@@ -71,11 +71,11 @@ We encourage development systems to provide facilities that alert developers to 
 
 This chapter first specifies some properties that any binary format for the Java programming language must have (§13.1). It next defines binary compatibility, explaining what it is and what it is not (§13.2). It finally enumerates a large set of possible changes to packages (§13.3), classes (§13.4), and interfaces (§13.5), specifying which of these changes are guaranteed to preserve binary compatibility and which are not.
 
-Occasionally, references of the form: (JVMS §x.y) are used to indicate concepts from The Java Virtual Machine Specification, Java SE 10 Edition.
+Occasionally, references of the form: (JVMS §x.y) are used to indicate concepts from The Java Virtual Machine Specification, Java SE 11 Edition.
 
 13.1. The Form of a Binary
 
-Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 10 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
+Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 11 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
 
 A class file corresponding to a class or interface declaration must have certain properties. A number of these properties are specifically chosen to support source code transformations that preserve binary compatibility. The required properties are:
 
@@ -189,7 +189,7 @@ Every type must contain sufficient information to recover its canonical name (§
 
 Every member type must have sufficient information to recover its source-level access modifier.
 
-Every nested class and nested interface must have a symbolic reference to its immediately enclosing class (§8.1.3).
+Every nested class and nested interface must have a symbolic reference to its immediately enclosing type (§8.1.3).
 
 Every class must contain symbolic references to all of its member types (§8.5), and to all local and anonymous classes that appear in its methods, constructors, static initializers, instance initializers, and field initializers.
 

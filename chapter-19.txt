@@ -235,24 +235,19 @@ Result:
 UnannType
 void
 MethodDeclarator:
-Identifier ( [FormalParameterList] ) [Dims]
+Identifier ( [ReceiverParameter ,] [FormalParameterList] ) [Dims]
+ReceiverParameter:
+{Annotation} UnannType [Identifier .] this
 FormalParameterList:
-ReceiverParameter
-FormalParameters , LastFormalParameter
-LastFormalParameter
-FormalParameters:
 FormalParameter {, FormalParameter}
-ReceiverParameter {, FormalParameter}
 FormalParameter:
 {VariableModifier} UnannType VariableDeclaratorId
+VariableArityParameter
+VariableArityParameter:
+{VariableModifier} UnannType {Annotation} ... Identifier
 VariableModifier:
 Annotation
 final
-LastFormalParameter:
-{VariableModifier} UnannType {Annotation} ... VariableDeclaratorId
-FormalParameter
-ReceiverParameter:
-{Annotation} UnannType [Identifier .] this
 Throws:
 throws ExceptionTypeList
 ExceptionTypeList:
@@ -273,7 +268,7 @@ ConstructorModifier:
 (one of)
 Annotation public protected private
 ConstructorDeclarator:
-[TypeParameters] SimpleTypeName ( [FormalParameterList] )
+[TypeParameters] SimpleTypeName ( [ReceiverParameter ,] [FormalParameterList] )
 SimpleTypeName:
 TypeIdentifier
 ConstructorBody:
@@ -591,11 +586,17 @@ AssignmentExpression
 LambdaExpression:
 LambdaParameters -> LambdaBody
 LambdaParameters:
+( [LambdaParameterList] )
 Identifier
-( [FormalParameterList] )
-( InferredFormalParameterList )
-InferredFormalParameterList:
+LambdaParameterList:
+LambdaParameter {, LambdaParameter}
 Identifier {, Identifier}
+LambdaParameter:
+{VariableModifier} LambdaParameterType VariableDeclaratorId
+VariableArityParameter
+LambdaParameterType:
+UnannType
+var
 LambdaBody:
 Expression
 Block

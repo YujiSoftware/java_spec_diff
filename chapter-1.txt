@@ -15,7 +15,7 @@ The Java programming language is strongly and statically typed. This specificati
 
 The Java programming language is a relatively high-level language, in that details of the machine representation are not available through the language. It includes automatic storage management, typically using a garbage collector, to avoid the safety problems of explicit deallocation (as in C's free or C++'s delete). High-performance garbage-collected implementations can have bounded pauses to support systems programming and real-time applications. The language does not include any unsafe constructs, such as array accesses without index checking, since such unsafe constructs would cause a program to behave in an unspecified way.
 
-The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 10 Edition.
+The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 11 Edition.
 
 1.1. Organization of the Specification
 
@@ -151,4 +151,4 @@ Mitchell, James G., William Maybury, and Richard Sweet. The Mesa Programming Lan
 
 Stroustrup, Bjarne. The C++ Progamming Language, 2nd ed. Addison-Wesley, Reading, Massachusetts, 1991, reprinted with corrections January 1994, ISBN 0-201-53992-6.
 
-Unicode Consortium, The. The Unicode Standard, Version 8.0.0. Mountain View, California, 2015, ISBN 978-1-936213-10-8.
+Unicode Consortium, The. The Unicode Standard, Version 10.0.0. Mountain View, California, 2017, ISBN 978-1-936213-16-0.

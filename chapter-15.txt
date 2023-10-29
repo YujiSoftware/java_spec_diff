@@ -610,7 +610,7 @@ in an instance initializer of a class (§8.6)
 
 in the initializer of an instance variable of a class (§8.3.2)
 
-to denote a receiver parameter (§8.4.1)
+to denote a receiver parameter (§8.4)
 
 If it appears anywhere else, a compile-time error occurs.
 
@@ -1961,7 +1961,7 @@ If the function type of T has a (non-void) return type, then the lambda body is 
 
 A method reference expression (§15.13) is potentially compatible with a functional interface type T if, where the arity of the function type of T is n, there exists at least one potentially applicable method when the method reference expression targets the function type with arity n (§15.13.1), and one of the following is true:
 
-The method reference expression has the form ReferenceType :: [TypeArguments] Identifier and at least one potentially applicable method is either i) static and supports arity n, or ii) not static and supports arity n-1.
+The method reference expression has the form ReferenceType :: [TypeArguments] Identifier and at least one potentially applicable method is either (i) static and supports arity n, or (ii) not static and supports arity n-1.
 
 The method reference expression has some other form and at least one potentially applicable method is not static.
 
@@ -2261,8 +2261,6 @@ The invocation mode, computed as follows:
 
 If the compile-time declaration has the static modifier, then the invocation mode is static.
 
-Otherwise, if the compile-time declaration has the private modifier, then the invocation mode is nonvirtual.
-
 Otherwise, if the part of the method invocation before the left parenthesis is of the form super . Identifier or of the form TypeName . super . Identifier, then the invocation mode is super.
 
 Otherwise, if the qualifying type of the method invocation is an interface, then the invocation mode is interface.
@@ -2406,39 +2404,41 @@ If the invocation mode is interface, then the implementation must check that the
 
 15.12.4.4. Locate Method to Invoke
 
-The strategy for method lookup depends on the invocation mode.
+As in the previous section (§15.12.4.3):
 
-If the invocation mode is static, no target reference is needed and overriding is not allowed. Method m of class T is the one to be invoked.
+Let T be the qualifying type of the method invocation (§13.1).
 
-Otherwise, an instance method is to be invoked and there is a target reference. If the target reference is null, a NullPointerException is thrown at this point. Otherwise, the target reference is said to refer to a target object and will be used as the value of the keyword this in the invoked method. The other four possibilities for the invocation mode are then considered.
+Let m be the method found in T or a supertype of T. (Note that m was merely the name of the method in the previous section; here it is the actual declaration.)
 
-If the invocation mode is nonvirtual, overriding is not allowed. Method m of class T is the one to be invoked.
+Let C be the class or interface that declares m.
 
-Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 10 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+The strategy for locating a method to invoke depends on the invocation mode:
 
-Otherwise, the invocation mode is interface, virtual, or super, and overriding may occur. A dynamic method lookup is used. The dynamic lookup process starts from a class S, determined as follows:
+If the invocation mode is static, no target reference is needed and overriding is not allowed. Method m of class or interface C is the one to be invoked.
 
-If the invocation mode is interface or virtual, then S is initially the actual run-time class R of the target object.
+Otherwise, an instance method is to be invoked and there is a target reference. If the target reference is null, a NullPointerException is thrown at this point. Otherwise, the target reference is said to refer to a target object and will be used as the value of the keyword this in the invoked method. The other three possibilities for the invocation mode are then considered:
 
-This is true even if the target object is an array instance. (Note that for invocation mode interface, R necessarily implements T; for invocation mode virtual, R is necessarily either T or a subclass of T.)
+If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-If the invocation mode is super, then S is initially the qualifying type (§13.1) of the method invocation.
+Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 11 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
-The dynamic method lookup uses the following procedure to search class S, and then the superclasses and superinterfaces of class S, as necessary, for method m.
+Otherwise, the invocation mode is interface or virtual.
 
-Let X be the compile-time type of the target reference of the method invocation. Then:
+If the method m of class or interface C is private, then it is the method to be invoked.
 
-If class S contains a declaration for a method named m with the same descriptor (same number of parameters, the same parameter types, and the same return type) required by the method invocation as determined at compile time (§15.12.3), then:
+Otherwise, overriding may occur. A dynamic method lookup, specified below, is used to locate the method to invoke. The lookup procedure starts from class R, the actual run-time class of the target object.
 
-If the invocation mode is super or interface, then this is the method to be invoked, and the procedure terminates.
+Note that for invocation mode interface, R necessarily implements T; for invocation mode virtual, R is necessarily either T or a subclass of T. If the target object is an array, then R is a "class" representing an array type.
 
-If the invocation mode is virtual, and the declaration in S overrides X.m (§8.4.8.1), then the method declared in S is the method to be invoked, and the procedure terminates.
+The procedure for dynamic method lookup is as follows. Let S be the class to search, beginning with R. Then:
 
-Otherwise, if S has a superclass, the lookup procedure of steps 1 and 2 is performed recursively using the direct superclass of S in place of S; the method to be invoked, if any, is the result of the recursive invocation of this lookup procedure.
+If class S contains a declaration for a method that overrides method m of class or interface C from R (§8.4.8.1), then that overriding method is the method to be invoked, and the procedure terminates.
+
+Otherwise, if S has a superclass, then steps 1 and 2 of this lookup procedure are performed recursively using the direct superclass of S in place of S; the method to be invoked, if any, is the result of the recursive invocation of this lookup procedure.
 
 If no method is found by the previous two steps, the superinterfaces of S are searched for a suitable method.
 
-A set of candidate methods is considered with the following properties: i) each method is declared in a (direct or indirect) superinterface of S; ii) each method has the name and descriptor required by the method invocation; iii) each method is non-static; iv) for each method, where the method's declaring interface is I, there is no other method satisfying (i) through (iii) that is declared in a subinterface of I.
+A set of candidate methods is considered with the following properties: (i) each method is declared in a (direct or indirect) superinterface of R; (ii) each method has the name and descriptor required by the method invocation; (iii) each method is non-static and non-private; (iv) for each method, where the method's declaring interface is I, there is no other method satisfying (i) through (iii) that is declared in a subinterface of I.
 
 If this set contains a default method, one such method is the method to be invoked. Otherwise, an abstract method in the set is selected as the method to be invoked.
 
@@ -2448,9 +2448,9 @@ If the method to be invoked is abstract, an AbstractMethodError is thrown.
 
 If the method to be invoked is default, and more than one default method appears in the set of candidates in step 3 above, an IncompatibleClassChangeError is thrown.
 
-If the invocation mode is interface and the selected method is not public, an IllegalAccessError is thrown.
+If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 10 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 11 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 
@@ -4763,29 +4763,29 @@ There is a precedent for ambiguity resolution involving casts, which essentially
 
 15.27.1. Lambda Parameters
 
-The formal parameters of a lambda expression may have either declared types or inferred types. These styles cannot be mixed: it is not possible for a lambda expression to declare the types of some of its parameters but leave others to be inferred. Only parameters with declared types can have modifiers.
+The formal parameters of a lambda expression, if any, are specified by either a parenthesized list of comma-separated parameter specifiers or a parenthesized list of comma-separated identifiers. In a list of parameter specifiers, each parameter specifier consists of optional modifiers, then a type (or var), then an identifier that specifies the name of the parameter. In a list of identifiers, each identifier specifies the name of the parameter.
+
+If a lambda expression has no formal parameters, then an empty pair of parentheses appears before the -> and the lambda body.
+
+If a lambda expression has exactly one formal parameter, and the parameter is specified by an identifier instead of a parameter specifier, then the parentheses around the identifier may be elided.
 
 LambdaParameters:
+( [LambdaParameterList] )
 Identifier
-( [FormalParameterList] )
-( InferredFormalParameterList )
-InferredFormalParameterList:
+LambdaParameterList:
+LambdaParameter {, LambdaParameter}
 Identifier {, Identifier}
+LambdaParameter:
+{VariableModifier} LambdaParameterType VariableDeclaratorId
+VariableArityParameter
+LambdaParameterType:
+UnannType
+var
 
-The following productions from §4.3, §8.3, and §8.4.1 are shown here for convenience:
+The following productions from §8.4.1, §8.3, and §4.3 are shown here for convenience:
 
-FormalParameterList:
-ReceiverParameter
-FormalParameters , LastFormalParameter
-LastFormalParameter
-FormalParameters:
-FormalParameter {, FormalParameter}
-ReceiverParameter {, FormalParameter}
-FormalParameter:
-{VariableModifier} UnannType VariableDeclaratorId
-LastFormalParameter:
-{VariableModifier} UnannType {Annotation} ... VariableDeclaratorId
-FormalParameter
+VariableArityParameter:
+{VariableModifier} UnannType {Annotation} ... Identifier
 VariableModifier:
 Annotation
 final
@@ -4794,49 +4794,53 @@ Identifier [Dims]
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-Receiver parameters are not permitted in the FormalParameters of a lambda expression, as specified in §8.4.1.
+A formal parameter of a lambda expression may be declared final, or annotated, only if specified by a parameter specifier. If a formal parameter is specified by an identifier instead, then the formal parameter is not final and has no annotations.
 
-A lambda expression whose formal parameters have declared types is said to be explicitly typed, while a lambda expression whose formal parameters have inferred types is said to be implicitly typed. A lambda expression with zero parameters is explicitly typed.
+A formal parameter of a lambda expression may be a variable arity parameter, indicated by an ellipsis following the type in a parameter specifier. At most one variable arity parameter is permitted for a lambda expression. It is a compile-time error if a variable arity parameter appears anywhere in the list of parameter specifiers except the last position.
 
-If the formal parameters have inferred types, then these types are derived (§15.27.3) from the functional interface type targeted by the lambda expression.
+Each formal parameter of a lambda expression has either an inferred type or a declared type:
 
-The syntax for formal parameters with declared types is the same as the syntax for the parameters of a method declaration (§8.4.1).
+If a formal parameter is specified either by a parameter specifier that uses var, or by an identifier instead of a parameter specifier, then the formal parameter has an inferred type. The type is inferred from the functional interface type targeted by the lambda expression (§15.27.3).
 
-The declared type of a formal parameter depends on whether it is a variable arity parameter:
+If a formal parameter is specified by a parameter specifier that does not use var, then the formal parameter has a declared type. The declared type is determined as follows:
 
 If the formal parameter is not a variable arity parameter, then the declared type is denoted by UnannType if no bracket pairs appear in UnannType and VariableDeclaratorId, and specified by §10.2 otherwise.
 
-If the formal parameter is a variable arity parameter, then the declared type is specified by §10.2. (Note that "mixed notation" is not permitted for variable arity parameters.)
+If the formal parameter is a variable arity parameter, then the declared type is an array type specified by §10.2.
 
 No distinction is made between the following lambda parameter lists:
 
-(int... x) -> ..
-(int[] x) -> ..
+(int... x) -> BODY
+(int[] x) -> BODY
 
 
-Consistent with the rules for overriding, either can be used, whether the functional interface's abstract method is fixed arity or variable arity. Since lambda expressions are never directly invoked, introducing int... where the functional interface uses int[] can have no impact on the surrounding program. In a lambda body, a variable arity parameter is treated just like an array-typed parameter.
+Either can be used, whether the functional interface's abstract method is fixed arity or variable arity. (This is consistent with the rules for method overriding.) Since lambda expressions are never directly invoked, using int... for the formal parameter where the functional interface uses int[] can have no impact on the surrounding program. In a lambda body, a variable arity parameter is treated just like an array-typed parameter.
+
+A lambda expression where all the formal parameters have declared types is said to be explicitly typed. A lambda expression where all the formal parameters have inferred types is said to be implicitly typed. A lambda expression with no formal parameters is explicitly typed.
+
+If a lambda expression is implicitly typed, then its lambda body is interpreted according to the context in which it appears. Specifically, the types of expressions in the body, and the checked exceptions thrown by the body, and the type correctness of code in the body all depend on the types inferred for the formal parameters. This implies that inference of formal parameter types must occur "before" attempting to type-check the lambda body.
+
+It is a compile-time error if a lambda expression declares a formal parameter with a declared type and a formal parameter with an inferred type.
+
+This rule prevents a mix of inferred and declared types in the formal parameters, such as (x, int y) -> BODY or (var x, int y) -> BODY. Note that if all the formal parameters have inferred types, the grammar prevents a mix of identifiers and var parameter specifiers, such as (x, var y) -> BODY or (var x, y) -> BODY.
 
 The rules for annotation modifiers on a formal parameter declaration are specified in §9.7.4 and §9.7.5.
 
 It is a compile-time error if final appears more than once as a modifier for a formal parameter declaration.
 
-It is a compile-time error to use mixed array notation (§10.2) for a variable arity parameter.
+It is a compile-time error if the LambdaParameterType of a formal parameter is var and the VariableDeclaratorId of the same formal parameter has one or more bracket pairs.
 
 The scope and shadowing of a formal parameter declaration is specified in §6.3 and §6.4.
 
-It is a compile-time error for a lambda expression to declare two formal parameters with the same name.
+It is a compile-time error for a lambda expression to declare two formal parameters with the same name. (That is, their declarations mention the same Identifier.)
 
 In Java SE 8, the use of _ as the name of a lambda parameter was forbidden, and its use discouraged as the name for other kinds of variable (§4.12.3). As of Java SE 9, _ is a keyword (§3.9) so it cannot be used as a variable name in any context.
 
-It is a compile-time error if a receiver parameter (§8.4.1) appears in the FormalParameters of a lambda expression.
-
 It is a compile-time error if a formal parameter that is declared final is assigned to within the body of the lambda expression.
 
-When the lambda expression is invoked (via a method invocation expression (§15.12)), the values of the actual argument expressions initialize newly created parameter variables, each of the declared or inferred type, before execution of the lambda body. The Identifier that appears in the VariableDeclaratorId or the InferredFormalParameterList may be used as a simple name in the lambda body to refer to the formal parameter.
+When the lambda expression is invoked (via a method invocation expression (§15.12)), the values of the actual argument expressions initialize newly created parameter variables, each of the declared or inferred type, before execution of the lambda body. The Identifier that appears in the LambdaParameter or directly in the LambdaParameterList or LambdaParameters may be used as a simple name in the lambda body to refer to the formal parameter.
 
-A lambda parameter of type float always contains an element of the float value set (§4.2.3); similarly, a lambda parameter of type double always contains an element of the double value set. It is not permitted for a lambda parameter of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a lambda parameter of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
-
-When the parameter types of a lambda expression are inferred, the same lambda body can be interpreted in different ways, depending on the context in which it appears. Specifically, the types of expressions in the body, the checked exceptions thrown by the body, and the type correctness of code in the body all depend on the parameters' inferred types. This implies that inference of parameter types must occur "before" attempting to type-check the body of the lambda expression.
+A lambda expression's formal parameter of type float always contains an element of the float value set (§4.2.3); similarly, a lambda expression's formal parameter of type double always contains an element of the double value set. It is not permitted for a lambda expression's formal parameter of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a lambda expression's formal parameter of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
 
 15.27.2. Lambda Body
 
@@ -4993,7 +4997,7 @@ If the lambda parameters are assumed to have the same types as the function type
 
 If the function type's result is void, the lambda body is either a statement expression (§14.8) or a void-compatible block.
 
-If the function type's result is a (non-void) type R, then either i) the lambda body is an expression that is compatible with R in an assignment context, or ii) the lambda body is a value-compatible block, and each result expression (§15.27.2) is compatible with R in an assignment context.
+If the function type's result is a (non-void) type R, then either (i) the lambda body is an expression that is compatible with R in an assignment context, or (ii) the lambda body is a value-compatible block, and each result expression (§15.27.2) is compatible with R in an assignment context.
 
 If a lambda expression is compatible with a target type T, then the type of the expression, U, is the ground target type derived from T.
 
@@ -5022,6 +5026,8 @@ Generally speaking, a lambda of the form () -> expr, where expr is a statement e
 At run time, evaluation of a lambda expression is similar to evaluation of a class instance creation expression, insofar as normal completion produces a reference to an object. Evaluation of a lambda expression is distinct from execution of the lambda body.
 
 Either a new instance of a class with the properties below is allocated and initialized, or an existing instance of a class with the properties below is referenced. If a new instance is to be created, but there is insufficient space to allocate the object, evaluation of the lambda expression completes abruptly by throwing an OutOfMemoryError.
+
+This implies that the identity of the result of evaluating a lambda expression (or, of serializing and deserializing a lambda expression) is unpredictable, and therefore identity-sensitive operations (such as reference equality (§15.21.3), object locking (§14.19), and the System.identityHashCode method) may produce different results in different implementations of the Java programming language, or even upon different lambda expression evaluations in the same implementation.
 
 The value of a lambda expression is a reference to an instance of a class with the following properties:
 

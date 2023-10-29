@@ -438,7 +438,7 @@ class Outer {
 }
 
 
-The declaration of class LocalInStaticContext occurs in a static context due to being within the static method classMethod. Instance variables of class Outer are not available within the body of a static method. In particular, instance variables of Outer are not available inside the body of LocalInStaticContext. However, local variables from the surrounding method may be referred to without error (provided they are marked final).
+The declaration of class LocalInStaticContext occurs in a static context due to being within the static method classMethod. Instance variables of class Outer are not available within the body of a static method. In particular, instance variables of Outer are not available inside the body of LocalInStaticContext. However, local variables from the surrounding method may be referred to without error (provided they are declared final or are effectively final).
 
 Inner classes whose declarations do not occur in a static context may freely refer to the instance variables of their enclosing type declaration. An instance variable is always defined with respect to an instance. In the case of instance variables of an enclosing type declaration, the instance variable must be defined with respect to an enclosing instance of that declared type. For example, the class Local above has an enclosing instance of class Outer. As a further example:
 
@@ -1573,20 +1573,32 @@ MethodHeader:
 Result MethodDeclarator [Throws]
 TypeParameters {Annotation} Result MethodDeclarator [Throws]
 MethodDeclarator:
-Identifier ( [FormalParameterList] ) [Dims]
+Identifier ( [ReceiverParameter ,] [FormalParameterList] ) [Dims]
+ReceiverParameter:
+{Annotation} UnannType [Identifier .] this
 
 The following production from §4.3 is shown here for convenience:
 
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-The FormalParameterList is described in §8.4.1, the MethodModifier clause in §8.4.3, the TypeParameters clause in §8.4.4, the Result clause in §8.4.5, the Throws clause in §8.4.6, and the MethodBody in §8.4.7.
+The FormalParameterList clause is described in §8.4.1, the MethodModifier clause in §8.4.3, the TypeParameters clause in §8.4.4, the Result clause in §8.4.5, the Throws clause in §8.4.6, and the MethodBody in §8.4.7.
 
 The Identifier in a MethodDeclarator may be used in a name to refer to the method (§6.5.7.1, §15.12).
 
-It is a compile-time error for the body of a class declaration to declare as members two methods with override-equivalent signatures (§8.4.2).
-
 The scope and shadowing of a method declaration is specified in §6.3 and §6.4.
+
+The receiver parameter is an optional syntactic device for an instance method or an inner class's constructor. For an instance method, the receiver parameter represents the object for which the method is invoked. For an inner class's constructor, the receiver parameter represents the immediately enclosing instance of the newly constructed object. In both cases, the receiver parameter exists solely to allow the type of the represented object to be denoted in source code, so that the type may be annotated (§9.7.4). The receiver parameter is not a formal parameter; more precisely, it is not a declaration of any kind of variable (§4.12.3), it is never bound to any value passed as an argument in a method invocation expression or class instance creation expression, and it has no effect whatsoever at run time.
+
+A receiver parameter may appear either in the MethodDeclarator of an instance method or in the ConstructorDeclarator of a constructor of an inner class where the inner class is not declared in a static context (§8.1.3). If a receiver parameter appears in any other kind of method or constructor, then a compile-time error occurs.
+
+The type and name of a receiver parameter are constrained as follows:
+
+In an instance method, the type of the receiver parameter must be the class or interface in which the method is declared, and the name of the receiver parameter must be this; otherwise, a compile-time error occurs.
+
+In an inner class's constructor, the type of the receiver parameter must be the class or interface which is the immediately enclosing type declaration of the inner class, and the name of the receiver parameter must be Identifier . this where Identifier is the simple name of the class or interface which is the immediately enclosing type declaration of the inner class; otherwise, a compile-time error occurs.
+
+It is a compile-time error for the body of a class declaration to declare as members two methods with override-equivalent signatures (§8.4.2).
 
 The declaration of a method that returns an array is allowed to place some or all of the bracket pairs that denote the array type after the formal parameter list. This syntax is supported for compatibility with early versions of the Java programming language. It is very strongly recommended that this syntax is not used in new code.
 
@@ -1594,46 +1606,35 @@ The declaration of a method that returns an array is allowed to place some or al
 
 The formal parameters of a method or constructor, if any, are specified by a list of comma-separated parameter specifiers. Each parameter specifier consists of a type (optionally preceded by the final modifier and/or one or more annotations) and an identifier (optionally followed by brackets) that specifies the name of the parameter.
 
-If a method or constructor has no formal parameters, only an empty pair of parentheses appears in the declaration of the method or constructor.
+If a method or constructor has no formal parameters, and no receiver parameter, then an empty pair of parentheses appears in the declaration of the method or constructor.
 
 FormalParameterList:
-ReceiverParameter
-FormalParameters , LastFormalParameter
-LastFormalParameter
-FormalParameters:
 FormalParameter {, FormalParameter}
-ReceiverParameter {, FormalParameter}
 FormalParameter:
 {VariableModifier} UnannType VariableDeclaratorId
+VariableArityParameter
+VariableArityParameter:
+{VariableModifier} UnannType {Annotation} ... Identifier
 VariableModifier:
 Annotation
 final
-ReceiverParameter:
-{Annotation} UnannType [Identifier .] this
-LastFormalParameter:
-{VariableModifier} UnannType {Annotation} ... VariableDeclaratorId
-FormalParameter
 
-The following productions from §4.3 and §8.3 are shown here for convenience:
+The following productions from §8.3 and §4.3 are shown here for convenience:
 
 VariableDeclaratorId:
 Identifier [Dims]
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-The last formal parameter of a method or constructor is special: it may be a variable arity parameter, indicated by an ellipsis following the type.
+A formal parameter of a method or constructor may be a variable arity parameter, indicated by an ellipsis following the type. At most one variable arity parameter is permitted for a method or constructor. It is a compile-time error if a variable arity parameter appears anywhere in the list of parameter specifiers except the last position.
 
-Note that the ellipsis (...) is a token unto itself (§3.11). It is possible to put whitespace between it and the type, but this is discouraged as a matter of style.
+In the grammar for VariableArityParameter, note that the ellipsis (...) is a token unto itself (§3.11). It is possible to put whitespace between it and the type, but this is discouraged as a matter of style.
 
 If the last formal parameter is a variable arity parameter, the method is a variable arity method. Otherwise, it is a fixed arity method.
-
-The receiver parameter is an optional syntactic device for an instance method or an inner class's constructor. For an instance method, the receiver parameter represents the object for which the method is invoked. For an inner class's constructor, the receiver parameter represents the immediately enclosing instance of the newly constructed object. Either way, the receiver parameter exists solely to allow the type of the represented object to be denoted in source code, so that the type may be annotated. The receiver parameter is not a formal parameter; more precisely, it is not a declaration of any kind of variable (§4.12.3), it is never bound to any value passed as an argument in a method invocation expression or qualified class instance creation expression, and it has no effect whatsoever at run time.
 
 The rules for annotation modifiers on a formal parameter declaration and on a receiver parameter are specified in §9.7.4 and §9.7.5.
 
 It is a compile-time error if final appears more than once as a modifier for a formal parameter declaration.
-
-It is a compile-time error to use mixed array notation (§10.2) for a variable arity parameter.
 
 The scope and shadowing of a formal parameter is specified in §6.3 and §6.4.
 
@@ -1641,27 +1642,19 @@ It is a compile-time error for a method or constructor to declare two formal par
 
 It is a compile-time error if a formal parameter that is declared final is assigned to within the body of the method or constructor.
 
-A receiver parameter may appear only in the FormalParameterList of either an instance method, or a constructor of an inner class where the inner class is not declared in a static context (§8.1.3); otherwise, a compile-time error occurs.
-
-Where a receiver parameter is allowed, its type and name are specified as follows:
-
-In an instance method, the type of the receiver parameter must be the class or interface in which the method is declared, and the name of the receiver parameter must be this; otherwise, a compile-time error occurs.
-
-In an inner class's constructor, the type of the receiver parameter must be the class or interface which is the immediately enclosing type declaration of the inner class, and the name of the receiver parameter must be Identifier . this where Identifier is the simple name of the class or interface which is the immediately enclosing type declaration of the inner class; otherwise, a compile-time error occurs.
-
 The declared type of a formal parameter depends on whether it is a variable arity parameter:
 
 If the formal parameter is not a variable arity parameter, then the declared type is denoted by UnannType if no bracket pairs appear in UnannType and VariableDeclaratorId, and specified by §10.2 otherwise.
 
-If the formal parameter is a variable arity parameter, then the declared type is specified by §10.2. (Note that "mixed notation" is not permitted for variable arity parameters.)
+If the formal parameter is a variable arity parameter, then the declared type is an array type specified by §10.2.
 
 If the declared type of a variable arity parameter has a non-reifiable element type (§4.7), then a compile-time unchecked warning occurs for the declaration of the variable arity method, unless the method is annotated with @SafeVarargs (§9.6.4.7) or the warning is suppressed by @SuppressWarnings (§9.6.4.5).
 
-When the method or constructor is invoked (§15.12), the values of the actual argument expressions initialize newly created parameter variables, each of the declared type, before execution of the body of the method or constructor. The Identifier that appears in the DeclaratorId may be used as a simple name in the body of the method or constructor to refer to the formal parameter.
+When the method or constructor is invoked (§15.12), the values of the actual argument expressions initialize newly created parameter variables, each of the declared type, before execution of the body of the method or constructor. The Identifier that appears in the FormalParameter may be used as a simple name in the body of the method or constructor to refer to the formal parameter.
 
 Invocations of a variable arity method may contain more actual argument expressions than formal parameters. All the actual argument expressions that do not correspond to the formal parameters preceding the variable arity parameter will be evaluated and the results stored into an array that will be passed to the method invocation (§15.12.4.2).
 
-A method or constructor parameter of type float always contains an element of the float value set (§4.2.3); similarly, a method or constructor parameter of type double always contains an element of the double value set. It is not permitted for a method or constructor parameter of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a method parameter of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
+A method's or constructor's formal parameter of type float always contains an element of the float value set (§4.2.3); similarly, a method's or constructor's formal parameter of type double always contains an element of the double value set. It is not permitted for a method's or constructor's formal parameter of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a method's or constructor's formal parameter of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
 
 Where an actual argument expression corresponding to a parameter variable is not FP-strict (§15.4), evaluation of that actual argument expression is permitted to use intermediate values drawn from the appropriate extended-exponent value sets. Prior to being stored in the parameter variable, the result of such an expression is mapped to the nearest value in the corresponding standard value set by being subjected to invocation conversion (§5.3).
 
@@ -1779,7 +1772,7 @@ If two or more (distinct) method modifiers appear in a method declaration, it is
 
 An abstract method declaration introduces the method as a member, providing its signature (§8.4.2), result (§8.4.5), and throws clause if any (§8.4.6), but does not provide an implementation (§8.4.7). A method that is not abstract may be referred to as a concrete method.
 
-The declaration of an abstract method m must appear directly within an abstract class (call it A) unless it occurs within an enum declaration (§8.9); otherwise a compile-time error occurs.
+The declaration of an abstract method m must appear directly within an abstract class (call it A) unless it occurs within an enum declaration (§8.9); otherwise, a compile-time error occurs.
 
 Every subclass of A that is not abstract (§8.1.1.1) must provide an implementation for m, or a compile-time error occurs.
 
@@ -2752,7 +2745,7 @@ A constructor is used in the creation of an object that is an instance of a clas
 ConstructorDeclaration:
 {ConstructorModifier} ConstructorDeclarator [Throws] ConstructorBody
 ConstructorDeclarator:
-[TypeParameters] SimpleTypeName ( [FormalParameterList] )
+[TypeParameters] SimpleTypeName ( [ReceiverParameter ,] [FormalParameterList] )
 SimpleTypeName:
 TypeIdentifier
 

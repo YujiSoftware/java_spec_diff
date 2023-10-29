@@ -212,7 +212,7 @@ If the function type's result is not void and the lambda body is a block that is
 
 Otherwise, the constraint reduces to all of the following constraint formulas:
 
-If the lambda parameters have explicitly declared types F1, ..., Fn and the function type has parameter types G1, ..., Gn, then i) for all i (1 ≤ i ≤ n), ‹Fi = Gi›, and ii) ‹T' <: T›.
+If the lambda parameters have explicitly declared types F1, ..., Fn and the function type has parameter types G1, ..., Gn, then (i) for all i (1 ≤ i ≤ n), ‹Fi = Gi›, and (ii) ‹T' <: T›.
 
 If the function type's return type is a (non-void) type R, assume the lambda's parameter types are the same as the function type's parameter types. Then:
 
@@ -438,7 +438,7 @@ If n > 0, the constraint reduces to a set of subtyping constraints: for all i (1
 
 Constraints on checked exceptions are handled separately from constraints on return types, because return type compatibility influences applicability of methods (§18.5.1), while exceptions only influence the invocation type after overload resolution is complete (§18.5.2). This could be simplified by including exception compatibility in the definition of lambda expression compatibility (§15.27.3), but this would lead to possibly surprising cases in which exceptions that can be thrown by an explicitly typed lambda body change overload resolution.
 
-The exceptions thrown by a lambda body cannot be determined until i) the parameter types of the lambda are known, and ii) the target type of result expressions in the body is known. (The second requirement is to account for generic method invocations in which, for example, the same type parameter appears in the return type and the throws clause.) Hence, we require both of these, as derived from the target type T, to be proper types.
+The exceptions thrown by a lambda body cannot be determined until (i) the parameter types of the lambda are known, and (ii) the target type of result expressions in the body is known. (The second requirement is to account for generic method invocations in which, for example, the same type parameter appears in the return type and the throws clause.) Hence, we require both of these, as derived from the target type T, to be proper types.
 
 One consequence is that lambda expressions returned from other lambda expressions cannot generate constraints from their thrown exceptions. These constraints can only be generated from top-level lambda expressions.
 
@@ -554,7 +554,7 @@ Given a set of inference variables to resolve, let V be the union of this set an
 
 If every variable in V has an instantiation, then resolution succeeds and this procedure terminates.
 
-Otherwise, let { α1, ..., αn } be a non-empty subset of uninstantiated variables in V such that i) for all i (1 ≤ i ≤ n), if αi depends on the resolution of a variable β, then either β has an instantiation or there is some j such that β = αj; and ii) there exists no non-empty proper subset of { α1, ..., αn } with this property. Resolution proceeds by generating an instantiation for each of α1, ..., αn based on the bounds in the bound set:
+Otherwise, let { α1, ..., αn } be a non-empty subset of uninstantiated variables in V such that (i) for all i (1 ≤ i ≤ n), if αi depends on the resolution of a variable β, then either β has an instantiation or there is some j such that β = αj; and (ii) there exists no non-empty proper subset of { α1, ..., αn } with this property. Resolution proceeds by generating an instantiation for each of α1, ..., αn based on the bounds in the bound set:
 
 If the bound set does not contain a bound of the form G<..., αi, ...> = capture(G<...>) for all i (1 ≤ i ≤ n), then a candidate instantiation Ti is defined for each αi:
 
@@ -610,7 +610,7 @@ Let F1, ..., Fn be the formal parameter types of m, and let e1, ..., ek be the a
 
 To test for applicability by strict invocation:
 
-If k ≠ n, or if there exists an i (1 ≤ i ≤ n) such that ei is pertinent to applicability (§15.12.2.2) and either i) ei is a standalone expression of a primitive type but Fi is a reference type, or ii) Fi is a primitive type but ei is not a standalone expression of a primitive type; then the method is not applicable and there is no need to proceed with inference.
+If k ≠ n, or if there exists an i (1 ≤ i ≤ n) such that ei is pertinent to applicability (§15.12.2.2) and either (i) ei is a standalone expression of a primitive type but Fi is a reference type, or (ii) Fi is a primitive type but ei is not a standalone expression of a primitive type; then the method is not applicable and there is no need to proceed with inference.
 
 Otherwise, C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → Fi θ›.
 
@@ -684,7 +684,7 @@ Otherwise, if R θ is a parameterized type, G<A1, ..., An>, and one of A1, ..., 
 
 Otherwise, if R θ is an inference variable α, and one of the following is true:
 
-T is a reference type, but is not a wildcard-parameterized type, and either i) B2 contains a bound of one of the forms α = S or S <: α, where S is a wildcard-parameterized type, or ii) B2 contains two bounds of the forms S1 <: α and S2 <: α, where S1 and S2 have supertypes that are two different parameterizations of the same generic class or interface.
+T is a reference type, but is not a wildcard-parameterized type, and either (i) B2 contains a bound of one of the forms α = S or S <: α, where S is a wildcard-parameterized type, or (ii) B2 contains two bounds of the forms S1 <: α and S2 <: α, where S1 and S2 have supertypes that are two different parameterizations of the same generic class or interface.
 
 T is a parameterization of a generic class or interface, G, and B2 contains a bound of one of the forms α = S or S <: α, where there exists no type of the form G<...> that is a supertype of S, but the raw type |G<...>| is a supertype of S.
 
@@ -806,7 +806,7 @@ For ‹LambdaExpression → T›:
 
 If T is an inference variable, it is the (only) input variable.
 
-If T is a functional interface type, and a function type can be derived from T (§15.27.3), then the input variables include i) if the lambda expression is implicitly typed, the inference variables mentioned by the function type's parameter types; and ii) if the function type's return type, R, is not void, then for each result expression e in the lambda body (or for the body itself if it is an expression), the input variables of ‹e → R›.
+If T is a functional interface type, and a function type can be derived from T (§15.27.3), then the input variables include (i) if the lambda expression is implicitly typed, the inference variables mentioned by the function type's parameter types; and (ii) if the function type's return type, R, is not void, then for each result expression e in the lambda body (or for the body itself if it is an expression), the input variables of ‹e → R›.
 
 Otherwise, there are no input variables.
 
@@ -814,7 +814,7 @@ For ‹LambdaExpression →throws T›:
 
 If T is an inference variable, it is the (only) input variable.
 
-If T is a functional interface type, and a function type can be derived, as described in §15.27.3, the input variables include i) if the lambda expression is implicitly typed, the inference variables mentioned by the function type's parameter types; and ii) the inference variables mentioned by the function type's return type.
+If T is a functional interface type, and a function type can be derived, as described in §15.27.3, the input variables include (i) if the lambda expression is implicitly typed, the inference variables mentioned by the function type's parameter types; and (ii) the inference variables mentioned by the function type's return type.
 
 Otherwise, there are no input variables.
 

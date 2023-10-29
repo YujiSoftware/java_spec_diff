@@ -274,7 +274,7 @@ One can conclude this from the rule above and from the rules of observable compi
 
 A package is visible to a module M if and only if an ordinary compilation unit containing a declaration of the package is visible to M.
 
-Package visibility is meant to imply that a package is "really" observable in some module on the system. It is not useful to think that package P is "technically" observable just because a subpackage P.Q is "technically" observable in some module. For example, suppose P.Q is "technically" observable in module M1 and P.R is "technically" observable in module M2; then, P is "technically" observable, but in M1 or M2 or both? During the compilwation of some module N that requires M1 only, it matters that P.Q is "really" observable, and it does not matter that P is "technically" observable.
+Package visibility is meant to imply that a package is observable in a useful way to a given module. It is generally not useful to know that package P is observable merely because a subpackage P.Q is observable. For example, suppose P.Q is observable (in module M1) and P.R is observable (in module M2); then, P is observable, but where? In M1, or M2, or both? The question is redundant; during compilation of module N that requires only M1, it matters that P.Q is observable, but it does not matter that P is observable.
 
 A package is uniquely visible to a module M if and only if one of the following holds:
 
@@ -825,7 +825,7 @@ If a service provider explicitly declares a public constructor with no formal pa
 
 If a service provider explicitly declares a public static method called provider with no formal parameters, then that method is called the provider method.
 
-If a service provider has a provider method, then its return type must i) either be declared in the current module, or be declared in another module and be accessible to code in the current module; and ii) be a subtype of the service specified in the provides directive; or a compile-time error occurs.
+If a service provider has a provider method, then its return type must (i) either be declared in the current module, or be declared in another module and be accessible to code in the current module; and (ii) be a subtype of the service specified in the provides directive; or a compile-time error occurs.
 
 While a service provider that is specified by a provides directive must be declared in the current module, its provider method may have a return type that is declared in another module. Also, note that when a service provider declares a provider method, the service provider itself need not be a subtype of the service.
 

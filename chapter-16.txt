@@ -614,19 +614,17 @@ V is [un]assigned before the initialization part of the for statement iff V is [
 
 V is definitely assigned before the condition part of the for statement iff V is definitely assigned after the initialization part of the for statement.
 
-V is definitely unassigned before the condition part of the for statement iff all of the following are true:
+V is definitely unassigned before the condition part of the for statement iff both of the following are true:
 
 V is definitely unassigned after the initialization part of the for statement.
 
-Assuming V is definitely unassigned before the condition part of the for statement, V is definitely unassigned after the contained statement.
-
-Assuming V is definitely unassigned before the contained statement, V is definitely unassigned before every continue statement for which the for statement is the continue target.
+Assuming V is definitely unassigned before the condition part of the for statement, V is definitely unassigned after the incrementation part of the for statement.
 
 V is [un]assigned before the contained statement iff either of the following is true:
 
 A condition expression is present and V is [un]assigned after the condition expression when true.
 
-No condition expression is present and V is [un]assigned after the initialization part of the for statement.
+No condition expression is present and V is [un]assigned before the condition part of the for statement.
 
 V is [un]assigned before the incrementation part of the for statement iff V is [un]assigned after the contained statement and V is [un]assigned before every continue statement for which the for statement is the continue target.
 

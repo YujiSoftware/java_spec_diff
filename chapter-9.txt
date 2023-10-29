@@ -219,7 +219,7 @@ It is a compile-time error if the interface explicitly declares such a method m 
 
 It is a compile-time error if the interface explicitly declares a method with a signature that is override-equivalent (§8.4.2) to a public method of Object, but which has a different return type, or an incompatible throws clause, or is not abstract.
 
-The interface inherits, from the interfaces it extends, all members of those interfaces, except for i) fields, classes, and interfaces that it hides, ii) abstract methods and default methods that it overrides (§9.4.1), iii) private methods, and iv) static methods.
+The interface inherits, from the interfaces it extends, all members of those interfaces, except for (i) fields, classes, and interfaces that it hides, (ii) abstract methods and default methods that it overrides (§9.4.1), (iii) private methods, and (iv) static methods.
 
 Fields, methods, and member types of an interface type may have the same name, since they are used in different contexts and are disambiguated by different lookup procedures (§6.5). However, this is discouraged as a matter of style.
 
@@ -342,7 +342,7 @@ Result:
 UnannType
 void
 MethodDeclarator:
-Identifier ( [FormalParameterList] ) [Dims]
+Identifier ( [ReceiverParameter ,] [FormalParameterList] ) [Dims]
 MethodBody:
 Block
 ;
@@ -576,7 +576,7 @@ By virtue of the AnnotationTypeElementDeclaration production, a method declarati
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 10.
+By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 11.
 
 By convention, the only AnnotationTypeElementModifiers that should be present on an annotation type element are annotations.
 

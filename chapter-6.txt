@@ -814,7 +814,7 @@ The type in a field declaration of a class or interface (§8.3, §9.3)
 
 The type in a formal parameter declaration of a method, constructor, or lambda expression (§8.4.1, §8.8.1, §9.4, §15.27.1)
 
-The type of the receiver parameter of a method (§8.4.1)
+The type of the receiver parameter of a method (§8.4)
 
 The type in a local variable declaration (§14.4, §14.14.1, §14.14.2, §14.20.3)
 
@@ -1438,11 +1438,11 @@ A subclass S is regarded as being responsible for the implementation of objects 
 
 In addition, access to an instance field or instance method is permitted based on the form of the qualified name, field access expression (§15.11), method invocation expression (§15.12), or method reference expression (§15.13):
 
-If the access is by i) a qualified name of the form ExpressionName.Id or TypeName.Id, or ii) a field access expression of the form Primary.Id, then access to the instance field Id is permitted if and only if the qualifying type is S or a subclass of S.
+If the access is by (i) a qualified name of the form ExpressionName.Id or TypeName.Id, or (ii) a field access expression of the form Primary.Id, then access to the instance field Id is permitted if and only if the qualifying type is S or a subclass of S.
 
 The qualifying type is the type of the ExpressionName or Primary, or the type denoted by TypeName.
 
-If the access is by i) a method invocation expression of the form ExpressionName.Id(...) or TypeName.Id(...) or Primary.Id(...), or ii) a method reference expression of the form ExpressionName :: Id or Primary :: Id or ReferenceType :: Id, then access to the instance method Id is permitted if and only if the qualifying type is S or a subclass of S.
+If the access is by (i) a method invocation expression of the form ExpressionName.Id(...) or TypeName.Id(...) or Primary.Id(...), or (ii) a method reference expression of the form ExpressionName :: Id or Primary :: Id or ReferenceType :: Id, then access to the instance method Id is permitted if and only if the qualifying type is S or a subclass of S.
 
 The qualifying type is the type of the ExpressionName or Primary, or the type denoted by TypeName or ReferenceType.
 

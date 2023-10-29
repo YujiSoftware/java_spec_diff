@@ -226,7 +226,7 @@ Each declarator in a local variable declaration declares one local variable, who
 
 If the optional keyword final appears at the start of the declaration, the variable being declared is a final variable (§4.12.4).
 
-The type of a local variable is determined as follows:
+The declared type of a local variable is determined as follows:
 
 If LocalVariableType is an UnannType, and no bracket pairs appear in UnannType or VariableDeclaratorId, then UnannType denotes the type of the local variable.
 
@@ -488,7 +488,7 @@ It is a compile-time error if, in the second form of the assert statement, Expre
 
 An assert statement that is executed after its class or interface has completed initialization is enabled if and only if the host system has determined that the top level class or interface that lexically contains the assert statement enables assertions.
 
-Whether a top level class or interface enables assertions is determined no later than the earliest of i) the initialization of the top level class or interface, and ii) the initialization of any class or interface nested in the top level class or interface. Whether a top level class or interface enables assertions cannot be changed after it has been determined.
+Whether a top level class or interface enables assertions is determined no later than the earliest of (i) the initialization of the top level class or interface, and (ii) the initialization of any class or interface nested in the top level class or interface. Whether a top level class or interface enables assertions cannot be changed after it has been determined.
 
 An assert statement that is executed before its class or interface has completed initialization is enabled.
 

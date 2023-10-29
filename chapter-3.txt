@@ -34,7 +34,7 @@ Programs are written using the Unicode character set. Information about this cha
 
 The Java SE Platform tracks the Unicode Standard as it evolves. The precise version of Unicode used by a given release is specified in the documentation of the class Character.
 
-Versions of the Java programming language prior to JDK 1.1 used Unicode 1.1.5. Upgrades to newer versions of the Unicode Standard occurred in JDK 1.1 (to Unicode 2.0), JDK 1.1.7 (to Unicode 2.1), Java SE 1.4 (to Unicode 3.0), Java SE 5.0 (to Unicode 4.0), Java SE 7 (to Unicode 6.0), Java SE 8 (to Unicode 6.2), and Java SE 9 (to Unicode 8.0).
+Versions of the Java programming language prior to JDK 1.1 used Unicode 1.1.5. Upgrades to newer versions of the Unicode Standard occurred in JDK 1.1 (to Unicode 2.0), JDK 1.1.7 (to Unicode 2.1), Java SE 1.4 (to Unicode 3.0), Java SE 5.0 (to Unicode 4.0), Java SE 7 (to Unicode 6.0), Java SE 8 (to Unicode 6.2), Java SE 9 (to Unicode 8.0), and Java SE 11 (to Unicode 10.0).
 
 The Unicode standard was originally designed as a fixed-width 16-bit character encoding. It has since been changed to allow for characters whose representation requires more than 16 bits. The range of legal code points is now U+0000 to U+10FFFF, using the hexadecimal U+n notation. Characters whose code points are greater than U+FFFF are called supplementary characters. To represent the complete range of characters using only 16-bit units, the Unicode standard defines an encoding called UTF-16. In this encoding, supplementary characters are represented as pairs of 16-bit code units, the first from the high-surrogates range, (U+D800 to U+DBFF), the second from the low-surrogates range (U+DC00 to U+DFFF). For characters in the range U+0000 to U+FFFF, the values of code points and UTF-16 code units are the same.
 
@@ -260,7 +260,7 @@ A type identifier is an identifier that is not the character sequence var.
 TypeIdentifier:
 Identifier but not var
 
-This special kind of identifier is used in certain contexts involving the declaration or use of types. For example, the name of a class must be a TypeIdentifier, so it is illegal to declare a class named var (§8.1).
+Type identifiers are used in certain contexts involving the declaration or use of types. For example, the name of a class must be a TypeIdentifier, so it is illegal to declare a class named var (§8.1).
 
 3.9. Keywords
 
@@ -289,7 +289,7 @@ true and false are not keywords, but rather boolean literals (§3.10.3).
 
 null is not a keyword, but rather the null literal (§3.10.7).
 
-var is not a keyword, but rather an identifier with special meaning as the type of a local variable declaration (§14.4, §14.14.1, §14.14.2, §14.20.3).
+var is not a keyword, but rather an identifier with special meaning as the type of a local variable declaration (§14.4, §14.14.1, §14.14.2, §14.20.3) and the type of a lambda formal parameter (§15.27.1).
 
 A further ten character sequences are restricted keywords: open, module, requires, transitive, exports, opens, to, uses, provides, and with. These character sequences are tokenized as keywords solely where they appear as terminals in the ModuleDeclaration, ModuleDirective, and RequiresModifier productions (§7.7). They are tokenized as identifiers everywhere else, for compatibility with programs written before the introduction of restricted keywords. There is one exception: immediately to the right of the character sequence requires in the ModuleDirective production, the character sequence transitive is tokenized as a keyword unless it is followed by a separator, in which case it is tokenized as an identifier.
 
@@ -655,7 +655,7 @@ Because Unicode escapes are processed very early, it is not correct to write "\u
 
 A string literal is a reference to an instance of class String (§4.3.1, §4.3.3).
 
-Moreover, a string literal always refers to the same instance of class String. This is because string literals - or, more generally, strings that are the values of constant expressions (§15.28) - are "interned" so as to share unique instances, using the method String.intern.
+Moreover, a string literal always refers to the same instance of class String. This is because string literals - or, more generally, strings that are the values of constant expressions (§15.28) - are "interned" so as to share unique instances, using the method String.intern (§12.5).
 
 Example 3.10.5-1. String Literals
 
@@ -665,11 +665,11 @@ package testPackage;
 class Test {
     public static void main(String[] args) {
         String hello = "Hello", lo = "lo";
-        System.out.print((hello == "Hello") + " ");
-        System.out.print((Other.hello == hello) + " ");
-        System.out.print((other.Other.hello == hello) + " ");
-        System.out.print((hello == ("Hel"+"lo")) + " ");
-        System.out.print((hello == ("Hel"+lo)) + " ");
+        System.out.println(hello == "Hello");
+        System.out.println(Other.hello == hello);
+        System.out.println(other.Other.hello == hello);
+        System.out.println(hello == ("Hel"+"lo"));
+        System.out.println(hello == ("Hel"+lo));
         System.out.println(hello == ("Hel"+lo).intern());
     }
 }
@@ -684,22 +684,27 @@ public class Other { public static String hello = "Hello"; }
 
 produces the output:
 
-true true true true false true
+true
+true
+true
+true
+false
+true
 
 
 This example illustrates six points:
 
-Literal strings within the same class (§8 (Classes)) in the same package (§7 (Packages and Modules)) represent references to the same String object (§4.3.1).
+String literals in the same class and package represent references to the same String object (§4.3.1).
 
-Literal strings within different classes in the same package represent references to the same String object.
+String literals in different classes in the same package represent references to the same String object.
 
-Literal strings within different classes in different packages likewise represent references to the same String object.
+String literals in different classes in different packages likewise represent references to the same String object.
 
-Strings computed by constant expressions (§15.28) are computed at compile time and then treated as if they were literals.
+Strings concatenated from constant expressions (§15.28) are computed at compile time and then treated as if they were literals.
 
 Strings computed by concatenation at run time are newly created and therefore distinct.
 
-The result of explicitly interning a computed string is the same string as any pre-existing literal string with the same contents.
+The result of explicitly interning a computed string is the same String object as any pre-existing string literal with the same contents.
 
 
 
