@@ -16,7 +16,7 @@ Table of Contents
 16.2. Definite Assignment and Statements
 16.2.1. Empty Statements
 16.2.2. Blocks
-16.2.3. Local Class Declaration Statements
+16.2.3. Local Class and Interface Declarations
 16.2.4. Local Variable Declaration Statements
 16.2.5. Labeled Statements
 16.2.6. Expression Statements
@@ -35,11 +35,11 @@ Table of Contents
 16.4. Definite Assignment and Array Initializers
 16.5. Definite Assignment and Enum Constants
 16.6. Definite Assignment and Anonymous Classes
-16.7. Definite Assignment and Member Types
+16.7. Definite Assignment and Member Classes and Interfaces
 16.8. Definite Assignment and Static Initializers
 16.9. Definite Assignment, Constructors, and Instance Initializers
 
-Each local variable (§14.4) and every blank final field (§4.12.4, §8.3.1.2) must have a definitely assigned value when any access of its value occurs.
+Every local variable declared by a statement (§14.4.2, §14.14.1, §14.14.2, §14.20.3) and every blank final field (§4.12.4, §8.3.1.2) must have a definitely assigned value when any access of its value occurs.
 
 An access to its value consists of the simple name of the variable (or, for a field, the simple name of the field qualified by this) occurring anywhere in an expression except as the left-hand operand of the simple assignment operator = (§15.26.1).
 
@@ -55,7 +55,7 @@ The remainder of this chapter is devoted to a precise explanation of the words "
 
 The idea behind definite assignment is that an assignment to the local variable or blank final field must occur on every possible execution path to the access. Similarly, the idea behind definite unassignment is that no other assignment to the blank final variable is permitted to occur on any possible execution path to an assignment.
 
-The analysis takes into account the structure of statements and expressions; it also provides a special treatment of the expression operators !, &&, ||, and ? :, and of boolean-valued constant expressions.
+The analysis takes into account the structure of statements and expressions; it also provides a special treatment of the expression operators &&, ||, !, and ? :, and of boolean-valued constant expressions.
 
 Except for the special treatment of the conditional boolean operators &&, ||, and ? : and of boolean-valued constant expressions, the values of expressions are not taken into account in the flow analysis.
 
@@ -215,23 +215,23 @@ and so compiling this program must cause a compile-time error to occur.
 
 In order to precisely specify all the cases of definite assignment, the rules in this section define several technical terms:
 
-whether a variable is definitely assigned before a statement or expression;
+whether a variable is definitely assigned before a statement or expression
 
-whether a variable is definitely unassigned before a statement or expression;
+whether a variable is definitely unassigned before a statement or expression
 
-whether a variable is definitely assigned after a statement or expression; and
+whether a variable is definitely assigned after a statement or expression
 
-whether a variable is definitely unassigned after a statement or expression.
+whether a variable is definitely unassigned after a statement or expression
 
 For boolean-valued expressions, the last two are refined into four cases:
 
-whether a variable is definitely assigned after the expression when true;
+whether a variable is definitely assigned after the expression when true
 
-whether a variable is definitely unassigned after the expression when true;
+whether a variable is definitely unassigned after the expression when true
 
-whether a variable is definitely assigned after the expression when false; and
+whether a variable is definitely assigned after the expression when false
 
-whether a variable is definitely unassigned after the expression when false.
+whether a variable is definitely unassigned after the expression when false
 
 Here, when true and when false refer to the value of the expression.
 
@@ -560,13 +560,13 @@ V was already assigned by an earlier expression prior to e. In this case the cur
 
 So, we can conclude that if the conditions are met by a program that causes no compile time error, then any assignments to V in B will not actually take place at run time.
 
-16.2.3. Local Class Declaration Statements
+16.2.3. Local Class and Interface Declarations
 
-V is [un]assigned after a local class declaration statement (§14.3) iff V is [un]assigned before the local class declaration statement.
+V is [un]assigned after a local class or interface declaration (§14.3) iff V is [un]assigned before the local class or interface declaration.
 
 16.2.4. Local Variable Declaration Statements
 
-V is [un]assigned after a local variable declaration statement (§14.4) that contains no variable initializers iff V is [un]assigned before the local variable declaration statement.
+V is [un]assigned after a local variable declaration statement (§14.4.2) that contains no variable initializers iff V is [un]assigned before the local variable declaration statement.
 
 V is definitely assigned after a local variable declaration statement that contains at least one variable initializer iff either V is definitely assigned after the last variable initializer in the local variable declaration statement or the last variable initializer in the declaration is in the declarator that declares V.
 
@@ -750,6 +750,8 @@ V is [un]assigned before S iff V is [un]assigned after e.
 
 16.2.15. try Statements
 
+The rules herein cover the try-catch and try-catch-finally statements (§14.20.1, §14.20.2). Since the try-with-resources statement (§14.20.3) is defined by translation to a try-catch-finally statement, no special rules need to be provided for it.
+
 These rules apply to every try statement (§14.20), whether or not it has a finally block:
 
 V is [un]assigned before the try block iff V is [un]assigned before the try statement.
@@ -840,15 +842,15 @@ V is definitely assigned before an anonymous class declaration (§15.9.5) that i
 
 It should be clear that if an anonymous class is implicitly defined by an enum constant, the rules of §16.5 apply.
 
-16.7. Definite Assignment and Member Types
+16.7. Definite Assignment and Member Classes and Interfaces
 
-Let C be a class, and let V be a blank final member field of C. Then:
+Let C be a class, and let V be a blank final field of C. Then:
 
-V is definitely assigned (and moreover, not definitely unassigned) before the declaration of any member type (§8.5, §9.5) of C.
+V is definitely assigned (and moreover, not definitely unassigned) before the declaration of any member class or interface (§8.5, §9.5) of C.
 
 Let C be a class declared within the scope of V. Then:
 
-V is definitely assigned before a member type declaration of C iff V is definitely assigned before the declaration of C.
+V is definitely assigned before the declaration of a member class or interface of C iff V is definitely assigned before the declaration of C.
 
 16.8. Definite Assignment and Static Initializers
 

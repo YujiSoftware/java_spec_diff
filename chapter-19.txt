@@ -13,7 +13,7 @@ any Unicode character that is a "Java letter"
 JavaLetterOrDigit:
 any Unicode character that is a "Java letter-or-digit"
 TypeIdentifier:
-Identifier but not var or yield
+Identifier but not var, yield, or record
 UnqualifiedMethodIdentifier:
 Identifier but not yield
 Literal:
@@ -114,7 +114,7 @@ CompilationUnit:
 OrdinaryCompilationUnit
 ModularCompilationUnit
 OrdinaryCompilationUnit:
-[PackageDeclaration] {ImportDeclaration} {TypeDeclaration}
+[PackageDeclaration] {ImportDeclaration} {TopLevelClassOrInterfaceDeclaration}
 ModularCompilationUnit:
 {ImportDeclaration} ModuleDeclaration
 PackageDeclaration:
@@ -134,7 +134,7 @@ SingleStaticImportDeclaration:
 import static TypeName . Identifier ;
 StaticImportOnDemandDeclaration:
 import static TypeName . * ;
-TypeDeclaration:
+TopLevelClassOrInterfaceDeclaration:
 ClassDeclaration
 InterfaceDeclaration
 ;
@@ -155,8 +155,9 @@ Productions from §8 (Classes)
 ClassDeclaration:
 NormalClassDeclaration
 EnumDeclaration
+RecordDeclaration
 NormalClassDeclaration:
-{ClassModifier} class TypeIdentifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
+{ClassModifier} class TypeIdentifier [TypeParameters] [ClassExtends] [ClassImplements] ClassBody
 ClassModifier:
 (one of)
 Annotation public protected private
@@ -165,9 +166,9 @@ TypeParameters:
 < TypeParameterList >
 TypeParameterList:
 TypeParameter {, TypeParameter}
-Superclass:
+ClassExtends:
 extends ClassType
-Superinterfaces:
+ClassImplements:
 implements InterfaceTypeList
 InterfaceTypeList:
 InterfaceType {, InterfaceType}
@@ -281,7 +282,7 @@ ExplicitConstructorInvocation:
 ExpressionName . [TypeArguments] super ( [ArgumentList] ) ;
 Primary . [TypeArguments] super ( [ArgumentList] ) ;
 EnumDeclaration:
-{ClassModifier} enum TypeIdentifier [Superinterfaces] EnumBody
+{ClassModifier} enum TypeIdentifier [ClassImplements] EnumBody
 EnumBody:
 { [EnumConstantList] [,] [EnumBodyDeclarations] }
 EnumConstantList:
@@ -292,19 +293,39 @@ EnumConstantModifier:
 Annotation
 EnumBodyDeclarations:
 ; {ClassBodyDeclaration}
+RecordDeclaration:
+{ClassModifier} record TypeIdentifier [TypeParameters] RecordHeader [ClassImplements] RecordBody
+RecordHeader:
+( [RecordComponentList] )
+RecordComponentList:
+RecordComponent {, RecordComponent}
+RecordComponent:
+{RecordComponentModifier} UnannType Identifier
+VariableArityRecordComponent
+VariableArityRecordComponent:
+{RecordComponentModifier} UnannType {Annotation} ... Identifier
+RecordComponentModifier:
+Annotation
+RecordBody:
+{ {RecordBodyDeclaration} }
+RecordBodyDeclaration:
+ClassBodyDeclaration
+CompactConstructorDeclaration
+CompactConstructorDeclaration:
+{ConstructorModifier} SimpleTypeName ConstructorBody
 
 Productions from §9 (Interfaces)
 
 InterfaceDeclaration:
 NormalInterfaceDeclaration
-AnnotationTypeDeclaration
+AnnotationInterfaceDeclaration
 NormalInterfaceDeclaration:
-{InterfaceModifier} interface TypeIdentifier [TypeParameters] [ExtendsInterfaces] InterfaceBody
+{InterfaceModifier} interface TypeIdentifier [TypeParameters] [InterfaceExtends] InterfaceBody
 InterfaceModifier:
 (one of)
 Annotation public protected private
 abstract static strictfp
-ExtendsInterfaces:
+InterfaceExtends:
 extends InterfaceTypeList
 InterfaceBody:
 { {InterfaceMemberDeclaration} }
@@ -326,19 +347,19 @@ InterfaceMethodModifier:
 (one of)
 Annotation public private
 abstract default static strictfp
-AnnotationTypeDeclaration:
-{InterfaceModifier} @ interface TypeIdentifier AnnotationTypeBody
-AnnotationTypeBody:
-{ {AnnotationTypeMemberDeclaration} }
-AnnotationTypeMemberDeclaration:
-AnnotationTypeElementDeclaration
+AnnotationInterfaceDeclaration:
+{InterfaceModifier} @ interface TypeIdentifier AnnotationInterfaceBody
+AnnotationInterfaceBody:
+{ {AnnotationInterfaceMemberDeclaration} }
+AnnotationInterfaceMemberDeclaration:
+AnnotationInterfaceElementDeclaration
 ConstantDeclaration
 ClassDeclaration
 InterfaceDeclaration
 ;
-AnnotationTypeElementDeclaration:
-{AnnotationTypeElementModifier} UnannType Identifier ( ) [Dims] [DefaultValue] ;
-AnnotationTypeElementModifier:
+AnnotationInterfaceElementDeclaration:
+{AnnotationInterfaceElementModifier} UnannType Identifier ( ) [Dims] [DefaultValue] ;
+AnnotationInterfaceElementModifier:
 (one of)
 Annotation public
 abstract
@@ -374,16 +395,19 @@ ArrayInitializer:
 VariableInitializerList:
 VariableInitializer {, VariableInitializer}
 
-Productions from §14 (Blocks and Statements)
+Productions from §14 (Blocks, Statements, and Patterns)
 
 Block:
 { [BlockStatements] }
 BlockStatements:
 BlockStatement {BlockStatement}
 BlockStatement:
+LocalClassOrInterfaceDeclaration
 LocalVariableDeclarationStatement
-ClassDeclaration
 Statement
+LocalClassOrInterfaceDeclaration:
+ClassDeclaration
+NormalInterfaceDeclaration
 LocalVariableDeclarationStatement:
 LocalVariableDeclaration ;
 LocalVariableDeclaration:
@@ -483,9 +507,9 @@ StatementExpressionList
 StatementExpressionList:
 StatementExpression {, StatementExpression}
 EnhancedForStatement:
-for ( {VariableModifier} LocalVariableType VariableDeclaratorId : Expression ) Statement
+for ( LocalVariableDeclaration : Expression ) Statement
 EnhancedForStatementNoShortIf:
-for ( {VariableModifier} LocalVariableType VariableDeclaratorId : Expression ) StatementNoShortIf
+for ( LocalVariableDeclaration : Expression ) StatementNoShortIf
 BreakStatement:
 break [Identifier] ;
 YieldStatement:
@@ -519,8 +543,12 @@ ResourceSpecification:
 ResourceList:
 Resource {; Resource}
 Resource:
-{VariableModifier} LocalVariableType Identifier = Expression
+LocalVariableDeclaration
 VariableAccess
+Pattern:
+TypePattern
+TypePattern:
+LocalVariableDeclaration
 
 Productions from §15 (Expressions)
 
@@ -650,7 +678,10 @@ RelationalExpression < ShiftExpression
 RelationalExpression > ShiftExpression
 RelationalExpression <= ShiftExpression
 RelationalExpression >= ShiftExpression
+InstanceofExpression
+InstanceofExpression:
 RelationalExpression instanceof ReferenceType
+RelationalExpression instanceof Pattern
 ShiftExpression:
 AdditiveExpression
 ShiftExpression << AdditiveExpression

@@ -256,14 +256,14 @@ MAX_VALUE
 
 isLetterOrDigit
 
-The identifiers var and yield are restricted identifiers because they are not allowed in some contexts.
+The identifiers var, yield, and record are restricted identifiers because they are not allowed in some contexts.
 
-A type identifier is an identifier that is not the character sequence var or the character sequence yield.
+A type identifier is an identifier that is not the character sequence var, yield, or record.
 
 TypeIdentifier:
-Identifier but not var or yield
+Identifier but not var, yield, or record
 
-Type identifiers are used in certain contexts involving the declaration or use of types. For example, the name of a class must be a TypeIdentifier, so it is illegal to declare a class named var or yield (§8.1).
+Type identifiers are used in certain contexts involving the declaration of classes and interfaces, and the use of types. For example, the name of a class must be a TypeIdentifier, so it is illegal to declare a class named var, yield, or record (§8.1).
 
 An unqualified method identifier is an identifier that is not the character sequence yield.
 
@@ -299,7 +299,7 @@ true and false are not keywords, but rather boolean literals (§3.10.3).
 
 null is not a keyword, but rather the null literal (§3.10.8).
 
-var and yield are not keywords, but rather restricted identifiers (§3.8). var has special meaning as the type of a local variable declaration (§14.4, §14.14.1, §14.14.2, §14.20.3) and the type of a lambda formal parameter (§15.27.1). yield has special meaning in a yield statement (§14.21). All invocations of a method named yield must be qualified so as to be distinguished from a yield statement.
+var, yield, and record are not keywords, but rather restricted identifiers (§3.8). var has special meaning as the type of a local variable declaration (§14.4) and the type of a lambda formal parameter (§15.27.1). yield has special meaning in a yield statement (§14.21); all invocations of a method named yield must be qualified so as to be distinguished from a yield statement. record has special meaning in a record declaration (§8.10).
 
 A further ten character sequences are restricted keywords: open, module, requires, transitive, exports, opens, to, uses, provides, and with. These character sequences are tokenized as keywords solely where they appear as terminals in the ModuleDeclaration, ModuleDirective, and RequiresModifier productions (§7.7). They are tokenized as identifiers everywhere else, for compatibility with programs written before the introduction of restricted keywords. There is one exception: immediately to the right of the character sequence requires in the ModuleDirective production, the character sequence transitive is tokenized as a keyword unless it is followed by a separator, in which case it is tokenized as an identifier.
 
@@ -941,7 +941,7 @@ When this specification says that a text block contains a particular character o
 
 Example 3.10.6-3. Order of transformations on text block content
 
-Interpreting escape sequences last allows developers to use \n, \f, and \r for vertical formatting of a string without affecting the normalization of line terminators, and to use \b and \t for horizontal formatting of a string without affecting the removal of incidental white space. For example, consider this text block that mentions the escape sequence \r (CR):
+Interpreting escape sequences last allows programmers to use \n, \f, and \r for vertical formatting of a string without affecting the normalization of line terminators, and to use \b and \t for horizontal formatting of a string without affecting the removal of incidental white space. For example, consider this text block that mentions the escape sequence \r (CR):
 
 
 String html = """

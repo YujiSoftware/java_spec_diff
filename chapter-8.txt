@@ -7,6 +7,7 @@ Table of Contents
 8.1.1.1. abstract Classes
 8.1.1.2. final Classes
 8.1.1.3. strictfp Classes
+8.1.1.4. static Classes
 8.1.2. Generic Classes and Type Parameters
 8.1.3. Inner Classes and Enclosing Instances
 8.1.4. Superclasses and Subclasses
@@ -41,8 +42,7 @@ Table of Contents
 8.4.8.3. Requirements in Overriding and Hiding
 8.4.8.4. Inheriting Methods with Override-Equivalent Signatures
 8.4.9. Overloading
-8.5. Member Type Declarations
-8.5.1. Static Member Type Declarations
+8.5. Member Class and Interface Declarations
 8.6. Instance Initializers
 8.7. Static Initializers
 8.8. Constructor Declarations
@@ -57,32 +57,45 @@ Table of Contents
 8.8.8. Constructor Overloading
 8.8.9. Default Constructor
 8.8.10. Preventing Instantiation of a Class
-8.9. Enum Types
+8.9. Enum Classes
 8.9.1. Enum Constants
 8.9.2. Enum Body Declarations
 8.9.3. Enum Members
+8.10. Record Classes
+8.10.1. Record Components
+8.10.2. Record Body Declarations
+8.10.3. Record Members
+8.10.4. Record Constructor Declarations
+8.10.4.1. Normal Canonical Constructors
+8.10.4.2. Compact Canonical Constructors
 
-Class declarations define new reference types and describe how they are implemented (§8.1).
+A class declaration defines a new class and describes how it is implemented (§8.1).
 
-A top level class is a class that is not a nested class.
+A top level class (§7.6) is a class declared directly in a compilation unit.
 
-A nested class is any class whose declaration occurs within the body of another class or interface.
+A nested class is any class whose declaration occurs within the body of another class or interface declaration. A nested class may be a member class (§8.5, §9.5), a local class (§14.3), or an anonymous class (§15.9.5).
 
-This chapter discusses the common semantics of all classes - top level (§7.6) and nested (including member classes (§8.5, §9.5), local classes (§14.3) and anonymous classes (§15.9.5)). Details that are specific to particular kinds of classes are discussed in the sections dedicated to these constructs.
+Some kinds of nested class are an inner class (§8.1.3), which is a class that can refer to enclosing class instances, local variables, and type variables.
 
-A named class may be declared abstract (§8.1.1.1) and must be declared abstract if it is incompletely implemented; such a class cannot be instantiated, but can be extended by subclasses. A class may be declared final (§8.1.1.2), in which case it cannot have subclasses. If a class is declared public, then it can be referred to from code in any package of its module and potentially from code in other modules. Each class except Object is an extension of (that is, a subclass of) a single existing class (§8.1.4) and may implement interfaces (§8.1.5). Classes may be generic (§8.1.2), that is, they may declare type variables whose bindings may differ among different instances of the class.
+An enum class (§8.9) is a class declared with abbreviated syntax that defines a small set of named class instances.
 
-Classes may be decorated with annotations (§9.7) just like any other kind of declaration.
+A record class (§8.10) is a class declared with abbreviated syntax that defines a simple aggregate of values.
 
-The body of a class declares members (fields and methods and nested classes and interfaces), instance and static initializers, and constructors (§8.1.6). The scope (§6.3) of a member (§8.2) is the entire body of the declaration of the class to which the member belongs. Field, method, member class, member interface, and constructor declarations may include the access modifiers (§6.6) public, protected, or private. The members of a class include both declared and inherited members (§8.2). Newly declared fields can hide fields declared in a superclass or superinterface. Newly declared class members and interface members can hide class or interface members declared in a superclass or superinterface. Newly declared methods can hide, implement, or override methods declared in a superclass or superinterface.
+This chapter discusses the common semantics of all classes. Details that are specific to particular kinds of classes are discussed in the sections dedicated to these constructs.
+
+A class may be declared abstract (§8.1.1.1) and must be declared abstract if it is incompletely implemented; such a class cannot be instantiated, but can be extended by subclasses. A class may be declared final (§8.1.1.2), in which case it cannot have subclasses. If a class is declared public, then it can be referred to from code in any package of its module and potentially from code in other modules. Each class except Object is an extension of (that is, a subclass of) a single existing class (§8.1.4) and may implement interfaces (§8.1.5). Classes may be generic (§8.1.2), that is, they may declare type variables whose bindings may differ among different instances of the class.
+
+Class declarations may be decorated with annotations (§9.7) just like any other kind of declaration.
+
+The body of a class declares members (fields, methods, classes, and interfaces), instance and static initializers, and constructors (§8.1.6). The scope (§6.3) of a member (§8.2) is the entire body of the declaration of the class to which the member belongs. Field, method, member class, member interface, and constructor declarations may include the access modifiers public, protected, or private (§6.6). The members of a class include both declared and inherited members (§8.2). Newly declared fields can hide fields declared in a superclass or superinterface. Newly declared member classes and member interfaces can hide member classes and member interfaces declared in a superclass or superinterface. Newly declared methods can hide, implement, or override methods declared in a superclass or superinterface.
 
 Field declarations (§8.3) describe class variables, which are incarnated once, and instance variables, which are freshly incarnated for each instance of the class. A field may be declared final (§8.3.1.2), in which case it can be assigned to only once. Any field declaration may include an initializer.
 
-Member class declarations (§8.5) describe nested classes that are members of the surrounding class. Member classes may be static, in which case they have no access to the instance variables of the surrounding class; or they may be inner classes (§8.1.3).
+Member class declarations (§8.5) describe nested classes that are members of the surrounding class. Member classes may be static, in which case they have no access to the instance variables of the surrounding class; or they may be inner classes.
 
 Member interface declarations (§8.5) describe nested interfaces that are members of the surrounding class.
 
-Method declarations (§8.4) describe code that may be invoked by method invocation expressions (§15.12). A class method is invoked relative to the class type; an instance method is invoked with respect to some particular object that is an instance of a class type. A method whose declaration does not indicate how it is implemented must be declared abstract. A method may be declared final (§8.4.3.3), in which case it cannot be hidden or overridden. A method may be implemented by platform-dependent native code (§8.4.3.4). A synchronized method (§8.4.3.6) automatically locks an object before executing its body and automatically unlocks the object on return, as if by use of a synchronized statement (§14.19), thus allowing its activities to be synchronized with those of other threads (§17 (Threads and Locks)).
+Method declarations (§8.4) describe code that may be invoked by method invocation expressions (§15.12). A class method is invoked relative to the class; an instance method is invoked with respect to some particular object that is an instance of a class. A method whose declaration does not indicate how it is implemented must be declared abstract. A method may be declared final (§8.4.3.3), in which case it cannot be hidden or overridden. A method may be implemented by platform-dependent native code (§8.4.3.4). A synchronized method (§8.4.3.6) automatically locks an object before executing its body and automatically unlocks the object on return, as if by use of a synchronized statement (§14.19), thus allowing its activities to be synchronized with those of other threads (§17 (Threads and Locks)).
 
 Method names may be overloaded (§8.4.9).
 
@@ -94,23 +107,24 @@ Constructors (§8.8) are similar to methods, but cannot be invoked directly by a
 
 8.1. Class Declarations
 
-A class declaration specifies a new named reference type.
+A class declaration specifies a class.
 
-There are two kinds of class declarations: normal class declarations and enum declarations.
+There are three kinds of class declarations: normal class declarations, enum declarations (§8.9), and record declarations (§8.10).
 
 ClassDeclaration:
 NormalClassDeclaration
 EnumDeclaration
+RecordDeclaration
 NormalClassDeclaration:
-{ClassModifier} class TypeIdentifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
+{ClassModifier} class TypeIdentifier [TypeParameters] [ClassExtends] [ClassImplements] ClassBody
 
-The rules in this section apply to all class declarations, including enum declarations. However, special rules apply to enum declarations with regard to class modifiers, inner classes, and superclasses; these rules are stated in §8.9.
+A class is also implicitly declared by a class instance creation expression (§15.9.5) and an enum constant that ends with a class body (§8.9.1).
 
 The TypeIdentifier in a class declaration specifies the name of the class.
 
 It is a compile-time error if a class has the same simple name as any of its enclosing classes or interfaces.
 
-The scope and shadowing of a class declaration is specified in §6.3 and §6.4.
+The scope and shadowing of a class declaration is specified in §6.3 and §6.4.1.
 
 8.1.1. Class Modifiers
 
@@ -121,15 +135,15 @@ ClassModifier:
 Annotation public protected private
 abstract static final strictfp
 
-The rules for annotation modifiers on a class declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a class declaration are specified in §9.7.4 and §9.7.5.
 
-The access modifier public (§6.6) pertains only to top level classes (§7.6) and member classes (§8.5), not to local classes (§14.3) or anonymous classes (§15.9.5).
+The access modifier public (§6.6) pertains only to top level classes (§7.6) and member classes (§8.5, §9.5), not to local classes (§14.3) or anonymous classes (§15.9.5).
 
-The access modifiers protected and private pertain only to member classes within a directly enclosing class declaration (§8.5).
+The access modifiers protected and private pertain only to member classes.
 
-The modifier static pertains only to member classes (§8.5.1), not to top level or local or anonymous classes.
+The modifier static pertains only to member classes and local classes.
 
-It is a compile-time error if the same keyword appears more than once as a modifier for a class declaration, or if a class declaration has more than one of the access modifiers public, protected, and private (§6.6).
+It is a compile-time error if the same keyword appears more than once as a modifier for a class declaration, or if a class declaration has more than one of the access modifiers public, protected, and private.
 
 If two or more (distinct) class modifiers appear in a class declaration, then it is customary, though not required, that they appear in the order consistent with that shown above in the production for ClassModifier.
 
@@ -227,11 +241,19 @@ Because a final class never has any subclasses, the methods of a final class are
 
 The effect of the strictfp modifier is to make all float or double expressions within the class declaration (including within variable initializers, instance initializers, static initializers, and constructors) be explicitly FP-strict (§15.4).
 
-This implies that all methods declared in the class, and all nested types declared in the class, are implicitly strictfp.
+This implies that all methods declared in the class, and all nested classes and interfaces declared in the class, are implicitly strictfp.
+
+8.1.1.4. static Classes
+
+The static modifier specifies that a nested class is not an inner class (§8.1.3). Just as a static method of a class has no current instance of the class in its body, a static nested class has no immediately enclosing instance in its body.
+
+References from a static nested class to type parameters, instance variables, local variables, formal parameters, exception parameters, or instance methods of lexically enclosing class, interface, or method declarations are disallowed (§6.5.5.1, §6.5.6.1, and §15.12.3).
+
+The static modifier does not pertain to all nested classes. It pertains only to member classes, whose declarations may use the static modifier, and not to local classes or anonymous classes, whose declarations may not use the static modifier (§14.3, §15.9.5). However, some local classes are implicitly static, namely local enum classes and local record classes, because all nested enum classes and nested record classes are implicitly static (§8.9, §8.10).
 
 8.1.2. Generic Classes and Type Parameters
 
-A class is generic if it declares one or more type variables (§4.4).
+A class is generic if the class declaration declares one or more type variables (§4.4).
 
 These type variables are known as the type parameters of the class. The type parameter section follows the class name and is delimited by angle brackets.
 
@@ -252,11 +274,15 @@ extends ClassOrInterfaceType {AdditionalBound}
 AdditionalBound:
 & InterfaceType
 
-The rules for annotation modifiers on a type parameter declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a type parameter declaration are specified in §9.7.4 and §9.7.5.
 
-In a class's type parameter section, a type variable T directly depends on a type variable S if S is the bound of T, while T depends on S if either T directly depends on S or T directly depends on a type variable U that depends on S (using this definition recursively). It is a compile-time error if a type variable in a class's type parameter section depends on itself.
+In a class's type parameter section, a type variable T directly depends on a type variable S if S is the bound of T, while T depends on S if either T directly depends on S or T directly depends on a type variable U that depends on S (using this definition recursively).
 
-The scope and shadowing of a class's type parameter is specified in §6.3 and §6.4.
+It is a compile-time error if a type variable in a class's type parameter section depends on itself.
+
+The scope and shadowing of a class's type parameter is specified in §6.3 and §6.4.1.
+
+References to a class's type parameter from a static context or a nested class or interface are restricted, as specified in §6.5.5.1.
 
 A generic class declaration defines a set of parameterized types (§4.5), one for each possible parameterization of the type parameter section by type arguments. All of these parameterized types share the same class at run time.
 
@@ -274,16 +300,6 @@ will result in the variable b holding the value true.
 It is a compile-time error if a generic class is a direct or indirect subclass of Throwable (§11.1.1).
 
 This restriction is needed since the catch mechanism of the Java Virtual Machine works only with non-generic classes.
-
-It is a compile-time error to refer to a type parameter of a generic class C in any of the following:
-
-the declaration of a static member of C (§8.3.1.1, §8.4.3.2, §8.5.1).
-
-the declaration of a static member of any type declaration nested within C.
-
-a static initializer of C (§8.7), or
-
-a static initializer of any class declaration nested within C.
 
 Example 8.1.2-1. Mutually Recursive Type Variable Bounds
 
@@ -356,48 +372,124 @@ class Test {
 
 8.1.3. Inner Classes and Enclosing Instances
 
-An inner class is a nested class that is not explicitly or implicitly declared static.
+An inner class is a nested class that is not explicitly or implicitly static.
 
-An inner class may be a non-static member class (§8.5), a local class (§14.3), or an anonymous class (§15.9.5). A member class of an interface is implicitly static (§9.5) so is never considered to be an inner class.
+An inner class is one of the following:
 
-It is a compile-time error if an inner class declares a static initializer (§8.7).
+a member class that is not explicitly or implicitly static (§8.5)
 
-It is a compile-time error if an inner class declares a member that is explicitly or implicitly static, unless the member is a constant variable (§4.12.4).
+a local class that is not implicitly static (§14.3)
 
-An inner class may inherit static members that are not constant variables even though it cannot declare them.
+an anonymous class (§15.9.5)
 
-A nested class that is not an inner class may declare static members freely, in accordance with the usual rules of the Java programming language.
+The following nested classes are implicitly static, so are not inner classes:
+
+a member enum class (§8.9)
+
+a local enum class (§14.3)
+
+a member record class (§8.10)
+
+a local record class (§14.3)
+
+a member class of an interface (§9.5)
+
+All of the rules that apply to nested classes apply to inner classes. In particular, an inner class may declare and inherit static members (§8.2), and declare static initializers (§8.7), even though the inner class itself is not static.
+
+There are no "inner interfaces" because every nested interface is implicitly static (§9.1.1.3).
 
 Example 8.1.3-1. Inner Class Declarations and Static Members
 
 class HasStatic {
     static int j = 100;
 }
+
 class Outer {
     class Inner extends HasStatic {
-        static final int x = 3;  // OK: constant variable
-        static int y = 4;  // Compile-time error: an inner class
+        static {
+            System.out.println("Hello from Outer.Inner");
+        }
+
+        static       int x = 3;
+        static final int y = 4;
+
+        static void hello() {
+            System.out.println("Hello from Outer.Inner.hello");
+        }
+
+        static class VeryNestedButNotInner
+            extends NestedButNotInner {}
     }
-    static class NestedButNotInner{
-        static int z = 5;    // OK: not an inner class
+    
+    static class NestedButNotInner {
+        int z = Inner.x;
     }
-    interface NeverInner {}  // Interfaces are never inner
+    
+    interface NeverInner {}  // Implicitly static, so never inner
 }
 
 
 
+Prior to Java SE 16, an inner class could not declare static initializers, and could only declare static members that were constant variables (§4.12.4).
 
-A statement or expression occurs in a static context if and only if the innermost method, constructor, instance initializer, static initializer, field initializer, or explicit constructor invocation statement enclosing the statement or expression is a static method, a static initializer, the variable initializer of a static variable, or an explicit constructor invocation statement (§8.8.7.1).
 
-An inner class C is a direct inner class of a class or interface O if O is the immediately enclosing type declaration of C and the declaration of C does not occur in a static context.
+
+
+A construct (statement, local variable declaration statement, local class declaration, local interface declaration, or expression) occurs in a static context if the innermost:
+
+method declaration,
+
+field declaration,
+
+constructor declaration,
+
+instance initializer,
+
+static initializer, or
+
+explicit constructor invocation statement
+
+which encloses the construct is one of the following:
+
+a static method declaration (§8.4.3.2, §9.4)
+
+a static field declaration (§8.3.1.1, §9.3)
+
+a static initializer (§8.7)
+
+an explicit constructor invocation statement (§8.8.7.1)
+
+Note that a construct which appears in a constructor declaration or an instance initializer does not occur in a static context.
+
+The purpose of a static context is to demarcate code that must not refer explicitly or implicitly to the current instance of the class whose declaration lexically encloses the static context. Consequently, code that occurs in a static context is restricted in the following ways:
+
+this expressions (both unqualified and qualified) are disallowed (§15.8.3, §15.8.4).
+
+Field accesses, method invocations, and method references may not be qualified by super (§15.11.2, §15.12.3, §15.13.1).
+
+Unqualified references to instance variables of any lexically enclosing class or interface declaration are disallowed (§6.5.6.1).
+
+Unqualified invocations of instance methods of any lexically enclosing class or interface declaration are disallowed (§15.12.3).
+
+References to type parameters of any lexically enclosing class or interface declarations are disallowed (§6.5.5.1).
+
+References to type parameters, local variables, formal parameters, and exception parameters declared by methods or constructors of any lexically enclosing class or interface declaration that is outside the immediately enclosing class or interface declaration are disallowed (§6.5.5.1, §6.5.6.1).
+
+Declarations of local normal classes (as opposed to local enum classes) and declarations of anonymous classes both specify classes that are inner, yet when instantiated have no immediately enclosing instances (§15.9.2).
+
+Class instance creation expressions that instantiate inner member classes must be qualified (§15.9).
+
+An inner class C is a direct inner class of a class or interface O if O is the immediately enclosing class or interface declaration of C and the declaration of C does not occur in a static context.
+
+If an inner class is a local class or an anonymous class, it may be declared in a static context, and in that case is not considered an inner class of any enclosing class or interface.
 
 A class C is an inner class of class or interface O if it is either a direct inner class of O or an inner class of an inner class of O.
 
-It is unusual, but possible, for the immediately enclosing type declaration of an inner class to be an interface. This only occurs if the class is declared in a default method body (§9.4). Specifically, it occurs if an anonymous or local class is declared in a default method body, or a member class is declared in the body of an anonymous class that is declared in a default method body.
+It is unusual, but possible, for the immediately enclosing class or interface declaration of an inner class to be an interface. This only occurs if the class is a local or anonymous class declared in a default or static method body (§9.4).
 
-A class or interface O is the zeroth lexically enclosing type declaration of itself.
+A class or interface O is the zeroth lexically enclosing class or interface declaration of itself.
 
-A class O is the n'th lexically enclosing type declaration of a class C if it is the immediately enclosing type declaration of the n-1'th lexically enclosing type declaration of C.
+A class O is the n'th lexically enclosing class declaration of a class C if it is the immediately enclosing class declaration of the n-1'th lexically enclosing class declaration of C.
 
 An instance i of a direct inner class C of a class or interface O is associated with an instance of O, known as the immediately enclosing instance of i. The immediately enclosing instance of an object, if any, is determined when the object is created (§15.9.2).
 
@@ -405,19 +497,19 @@ An object o is the zeroth lexically enclosing instance of itself.
 
 An object o is the n'th lexically enclosing instance of an instance i if it is the immediately enclosing instance of the n-1'th lexically enclosing instance of i.
 
-An instance of an inner class I whose declaration occurs in a static context has no lexically enclosing instances. However, if I is immediately declared within a static method or static initializer then I does have an enclosing block, which is the innermost block statement lexically enclosing the declaration of I.
+An instance of an inner local class or an anonymous class whose declaration occurs in a static context has no immediately enclosing instance. Also, an instance of a static nested class (§8.1.1.4) has no immediately enclosing instance.
 
 For every superclass S of C which is itself a direct inner class of a class or interface SO, there is an instance of SO associated with i, known as the immediately enclosing instance of i with respect to S. The immediately enclosing instance of an object with respect to its class' direct superclass, if any, is determined when the superclass constructor is invoked via an explicit constructor invocation statement (§8.8.7.1).
 
-When an inner class (whose declaration does not occur in a static context) refers to an instance variable that is a member of a lexically enclosing type declaration, the variable of the corresponding lexically enclosing instance is used.
+When an inner class (whose declaration does not occur in a static context) refers to an instance variable that is a member of a lexically enclosing class or interface declaration, the variable of the corresponding lexically enclosing instance is used.
 
-Any local variable, formal parameter, or exception parameter used but not declared in an inner class must either be declared final or be effectively final (§4.12.4), or a compile-time error occurs where the use is attempted.
+Any local variable, formal parameter, or exception parameter used but not declared in an inner class must either be final or effectively final (§4.12.4), as specified in §6.5.6.1.
 
 Any local variable used but not declared in an inner class must be definitely assigned (§16 (Definite Assignment)) before the body of the inner class, or a compile-time error occurs.
 
 Similar rules on variable use apply in the body of a lambda expression (§15.27.2).
 
-A blank final field (§4.12.4) of a lexically enclosing type declaration may not be assigned within an inner class, or a compile-time error occurs.
+A blank final field (§4.12.4) of a lexically enclosing class or interface declaration may not be assigned within an inner class, or a compile-time error occurs.
 
 Example 8.1.3-2. Inner Class Declarations
 
@@ -440,7 +532,7 @@ class Outer {
 
 The declaration of class LocalInStaticContext occurs in a static context due to being within the static method classMethod. Instance variables of class Outer are not available within the body of a static method. In particular, instance variables of Outer are not available inside the body of LocalInStaticContext. However, local variables from the surrounding method may be referred to without error (provided they are declared final or are effectively final).
 
-Inner classes whose declarations do not occur in a static context may freely refer to the instance variables of their enclosing type declaration. An instance variable is always defined with respect to an instance. In the case of instance variables of an enclosing type declaration, the instance variable must be defined with respect to an enclosing instance of that declared type. For example, the class Local above has an enclosing instance of class Outer. As a further example:
+Inner classes whose declarations do not occur in a static context may freely refer to the instance variables of their enclosing class declaration. An instance variable is always defined with respect to an instance. In the case of instance variables of an enclosing class declaration, the instance variable must be defined with respect to an enclosing instance of the inner class. For example, the class Local above has an enclosing instance of class Outer. As a further example:
 
 class WithDeepNesting {
     boolean toBe;
@@ -463,34 +555,40 @@ Here, every instance of WithDeepNesting.Nested.DeeplyNested has an enclosing ins
 
 8.1.4. Superclasses and Subclasses
 
-The optional extends clause in a normal class declaration specifies the direct superclass of the current class.
+The optional extends clause in a normal class declaration specifies the direct superclass type of the class being declared.
 
-Superclass:
+ClassExtends:
 extends ClassType
 
-The extends clause must not appear in the definition of the class Object, or a compile-time error occurs, because it is the primordial class and has no direct superclass.
+The extends clause must not appear in the definition of the class Object, or a compile-time error occurs, because it is the primordial class and has no direct superclass type.
 
-The ClassType must name an accessible class type (§6.6), or a compile-time error occurs.
+The ClassType must name an accessible class (§6.6), or a compile-time error occurs.
 
 It is a compile-time error if the ClassType names a class that is final, because final classes are not allowed to have subclasses (§8.1.1.2).
 
-It is a compile-time error if the ClassType names the class Enum or any invocation of Enum (§8.9).
+It is a compile-time error if the ClassType names the class Enum, which can only be extended by an enum class (§8.9), or names the class Record, which can only be extended by a record class (§8.10).
 
 If the ClassType has type arguments, it must denote a well-formed parameterized type (§4.5), and none of the type arguments may be wildcard type arguments, or a compile-time error occurs.
 
-Given a (possibly generic) class declaration C<F1,...,Fn> (n ≥ 0, C ≠ Object), the direct superclass of the class type C<F1,...,Fn> is the type given in the extends clause of the declaration of C if an extends clause is present, or Object otherwise.
+The direct superclass type of a class whose declaration lacks an extends clause is as follows:
 
-Given a generic class declaration C<F1,...,Fn> (n > 0), the direct superclass of the parameterized class type C<T1,...,Tn>, where Ti (1 ≤ i ≤ n) is a type, is D<U1 θ,...,Uk θ>, where D<U1,...,Uk> is the direct superclass of C<F1,...,Fn> and θ is the substitution [F1:=T1,...,Fn:=Tn].
+The class Object has no direct superclass type.
 
-A class is said to be a direct subclass of its direct superclass. The direct superclass is the class from whose implementation the implementation of the current class is derived.
+For a class other than Object with a normal class declaration, the direct superclass type is Object.
 
-The subclass relationship is the transitive closure of the direct subclass relationship. A class A is a subclass of class C if either of the following is true:
+For an enum class E, the direct superclass type is Enum<E>.
 
-A is the direct subclass of C
+For an anonymous class, the direct superclass type is defined in §15.9.5.
 
-There exists a class B such that A is a subclass of B, and B is a subclass of C, applying this definition recursively.
+The direct superclass of a class is the class named by its direct superclass type. The direct superclass is important because its implementation is used to derive the implementation of the class being declared.
 
-Class C is said to be a superclass of class A whenever A is a subclass of C.
+The superclass relationship is the transitive closure of the direct superclass relationship. A class A is a superclass of class C if either of the following is true:
+
+A is the direct superclass of C.
+
+Where a class B is the direct superclass of C, A is a superclass of B, applying this definition recursively.
+
+A class is said to be a direct subclass of its direct superclass, and a subclass of each of its superclasses.
 
 Example 8.1.4-1. Direct Superclasses and Subclasses
 
@@ -538,15 +636,15 @@ The class Colored3dPoint is a subclass of class Point.
 
 
 
-A class C directly depends on a type T if T is mentioned in the extends or implements clause of C either as a superclass or superinterface, or as a qualifier in the fully qualified form of a superclass or superinterface name.
+A class C directly depends on a class or interface A if A is mentioned in the extends or implements clause of C either as a superclass or superinterface, or as a qualifier in the fully qualified form of a superclass or superinterface name.
 
-A class C depends on a reference type T if any of the following is true:
+A class C depends on a class or interface A if any of the following is true:
 
-C directly depends on T.
+C directly depends on A.
 
-C directly depends on an interface I that depends (§9.1.3) on T.
+C directly depends on an interface I that depends (§9.1.3) on A.
 
-C directly depends on a class D that depends on T (using this definition recursively).
+C directly depends on a class B that depends on A, applying this definition recursively.
 
 It is a compile-time error if a class depends on itself.
 
@@ -564,18 +662,18 @@ This program causes a compile-time error because class Point depends on itself.
 
 8.1.5. Superinterfaces
 
-The optional implements clause in a class declaration lists the names of interfaces that are direct superinterfaces of the class being declared.
+The optional implements clause in a class declaration specifies the direct superinterface types of the class being declared.
 
-Superinterfaces:
+ClassImplements:
 implements InterfaceTypeList
 InterfaceTypeList:
 InterfaceType {, InterfaceType}
 
-Each InterfaceType must name an accessible interface type (§6.6), or a compile-time error occurs.
+Each InterfaceType must name an accessible interface (§6.6), or a compile-time error occurs.
 
 If an InterfaceType has type arguments, it must denote a well-formed parameterized type (§4.5), and none of the type arguments may be wildcard type arguments, or a compile-time error occurs.
 
-It is a compile-time error if the same interface is mentioned as a direct superinterface more than once in a single implements clause. This is true even if the interface is named in different ways.
+It is a compile-time error if the same interface is named by a direct superinterface type more than once in a single implements clause. This is true even if the interface is named in different ways.
 
 Example 8.1.5-1. Illegal Superinterfaces
 
@@ -590,11 +688,11 @@ This program results in a compile-time error because the names java.lang.Cloneab
 
 
 
-Given a (possibly generic) class declaration C<F1,...,Fn> (n ≥ 0, C ≠ Object), the direct superinterfaces of the class type C<F1,...,Fn> are the types given in the implements clause of the declaration of C, if an implements clause is present.
+A class whose declaration lacks an implements clause has no direct superinterface types, with one exception: an anonymous class may have a superinterface type (§15.9.5).
 
-Given a generic class declaration C<F1,...,Fn> (n > 0), the direct superinterfaces of the parameterized class type C<T1,...,Tn>, where Ti (1 ≤ i ≤ n) is a type, are all types I<U1 θ,...,Uk θ>, where I<U1,...,Uk> is a direct superinterface of C<F1,...,Fn> and θ is the substitution [F1:=T1,...,Fn:=Tn].
+An interface is a direct superinterface of a class if the interface is named by one of the direct superinterface types of the class.
 
-An interface type I is a superinterface of class type C if any of the following is true:
+An interface I is a superinterface of class C if any of the following is true:
 
 I is a direct superinterface of C.
 
@@ -604,9 +702,11 @@ I is a superinterface of the direct superclass of C.
 
 A class can have a superinterface in more than one way.
 
-A class is said to implement all its superinterfaces.
+A class is said to directly implement its direct superinterfaces, and to implement all of its superinterfaces.
 
-A class may not at the same time be a subtype of two interface types which are different parameterizations of the same generic interface (§9.1.2), or a subtype of a parameterization of a generic interface and a raw type naming that same generic interface, or a compile-time error occurs.
+A class is said to be a direct subclass of its direct superinterfaces, and a subclass of all of its superinterfaces.
+
+A class may not declare a direct superclass type and a direct superinterface type, or two direct superinterface types, which are, or which have supertypes (§4.10.2) which are, different parameterizations of the same generic interface (§9.1.2), or a parameterization of a generic interface and a raw type naming that same generic interface. In the case of such a conflict, a compile-time error occurs.
 
 This requirement was introduced in order to support translation by type erasure (§4.6).
 
@@ -711,7 +811,7 @@ it is impossible to declare a method named getNumberOfScales whose signature and
 
 8.1.6. Class Body and Member Declarations
 
-A class body may contain declarations of members of the class, that is, fields (§8.3), methods (§8.4), classes (§8.5), and interfaces (§8.5).
+A class body may contain declarations of members of the class, that is, fields (§8.3), methods (§8.4), classes, and interfaces (§8.5).
 
 A class body may also contain instance initializers (§8.6), static initializers (§8.7), and declarations of constructors (§8.8) for the class.
 
@@ -729,17 +829,17 @@ ClassDeclaration
 InterfaceDeclaration
 ;
 
-The scope and shadowing of a declaration of a member m declared in or inherited by a class type C is specified in §6.3 and §6.4.
+The scope and shadowing of a declaration of a member m declared in or inherited by a class C is specified in §6.3 and §6.4.1.
 
-If C itself is a nested class, there may be definitions of the same kind (variable, method, or type) and name as m in enclosing scopes. (The scopes may be blocks, classes, or packages.) In all such cases, the member m declared in or inherited by C shadows (§6.4.1) the other definitions of the same kind and name.
+If C is a nested class, there may be definitions of the same kind (variable, method, or type) and name as m in enclosing scopes. (The scopes may be blocks, classes, or packages.) In all such cases, the member m declared in or inherited by C shadows the other definitions of the same kind and name.
 
 8.2. Class Members
 
-The members of a class type are all of the following:
+The members of a class are all of the following:
 
-Members inherited from its direct superclass (§8.1.4), except in class Object, which has no direct superclass
+Members inherited from its direct superclass type (§8.1.4), except in the class Object, which has no direct superclass type
 
-Members inherited from any direct superinterfaces (§8.1.5)
+Members inherited from any direct superinterface types (§8.1.5)
 
 Members declared in the body of the class (§8.1.6)
 
@@ -763,7 +863,7 @@ return type: the return type of the method member.
 
 throws clause: exception types declared in the throws clause of the method member.
 
-Fields, methods, and member types of a class type may have the same name, since they are used in different contexts and are disambiguated by different lookup procedures (§6.5). However, this is discouraged as a matter of style.
+Fields, methods, member classes, and member interfaces of a class may have the same name, since they are used in different contexts and are disambiguated by different lookup procedures (§6.5). However, this is discouraged as a matter of style.
 
 Example 8.2-1. Use of Class Members
 
@@ -960,7 +1060,7 @@ then class Point4d would inherit the field z, which, being public, could then be
 
 8.3. Field Declarations
 
-The variables of a class type are introduced by field declarations.
+The variables of a class are introduced by field declarations.
 
 FieldDeclaration:
 {FieldModifier} UnannType VariableDeclaratorList ;
@@ -1012,7 +1112,7 @@ The FieldModifier clause is described in §8.3.1.
 
 The declared type of a field is denoted by UnannType if no bracket pairs appear in UnannType and VariableDeclaratorId, and is specified by §10.2 otherwise.
 
-The scope and shadowing of a field declaration is specified in §6.3 and §6.4.
+The scope and shadowing of a field declaration is specified in §6.3 and §6.4.1.
 
 It is a compile-time error for the body of a class declaration to declare two fields with the same name.
 
@@ -1115,7 +1215,7 @@ FieldModifier:
 Annotation public protected private
 static final transient volatile
 
-The rules for annotation modifiers on a field declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a field declaration are specified in §9.7.4 and §9.7.5.
 
 It is a compile-time error if the same keyword appears more than once as a modifier for a field declaration, or if a field declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
@@ -1125,7 +1225,11 @@ If two or more (distinct) field modifiers appear in a field declaration, it is c
 
 If a field is declared static, there exists exactly one incarnation of the field, no matter how many instances (possibly zero) of the class may eventually be created. A static field, sometimes called a class variable, is incarnated when the class is initialized (§12.4).
 
-A field that is not declared static (sometimes called a non-static field) is called an instance variable. Whenever a new instance of a class is created (§12.5), a new variable associated with that instance is created for every instance variable declared in that class or any of its superclasses.
+A field that is not declared static is called an instance variable, and sometimes called a non-static field. Whenever a new instance of a class is created (§12.5), a new variable associated with that instance is created for every instance variable declared in that class or any of its superclasses.
+
+The declaration of a class variable introduces a static context (§8.1.3), which limits the use of constructs that refer to the current object. Notably, the keywords this and super are prohibited in a static context (§15.8.3, §15.11.2), as are unqualified references to instance variables, instance methods, and type parameters of lexically enclosing declarations (§6.5.5.1, §6.5.6.1, §15.12.3).
+
+References to an instance variable from a static context or a nested class or interface are restricted, as specified in §6.5.6.1.
 
 Example 8.3.1.1-1. static Fields
 
@@ -1355,25 +1459,21 @@ See §17.4 for more discussion and examples.
 
 If a declarator in a field declaration has a variable initializer, then the declarator has the semantics of an assignment (§15.26) to the declared variable.
 
-If the declarator is for a class variable (that is, a static field), then the following rules apply to its initializer:
+If the declarator is for a class variable (that is, a static field) (§8.3.1.1), then the following rules apply to its initializer:
 
-It is a compile-time error if a reference by simple name to any instance variable occurs in the initializer.
-
-It is a compile-time error if the keyword this (§15.8.3) or the keyword super (§15.11.2, §15.12) occurs in the initializer.
+The initializer may not refer to the current object using the keyword this or the keyword super, as specified in §15.8.3 and §15.11.2, nor refer by simple name to any instance variable or instance method, as specified in §6.5.6.1 and §15.12.3.
 
 At run time, the initializer is evaluated and the assignment performed exactly once, when the class is initialized (§12.4.2).
 
-Note that static fields that are constant variables (§4.12.4) are initialized before other static fields (§12.4.2). This also applies in interfaces (§9.3.1). When such fields are referenced by simple name, they will never be observed to have their default initial values (§4.12.5).
+Note that static fields that are constant variables (§4.12.4) are initialized before other static fields (§12.4.2, step 6). This also applies in interfaces (§9.3.1). When such fields are referenced by simple name, they will never be observed to have their default initial values (§4.12.5).
 
 If the declarator is for an instance variable (that is, a field that is not static), then the following rules apply to its initializer:
 
-The initializer may refer by simple name to any class variable declared in or inherited by the class, even one whose declaration occurs to the right of the initializer (§3.5).
-
-The initializer may refer to the current object using the keyword this (§15.8.3) or the keyword super (§15.11.2, §15.12).
+The initializer may refer to the current object using the keyword this or the keyword super, and may refer by simple name to any class variable declared in or inherited by the class, even one whose declaration occurs to the right of the initializer (§3.5).
 
 At run time, the initializer is evaluated and the assignment performed each time an instance of the class is created (§12.5).
 
-References from variable initializers to fields that may not yet be initialized are subject to additional restrictions, as specified in §8.3.3 and §16 (Definite Assignment).
+References from variable initializers to fields that may not yet be initialized are restricted, as specified in §8.3.3 and §16 (Definite Assignment).
 
 Exception checking for a variable initializer in a field declaration is specified in §11.2.3.
 
@@ -1586,7 +1686,7 @@ The FormalParameterList clause is described in §8.4.1, the MethodModifier claus
 
 The Identifier in a MethodDeclarator may be used in a name to refer to the method (§6.5.7.1, §15.12).
 
-The scope and shadowing of a method declaration is specified in §6.3 and §6.4.
+The scope and shadowing of a method declaration is specified in §6.3 and §6.4.1.
 
 The receiver parameter is an optional syntactic device for an instance method or an inner class's constructor. For an instance method, the receiver parameter represents the object for which the method is invoked. For an inner class's constructor, the receiver parameter represents the immediately enclosing instance of the newly constructed object. In both cases, the receiver parameter exists solely to allow the type of the represented object to be denoted in source code, so that the type may be annotated (§9.7.4). The receiver parameter is not a formal parameter; more precisely, it is not a declaration of any kind of variable (§4.12.3), it is never bound to any value passed as an argument in a method invocation expression or class instance creation expression, and it has no effect whatsoever at run time.
 
@@ -1630,13 +1730,15 @@ A formal parameter of a method or constructor may be a variable arity parameter,
 
 In the grammar for VariableArityParameter, note that the ellipsis (...) is a token unto itself (§3.11). It is possible to put whitespace between it and the type, but this is discouraged as a matter of style.
 
-If the last formal parameter is a variable arity parameter, the method is a variable arity method. Otherwise, it is a fixed arity method.
+If the last formal parameter of a method is a variable arity parameter, the method is a variable arity method. Otherwise, it is a fixed arity method.
 
-The rules for annotation modifiers on a formal parameter declaration and on a receiver parameter are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a formal parameter declaration and for a receiver parameter are specified in §9.7.4 and §9.7.5.
 
 It is a compile-time error if final appears more than once as a modifier for a formal parameter declaration.
 
 The scope and shadowing of a formal parameter is specified in §6.3 and §6.4.
+
+References to a formal parameter from a nested class or interface, or a lambda expression, are restricted, as specified in §6.5.6.1.
 
 It is a compile-time error for a method or constructor to declare two formal parameters with the same name. (That is, their declarations mention the same Identifier.)
 
@@ -1758,7 +1860,7 @@ MethodModifier:
 Annotation public protected private
 abstract static final synchronized native strictfp
 
-The rules for annotation modifiers on a method declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a method declaration are specified in §9.7.4 and §9.7.5.
 
 It is a compile-time error if the same keyword appears more than once as a modifier for a method declaration, or if a method declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
@@ -1815,7 +1917,7 @@ abstract class Point {
 }
 
 
-This abstract declaration of toString overrides the non-abstract toString method of class Object. (Class Object is the implicit direct superclass of class Point.) Adding the code:
+This abstract declaration of toString overrides the non-abstract toString method of the class Object. (Object is the implicit direct superclass of class Point.) Adding the code:
 
 class ColoredPoint extends Point {
     int color;
@@ -1845,13 +1947,13 @@ class ColoredPoint extends Point {
 
 A method that is declared static is called a class method.
 
-It is a compile-time error to use the name of a type parameter of any surrounding declaration in the header or body of a class method.
-
-A class method is always invoked without reference to a particular object. It is a compile-time error to attempt to refer to the current object using the keyword this (§15.8.3) or the keyword super (§15.11.2).
+A class method is always invoked without reference to a particular object. The declaration of a class method introduces a static context (§8.1.3), which limits the use of constructs that refer to the current object. Notably, the keywords this and super are prohibited in a static context (§15.8.3, §15.11.2), as are unqualified references to instance variables, instance methods, and type parameters of lexically enclosing declarations (§6.5.5.1, §6.5.6.1, §15.12.3).
 
 A method that is not declared static is called an instance method, and sometimes called a non-static method.
 
 An instance method is always invoked with respect to an object, which becomes the current object to which the keywords this and super refer during execution of the method body.
+
+References to an instance method from a static context or a nested class or interface are restricted, as specified in §15.12.3.
 
 8.4.3.3. final Methods
 
@@ -2002,7 +2104,9 @@ These type variables are known as the type parameters of the method. The form of
 
 A generic method declaration defines a set of methods, one for each possible invocation of the type parameter section by type arguments. Type arguments may not need to be provided explicitly when a generic method is invoked, as they can often be inferred (§18 (Type Inference)).
 
-The scope and shadowing of a method's type parameter is specified in §6.3.
+The scope and shadowing of a method's type parameter is specified in §6.3 and §6.4.1.
+
+References to a method's type parameter from a nested class or interface are restricted, as specified in §6.5.5.1.
 
 Two methods or constructors M and N have the same type parameters if both of the following are true:
 
@@ -2124,27 +2228,27 @@ class DizzyDean {
 
 8.4.8. Inheritance, Overriding, and Hiding
 
-A class C inherits from its direct superclass all concrete methods m (both static and instance) of the superclass for which all of the following are true:
+A class C inherits from its direct superclass type D all concrete methods m (both static and instance) for which all of the following are true:
 
-m is a member of the direct superclass of C.
-
-m is public, protected, or declared with package access in the same package as C.
-
-No method declared in C has a signature that is a subsignature (§8.4.2) of the signature of m.
-
-A class C inherits from its direct superclass and direct superinterfaces all abstract and default (§9.4) methods m for which all of the following are true:
-
-m is a member of the direct superclass or a direct superinterface, D, of C.
+m is a member of D.
 
 m is public, protected, or declared with package access in the same package as C.
 
-No method declared in C has a signature that is a subsignature (§8.4.2) of the signature of m.
+No method declared in C has a signature that is a subsignature (§8.4.2) of the signature of m as a member of D.
 
-No concrete method inherited by C from its direct superclass has a signature that is a subsignature of the signature of m.
+A class C inherits from its direct superclass type and direct superinterface types all abstract and default (§9.4) methods m for which all of the following are true:
 
-There exists no method m' that is a member of the direct superclass or a direct superinterface, D', of C (m distinct from m', D distinct from D'), such that m' overrides from D' (§8.4.8.1, §9.4.1.1) the declaration of the method m.
+m is a member of the direct superclass type or a direct superinterface type of C, known in either case as D.
 
-A class does not inherit private or static methods from its superinterfaces.
+m is public, protected, or declared with package access in the same package as C.
+
+No method declared in C has a signature that is a subsignature (§8.4.2) of the signature of m as a member of D.
+
+No concrete method inherited by C from its direct superclass type has a signature that is a subsignature of the signature of m as a member of D.
+
+There exists no method m' that is a member of the direct superclass type or a direct superinterface type of C, D' (m distinct from m', D distinct from D'), such that m' overrides from the class or interface of D' the declaration of the method m (§8.4.8.1, §9.4.1.1).
+
+A class does not inherit private or static methods from its superinterface types.
 
 Note that methods are overridden or hidden on a signature-by-signature basis. If, for example, a class declares two public methods with the same name (§8.4.9), and a subclass overrides one of them, the subclass still inherits the other method.
 
@@ -2176,7 +2280,7 @@ C is a subclass of A.
 
 C does not inherit mA.
 
-The signature of mC is a subsignature (§8.4.2) of the signature of mA.
+The signature of mC is a subsignature (§8.4.2) of the signature of mA as a member of the supertype of C that names A.
 
 One of the following is true:
 
@@ -2184,7 +2288,7 @@ mA is public.
 
 mA is protected.
 
-mA is declared with package access in the same package as C, and either C declares mC or mA is a member of the direct superclass of C.
+mA is declared with package access in the same package as C, and either C declares mC or mA is a member of the direct superclass type of C.
 
 mA is declared with package access and mC overrides mA from some superclass of C.
 
@@ -2204,7 +2308,7 @@ mI is not static.
 
 C does not inherit mI.
 
-The signature of mC is a subsignature (§8.4.2) of the signature of mI.
+The signature of mC is a subsignature (§8.4.2) of the signature of mI as a member of the supertype of C that names I.
 
 mI is public.
 
@@ -2305,13 +2409,15 @@ Documentation for a class such as BufferOutput, which is designed to be extended
 
 8.4.8.2. Hiding (by Class Methods)
 
-If a class C declares or inherits a static method m, then m is said to hide any method m' for which all of the following are true:
+If a class C declares or inherits a static method m, then m is said to hide any method m' declared in a class or interface A for which all of the following are true:
 
-m' is either a static or instance method declared in a superclass of C, or an instance method declared in a superinterface of C.
+A is a superclass or superinterface of C.
+
+If A is an interface, m' is an instance method.
 
 m' is accessible to C (§6.6).
 
-The signature of m is a subsignature of the signature of m' (§8.4.2).
+The signature of m is a subsignature (§8.4.2) of the signature of m' as a member of the supertype of C that names A.
 
 It is a compile-time error if a static method hides an instance method.
 
@@ -2323,7 +2429,7 @@ In this respect, hiding of methods is similar to hiding of fields.
 
 Example 8.4.8.2-1. Invocation of Hidden Class Methods
 
-A class (static) method that is hidden can be invoked by using a reference whose type is the class that actually contains the declaration of the method. In this respect, hiding of static methods is different from overriding of instance methods. The example:
+A class (static) method that is hidden can be invoked by using a reference whose type is the type of the class that actually contains the declaration of the method. In this respect, hiding of static methods is different from overriding of instance methods. The example:
 
 class Super {
     static String greeting() { return "Goodnight"; }
@@ -2370,17 +2476,17 @@ For every checked exception type listed in the throws clause of m2, that same ex
 
 If the unerased throws clause of m1 does not contain a supertype of each exception type in the throws clause of m2 (adapted, if necessary, to the type parameters of m1), then a compile-time unchecked warning occurs, unless suppressed by @SuppressWarnings (§9.6.4.5).
 
-It is a compile-time error if a type declaration T has a member method m1 and there exists a method m2 declared in T or a supertype of T such that all of the following are true:
+It is a compile-time error if a class or interface C has a member method m1 and there exists a method m2 declared in C or a superclass or superinterface of C, A, such that all of the following are true:
 
 m1 and m2 have the same name.
 
-m2 is accessible (§6.6) from T.
+m2 is accessible (§6.6) from C.
 
-The signature of m1 is not a subsignature (§8.4.2) of the signature of m2.
+The signature of m1 is not a subsignature (§8.4.2) of the signature of m2 as a member of the supertype of C that names A.
 
-The signature of m1 or some method m1 overrides (directly or indirectly) has the same erasure as the signature of m2 or some method m2 overrides (directly or indirectly).
+The declared signature of m1 or some method m1 overrides (directly or indirectly) has the same erasure as the declared signature of m2 or some method m2 overrides (directly or indirectly).
 
-These restrictions are necessary because generics are implemented via erasure. The rule above implies that methods declared in the same class with the same name must have different erasures. It also implies that a type declaration cannot implement or extend two distinct invocations of the same generic interface.
+These restrictions are necessary because generics are implemented via erasure. The rule above implies that methods declared in the same class with the same name must have different erasures. It also implies that a class or interface cannot implement or extend two distinct parameterizations of the same generic interface.
 
 The access modifier of an overriding or hiding method must provide at least as much access as the overridden or hidden method, as follows:
 
@@ -2680,35 +2786,33 @@ The last two lines of output show that the method invocations p.getX() and rp.ge
 
 
 
-8.5. Member Type Declarations
+8.5. Member Class and Interface Declarations
 
 A member class is a class whose declaration is directly enclosed in the body of another class or interface declaration (§8.1.6, §9.1.4).
 
-A member interface is an interface whose declaration is directly enclosed in the body of another class or interface declaration (§8.1.6, §9.1.4).
+A member interface is an interface whose declaration is directly enclosed in the body of another class or interface declaration.
 
-The accessibility of a member type declaration in a class is specified by its access modifier, or by §6.6 if lacking an access modifier.
+A member class may be a normal class (§8.1), an enum class (§8.9), or a record class (§8.10).
 
-It is a compile-time error if the same keyword appears more than once as a modifier for a member type declaration in a class, or if a member type declaration has more than one of the access modifiers public, protected, and private (§6.6.)
+A member interface may be a normal interface (§9.1) or an annotation interface (§9.6).
 
-The scope and shadowing of a member type is specified in §6.3 and §6.4.
+The accessibility of a member class or interface declaration in the body of a class declaration is specified by its access modifier, or by §6.6 if lacking an access modifier.
 
-If a class declares a member type with a certain name, then the declaration of that type is said to hide any and all accessible declarations of member types with the same name in superclasses and superinterfaces of the class.
+The rules for modifiers of a member class declaration in the body of a class declaration are specified in §8.1.1.
 
-In this respect, hiding of member types is similar to hiding of fields (§8.3).
+The rules for modifiers of a member interface declaration in the body of a class declaration are specified in §9.1.1.
 
-A class inherits from its direct superclass and direct superinterfaces all the non-private member types of the superclass and superinterfaces that are both accessible to code in the class and not hidden by a declaration in the class.
+The scope and shadowing of a member class or interface is specified in §6.3 and §6.4.1.
 
-It is possible for a class to inherit more than one member type with the same name, either from its superclass and superinterfaces or from its superinterfaces alone. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the class to refer to any such member type by its simple name will result in a compile-time error, because the reference is ambiguous.
+If a class declares a member class or interface with a certain name, then the declaration of the member class or interface is said to hide any and all accessible declarations of member classes and interfaces with the same name in superclasses and superinterfaces of the class.
 
-There might be several paths by which the same member type declaration is inherited from an interface. In such a situation, the member type is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
+In this respect, hiding of member class and interfaces is similar to hiding of fields (§8.3).
 
-8.5.1. Static Member Type Declarations
+A class inherits from its direct superclass and direct superinterfaces all the non-private member classes and interfaces of the superclass and superinterfaces that are both accessible to code in the class and not hidden by a declaration in the class.
 
-The static keyword may modify the declaration of a member type C within the body of a non-inner class or interface T. Its effect is to declare that C is not an inner class. Just as a static method of T has no current instance of T in its body, C also has no current instance of T, nor does it have any lexically enclosing instances.
+It is possible for a class to inherit more than one member class or interface with the same name, either from its superclass and superinterfaces or from its superinterfaces alone. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the class to refer to any such member class or interface by its simple name will result in a compile-time error, because the reference is ambiguous.
 
-It is a compile-time error if a static class contains a usage of a non-static member of an enclosing class.
-
-A member interface is implicitly static (§9.1.1). It is permitted for the declaration of a member interface to redundantly specify the static modifier.
+There might be several paths by which the same member class or interface declaration is inherited from an interface. In such a situation, the member class or interface is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
 
 8.6. Instance Initializers
 
@@ -2738,7 +2842,7 @@ It is a compile-time error if a static initializer cannot complete normally (§1
 
 It is a compile-time error if a return statement (§14.17) appears anywhere within a static initializer.
 
-It is a compile-time error if the keyword this (§15.8.3) or the keyword super (§15.11, §15.12) or any type variable declared outside the static initializer, appears anywhere within a static initializer.
+A static initializer introduces a static context (§8.1.3, which limits the use of constructs that refer to the current object. Notably, the keywords this and super are prohibited in a static context (§15.8.3, §15.11.2), as are unqualified references to instance variables, instance methods, and type parameters of lexically enclosing declarations (§6.5.5.1, §6.5.6.1, §15.12.3).
 
 Restrictions on how a static initializer may refer to class variables, even when the class variables are in scope, are specified in §8.3.3.
 
@@ -2755,7 +2859,7 @@ ConstructorDeclarator:
 SimpleTypeName:
 TypeIdentifier
 
-The rules in this section apply to constructors in all class declarations, including enum declarations. However, special rules apply to enum declarations with regard to constructor modifiers, constructor bodies, and default constructors; these rules are stated in §8.9.2.
+The rules in this section apply to constructors in all class declarations, including enum declarations and record declarations. However, special rules apply to enum declarations with regard to constructor modifiers, constructor bodies, and default constructors; these rules are stated in §8.9.2. Special rules also apply to record declarations with regard to constructors, as stated in §8.10.4.
 
 The SimpleTypeName in the ConstructorDeclarator must be the simple name of the class that contains the constructor declaration, or a compile-time error occurs.
 
@@ -2780,17 +2884,19 @@ class Point {
 
 The formal parameters of a constructor are identical in syntax and semantics to those of a method (§8.4.1).
 
+If the last formal parameter of a constructor is a variable arity parameter, the constructor is a variable arity constructor. Otherwise, it is a fixed arity constructor.
+
 The constructor of a non-private inner member class implicitly declares, as the first formal parameter, a variable representing the immediately enclosing instance of the class (§15.9.2, §15.9.3).
 
 The rationale for why only this kind of class has an implicitly declared constructor parameter is subtle. The following explanation may be helpful:
 
 In a class instance creation expression for a non-private inner member class, §15.9.2 specifies the immediately enclosing instance of the member class. The member class may have been emitted by a compiler which is different than the compiler of the class instance creation expression. Therefore, there must be a standard way for the compiler of the creation expression to pass a reference (representing the immediately enclosing instance) to the member class's constructor. Consequently, the Java programming language deems in this section that a non-private inner member class's constructor implicitly declares an initial parameter for the immediately enclosing instance. §15.9.3 specifies that the instance is passed to the constructor.
 
-In a class instance creation expression for a local class (not in a static context) or anonymous class, §15.9.2 specifies the immediately enclosing instance of the local/anonymous class. The local/anonymous class is necessarily emitted by the same compiler as the class instance creation expression. That compiler can represent the immediately enclosing instance how ever it wishes. There is no need for the Java programming language to implicitly declare a parameter in the local/anonymous class's constructor.
+In a class instance creation expression for an inner local class or an anonymous class (not in a static context), §15.9.2 specifies the immediately enclosing instance of the local/anonymous class. The local/anonymous class is necessarily emitted by the same compiler as the class instance creation expression. That compiler can represent the immediately enclosing instance how ever it wishes. There is no need for the Java programming language to implicitly declare a parameter in the local/anonymous class's constructor.
 
-In a class instance creation expression for an anonymous class, and where the anonymous class's superclass is either inner or local (not in a static context), §15.9.2 specifies the anonymous class's immediately enclosing instance with respect to the superclass. This instance must be transmitted from the anonymous class to its superclass, where it will serve as the immediately enclosing instance. Since the superclass may have been emitted by a compiler which is different than the compiler of the class instance creation expression, it is necessary to transmit the instance in a standard way, by passing it as the first argument to the superclass's constructor. Note that the anonymous class itself is necessarily emitted by the same compiler as the class instance creation expression, so it would be possible for the compiler to transmit the immediately enclosing instance with respect to the superclass to the anonymous class how ever it wishes, before the anonymous class passes the instance to the superclass's constructor. However, for consistency, the Java programming language deems in §15.9.5.1 that, in some circumstances, an anonymous class's constructor implicitly declares an initial parameter for the immediately enclosing instance with respect to the superclass.
+In a class instance creation expression for an anonymous class, and where the anonymous class's superclass is an inner class (not in a static context), §15.9.2 specifies the anonymous class's immediately enclosing instance with respect to the superclass. This instance must be transmitted from the anonymous class to its superclass, where it will serve as the immediately enclosing instance. Since the superclass may have been emitted by a compiler which is different than the compiler of the class instance creation expression, it is necessary to transmit the instance in a standard way, by passing it as the first argument to the superclass's constructor. Note that the anonymous class itself is necessarily emitted by the same compiler as the class instance creation expression, so it would be possible for the compiler to transmit the immediately enclosing instance with respect to the superclass to the anonymous class how ever it wishes, before the anonymous class passes the instance to the superclass's constructor. However, for consistency, the Java programming language deems in §15.9.5.1 that, in some circumstances, an anonymous class's constructor implicitly declares an initial parameter for the immediately enclosing instance with respect to the superclass.
 
-The fact that a non-private inner member class may be accessed by a different compiler than compiled it, whereas a local or anonymous class is always accessed by the same compiler that compiled it, explains why the binary name of a non-private inner member class is defined to be predictable but the binary name of a local or anonymous class is not (§13.1).
+The fact that a non-private inner member class may be accessed by a different compiler than compiled it, whereas an inner local class or an anonymous class is always accessed by the same compiler that compiled it, explains why the binary name of a non-private inner member class is defined to be predictable but the binary name of an inner local class or an anonymous class is not (§13.1).
 
 8.8.2. Constructor Signature
 
@@ -2803,7 +2909,7 @@ ConstructorModifier:
 (one of)
 Annotation public protected private
 
-The rules for annotation modifiers on a constructor declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a constructor declaration are specified in §9.7.4 and §9.7.5.
 
 It is a compile-time error if the same keyword appears more than once as a modifier in a constructor declaration, or if a constructor declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
@@ -2835,7 +2941,9 @@ It is possible for a constructor to be generic independently of whether the clas
 
 A generic constructor declaration defines a set of constructors, one for each possible invocation of the type parameter section by type arguments. Type arguments may not need to be provided explicitly when a generic constructor is invoked, as they can often by inferred (§18 (Type Inference)).
 
-The scope and shadowing of a constructor's type parameter is specified in §6.3 and §6.4.
+The scope and shadowing of a constructor's type parameter is specified in §6.3 and §6.4.1.
+
+References to a constructor's type parameter from an explicit constructor invocation statement or a nested class or interface are restricted, as specified in §6.5.5.1.
 
 8.8.5. Constructor Throws
 
@@ -2907,9 +3015,7 @@ Unqualified superclass constructor invocations begin with the keyword super (pos
 
 Qualified superclass constructor invocations begin with a Primary expression or an ExpressionName. They allow a subclass constructor to explicitly specify the newly created object's immediately enclosing instance with respect to the direct superclass (§8.1.3). This may be necessary when the superclass is an inner class.
 
-An explicit constructor invocation statement in a constructor body may not refer to any instance variables or instance methods or inner classes declared in this class or any superclass, or use this or super in any expression; otherwise, a compile-time error occurs.
-
-This prohibition on using the current instance explains why an explicit constructor invocation statement is deemed to occur in a static context (§8.1.3).
+An explicit constructor invocation statement introduces a static context (§8.1.3), which limits the use of constructs that refer to the current object. Notably, the keywords this and super are prohibited in a static context (§15.8.3, §15.11.2), as are unqualified references to instance variables, instance methods, and type parameters of lexically enclosing declarations (§6.5.5.1, §6.5.6.1, §15.12.3).
 
 If TypeArguments is present to the left of this or super, then it is a compile-time error if any of the type arguments are wildcards (§4.5.1).
 
@@ -2918,6 +3024,10 @@ Let C be the class being instantiated, and let S be the direct superclass of C.
 If a superclass constructor invocation statement is unqualified, then:
 
 If S is an inner member class, but S is not a member of a class enclosing C, then a compile-time error occurs.
+
+Otherwise, let O be the innermost enclosing class of C of which S is a member. C must be an inner class of O (§8.1.3), or a compile-time error occurs.
+
+If S is an inner local class, and S does not occur in a static context, let O be the immediately enclosing class or interface declaration of S. C must be an inner class of O, or a compile-time error occurs.
 
 If a superclass constructor invocation statement is qualified, then:
 
@@ -2935,19 +3045,19 @@ Let i be the instance being created. The immediately enclosing instance of i wit
 
 If S is not an inner class, or if the declaration of S occurs in a static context, then no immediately enclosing instance of i with respect to S exists.
 
-If the superclass constructor invocation is unqualified, then S is necessarily a local class or an inner member class.
+Otherwise, if the superclass constructor invocation is unqualified, then S is necessarily an inner local class or an inner member class.
 
-If S is a local class, then let O be the immediately enclosing type declaration of S.
+If S is an inner local class, let O be the immediately enclosing class or interface declaration of S.
 
-If S is an inner member class, then let O be the innermost enclosing class of C of which S is a member.
+If S is an inner member class, let O be the innermost enclosing class of C of which S is a member.
 
-Let n be an integer (n ≥ 1) such that O is the n'th lexically enclosing type declaration of C.
+Let n be an integer (n ≥ 1) such that O is the n'th lexically enclosing class or interface declaration of C.
 
 The immediately enclosing instance of i with respect to S is the n'th lexically enclosing instance of this.
 
 While it may be the case that S is a member of C due to inheritance, the zeroth lexically enclosing instance of this (that is, this itself) is never used as the immediately enclosing instance of i with respect to S.
 
-If the superclass constructor invocation is qualified, then the Primary expression or the ExpressionName immediately preceding ".super", p, is evaluated.
+Otherwise, if the superclass constructor invocation is qualified, then the Primary expression or the ExpressionName immediately preceding ".super", p, is evaluated.
 
 If p evaluates to null, a NullPointerException is raised, and the superclass constructor invocation completes abruptly.
 
@@ -2987,7 +3097,7 @@ then a compile-time error would occur, because the instance variable color canno
 
 Example 8.8.7.1-2. Qualified Superclass Constructor Invocation
 
-In the code below, ChildOfInner has no lexically enclosing type declaration, so an instance of ChildOfInner has no enclosing instance. However, the superclass of ChildOfInner (Inner) has a lexically enclosing type declaration (Outer), and an instance of Inner must have an enclosing instance of Outer. The enclosing instance of Outer is set when an instance of Inner is created. Therefore, when we create an instance of ChildOfInner, which is implicitly an instance of Inner, we must provide the enclosing instance of Outer via a qualified superclass invocation statement in ChildOfInner's constructor. The instance of Outer is called the immediately enclosing instance of ChildOfInner with respect to Inner.
+In the code below, ChildOfInner has no lexically enclosing class or interface declaration, so an instance of ChildOfInner has no enclosing instance. However, the superclass of ChildOfInner (Inner) has a lexically enclosing class declaration (Outer), and an instance of Inner must have an enclosing instance of Outer. The enclosing instance of Outer is set when an instance of Inner is created. Therefore, when we create an instance of ChildOfInner, which is implicitly an instance of Inner, we must provide the enclosing instance of Outer via a qualified superclass invocation statement in ChildOfInner's constructor. The instance of Outer is called the immediately enclosing instance of ChildOfInner with respect to Inner.
 
 class Outer {
     class Inner {}
@@ -3045,7 +3155,7 @@ The default constructor has the same access modifier as the class, unless the cl
 
 The default constructor has no formal parameters, except in a non-private inner member class, where the default constructor implicitly declares one formal parameter representing the immediately enclosing instance of the class (§8.8.1, §15.9.2, §15.9.3).
 
-The default constructor has no throws clauses.
+The default constructor has no throws clause.
 
 If the class being declared is the primordial class Object, then the default constructor has an empty body. Otherwise, the default constructor simply invokes the superclass constructor with no arguments.
 
@@ -3130,38 +3240,42 @@ the public class PackageOnly can be instantiated only within the package just, i
 
 
 
-8.9. Enum Types
+8.9. Enum Classes
 
-An enum declaration specifies a new enum type, a special kind of class type.
+An enum declaration specifies a new enum class, a restricted kind of class that defines a small set of named class instances.
 
 EnumDeclaration:
-{ClassModifier} enum TypeIdentifier [Superinterfaces] EnumBody
+{ClassModifier} enum TypeIdentifier [ClassImplements] EnumBody
+
+An enum declaration may specify a top level enum class (§7.6), a member enum class (§8.5, §9.5), or a local enum class (§14.3).
+
+The TypeIdentifier in an enum declaration specifies the name of the enum class.
 
 It is a compile-time error if an enum declaration has the modifier abstract or final.
 
-An enum declaration is implicitly final unless it contains at least one enum constant that has a class body (§8.9.1).
+An enum class is implicitly final unless its declaration contains at least one enum constant that has a class body (§8.9.1).
 
-A nested enum type is implicitly static. It is permitted for the declaration of a nested enum type to redundantly specify the static modifier.
-
-This implies that it is impossible to declare an enum type in the body of an inner class (§8.1.3), because an inner class cannot have static members except for constant variables.
+A nested enum class is implicitly static. That is, every member enum class and local enum class is static. It is permitted for the declaration of a member enum class to redundantly specify the static modifier, but it is not permitted for the declaration of a local enum class (§14.3).
 
 It is a compile-time error if the same keyword appears more than once as a modifier for an enum declaration, or if an enum declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
-The direct superclass of an enum type E is Enum<E> (§8.1.4).
+The direct superclass type of an enum class E is Enum<E> (§8.1.4).
 
-An enum type has no instances other than those defined by its enum constants. It is a compile-time error to attempt to explicitly instantiate an enum type (§15.9.1).
+An enum declaration does not have an extends clause, so it is not possible to explicitly declare a direct superclass type, even Enum<E>.
 
-In addition to the compile-time error, three further mechanisms ensure that no instances of an enum type exist beyond those defined by its enum constants:
+An enum class has no instances other than those defined by its enum constants. It is a compile-time error to attempt to explicitly instantiate an enum class (§15.9.1).
+
+In addition to the compile-time error, three further mechanisms ensure that no instances of an enum class exist beyond those defined by its enum constants:
 
 The final clone method in Enum ensures that enum constants can never be cloned.
 
-Reflective instantiation of enum types is prohibited.
+Reflective instantiation of enum classes is prohibited.
 
 Special treatment by the serialization mechanism ensures that duplicate instances are never created as a result of deserialization.
 
 8.9.1. Enum Constants
 
-The body of an enum declaration may contain enum constants. An enum constant defines an instance of the enum type.
+The body of an enum declaration may contain enum constants. An enum constant defines an instance of the enum class.
 
 EnumBody:
 { [EnumConstantList] [,] [EnumBodyDeclarations] }
@@ -3177,15 +3291,15 @@ The following production from §15.12 is shown here for convenience:
 ArgumentList:
 Expression {, Expression}
 
-The rules for annotation modifiers on an enum constant declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for an enum constant declaration are specified in §9.7.4 and §9.7.5.
 
 The Identifier in a EnumConstant may be used in a name to refer to the enum constant.
 
-The scope and shadowing of an enum constant is specified in §6.3 and §6.4.
+The scope and shadowing of an enum constant is specified in §6.3 and §6.4.1.
 
 An enum constant may be followed by arguments, which are passed to the constructor of the enum when the constant is created during class initialization as described later in this section. The constructor to be invoked is chosen using the normal rules of overload resolution (§15.12.2). If the arguments are omitted, an empty argument list is assumed.
 
-The optional class body of an enum constant implicitly defines an anonymous class declaration (§15.9.5) that extends the immediately enclosing enum type. The class body is governed by the usual rules of anonymous classes; in particular it cannot contain any constructors. Instance methods declared in these class bodies may be invoked outside the enclosing enum type only if they override accessible methods in the enclosing enum type (§8.4.8).
+The optional class body of an enum constant implicitly defines an anonymous class (§15.9.5) that extends the immediately enclosing enum class. The class body is governed by the usual rules of anonymous classes; in particular it cannot contain any constructors. Instance methods declared in these class bodies may be invoked outside the enclosing enum class only if they override accessible methods in the enclosing enum class (§8.4.8).
 
 It is a compile-time error for the class body of an enum constant to declare an abstract method.
 
@@ -3214,23 +3328,23 @@ ClassDeclaration
 InterfaceDeclaration
 ;
 
-Any constructor or member declarations in the body of an enum declaration apply to the enum type exactly as if they had been present in the body of a normal class declaration, unless explicitly stated otherwise.
+Any constructor or member declarations in the body of an enum declaration apply to the enum class exactly as if they had been present in the body of a normal class declaration, unless explicitly stated otherwise.
 
 It is a compile-time error if a constructor declaration in an enum declaration is public or protected (§6.6).
 
 It is a compile-time error if a constructor declaration in an enum declaration contains a superclass constructor invocation statement (§8.8.7.1).
 
-It is a compile-time error to refer to a static field of an enum type from a constructor, instance initializer, or instance variable initializer of the enum type, unless the field is a constant variable (§4.12.4).
+It is a compile-time error to refer to a static field of an enum class from a constructor, instance initializer, or instance variable initializer in the enum declaration of the class, unless the field is a constant variable (§4.12.4).
 
 In an enum declaration, a constructor declaration with no access modifiers is private.
 
 In an enum declaration with no constructor declarations, a default constructor is implicitly declared. The default constructor is private, has no formal parameters, and has no throws clause.
 
-In practice, a compiler is likely to mirror the Enum type by declaring String and int parameters in the default constructor of an enum type. However, these parameters are not specified as "implicitly declared" because different compilers do not need to agree on the form of the default constructor. Only the compiler of an enum type knows how to instantiate the enum constants; other compilers can simply rely on the implicitly declared public static fields of the enum type (§8.9.3) without regard for how those fields were initialized.
+In practice, a compiler is likely to mirror the Enum class by declaring String and int parameters in the default constructor of an enum class. However, these parameters are not specified as "implicitly declared" because different compilers do not need to agree on the form of the default constructor. Only the compiler of an enum declaration knows how to instantiate the enum constants; other compilers can simply rely on the implicitly declared public static fields of the enum class (§8.9.3) without regard for how those fields were initialized.
 
 It is a compile-time error if an enum declaration E has an abstract method m as a member, unless E has at least one enum constant and all of E's enum constants have class bodies that provide concrete implementations of m.
 
-It is a compile-time error for an enum declaration to declare a finalizer (§12.6). An instance of an enum type may never be finalized.
+It is a compile-time error for an enum declaration to declare a finalizer (§12.6). An instance of an enum class may never be finalized.
 
 Example 8.9.2-1. Enum Body Declarations
 
@@ -3243,14 +3357,14 @@ enum Coin {
 }
 
 
-Each enum constant arranges for a different value in the field value, passed in via a constructor. The field represents the value, in cents, of an American coin. Note that there are no restrictions on the parameters that may be declared by an enum type's constructor.
+Each enum constant arranges for a different value in the field value, passed in via a constructor. The field represents the value, in cents, of an American coin. Note that there are no restrictions on the parameters that may be declared by an enum class's constructor.
 
 
 
 
 Example 8.9.2-2. Restriction On Enum Constant Self-Reference
 
-Without the rule on static field access, apparently reasonable code would fail at run time due to the initialization circularity inherent in enum types. (A circularity exists in any class with a "self-typed" static field.) Here is an example of the sort of code that would fail:
+Without the rule on static field access, apparently reasonable code would fail at run time due to the initialization circularity inherent in enum classes. (A circularity exists in any class with a "self-typed" static field.) Here is an example of the sort of code that would fail:
 
 import java.util.Map;
 import java.util.HashMap;
@@ -3287,7 +3401,7 @@ The refactored version is clearly correct, as static initialization occurs top t
 
 8.9.3. Enum Members
 
-The members of an enum type E are all of the following:
+The members of an enum class E are all of the following:
 
 Members declared in the body of the declaration of E.
 
@@ -3303,7 +3417,7 @@ An implicitly declared method public static E[] values(), which returns an array
 
 An implicitly declared method public static E valueOf(String name), which returns the enum constant of E with the specified name.
 
-It follows that the declaration of enum type E cannot contain fields that conflict with the implicitly declared fields corresponding to E's enum constants, nor contain methods that conflict with implicitly declared methods or override final methods of class Enum<E>.
+It follows that the declaration of enum class E cannot contain fields that conflict with the implicitly declared fields corresponding to E's enum constants, nor contain methods that conflict with implicitly declared methods or override final methods of class Enum<E>.
 
 Example 8.9.3-1. Iterating Over Enum Constants With An Enhanced for Loop
 
@@ -3329,7 +3443,7 @@ FALL
 
 Example 8.9.3-2. Switching Over Enum Constants
 
-A switch statement (§14.11) is useful for simulating the addition of a method to an enum type from outside the type. This example "adds" a color method to the Coin type from §8.9.2, and prints a table of coins, their values, and their colors.
+A switch statement (§14.11) is useful for simulating the addition of a method to an enum class from outside the class. This example "adds" a color method to the Coin class from §8.9.2, and prints a table of coins, their values, and their colors.
 
 class Test {
     enum CoinColor { COPPER, NICKEL, SILVER }
@@ -3367,6 +3481,8 @@ QUARTER         25      SILVER
 
 Example 8.9.3-3. Enum Constants with Class Bodies
 
+Rather than using a switch statement to "add" behavior to an enum class from the outside, it is possible to use class bodies to attach behaviors to enum constants directly.
+
 enum Operation {
     PLUS {
         double eval(double x, double y) { return x + y; }
@@ -3394,7 +3510,7 @@ enum Operation {
 }
 
 
-Class bodies attach behaviors to the enum constants. The program produces the output:
+The program produces the output:
 
 java Operation 2.0 4.0
 2.0 PLUS 4.0 = 6.0
@@ -3403,12 +3519,12 @@ java Operation 2.0 4.0
 2.0 DIVIDED_BY 4.0 = 0.5
 
 
-This pattern is much safer than using a switch statement in the base type (Operation), as the pattern precludes the possibility of forgetting to add a behavior for a new constant (since the enum declaration would cause a compile-time error).
+This pattern is much safer than using a switch statement because the pattern precludes the possibility of forgetting to add a behavior for a new constant (since the enum declaration would cause a compile-time error).
 
 
 
 
-Example 8.9.3-4. Multiple Enum Types
+Example 8.9.3-4. Multiple Enum Classes
 
 In the following program, a playing card class is built atop two simple enums.
 
@@ -3501,3 +3617,360 @@ java Deal 4 3
 [TEN of CLUBS, NINE of DIAMONDS, THREE of SPADES]
 
 
+
+8.10. Record Classes
+
+A record declaration specifies a new record class, a restricted kind of class that defines a simple aggregate of values.
+
+RecordDeclaration:
+{ClassModifier} record TypeIdentifier [TypeParameters] RecordHeader [ClassImplements] RecordBody
+
+A record declaration may specify a top level record class (§7.6), a member record class (§8.5, §9.5), or a local record class (§14.3).
+
+The TypeIdentifier in a record declaration specifies the name of the record class.
+
+It is a compile-time error if a record declaration has the modifier abstract.
+
+A record class is implicitly final. It is permitted for the declaration of a record class to redundantly specify the final modifier.
+
+A nested record class is implicitly static. That is, every member record class and local record class is static. It is permitted for the declaration of a member record class to redundantly specify the static modifier, but it is not permitted for the declaration of a local record class (§14.3).
+
+It is a compile-time error if the same keyword appears more than once as a modifier for a record declaration, or if a record declaration has more than one of the access modifiers public, protected, and private (§6.6).
+
+The direct superclass type of a record class is Record (§8.1.4).
+
+A record declaration does not have an extends clause, so it is not possible to explicitly declare a direct superclass type, even Record.
+
+The serialization mechanism treats instances of a record class differently than ordinary serializable or externalizable objects. In particular, a record object is deserialized using the canonical constructor (§8.10.4).
+
+8.10.1. Record Components
+
+The record components of a record class, if any, are specified in the header of a record declaration. Each record component consists of a type (optionally preceded by one or more annotations) and an identifier that specifies the name of the record component. A record component corresponds to two members of the record class: a private field declared implicitly, and a public accessor method declared explicitly or implicitly (§8.10.3).
+
+If a record class has no record components, then an empty pair of parentheses appears in the header of the record declaration.
+
+RecordHeader:
+( [RecordComponentList] )
+RecordComponentList:
+RecordComponent {, RecordComponent}
+RecordComponent:
+{RecordComponentModifier} UnannType Identifier
+VariableArityRecordComponent
+VariableArityRecordComponent:
+{RecordComponentModifier} UnannType {Annotation} ... Identifier
+RecordComponentModifier:
+Annotation
+
+A record component may be a variable arity record component, indicated by an ellipsis following the type. At most one variable arity record component is permitted for a record class. It is a compile-time error if a variable arity record component appears anywhere in the list of record components except the last position.
+
+The rules concerning annotation modifiers for a record component declaration are specified in §9.7.4 and §9.7.5.
+
+Annotations on a record component declaration are available via reflection if their annotation interfaces are applicable in the record component context (§9.6.4.1). Independently, annotations on a record component declaration are propagated to the declarations of members and constructors of the record class if their annotation interfaces are applicable in other contexts (§8.10.3, §8.10.4).
+
+It is a compile-time error for a record declaration to declare a record component with the name clone, finalize, getClass, hashCode, notify, notifyAll, toString, or wait.
+
+These are the names of the no-args public and protected methods in Object. Disallowing them as the names of record components avoids confusion in a number of ways. First, every record class provides implementations of hashCode and toString that return representations of a record object as a whole; they cannot serve as accessor methods (§8.10.3) for record components called hashCode or toString, and there would be no way to access such record components from outside the record class. Similarly, some record classes may provide implementations of clone and (regrettably) finalize, so a record component called clone or finalize could not be accessed via an accessor method. Finally, the getClass, notify, notifyAll, and wait methods in Object are final, so record components with the same names could not have accessor methods. (The accessor methods would have the same signatures as the final methods, and would thus attempt, unsuccessfully, to override them.)
+
+It is a compile-time error for a record declaration to declare two record components with the same name.
+
+The declared type of a record component depends on whether it is a variable arity record component:
+
+If the record component is not a variable arity record component, then the declared type is denoted by UnannType.
+
+If the record component is a variable arity record component, then the declared type is an array type specified by §10.2.
+
+If the declared type of a variable arity record component has a non-reifiable element type (§4.7), then a compile-time unchecked warning occurs for the declaration of the variable arity record component, unless the canonical constructor (§8.10.4) is annotated with @SafeVarargs (§9.6.4.7) or the warning is suppressed by @SuppressWarnings (§9.6.4.5).
+
+8.10.2. Record Body Declarations
+
+The body of a record declaration may contain constructor and member declarations as well as static initializers.
+
+RecordBody:
+{ {RecordBodyDeclaration} }
+RecordBodyDeclaration:
+ClassBodyDeclaration
+CompactConstructorDeclaration
+
+The following productions from §8.1.6 are shown here for convenience:
+
+ClassBodyDeclaration:
+ClassMemberDeclaration
+InstanceInitializer
+StaticInitializer
+ConstructorDeclaration
+ClassMemberDeclaration:
+FieldDeclaration
+MethodDeclaration
+ClassDeclaration
+InterfaceDeclaration
+;
+
+The CompactConstructorDeclaration clause is described in §8.10.4.2.
+
+It is a compile-time error for the body of a record declaration to contain a non-static field declaration (§8.3.1.1).
+
+It is a compile-time error for the body of a record declaration to contain a method declaration that is abstract or native (§8.4.3.1, §8.4.3.4).
+
+It is a compile-time error for the body of a record declaration to contain an instance initializer (§8.6).
+
+8.10.3. Record Members
+
+For each record component, a record class has a field with the same name as the record component and the same type as the declared type of the record component. This field, which is declared implicitly, is known as a component field.
+
+A component field is private, final, and non-static.
+
+A component field is annotated with the annotations, if any, that appear on the corresponding record component and whose annotation interfaces are applicable in the field declaration context, or in type contexts, or both (§9.7.4).
+
+Furthermore, for each record component, a record class has a method with the same name as the record component and an empty formal parameter list. This method, which is declared explicitly or implicitly, is known as an accessor method.
+
+If an accessor method for a record component is declared explicitly, then all of the following must be true, or a compile-time error occurs:
+
+The return type of the accessor method (§8.4.5) must be the same as the declared type of the record component.
+
+The accessor method must not be generic (§8.4.4).
+
+The accessor method must be a public instance method with no formal parameters and no throws clause.
+
+If a record class has a record component for which an accessor method is not declared explicitly, then an accessor method for that record component is declared implicitly, with the following properties:
+
+Its name is the same as the name of the record component.
+
+Its return type is the same as the declared type of the record component.
+
+It is not generic.
+
+It is a public instance method with no formal parameters and no throws clause.
+
+It is annotated with the annotations, if any, that appear on the corresponding record component and whose annotation interfaces are applicable in the method declaration context, or in type contexts, or both (§9.7.4).
+
+Its body returns the value of the corresponding component field.
+
+The restrictions on record component names (§8.10.1) mean that no implicitly declared accessor method has a signature that is override-equivalent with a non-private method of class Object. An explicit method declaration that takes one of the restricted names, such as public void wait() {...}, is not an accessor method, since wait is never a record component name.
+
+Annotations that appear on a record component are not propagated to an explicitly declared accessor method for that record component. In some situations, the programmer may need to duplicate a record component's annotations on an explicitly declared accessor method, but this is not generally necessary.
+
+Annotations that are propagated to an implicitly declared accessor method must result in a legally annotated method. For example, in the following record declaration, the implicitly declared accessor method x() would be annotated with @SafeVarargs, but such an annotation is illegal on a fixed arity method (§9.6.4.7):
+
+record BadRecord(@SafeVarargs int x) {}  // Error
+
+
+
+Record classes may explicitly declare instance methods other than accessor methods, but may not explicitly declare instance variables (§8.10.2). Explicit declarations of class methods and class variables are permitted.
+
+All members of record classes, including implicitly declared members, are subject to the usual rules for member declarations in a class (§8.3, §8.4, §8.5).
+
+All of the rules concerning inheritance that apply to normal classes apply to record classes. In particular, record classes may inherit members from superinterfaces, although a superinterface method will never be inherited as an accessor method because the record class will always declare, explicitly or implicitly, an accessor method that overrides the superinterface method.
+
+For example, a record class can inherit default methods from its direct superinterfaces, although the default method bodies have no knowledge of the component fields of the record class. The following program prints Logged:
+
+public class Test {
+    interface Logging {
+        default void logAction() {
+            System.out.println("Logged");
+        }	
+    }
+
+    record Point(int i, int j) implements Logging {}
+
+    public static void main(String[] args) {
+        Point p = new Point(10, 20);
+        p.logAction();
+    }
+}
+
+
+
+A record class provides implementations of all the abstract methods declared in class Record. For each of the following methods, if a record class R does not explicitly declare a method with the same modifiers, name, and signature (§8.4.2), then the method is implicitly declared as follows:
+
+A method public final boolean equals(Object) that returns true if and only if the argument is an instance of R, and the current instance is equal to the argument instance at every record component of R; otherwise false is returned.
+
+Equality of an instance a of a record class R with another instance b of the same record class at a record component c is determined as follows:
+
+If the type of the record component c is a reference type, equality is determined as follows: if the value of the component field c of both a and b is the null reference then true is returned; if the value of the component field c of either a or b, but not both, is the null reference then false is returned; otherwise equality is determined by invoking the equals method on the value of the component field c of a, with an argument that is the value of the component field c of b.
+
+If the type of the record component c is a primitive type T, equality is determined as if by invoking the static method compare of the wrapper class corresponding to T (§5.1.7), with the first argument given by the value of the component field c of a, and the second argument given by the value of the component field c of b; if the method would return 0 then true is returned, otherwise false is returned.
+
+The use of compare in wrapper classes ensures that the implicitly declared equals method is reflexive and behaves consistently with the implicitly declared hashCode method for record classes that have floating point components.
+
+A method public final int hashCode() that returns a hash code value derived from the hash code values at every record component of R.
+
+The hash code value of an instance a of a record class at a record component c is as follows:
+
+If the type of the record component c is a reference type, then the hash code value is determined as if by invoking the hashCode method on the value of the component field c of a.
+
+If the type of the record component c is a primitive type T, then the hash code value is determined as if by subjecting the value of the component field c of a to boxing conversion (§5.1.7) and then invoking the method hashCode of the wrapper class corresponding to T on the resulting object.
+
+A method public final String toString() that returns a string derived from the name of the record class and the names and string representations of every record component of R.
+
+The string representation of a record component c of an instance a of a record class is as follows:
+
+If the type of the record component c is a reference type, then the string representation is determined as if by invoking the toString method on the value of the component field c of a.
+
+If the type of the record component c is a primitive type T, then the string representation is determined as if by subjecting the value of the component field c of a to boxing conversion (§5.1.7) and then invoking the method toString method of the wrapper class corresponding to T on the resulting object.
+
+Note that equality, hash code values, and string representations are determined by looking at the values of component fields directly, rather than by invoking accessor methods.
+
+Consider a record class R that has components c1, ..., cn, and an implicitly declared accessor method for every component, and an implicitly declared equals method. If an instance r1 of R is copied in the following way:
+
+R r2 = new R(r1.c1(), r1.c2(), ..., r1.cn());
+
+
+then, assuming r1 is not the null reference, it is always the case that the expression r1.equals(r2) will evaluate to true. Explicitly declared accessor methods and equals methods should respect this invariant. It is not generally possible for a compiler to check whether explicitly declared methods respect the invariant. The following record declaration is bad style because its accessor methods clip the x and y components and therefore prevent p3 from being equals to p1:
+
+record SmallPoint(int x, int y) {
+    public int x() { return this.x < 100 ? this.x : 100; }
+    public int y() { return this.y < 100 ? this.y : 100; }
+
+    public static void main(String[] args) {
+        SmallPoint p1 = new SmallPoint(200,300);
+        SmallPoint p2 = new SmallPoint(200,300);
+        System.out.println(p1.equals(p2));  // prints true
+	
+        SmallPoint p3 = new SmallPoint(p1.x(), p1.y());
+        System.out.println(p1.equals(p3));  // prints false
+    }
+}
+
+
+8.10.4. Record Constructor Declarations
+
+To ensure proper initialization of its record components, a record class does not implicitly declare a default constructor (§8.8.9). Instead, a record class has a canonical constructor, declared explicitly or implicitly, that initializes all the component fields of the record class.
+
+There are two ways to explicitly declare a canonical constructor in a record declaration: by declaring a normal constructor with a suitable signature (§8.10.4.1) or by declaring a compact constructor (§8.10.4.2).
+
+Given the signature of a normal constructor that qualifies as canonical, and the signature derived for a compact constructor, the rules of constructor signatures (§8.8.2) mean it is a compile-time error if a record declaration has both a normal constructor that qualifies as canonical and a compact constructor.
+
+Either way, an explicitly declared canonical constructor must provide at least as much access as the record class, as follows:
+
+If the record class is public, then the canonical constructor must be public; otherwise, a compile-time error occurs.
+
+If the record class is protected, then the canonical constructor must be protected or public; otherwise, a compile-time error occurs.
+
+If the record class has package access, then the canonical constructor must not be private; otherwise, a compile-time error occurs.
+
+If the record class is private, then the canonical constructor may be declared with any accessibility.
+
+An explicitly declared canonical constructor may be a fixed arity constructor or a variable arity constructor (§8.8.1).
+
+If a canonical constructor is not explicitly declared in the declaration of a record class R, then a canonical constructor r is implicitly declared in R with the following properties:
+
+The signature of r has no type parameters, and has formal parameters given by the derived formal parameter list of R, defined below.
+
+r has the same access modifier as R, unless R lacks an access modifier, in which case r has package access.
+
+r has no throws clause.
+
+The body of r initializes each component field of the record class with the corresponding formal parameter of r, in the order that record components (corresponding to the component fields) appear in the record header.
+
+The derived formal parameter list of a record class is formed by deriving a formal parameter from each record component in the record header, in order, as follows:
+
+If the record component is not a variable arity record component, then the derived formal parameter has the same name and declared type as the record component.
+
+If the record component is a variable arity record component, then the derived formal parameter is a variable arity parameter (§8.4.1) with the same name and declared type as the record component.
+
+The derived formal parameter is annotated with the annotations, if any, that appear on the record component and whose annotation interfaces are applicable in the formal parameter context, or in type contexts, or both (§9.7.4).
+
+A record declaration may contain declarations of constructors that are not canonical constructors. The body of every non-canonical constructor in a record declaration must start with an alternate constructor invocation (§8.8.7.1), or a compile-time error occurs.
+
+8.10.4.1. Normal Canonical Constructors
+
+A (non-compact) constructor in the declaration of record class R is the canonical constructor of R if its signature is override-equivalent (§8.4.2) to the derived constructor signature of R.
+
+The derived constructor signature of a record class R is a signature that consists of the name R, no type parameters, and the formal parameter types derived from the record header of R by taking the declared type of each record component in order.
+
+As a canonical constructor has a signature that is override-equivalent to the derived constructor signature of the record class, there can be only one canonical constructor declared explicitly in the record class.
+
+The declaration of a (non-compact) canonical constructor must satisfy all of the following conditions, or a compile-time error occurs:
+
+Each formal parameter in the formal parameter list must have the same name and declared type as the corresponding record component.
+
+A formal parameter must be a variable arity parameter if and only if the corresponding record component is a variable arity record component.
+
+The constructor must not be generic (§8.8.4).
+
+The constructor must not have a throws clause.
+
+The constructor body must not contain an explicit constructor invocation statement (§8.8.7.1).
+
+All the other rules for constructor declarations in a normal class declaration must be satisfied (§8.8).
+
+A consequence of these rules is that the annotations on a record component can differ from the annotations on the corresponding formal parameter of an explicitly declared canonical constructor. For example, the following record declaration is valid:
+
+import java.lang.annotation.Target;
+import java.lang.annotation.ElementType;
+
+@interface Foo {}
+@interface Bar {}
+
+record Person(@Foo String name) {
+    Person(@Bar String name) {
+        this.name = name;
+    }
+}
+
+
+8.10.4.2. Compact Canonical Constructors
+
+A compact constructor declaration is a succinct form of constructor declaration, only available in a record declaration. It declares the canonical constructor of a record class without requiring the record components of the class to be manually repeated as formal parameters of the constructor.
+
+CompactConstructorDeclaration:
+{ConstructorModifier} SimpleTypeName ConstructorBody
+
+The following productions from §8.8, §8.8.3, and §8.8.7 are shown here for convenience:
+
+ConstructorModifier:
+(one of)
+Annotation public protected private
+SimpleTypeName:
+TypeIdentifier
+ConstructorBody:
+{ [ExplicitConstructorInvocation] [BlockStatements] }
+
+It is a compile-time error for a record declaration to have more than one compact constructor declaration.
+
+The formal parameters of a compact constructor of a record class are implicitly declared. They are given by the derived formal parameter list of the record class (§8.10.4).
+
+The compact constructor of a record class is a variable arity constructor (§8.8.1) if the record class has a variable arity record component.
+
+The signature of a compact constructor declaration is equal to the derived constructor signature of the record class (§8.10.4.1).
+
+The body of a compact constructor declaration must satisfy all of the following conditions, or a compile-time error occurs:
+
+The body must not contain a return statement (§14.17).
+
+The body must not contain an explicit constructor invocation statement (§8.8.7.1).
+
+The body must not contain an assignment to a component field of the record class.
+
+All the other rules for a constructor in a normal class declaration must be satisfied (§8.8), except for the requirement that the component fields of the record class must be definitely assigned and moreover not definitely unassigned at the end of the compact constructor (§8.3.1.2).
+
+If a record declaration has a record component named c, then the simple name c in the body of a compact constructor denotes the implicit formal parameter named c, and not the component field named c.
+
+After the last statement, if any, in the body of the compact constructor has completed normally (§14.1), all component fields of the record class are implicitly initialized to the values of the corresponding formal parameters. The component fields are initialized in the order that the corresponding record components are declared in the record header.
+
+The intent of a compact constructor declaration is that only code to validate or normalize parameters needs to be given in the constructor body; the remaining initialization code is supplied by the compiler. For example, the following record class has a compact constructor that simplifies a rational number:
+
+record Rational(int num, int denom) {
+    private static int gcd(int a, int b) {
+        if (b == 0) return Math.abs(a);
+        else return gcd(b, a % b);
+    }
+   
+    Rational {
+        int gcd = gcd(num, denom);
+        num    /= gcd;
+        denom  /= gcd;
+    }
+}
+
+
+
+The compact constructor Rational {...} behaves the same as this normal constructor:
+
+Rational(int num, int demon) {
+    int gcd = gcd(num, denom);
+    num    /= gcd;
+    denom  /= gcd;
+    this.num   = num;
+    this.denom = denom;
+}

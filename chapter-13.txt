@@ -31,7 +31,8 @@ Table of Contents
 13.4.23. Method and Constructor Overloading
 13.4.24. Method Overriding
 13.4.25. Static Initializers
-13.4.26. Evolution of Enums
+13.4.26. Evolution of Enum Classes
+13.4.27. Evolution of Record Classes
 13.5. Evolution of Interfaces
 13.5.1. public Interfaces
 13.5.2. Superinterfaces
@@ -39,11 +40,11 @@ Table of Contents
 13.5.4. Interface Type Parameters
 13.5.5. Field Declarations
 13.5.6. Interface Method Declarations
-13.5.7. Evolution of Annotation Types
+13.5.7. Evolution of Annotation Interfaces
 
-Development tools for the Java programming language should support automatic recompilation as necessary whenever source code is available. Particular implementations may also store the source and binary of types in a versioning database and implement a ClassLoader that uses integrity mechanisms of the database to prevent linkage errors by providing binary-compatible versions of types to clients.
+Development tools for the Java programming language should support automatic recompilation as necessary whenever source code is available. Particular implementations may also store the source and binary representations of classes and interfaces in a versioning database and implement a ClassLoader that uses integrity mechanisms of the database to prevent linkage errors by providing binary-compatible versions of classes and interfaces to clients.
 
-Developers of packages and classes that are to be widely distributed face a different set of problems. In the Internet, which is our favorite example of a widely distributed system, it is often impractical or impossible to automatically recompile the pre-existing binaries that directly or indirectly depend on a type that is to be changed. Instead, this specification defines a set of changes that developers are permitted to make to a package or to a class or interface type while preserving (not breaking) compatibility with pre-existing binaries.
+Developers of packages, classes, and interfaces that are to be widely distributed face a different set of problems. In the Internet, which is our favorite example of a widely distributed system, it is often impractical or impossible to automatically recompile the pre-existing binaries that directly or indirectly depend on a class or interface that is to be changed. Instead, this specification defines a set of changes that developers are permitted to make to a package or to a class or interface while preserving (not breaking) compatibility with pre-existing binaries.
 
 Within the framework of Release-to-Release Binary Compatibility in SOM (Forman, Conner, Danforth, and Raper, Proceedings of OOPSLA '95), Java programming language binaries are binary compatible under all relevant transformations that the authors identify (with some caveats with respect to the addition of instance variables). Using their scheme, here is a list of some important binary compatible changes that the Java programming language supports:
 
@@ -57,7 +58,7 @@ Deleting private fields, methods, or constructors of a class.
 
 When an entire package is updated, deleting package access fields, methods, or constructors of classes and interfaces in the package.
 
-Reordering the fields, methods, or constructors in an existing type declaration.
+Reordering the fields, methods, or constructors in an existing class or interface declaration.
 
 Moving a method upward in the class hierarchy.
 
@@ -71,31 +72,31 @@ We encourage development systems to provide facilities that alert developers to 
 
 This chapter first specifies some properties that any binary format for the Java programming language must have (§13.1). It next defines binary compatibility, explaining what it is and what it is not (§13.2). It finally enumerates a large set of possible changes to packages (§13.3), classes (§13.4), and interfaces (§13.5), specifying which of these changes are guaranteed to preserve binary compatibility and which are not.
 
-Occasionally, references of the form: (JVMS §x.y) are used to indicate concepts from The Java Virtual Machine Specification, Java SE 15 Edition.
+Occasionally, references of the form: (JVMS §x.y) are used to indicate concepts from The Java Virtual Machine Specification, Java SE 16 Edition.
 
 13.1. The Form of a Binary
 
-Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 15 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
+Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 16 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
 
 A class file corresponding to a class or interface declaration must have certain properties. A number of these properties are specifically chosen to support source code transformations that preserve binary compatibility. The required properties are:
 
 The class or interface must be named by its binary name, which must meet the following constraints:
 
-The binary name of a top level type (§7.6) is its canonical name (§6.7).
+The binary name of a top level class or interface (§7.6) is its canonical name (§6.7).
 
-The binary name of a member type (§8.5, §9.5) consists of the binary name of its immediately enclosing type, followed by $, followed by the simple name of the member.
+The binary name of a member class or interface (§8.5, §9.5) consists of the binary name of its immediately enclosing class or interface, followed by $, followed by the simple name of the member.
 
-The binary name of a local class (§14.3) consists of the binary name of its immediately enclosing type, followed by $, followed by a non-empty sequence of digits, followed by the simple name of the local class.
+The binary name of a local class or interface (§14.3) consists of the binary name of its immediately enclosing class or interface, followed by $, followed by a non-empty sequence of digits, followed by the simple name of the local class.
 
-The binary name of an anonymous class (§15.9.5) consists of the binary name of its immediately enclosing type, followed by $, followed by a non-empty sequence of digits.
+The binary name of an anonymous class (§15.9.5) consists of the binary name of its immediately enclosing class or interface, followed by $, followed by a non-empty sequence of digits.
 
-The binary name of a type variable declared by a generic class or interface (§8.1.2, §9.1.2) is the binary name of its immediately enclosing type, followed by $, followed by the simple name of the type variable.
+The binary name of a type variable declared by a generic class or interface (§8.1.2, §9.1.2) is the binary name of its immediately enclosing class or interface, followed by $, followed by the simple name of the type variable.
 
-The binary name of a type variable declared by a generic method (§8.4.4) is the binary name of the type declaring the method, followed by $, followed by the descriptor of the method (JVMS §4.3.3), followed by $, followed by the simple name of the type variable.
+The binary name of a type variable declared by a generic method (§8.4.4) is the binary name of the class or interface declaring the method, followed by $, followed by the descriptor of the method (JVMS §4.3.3), followed by $, followed by the simple name of the type variable.
 
-The binary name of a type variable declared by a generic constructor (§8.8.4) is the binary name of the type declaring the constructor, followed by $, followed by the descriptor of the constructor (JVMS §4.3.3), followed by $, followed by the simple name of the type variable.
+The binary name of a type variable declared by a generic constructor (§8.8.4) is the binary name of the class declaring the constructor, followed by $, followed by the descriptor of the constructor (JVMS §4.3.3), followed by $, followed by the simple name of the type variable.
 
-A reference to another class or interface type must be symbolic, using the binary name of the type.
+A reference to another class or interface must be symbolic, using the binary name of the class or interface.
 
 A reference to a field that is a constant variable (§4.12.4) must be resolved at compile time to the value V denoted by the constant variable's initializer.
 
@@ -103,45 +104,47 @@ If such a field is static, then no reference to the field should be present in t
 
 If such a field is non-static, then no reference to the field should be present in the code in a binary file, except in the class containing the field. (It will be a class rather than an interface, since an interface has only static fields.) The class should have code to set the field's value to V during instance creation (§12.5).
 
-Given a legal expression denoting a field access in a class C, referencing a field named f that is not a constant variable and is declared in a (possibly distinct) class or interface D, we define the qualifying type of the field reference as follows:
+Given a legal expression denoting a field access in a class C, referencing a field named f that is not a constant variable and is declared in a (possibly distinct) class or interface D, we define the qualifying class or interface of the field reference as follows:
 
-If the expression is referenced by a simple name, then if f is a member of the current class or interface, C, then let T be C. Otherwise, let T be the innermost lexically enclosing type declaration of which f is a member. In either case, T is the qualifying type of the reference.
+If the expression is referenced by a simple name, then if f is a member of the current class or interface, C, then let Q be C. Otherwise, let Q be the innermost lexically enclosing class or interface declaration of which f is a member. In either case, Q is the qualifying class or interface of the reference.
 
-If the reference is of the form TypeName.f, where TypeName denotes a class or interface, then the class or interface denoted by TypeName is the qualifying type of the reference.
+If the reference is of the form TypeName.f, where TypeName denotes a class or interface, then the class or interface denoted by TypeName is the qualifying class or interface of the reference.
 
 If the expression is of the form ExpressionName.f or Primary.f, then:
 
-If the compile-time type of ExpressionName or Primary is an intersection type V1 & ... & Vn (§4.9), then the qualifying type of the reference is V1.
+If the compile-time type of ExpressionName or Primary is an intersection type V1 & ... & Vn (§4.9), then the qualifying class or interface of the reference is the erasure (§4.6) of V1.
 
-Otherwise, the compile-time type of ExpressionName or Primary is the qualifying type of the reference.
+Otherwise, the erasure of the compile-time type of ExpressionName or Primary is the qualifying class or interface of the reference.
 
-If the expression is of the form super.f, then the superclass of C is the qualifying type of the reference.
+If the expression is of the form super.f, then the superclass of C is the qualifying class or interface of the reference.
 
-If the expression is of the form TypeName.super.f, then the superclass of the class denoted by TypeName is the qualifying type of the reference.
+If the expression is of the form TypeName.super.f, then the superclass of the class denoted by TypeName is the qualifying class or interface of the reference.
 
-The reference to f must be compiled into a symbolic reference to the erasure (§4.6) of the qualifying type of the reference, plus the simple name of the field, f. The reference must also include a symbolic reference to the erasure of the declared type of the field so that the verifier can check that the type is as expected.
+The reference to f must be compiled into a symbolic reference to the qualifying class or interface of the reference, plus the simple name of the field, f.
 
-Given a method invocation expression or a method reference expression in a class or interface C, referencing a method named m declared (or implicitly declared (§9.2)) in a (possibly distinct) class or interface D, we define the qualifying type of the method invocation as follows:
+The reference must also include a symbolic reference to the erasure of the declared type of the field, so that the verifier can check that the type is as expected.
 
-If D is Object then the qualifying type of the expression is Object.
+Given a method invocation expression or a method reference expression in a class or interface C, referencing a method named m declared (or implicitly declared (§9.2)) in a (possibly distinct) class or interface D, we define the qualifying class or interface of the method invocation as follows:
+
+If D is Object then the qualifying class or interface of the method invocation is Object.
 
 Otherwise:
 
-If the method is referenced by a simple name, then if m is a member of the current class or interface C, let T be C; otherwise, let T be the innermost lexically enclosing type declaration of which m is a member. In either case, T is the qualifying type of the method invocation.
+If the method is referenced by a simple name, then if m is a member of the current class or interface C, let Q be C; otherwise, let Q be the innermost lexically enclosing class or interface declaration of which m is a member. In either case, Q is the qualifying class or interface of the method invocation.
 
-If the expression is of the form TypeName.m or ReferenceType::m, then the type denoted by TypeName or ReferenceType is the qualifying type of the method invocation.
+If the expression is of the form TypeName.m or ReferenceType::m, then the class or interface denoted by TypeName, or the erasure of ReferenceType, is the qualifying class or interface of the method invocation.
 
 If the expression is of the form ExpressionName.m or Primary.m or ExpressionName::m or Primary::m, then:
 
-If the compile-time type of ExpressionName or Primary is an intersection type V1 & ... & Vn (§4.9), then the qualifying type of the method invocation is V1.
+If the compile-time type of ExpressionName or Primary is an intersection type V1 & ... & Vn, then the qualifying class or interface of the method invocation is the erasure of V1.
 
-Otherwise, the compile-time type of ExpressionName or Primary is the qualifying type of the method invocation.
+Otherwise, the erasure of the compile-time type of ExpressionName or Primary is the qualifying class or interface of the method invocation.
 
-If the expression is of the form super.m or super::m, then the superclass of C is the qualifying type of the method invocation.
+If the expression is of the form super.m or super::m, then the superclass of C is the qualifying class or interface of the method invocation.
 
-If the expression is of the form TypeName.super.m or TypeName.super::m, then if TypeName denotes a class X, the superclass of X is the qualifying type of the method invocation; if TypeName denotes an interface X, X is the qualifying type of the method invocation.
+If the expression is of the form TypeName.super.m or TypeName.super::m, then if TypeName denotes a class X, the superclass of X is the qualifying class or interface of the method invocation; if TypeName denotes an interface X, X is the qualifying class or interface of the method invocation.
 
-A reference to a method must be resolved at compile time to a symbolic reference to the erasure (§4.6) of the qualifying type of the invocation, plus the erasure of the signature (§8.4.2) of the method. The signature of a method must include all of the following as determined by §15.12.3:
+A reference to a method must be resolved at compile time to a symbolic reference to the qualifying class or interface of the method invocation, plus the erasure of the declared signature (§8.4.2) of the method. The signature of a method must include all of the following as determined by §15.12.3:
 
 The simple name of the method
 
@@ -151,17 +154,17 @@ A symbolic reference to the type of each parameter
 
 A reference to a method must also include either a symbolic reference to the erasure of the return type of the denoted method or an indication that the denoted method is declared void and does not return a value.
 
-Given a class instance creation expression (§15.9) or an explicit constructor invocation statement (§8.8.7.1) or a method reference expression of the form ClassType :: new (§15.13) in a class or interface C referencing a constructor m declared in a (possibly distinct) class or interface D, we define the qualifying type of the constructor invocation as follows:
+Given a class instance creation expression (§15.9) or an explicit constructor invocation statement (§8.8.7.1) or a method reference expression of the form ClassType :: new (§15.13) in a class or interface C, referencing a constructor m declared in a (possibly distinct) class or interface D, we define the qualifying class of the constructor invocation as follows:
 
-If the expression is of the form new D(...) or ExpressionName.new D(...) or Primary.new D(...) or D :: new, then the qualifying type of the invocation is D.
+If the expression is of the form new D(...) or ExpressionName.new D(...) or Primary.new D(...) or D :: new, then the qualifying class of the constructor invocation is D.
 
-If the expression is of the form new D(...){...} or ExpressionName.new D(...){...} or Primary.new D(...){...}, then the qualifying type of the expression is the compile-time type of the expression.
+If the expression is of the form new D(...){...} or ExpressionName.new D(...){...} or Primary.new D(...){...}, then the qualifying class of the constructor invocation is the anonymous class declared by the expression.
 
-If the expression is of the form super(...) or ExpressionName.super(...) or Primary.super(...), then the qualifying type of the expression is the direct superclass of C.
+If the expression is of the form super(...) or ExpressionName.super(...) or Primary.super(...), then the qualifying class of the constructor invocation is the direct superclass of C.
 
-If the expression is of the form this(...), then the qualifying type of the expression is C.
+If the expression is of the form this(...), then the qualifying class of the constructor invocation is C.
 
-A reference to a constructor must be resolved at compile time to a symbolic reference to the erasure (§4.6) of the qualifying type of the invocation, plus the signature of the constructor (§8.8.2). The signature of a constructor must include both:
+A reference to a constructor must be resolved at compile time to a symbolic reference to the qualifying class of the constructor invocation, plus the declared signature of the constructor (§8.8.2). The signature of a constructor must include both:
 
 The number of parameters of the constructor
 
@@ -169,9 +172,9 @@ A symbolic reference to the type of each formal parameter
 
 A binary representation for a class or interface must also contain all of the following:
 
-If it is a class and is not Object, then a symbolic reference to the erasure of the direct superclass of this class.
+If it is a class and is not Object, then a symbolic reference to the direct superclass of this class.
 
-A symbolic reference to the erasure of each direct superinterface, if any.
+A symbolic reference to each direct superinterface, if any.
 
 A specification of each field declared in the class or interface, given as the simple name of the field and a symbolic reference to the erasure of the type of the field.
 
@@ -185,15 +188,13 @@ For an interface, code for the field initializers and the implementation of each
 
 For a class, code for the field initializers, the instance and static initializers, the implementation of each method with a block body (§8.4.7), and the implementation of each constructor.
 
-Every type must contain sufficient information to recover its canonical name (§6.7).
+Every class or interface must contain sufficient information to recover its canonical name (§6.7).
 
-Every member type must have sufficient information to recover its source-level access modifier.
+Every member class or interface must have sufficient information to recover its source-level access modifier (§6.6).
 
-Every nested class and nested interface must have a symbolic reference to its immediately enclosing type (§8.1.3).
+Every nested class or interface must have a symbolic reference to its immediately enclosing class or interface (§8.1.3).
 
-Every class must contain symbolic references to all of its member types (§8.5), and to all local and anonymous classes that appear in its methods, constructors, static initializers, instance initializers, and field initializers.
-
-Every interface must contain symbolic references to all of its member types (§9.5), and to all local and anonymous classes that appear in its default methods and field initializers.
+Every class or interface must contain symbolic references to all of its member classes and interfaces (§8.5, §9.5), and to all other nested classes and interfaces declared within its body.
 
 A construct emitted by a Java compiler must be marked as synthetic if it does not correspond to a construct declared explicitly or implicitly in source code, unless the emitted construct is a class initialization method (JVMS §2.9).
 
@@ -203,19 +204,25 @@ The following formal parameters are declared implicitly in source code:
 
 The first formal parameter of a constructor of a non-private inner member class (§8.8.1, §8.8.9).
 
-The first formal parameter of an anonymous constructor of an anonymous class whose superclass is inner or local (not in a static context) (§15.9.5.1).
+The first formal parameter of an anonymous constructor of an anonymous class whose superclass is an inner class (not in a static context) (§15.9.5.1).
 
-The formal parameter name of the valueOf method which is implicitly declared in an enum type (§8.9.3).
+The formal parameter name of the valueOf method which is implicitly declared in an enum class (§8.9.3).
 
-For reference, the following constructs are declared implicitly in source code, but are not marked as mandated because only formal parameters can be so marked in a class file (JVMS §4.7.24):
+The formal parameters of a compact constructor of a record class (§8.10.4).
 
-Default constructors of classes and enum types (§8.8.9, §8.9.2)
+For reference, the following constructs are declared implicitly in source code, but are not marked as mandated because only formal parameters and modules can be so marked in a class file (JVMS §4.7.24, JVMS §4.7.25):
+
+Default constructors of normal and enum classes (§8.8.9, §8.9.2)
+
+Canonical constructors of record classes (§8.10.4)
 
 Anonymous constructors (§15.9.5.1)
 
-The values and valueOf methods of enum types (§8.9.3)
+The values and valueOf methods of enum classes (§8.9.3)
 
-Certain public fields of enum types (§8.9.3)
+Certain public fields of enum classes (§8.9.3)
+
+Certain private fields and public methods of record classes (§8.10.3)
 
 Certain public methods of interfaces (§9.2)
 
@@ -229,11 +236,11 @@ A specification of each dependence denoted by a requires directive, given as a s
 
 A specification of each package denoted by an exports or opens directive, given as a symbolic reference to the name of the package indicated by the directive (§7.7.2). Also, if the directive was qualified, the specification must give symbolic references to the names of the modules indicated by the directive's to clause.
 
-A specification of each service denoted by a uses directive, given as a symbolic reference to the name of the type indicated by the directive (§7.7.3).
+A specification of each service denoted by a uses directive, given as a symbolic reference to the name of the class or interface indicated by the directive (§7.7.3).
 
-A specification of the service providers denoted by a provides directive, given as symbolic references to the names of the types indicated by the directive's with clause (§7.7.4). Also, the specification must give a symbolic reference to the name of the type indicated as the service by the directive.
+A specification of the service providers denoted by a provides directive, given as symbolic references to the names of the classes and interfaces indicated by the directive's with clause (§7.7.4). Also, the specification must give a symbolic reference to the name of the class or interface indicated as the service by the directive.
 
-The following sections discuss changes that may be made to class and interface type declarations without breaking compatibility with pre-existing binaries. Under the translation requirements given above, the Java Virtual Machine and its class file format support these changes. Any other valid binary format, such as a compressed or encrypted representation that is mapped back into class files by a class loader under the above requirements, will necessarily support these changes as well.
+The following sections discuss changes that may be made to class and interface declarations without breaking compatibility with pre-existing binaries. Under the translation requirements given above, the Java Virtual Machine and its class file format support these changes. Any other valid binary format, such as a compressed or encrypted representation that is mapped back into class files by a class loader under the above requirements, will necessarily support these changes as well.
 
 13.2. What Binary Compatibility Is and Is Not
 
@@ -249,17 +256,17 @@ Binary compatibility is not the same as source compatibility. In particular, the
 
 13.3. Evolution of Packages and Modules
 
-A new top level class or interface type may be added to a package without breaking compatibility with pre-existing binaries, provided the new type does not reuse a name previously given to an unrelated type. If a new type reuses a name previously given to an unrelated type, then a conflict may result, since binaries for both types could not be loaded by the same class loader.
+A new top level class or interface may be added to a package without breaking compatibility with pre-existing binaries, provided the new class or interface does not reuse a name previously given to an unrelated class or interface. If a new class or interface reuses a name previously given to an unrelated class or interface, then a conflict may result, since binaries for both classes or interfaces could not be loaded by the same class loader.
 
-Changes in top level class and interface types that are not public and that are not a superclass or superinterface, respectively, of a public type, affect only types within the package in which they are declared. Such types may be deleted or otherwise changed, even if incompatibilities are otherwise described here, provided that the affected binaries of that package are updated together.
+Changes in top level classes and interfaces that are not public and that are not a superclass or superinterface, respectively, of a public class or interface, affect only classes and interfaces within the package in which they are declared. Such classes and interfaces may be deleted or otherwise changed, even if incompatibilities are otherwise described here, provided that the affected binaries of that package are updated together.
 
-If a module that was declared to export or open a package is changed to not export or open the package, or to export or open the package to a different set of friends, then an IllegalAccessError is thrown if a pre-existing binary is linked that needs but no longer has access to the public and protected types of the package. Such a change is not recommended for modules that have been widely distributed.
+If a module that was declared to export or open a package is changed to not export or open the package, or to export or open the package to a different set of friends, then an IllegalAccessError is thrown if a pre-existing binary is linked that needs but no longer has access to the public and protected classes and interfaces of the package. Such a change is not recommended for modules that have been widely distributed.
 
 If a module was not declared to export or open a given package, then changing the module to export or open the package does not break compatibility with pre-existing binaries. However, changing the module to export the package may prevent the program from starting, since any module that reads the module may also read some other module that exports a package with the same name.
 
 Adding a requires directive to a module declaration, or adding the transitive modifier to a requires directive, does not break compatibility with pre-existing binaries. However, it may prevent the program from starting, since the module may now read multiple modules that export packages with the same name.
 
-Deleting a requires directive in a module declaration, or deleting the transitive modifier from a requires directive, may break compatibility with any pre-existing binary that relied on the directive or modifier for readability of a given module in the course of referencing types exported by that module. An IllegalAccessError may be thrown when such a reference from a pre-existing binary is linked.
+Deleting a requires directive in a module declaration, or deleting the transitive modifier from a requires directive, may break compatibility with any pre-existing binary that relied on the directive or modifier for readability of a given module in the course of referencing classes and interfaces exported by that module. An IllegalAccessError may be thrown when such a reference from a pre-existing binary is linked.
 
 Adding or deleting a uses or provides directive in a module declaration does not break compatibility with pre-existing binaries.
 
@@ -275,7 +282,7 @@ Changing a class that is declared abstract to no longer be declared abstract doe
 
 13.4.2. final Classes
 
-If a class that was not declared final is changed to be declared final, then a VerifyError is thrown if a binary of a pre-existing subclass of this class is loaded, because final classes can have no subclasses; such a change is not recommended for widely distributed classes.
+If a class that was not declared final is changed to be declared final, then an IncompatibleClassChangeError is thrown if a binary of a pre-existing subclass of this class is loaded, because final classes can have no subclasses; such a change is not recommended for widely distributed classes.
 
 Changing a class that is declared final to no longer be declared final does not break compatibility with pre-existing binaries.
 
@@ -289,7 +296,9 @@ If a class that was declared public is changed to not be declared public, then a
 
 A ClassCircularityError is thrown at load time if a class would be a superclass of itself. Changes to the class hierarchy that could result in such a circularity when newly compiled binaries are loaded with pre-existing binaries are not recommended for widely distributed classes.
 
-Changing the direct superclass or the set of direct superinterfaces of a class type will not break compatibility with pre-existing binaries, provided that the total set of superclasses or superinterfaces, respectively, of the class type loses no members.
+Changing the direct superclass type or the set of direct superinterface types of a class will not break compatibility with pre-existing binaries, provided that the total set of superclasses or superinterfaces, respectively, of the class loses no members.
+
+For example, it is binary compatible to replace a raw supertype of a class with a parameterization of the class or interface named by the raw type.
 
 If a change to the direct superclass or the set of direct superinterfaces results in any class or interface no longer being a superclass or superinterface, respectively, then linkage errors may result if pre-existing binaries are loaded with the binary of the modified class. Such changes are not recommended for widely distributed classes.
 
@@ -319,7 +328,7 @@ Suppose that a new version of class Super is then compiled:
 class Super { char s = 's'; }
 
 
-This version of class Super is not a subclass of Hyper. If we then run the existing binaries of Hyper and Test with the new version of Super, then a VerifyError is thrown at link time. The verifier objects because the result of new Super() cannot be passed as an argument in place of a formal parameter of type Hyper, because Super is not a subclass of Hyper.
+This version of class Super is not a subclass of Hyper. If we then run the existing binaries of Hyper and Test with the new version of Super, then a VerifyError is thrown at link time. The verifier complains because the result of new Super() cannot be passed as an argument in place of a formal parameter of type Hyper, because Super is not a subclass of Hyper.
 
 It is instructive to consider what might happen without the verification step: the program might run and print:
 
@@ -333,22 +342,26 @@ The lesson is that an implementation that lacks a verifier or fails to use it wi
 
 
 
-The requirement that alternatives in a multi-catch clause (§14.20) not be subclasses or superclasses of each other is only a source restriction. Assuming the following client code is legal:
+Example 13.4.4-2. Introducing a Superclass
+
+Broadly speaking, there are various situations where a class transformation that is binary compatible for a client might not be source compatible for that client.
+
+For example, the requirement that alternatives in a multi-catch clause (§14.20) are not subclasses or superclasses of each other is only a source restriction. The following code:
 
 try {
-    throwAorB();
-} catch(ExceptionA | ExceptionB e) {
+    failByThrowingAorB();
+} catch (A|B e) {
     ...
 }
 
 
-where ExceptionA and ExceptionB do not have a subclass/superclass relationship when the client is compiled, it is binary compatible with respect to the client for ExceptionA and ExceptionB to have such a relationship when the client is executed.
+is legal provided that A and B do not have a subclass/superclass relationship when the code is compiled. Thereafter, it is binary compatible with respect to this client for A and B to be changed to have such a relationship. The previously compiled code will continue to execute, but since the change is not source compatible with respect to this client, the code cannot be recompiled.
 
-This is analogous to other situations where a class transformation that is binary compatible for a client might not be source compatible for the same client.
+
 
 13.4.5. Class Type Parameters
 
-Adding or removing a type parameter of a class does not, in itself, have any implications for binary compatibility.
+Adding or deleting a type parameter of a class does not, in itself, have any implications for binary compatibility.
 
 If such a type parameter is used in the type of a field or method, that may have the normal implications of changing the aforementioned type.
 
@@ -486,9 +499,9 @@ Allowing superclasses to change protected methods to be public without breaking 
 
 Widely distributed programs should not expose any fields to their clients. Apart from the binary compatibility issues discussed below, this is generally good software engineering practice. Adding a field to a class may break compatibility with pre-existing binaries that are not recompiled.
 
-Assume a reference to a field f with qualifying type T. Assume further that f is in fact an instance (respectively static) field declared in a superclass of T, S, and that the type of f is X.
+Assume a reference to a field f with qualifying class C. Assume further that f is in fact an instance (respectively static) field declared in a superclass of C, S, and that the type of f is X.
 
-If a new field of type X with the same name as f is added to a subclass of S that is a superclass of T or T itself, then a linkage error may occur. Such a linkage error will occur only if, in addition to the above, either one of the following is true:
+If a new field of type X with the same name as f is added to a subclass of S that is a superclass of C or C itself, then a linkage error may occur. Such a linkage error will occur only if, in addition to the above, either one of the following is true:
 
 The new field is less accessible than the old one.
 
@@ -573,7 +586,7 @@ would result in a compile-time error, because the h in the source code for main 
 
 Deleting a field from a class will break compatibility with any pre-existing binaries that reference this field, and a NoSuchFieldError will be thrown when such a reference from a pre-existing binary is linked. Only private fields may be safely deleted from a widely distributed class.
 
-For purposes of binary compatibility, adding or removing a field f whose type involves type variables (§4.4) or parameterized types (§4.5) is equivalent to the addition (respectively, removal) of a field of the same name whose type is the erasure (§4.6) of the type of f.
+For purposes of binary compatibility, adding or deleting a field f whose type involves type variables (§4.4) or parameterized types (§4.5) is equivalent to the addition (respectively, deletion) of a field of the same name whose type is the erasure (§4.6) of the type of f.
 
 13.4.9. final Fields and static Constant Variables
 
@@ -646,11 +659,11 @@ Adding or deleting a transient modifier of a field does not break compatibility 
 
 13.4.12. Method and Constructor Declarations
 
-Adding a method or constructor declaration to a class will not break compatibility with any pre-existing binaries, even in the case where a type could no longer be recompiled because an invocation previously referenced a method or constructor of a superclass with an incompatible type. The previously compiled class with such a reference will continue to reference the method or constructor declared in a superclass.
+Adding a method or constructor to a class will not break compatibility with any pre-existing binaries, even in the case where a class could no longer be recompiled because an invocation previously referenced a method or constructor of a superclass with an incompatible type. The previously compiled class with such a reference will continue to reference the method or constructor declared in a superclass.
 
-Assume a reference to a method m with qualifying type T. Assume further that m is in fact an instance (respectively static) method declared in a superclass of T, S.
+Assume a reference to a method m with qualifying class C. Assume further that m is in fact an instance (respectively static) method declared in a superclass of C, S.
 
-If a new method of type X with the same signature and return type as m is added to a subclass of S that is a superclass of T or T itself, then a linkage error may occur. Such a linkage error will occur only if, in addition to the above, either one of the following is true:
+If a new method of type X with the same signature and return type as m is added to a subclass of S that is a superclass of C or C itself, then a linkage error may occur. Such a linkage error will occur only if, in addition to the above, either one of the following is true:
 
 The new method is less accessible than the old one.
 
@@ -662,7 +675,7 @@ If the source code for a non-inner class contains no declared constructors, then
 
 13.4.13. Method and Constructor Type Parameters
 
-Adding or removing a type parameter of a method or constructor does not, in itself, have any implications for binary compatibility.
+Adding or deleting a type parameter of a method or constructor does not, in itself, have any implications for binary compatibility.
 
 If such a type parameter is used in the type of the method or constructor, that may have the normal implications of changing the aforementioned type.
 
@@ -670,13 +683,13 @@ Renaming a type parameter of a method or constructor has no effect with respect 
 
 Changing the first bound of a type parameter of a method or constructor may change the erasure (§4.6) of any member that uses that type parameter in its own type, and this may affect binary compatibility. Specifically:
 
-If the type parameter is used as the type of a field, the effect is as if the field was removed and a field with the same name, whose type is the new erasure of the type variable, was added.
+If the type parameter is used as the type of a field, the effect is as if the field were deleted and a field with the same name, whose type is the new erasure of the type variable, were added.
 
-If the type parameter is used as the type of any formal parameter of a method, but not as the return type, the effect is as if that method were removed, and replaced with a new method that is identical except for the types of the aforementioned formal parameters, which now have the new erasure of the type parameter as their type.
+If the type parameter is used as the type of any formal parameter of a method, but not as the return type, the effect is as if that method were deleted, and replaced with a new method that is identical except for the types of the aforementioned formal parameters, which now have the new erasure of the type parameter as their type.
 
-If the type parameter is used as a return type of a method, but not as the type of any formal parameter of the method, the effect is as if that method were removed, and replaced with a new method that is identical except for the return type, which is now the new erasure of the type parameter.
+If the type parameter is used as a return type of a method, but not as the type of any formal parameter of the method, the effect is as if that method were deleted, and replaced with a new method that is identical except for the return type, which is now the new erasure of the type parameter.
 
-If the type parameter is used as a return type of a method and as the type of one or more formal parameters of the method, the effect is as if that method were removed, and replaced with a new method that is identical except for the return type, which is now the new erasure of the type parameter, and except for the types of the aforementioned formal parameters, which now have the new erasure of the type parameter as their types.
+If the type parameter is used as a return type of a method and as the type of one or more formal parameters of the method, the effect is as if that method were deleted, and replaced with a new method that is identical except for the return type, which is now the new erasure of the type parameter, and except for the types of the aforementioned formal parameters, which now have the new erasure of the type parameter as their types.
 
 Changing any other bound has no effect on binary compatibility.
 
@@ -686,15 +699,15 @@ Changing the name of a formal parameter of a method or constructor does not impa
 
 Changing the name of a method, or the type of a formal parameter to a method or constructor, or adding a parameter to or deleting a parameter from a method or constructor declaration creates a method or constructor with a new signature, and has the combined effect of deleting the method or constructor with the old signature and adding a method or constructor with the new signature (§13.4.12).
 
-Changing the type of the last formal parameter of a method from T[] to a variable arity parameter (§8.4.1) of type T (i.e. to T...), and vice versa, does not impact pre-existing binaries.
+Changing the type of the last formal parameter of a method from T[] to a variable arity parameter of type T, that is, to T... (§8.4.1), and vice versa, does not impact pre-existing binaries.
 
-For purposes of binary compatibility, adding or removing a method or constructor m whose signature involves type variables (§4.4) or parameterized types (§4.5) is equivalent to the addition (respectively, removal) of an otherwise equivalent method whose signature is the erasure (§4.6) of the signature of m.
+For purposes of binary compatibility, adding or deleting a method or constructor m whose signature involves type variables (§4.4) or parameterized types (§4.5) is equivalent to the addition (respectively, deletion) of an otherwise equivalent method whose signature is the erasure (§4.6) of the signature of m.
 
 13.4.15. Method Result Type
 
 Changing the result type of a method, or replacing a result type with void, or replacing void with a result type, has the combined effect of deleting the old method and adding a new method with the new result type or newly void result (see §13.4.12).
 
-For purposes of binary compatibility, adding or removing a method or constructor m whose return type involves type variables (§4.4) or parameterized types (§4.5) is equivalent to the addition (respectively, removal) of the an otherwise equivalent method whose return type is the erasure (§4.6) of the return type of m.
+For purposes of binary compatibility, adding or deleting a method or constructor m whose return type involves type variables (§4.4) or parameterized types (§4.5) is equivalent to the addition (respectively, deletion) of the an otherwise equivalent method whose return type is the erasure (§4.6) of the return type of m.
 
 13.4.16. abstract Methods
 
@@ -759,7 +772,7 @@ Suppose that a new version of class Super is produced:
 class Super { final void out() { System.out.println("!"); } }
 
 
-If Super is recompiled but not Test, then running the new binary with the existing binary of Test results in a VerifyError because the class Test improperly tries to override the instance method out.
+If Super is recompiled but not Test, then running the new binary with the existing binary of Test results in an IncompatibleClassChangeError because the class Test improperly tries to override the instance method out.
 
 
 
@@ -843,19 +856,27 @@ as might have been naively expected in the previous case.
 
 If an instance method is added to a subclass and it overrides a method in a superclass, then the subclass method will be found by method invocations in pre-existing binaries, and these binaries are not impacted.
 
-If a class method is added to a class, then this method will not be found unless the qualifying type of the reference is the subclass type.
+If a class method is added to a class, then this method will not be found unless the qualifying class of the method invocation is the subclass.
 
 13.4.25. Static Initializers
 
 Adding, deleting, or changing a static initializer (§8.7) of a class does not impact pre-existing binaries.
 
-13.4.26. Evolution of Enums
+13.4.26. Evolution of Enum Classes
 
-Adding or reordering constants in an enum will not break compatibility with pre-existing binaries.
+Adding or reordering enum constants in an enum class will not break compatibility with pre-existing binaries.
 
-If a pre-existing binary attempts to access an enum constant that no longer exists, the client will fail at run time with a NoSuchFieldError. Therefore such a change is not recommended for widely distributed enums.
+Deleting an enum constant from an enum class will delete the public field that corresponds to the enum constant (§8.9.3). The consequences are specified in §13.4.8. Such a change is not recommended for widely distributed enum classes.
 
-In all other respects, the binary compatibility rules for enums are identical to those for classes.
+In all other respects, the binary compatibility rules for enum classes are identical to those for normal classes.
+
+13.4.27. Evolution of Record Classes
+
+Adding, deleting, changing, or reordering record components in a record class may break compatibility with pre-existing binaries that are not recompiled; such a change is not recommended for widely distributed record classes.
+
+More precisely, adding, deleting, changing, or reordering record components may change the corresponding implicit declarations of component fields and accessor methods, as well as changing the signature and implementation of the canonical constructor and other supporting methods, with consequences specified in §13.4.8 and §13.4.12.
+
+In all other respects, the binary compatibility rules for record classes are identical to those for normal classes.
 
 13.5. Evolution of Interfaces
 
@@ -917,7 +938,7 @@ The considerations for changing field declarations in interfaces are the same as
 
 The considerations for changing method declarations in interfaces include those for changing methods in classes, as described in §13.4.7, §13.4.14, §13.4.15, §13.4.19, §13.4.21, §13.4.22, and §13.4.23.
 
-Adding a default method, or changing a method from abstract to default, does not break compatibility with pre-existing binaries, but may cause an IncompatibleClassChangeError if a pre-existing binary attempts to invoke the method. This error occurs if the qualifying type, T, is a subtype of two interfaces, I and J, where both I and J declare a default method with the same signature and result, and neither I nor J is a subinterface of the other.
+Adding a default method, or changing a method from abstract to default, does not break compatibility with pre-existing binaries, but may cause an IncompatibleClassChangeError if a pre-existing binary attempts to invoke the method. This error occurs if the qualifying interface of the method invocation, K, is a subinterface of two interfaces, I and J, where both I and J declare a default method with the same signature and result, and neither I nor J is a subinterface of the other.
 
 In other words, adding a default method is a binary-compatible change because it does not introduce errors at link time, even if it introduces errors at compile time or invocation time. In practice, the risk of accidental clashes occurring by introducing a default method are similar to those associated with adding a new method to a non-final class. In the event of a clash, adding a method to a class is unlikely to trigger a LinkageError, but an accidental override of the method in a child can lead to unpredictable method behavior. Both changes can cause errors at compile time.
 
@@ -956,8 +977,8 @@ If Cowboy is recompiled but not CowboyArtist, then running the new binary with t
 
 
 
-13.5.7. Evolution of Annotation Types
+13.5.7. Evolution of Annotation Interfaces
 
-Annotation types behave exactly like any other interface. Adding or removing an element from an annotation type is analogous to adding or removing a method. There are important considerations governing other changes to annotation types, such as making an annotation type repeatable (§9.6.3), but these have no effect on the linkage of binaries by the Java Virtual Machine. Rather, such changes affect the behavior of reflective APIs that manipulate annotations. The documentation of these APIs specifies their behavior when various changes are made to the underlying annotation types.
+Annotation interfaces behave exactly like any other interface. Adding or deleting an element from an annotation interface is analogous to adding or deleting a method. There are important considerations governing other changes to annotation interfaces, such as making an annotation interface repeatable (§9.6.3), but these have no effect on the linkage of binaries by the Java Virtual Machine. Rather, such changes affect the behavior of reflective APIs in the Java SE Platform that reveal the presence of annotations in a program. The API specifications describe their behavior when various changes are made to the underlying annotation interfaces (§1.4).
 
-Adding or removing annotations has no effect on the correct linkage of the binary representations of programs in the Java programming language.
+Adding or deleting annotations has no effect on the correct linkage of the binary representations of programs in the Java programming language.

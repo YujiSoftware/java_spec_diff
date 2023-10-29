@@ -299,7 +299,7 @@ If a try or catch block in a try-finally or try-catch-finally statement complete
 
 If a finally clause is executed because of abrupt completion of a try block and the finally clause itself completes abruptly, then the reason for the abrupt completion of the try block is discarded and the new reason for abrupt completion is propagated from there.
 
-The exact rules for abrupt completion and for the catching of exceptions are specified in detail with the specification of each statement in §14 (Blocks and Statements) and for expressions in §15 (Expressions) (especially §15.6).
+The exact rules for abrupt completion and for the catching of exceptions are specified in detail with the specification of each statement in §14 (Blocks, Statements, and Patterns) and for expressions in §15 (Expressions) (especially §15.6).
 
 Example 11.3-1. Throwing and Catching Exceptions
 

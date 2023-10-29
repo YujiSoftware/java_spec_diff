@@ -1,13 +1,13 @@
-Chapter 14. Blocks and Statements
+Chapter 14. Blocks, Statements, and Patterns
 
 Table of Contents
 
 14.1. Normal and Abrupt Completion of Statements
 14.2. Blocks
-14.3. Local Class Declarations
-14.4. Local Variable Declaration Statements
+14.3. Local Class and Interface Declarations
+14.4. Local Variable Declarations
 14.4.1. Local Variable Declarators and Types
-14.4.2. Execution of Local Variable Declarations
+14.4.2. Local Variable Declaration Statements
 14.5. Statements
 14.6. The Empty Statement
 14.7. Labeled Statements
@@ -43,6 +43,9 @@ Table of Contents
 14.20.3.2. Extended try-with-resources
 14.21. The yield Statement
 14.22. Unreachable Statements
+14.30. Patterns
+14.30.1. Kinds of Patterns
+14.30.2. Pattern Matching
 
 The sequence of execution of a program is controlled by statements, which are executed for their effect and do not have values.
 
@@ -50,11 +53,15 @@ Some statements contain other statements as part of their structure; such other 
 
 The first section of this chapter discusses the distinction between normal and abrupt completion of statements (§14.1). Most of the remaining sections explain the various kinds of statements, describing in detail both their normal behavior and any special treatment of abrupt completion.
 
-Blocks are explained first (§14.2), followed by local class declarations (§14.3) and local variable declaration statements (§14.4).
+Blocks are explained first (§14.2), both because they can appear in certain places where statements are not allowed and because one kind of statement, a local variable declaration statement (§14.4.2), must be immediately contained by a block. Local class and interface declarations (§14.3) are not statements, but must also be immediately contained by a block.
 
-Next a grammatical maneuver that sidesteps the familiar "dangling else" problem (§14.5) is explained.
+Next, a grammatical maneuver that sidesteps the familiar "dangling else" problem (§14.5) is explained.
 
-The last section (§14.22) of this chapter addresses the requirement that every statement be reachable in a certain technical sense.
+Every statement must be reachable in a certain technical sense (§14.22).
+
+Sections 14.23-14.29 are unused to allow for the introduction of new kinds of statements in future.
+
+The last section of this chapter (§14.30) describes patterns, which are used within statements and expressions to conditionally declare and initialize local variables. A pattern gives a concise description of how one value, such as an object, could be composed from one or more other values, denoted by variable declarations. Pattern matching attempts to extract one or more values from a given value, as if to decompose it, and uses the extracted values to initialize the variables declared by the pattern.
 
 14.1. Normal and Abrupt Completion of Statements
 
@@ -96,30 +103,55 @@ Unless otherwise specified, a statement completes normally if all expressions it
 
 14.2. Blocks
 
-A block is a sequence of statements, local class declarations, and local variable declaration statements within braces.
+A block is a sequence of statements, local variable declaration statements, and local class and interface declarations within braces.
 
 Block:
 { [BlockStatements] }
 BlockStatements:
 BlockStatement {BlockStatement}
 BlockStatement:
+LocalClassOrInterfaceDeclaration
 LocalVariableDeclarationStatement
-ClassDeclaration
 Statement
 
 A block is executed by executing each of the local variable declaration statements and other statements in order from first to last (left to right). If all of these block statements complete normally, then the block completes normally. If any of these block statements complete abruptly for any reason, then the block completes abruptly for the same reason.
 
-14.3. Local Class Declarations
+14.3. Local Class and Interface Declarations
 
-A local class is a nested class (§8 (Classes)) that is not a member of any class and that has a name (§6.2, §6.7).
+A local class is a nested class (§8 (Classes)) whose declaration is immediately contained by a block (§14.2).
 
-All local classes are inner classes (§8.1.3).
+A local interface is a nested interface (§9 (Interfaces)) whose declaration is immediately contained by a block.
 
-Every local class declaration statement is immediately contained by a block (§14.2). Local class declaration statements may be intermixed freely with other kinds of statements in the block.
+LocalClassOrInterfaceDeclaration:
+ClassDeclaration
+NormalInterfaceDeclaration
 
-It is a compile-time error if a local class declaration contains any of the access modifiers public, protected, or private (§6.6), or the modifier static (§8.1.1).
+The following productions are shown here for convenience:
 
-The scope and shadowing of a local class declaration is specified in §6.3 and §6.4.
+ClassDeclaration:
+NormalClassDeclaration
+EnumDeclaration
+RecordDeclaration
+NormalClassDeclaration:
+{ClassModifier} class TypeIdentifier [TypeParameters] [ClassExtends] [ClassImplements] ClassBody
+EnumDeclaration:
+{ClassModifier} enum TypeIdentifier [ClassImplements] EnumBody
+NormalInterfaceDeclaration:
+{InterfaceModifier} interface TypeIdentifier [TypeParameters] [InterfaceExtends] InterfaceBody
+
+Local class and interface declarations may be intermixed freely with statements (including local variable declaration statements) in the containing block.
+
+It is a compile-time error if a local class or interface declaration has any of the access modifiers public, protected, or private (§6.6).
+
+It is a compile-time error if a local class or interface declaration has the modifier static (§8.1.1).
+
+A local class may be a normal class (§8.1), an enum class (§8.9), or a record class (§8.10). Every local normal class is an inner class (§8.1.3). Every local enum class and local record class is implicitly static (§8.1.1.4), and therefore not an inner class.
+
+A local interface may be a normal interface (§9.1), but not an annotation interface (§9.6). Every local interface is implicitly static (§9.1.1.3).
+
+Like an anonymous class (§15.9.5), a local class or interface is not a member of any package, class, or interface (§7.1, §8.5). Unlike an anonymous class, a local class or interface has a simple name (§6.2, §6.7).
+
+The scope and shadowing of a local class or interface declaration is specified in §6.3 and §6.4.
 
 Example 14.3-1. Local Class Declarations
 
@@ -159,12 +191,10 @@ The final declaration of Local is legal, since it occurs outside the scope of an
 
 
 
-14.4. Local Variable Declaration Statements
+14.4. Local Variable Declarations
 
-A local variable declaration statement declares one or more local variable names.
+A local variable declaration declares and optionally initializes one or more local variables (§4.12.3).
 
-LocalVariableDeclarationStatement:
-LocalVariableDeclaration ;
 LocalVariableDeclaration:
 {VariableModifier} LocalVariableType VariableDeclaratorList
 LocalVariableType:
@@ -188,11 +218,21 @@ VariableInitializer:
 Expression
 ArrayInitializer
 
-Every local variable declaration statement is immediately contained by a block. Local variable declaration statements may be intermixed freely with other kinds of statements in the block.
+A local variable declaration can appear in the following locations:
 
-Apart from local variable declaration statements, a local variable can be declared by the header of a basic for statement (§14.14.1), an enhanced for statement (§14.14.2), or a try-with-resources statement (§14.20.3).
+a local variable declaration statement in a block (§14.4.2)
 
-The rules for annotation modifiers on a local variable declaration are specified in §9.7.4 and §9.7.5.
+the header of a basic for statement (§14.14.1)
+
+the header of an enhanced for statement (§14.14.2)
+
+the resource specification of a try-with-resources statement (§14.20.3)
+
+a pattern (§14.30.1)
+
+The rules concerning annotation modifiers for a local variable declaration are specified in §9.7.4 and §9.7.5.
+
+If the keyword final appears as a modifier for a local variable declaration, then the local variable is a final variable (§4.12.4).
 
 It is a compile-time error if final appears more than once as a modifier for a local variable declaration.
 
@@ -234,15 +274,21 @@ If the optional keyword final appears at the start of the declaration, the varia
 
 The declared type of a local variable is determined as follows:
 
-If LocalVariableType is an UnannType, and no bracket pairs appear in UnannType or VariableDeclaratorId, then UnannType denotes the type of the local variable.
+If the LocalVariableType is UnannType, and no bracket pairs appear in UnannType or VariableDeclaratorId, then the type of the local variable is denoted by UnannType.
 
-If LocalVariableType is an UnannType, and bracket pairs appear in UnannType or VariableDeclaratorId, then the type of the local variable is specified by §10.2.
+If the LocalVariableType is UnannType, and bracket pairs appear in UnannType or VariableDeclaratorId, then the type of the local variable is specified by §10.2.
 
-If LocalVariableType is var, then let T be the type of the initializer expression when treated as if it did not appear in an assignment context, and were thus a standalone expression (§15.2). The type of the local variable is the upward projection of T with respect to all synthetic type variables mentioned by T (§4.10.5).
+If the LocalVariableType is var, then let T be the type of the initializer expression when treated as if it did not appear in an assignment context, and were thus a standalone expression (§15.2). The type of the local variable is the upward projection of T with respect to all synthetic type variables mentioned by T (§4.10.5).
 
 It is a compile-time error if T is the null type.
 
 Because the initializer is treated as if it did not appear in an assignment context, an error occurs if it is a lambda expression (§15.27) or a method reference expression (§15.13).
+
+A local variable of type float always contains a value that is an element of the float value set (§4.2.3); similarly, a local variable of type double always contains a value that is an element of the double value set. It is not permitted for a local variable of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a local variable of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
+
+The scope and shadowing of a local variable declaration is specified in §6.3 and §6.4.
+
+References to a local variable from a nested class or interface, or a lambda expression, are restricted, as specified in §6.5.6.1.
 
 Example 14.4.1-1. Type of Local Variables Declared With var
 
@@ -270,11 +316,16 @@ Upward projection is applied to the type of the initializer when determining the
 
 While it would be possible to allow the type of the variable to mention capture variables, by projecting them away we enforce an attractive invariant that the scope of a capture variable is never larger than the statement containing the expression whose type is captured. Informally, capture variables cannot "leak" into subsequent statements.
 
-A local variable of type float always contains a value that is an element of the float value set (§4.2.3); similarly, a local variable of type double always contains a value that is an element of the double value set. It is not permitted for a local variable of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a local variable of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
+14.4.2. Local Variable Declaration Statements
 
-The scope and shadowing of a local variable declaration is specified in §6.3 and §6.4.
+A local variable declaration statement consists of a local variable declaration.
 
-14.4.2. Execution of Local Variable Declarations
+LocalVariableDeclarationStatement:
+LocalVariableDeclaration ;
+
+Every local variable declaration statement is immediately contained by a block, whereas other kinds of statement (§14.5) may be immediately contained by either a block or another statement.
+
+In the containing block, local variable declaration statements may be intermixed freely with other kinds of statements and with local class and interface declarations.
 
 A local variable declaration statement is an executable statement. Every time it is executed, the declarators are processed in order from left to right. If a declarator has an initializer, the initializer is evaluated and its value is assigned to the variable.
 
@@ -282,9 +333,9 @@ If a declarator does not have an initializer, then every reference to the variab
 
 Each initializer (except the first) is evaluated only if evaluation of the preceding initializer completes normally.
 
-Execution of the local variable declaration completes normally only if evaluation of the last initializer completes normally.
+Execution of the local variable declaration statement completes normally only if evaluation of the last initializer completes normally.
 
-If the local variable declaration contains no initializers, then executing it always completes normally.
+If none of the declarators in a local variable declaration statement have an initializer, then executing the statement always completes normally.
 
 14.5. Statements
 
@@ -925,9 +976,11 @@ StatementExpressionList
 StatementExpressionList:
 StatementExpression {, StatementExpression}
 
-The Expression must have type boolean or Boolean, or a compile-time error occurs.
+The type of the Expression must be boolean or Boolean, or a compile-time error occurs.
 
 The scope and shadowing of a local variable declared in the ForInit part of a basic for statement is specified in §6.3 and §6.4.
+
+References to a local variable declared in the ForInit part of a basic for statement from a nested class or interface, or a lambda expression, are restricted, as specified in §6.5.6.1.
 
 14.14.1.1. Initialization of for Statement
 
@@ -937,7 +990,7 @@ If the ForInit code is a list of statement expressions (§14.8), the expressions
 
 If evaluation of any expression completes abruptly for some reason, the for statement completes abruptly for the same reason; any ForInit statement expressions to the right of the one that completed abruptly are not evaluated.
 
-If the ForInit code is a local variable declaration (§14.4), it is executed as if it were a local variable declaration statement appearing in a block.
+If the ForInit code is a local variable declaration (§14.4), it is executed as if it were a local variable declaration statement appearing in a block (§14.4.2).
 
 If execution of the local variable declaration completes abruptly for any reason, the for statement completes abruptly for the same reason.
 
@@ -1006,98 +1059,115 @@ Note that the case of abrupt completion because of a break with a label is handl
 The enhanced for statement has the form:
 
 EnhancedForStatement:
-for ( {VariableModifier} LocalVariableType VariableDeclaratorId : Expression ) Statement
+for ( LocalVariableDeclaration : Expression ) Statement
 EnhancedForStatementNoShortIf:
-for ( {VariableModifier} LocalVariableType VariableDeclaratorId : Expression ) StatementNoShortIf
+for ( LocalVariableDeclaration : Expression ) StatementNoShortIf
 
 The following productions from §4.3, §8.3, §8.4.1, and §14.4 are shown here for convenience:
 
+LocalVariableDeclaration:
+{VariableModifier} LocalVariableType VariableDeclaratorList
 VariableModifier:
 Annotation
 final
 LocalVariableType:
 UnannType
 var
+VariableDeclaratorList:
+VariableDeclarator {, VariableDeclarator}
+VariableDeclarator:
+VariableDeclaratorId [= VariableInitializer]
 VariableDeclaratorId:
 Identifier [Dims]
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-The header of the enhanced for statement declares a local variable, whose name is the identifier given by VariableDeclaratorId.
+The type of the Expression must be an array type (§10.1) or a subtype of the raw type Iterable, or a compile-time error occurs.
 
-If the keyword final appears at the start of the declaration, the variable being declared is a final variable (§4.12.4).
+The header of the enhanced for statement declares a local variable whose name is the identifier given by VariableDeclaratorId. When the enhanced for statement is executed, the local variable is initialized, on each iteration of the loop, to successive elements of the Iterable or the array produced by the expression.
 
-It is a compile-time error if the LocalVariableType is var and the VariableDeclaratorId has one or more bracket pairs.
+The rules for a local variable declared in the header of an enhanced for statement are specified in §14.4, disregarding any rules in that section which apply when the LocalVariableType is var. In addition, all of the following must be true, or a compile-time error occurs:
 
-The type of the Expression must be a subtype of the raw type Iterable or an array type (§10.1), or a compile-time error occurs.
+The VariableDeclaratorList consists of a single VariableDeclarator.
 
-The type of the local variable is determined as follows:
+The VariableDeclarator has no initializer.
 
-If LocalVariableType is an UnannType, and no bracket pairs appear in UnannType or VariableDeclaratorId, then UnannType denotes the type of the local variable.
+The VariableDeclaratorId has no bracket pairs if the LocalVariableType is var.
 
-If LocalVariableType is an UnannType, and bracket pairs appear in UnannType or VariableDeclaratorId, then the type of the local variable is specified by §10.2.
+The scope and shadowing of a local variable declared in the header of an enhanced for statement is specified in §6.3 and §6.4.
 
-If LocalVariableType is var, then let T be derived from the type of the Expression, as follows:
+References to the local variable from a nested class or interface, or a lambda expression, are restricted, as specified in §6.5.6.1.
 
-If the Expression has an array type, then T is the component type of the array type.
+The type T of the local variable declared in the header of the enhanced for statement is determined as follows:
 
-Otherwise, if the Expression has a type that is a subtype of Iterable<X>, for some type X, then T is X.
+If the LocalVariableType is UnannType, and no bracket pairs appear in UnannType or VariableDeclaratorId, then T is the type denoted by UnannType.
 
-Otherwise, the Expression has a type that is a subtype of the raw type Iterable, and T is Object.
+If the LocalVariableType is UnannType, and bracket pairs appear in UnannType or VariableDeclaratorId, then T is specified by §10.2.
 
-The type of the local variable is the upward projection of T with respect to all synthetic type variables mentioned by T (§4.10.5).
+If the LocalVariableType is var, then let R be derived from the type of the Expression, as follows:
 
-The scope and shadowing of the local variable is specified in §6.3 and §6.4.
+If the Expression has an array type, then R is the component type of the array type.
 
-When an enhanced for statement is executed, the local variable is initialized, on each iteration of the loop, to successive elements of the array or Iterable produced by the expression. The precise meaning of the enhanced for statement is given by translation into a basic for statement, as follows:
+Otherwise, if the Expression has a type that is a subtype of Iterable<X>, for some type X, then R is X.
 
-If the type of Expression is a subtype of Iterable, then the translation is as follows.
+Otherwise, the Expression has a type that is a subtype of the raw type Iterable, and R is Object.
 
-If the type of Expression is a subtype of Iterable<X> for some type argument X, then let I be the type java.util.Iterator<X>; otherwise, let I be the raw type java.util.Iterator.
+T is the upward projection of R with respect to all synthetic type variables mentioned by R (§4.10.5).
 
-The enhanced for statement is equivalent to a basic for statement of the form:
+The precise meaning of the enhanced for statement is given by translation into a basic for statement, as follows:
+
+If the type of Expression is a subtype of Iterable, then the basic for statement has this form:
 
 for (I #i = Expression.iterator(); #i.hasNext(); ) {
-    {VariableModifier} TargetType Identifier =
-        (TargetType) #i.next();
+    {VariableModifier} T Identifier = (TargetType) #i.next();
     Statement
 }
     
 
+where:
+
+If the type of Expression is a subtype of Iterable<X> for some type argument X, then I is the type java.util.Iterator<X>. Otherwise, I is the raw type java.util.Iterator.
+
 #i is an automatically generated identifier that is distinct from any other identifiers (automatically generated or otherwise) that are in scope (§6.3) at the point where the enhanced for statement occurs.
 
-If the declared type of the local variable in the header of the enhanced for statement is a reference type, then TargetType is that declared type; otherwise, TargetType is the upper bound of the capture conversion (§5.1.10) of the type argument of I, or Object if I is raw.
+{VariableModifier} is as given in the header of the enhanced for statement.
+
+T is the type of the local variable as determined above.
+
+If T is a reference type, then TargetType is T. Otherwise, TargetType is the upper bound of the capture conversion (§5.1.10) of the type argument of I, or Object if I is raw.
+
+Otherwise, the Expression necessarily has an array type, S[], and the basic for statement has this form:
+
+S[] #a = Expression;
+L1: L2: ... Lm:
+for (int #i = 0; #i < #a.length; #i++) {
+    {VariableModifier} T Identifier = #a[#i];
+    Statement
+}
+    
+
+where:
+
+L1 ... Lm is the (possibly empty) sequence of labels immediately preceding the enhanced for statement.
+
+#a and #i are automatically generated identifiers that are distinct from any other identifiers (automatically generated or otherwise) that are in scope at the point where the enhanced for statement occurs.
+
+{VariableModifier} is as given in the header of the enhanced for statement.
+
+T is the type of the local variable as determined above.
 
 For example, this code:
 
 List<? extends Integer> l = ...
 for (float i : l) ...
-      
+
 
 will be translated to:
 
 for (Iterator<Integer> #i = l.iterator(); #i.hasNext(); ) {
     float #i0 = (Integer)#i.next();
     ...
-      
 
-Otherwise, the Expression necessarily has an array type, T[].
-
-Let L1 ... Lm be the (possibly empty) sequence of labels immediately preceding the enhanced for statement.
-
-The enhanced for statement is equivalent to a basic for statement of the form:
-
-T[] #a = Expression;
-L1: L2: ... Lm:
-for (int #i = 0; #i < #a.length; #i++) {
-    {VariableModifier} TargetType Identifier = #a[#i];
-    Statement
-}
-    
-
-#a and #i are automatically generated identifiers that are distinct from any other identifiers (automatically generated or otherwise) that are in scope at the point where the enhanced for statement occurs.
-
-TargetType is the declared type of the local variable in the header of the enhanced for statement.
 
 Example 14.14-1. Enhanced for And Arrays
 
@@ -1457,6 +1527,8 @@ It is a compile-time error if final appears more than once as a modifier for an 
 
 The scope and shadowing of an exception parameter is specified in §6.3 and §6.4.
 
+References to an exception parameter from a nested class or interface, or a lambda expression, are restricted, as specified in §6.5.6.1.
+
 An exception parameter may denote its type as either a single class type or a union of two or more class types (called alternatives). The alternatives of a union are syntactically separated by |.
 
 A catch clause whose exception parameter is denoted as a single class type is called a uni-catch clause.
@@ -1641,7 +1713,7 @@ The problem with mandating a backtrace is that an exception can be created at on
 
 14.20.3. try-with-resources
 
-A try-with-resources statement is parameterized with local variables (known as resources) that are initialized before execution of the try block and closed automatically, in the reverse order from which they were initialized, after execution of the try block. catch clauses and a finally clause are often unnecessary when resources are closed automatically.
+A try-with-resources statement is parameterized with variables (known as resources) that are initialized before execution of the try block and closed automatically, in the reverse order from which they were initialized, after execution of the try block. catch clauses and a finally clause are often unnecessary when resources are closed automatically.
 
 TryWithResourcesStatement:
 try ResourceSpecification Block [Catches] [Finally]
@@ -1650,44 +1722,61 @@ ResourceSpecification:
 ResourceList:
 Resource {; Resource}
 Resource:
-{VariableModifier} LocalVariableType Identifier = Expression
+LocalVariableDeclaration
 VariableAccess
 VariableAccess:
 ExpressionName
 FieldAccess
 
-The following productions from §8.4.1 and §14.4 are shown here for convenience:
+The following productions from §4.3, §8.3, §8.4.1, and §14.4 are shown here for convenience:
 
+LocalVariableDeclaration:
+{VariableModifier} LocalVariableType VariableDeclaratorList
 VariableModifier:
 Annotation
 final
 LocalVariableType:
 UnannType
 var
+VariableDeclaratorList:
+VariableDeclarator {, VariableDeclarator}
+VariableDeclarator:
+VariableDeclaratorId [= VariableInitializer]
+VariableDeclaratorId:
+Identifier [Dims]
+Dims:
+{Annotation} [ ] {{Annotation} [ ]}
+VariableInitializer:
+Expression
+ArrayInitializer
 
-A resource specification uses variables to denote resources for the try statement, either by declaring local variables with initializer expressions or by referring to suitable existing variables. An existing variable is referred to by either an expression name (§6.5.6) or a field access expression (§15.11).
+See §8.3 for UnannType.
 
-It is a compile-time error for a resource specification to declare two variables with the same name.
+The resource specification denotes the resources of the try-with-resources statement, either by declaring local variables with initializer expressions or by referring to existing variables. An existing variable is referred to by an expression name (§6.5.6) or a field access expression (§15.11).
 
-It is a compile-time error if final appears more than once as a modifier for each variable declared in a resource specification.
+The rules for a local variable declared in a resource specification are specified in §14.4. In addition, all of the following must be true, or a compile-time error occurs:
 
-A variable declared in a resource specification is implicitly declared final if it is not explicitly declared final (§4.12.4).
+The VariableDeclaratorList consists of a single VariableDeclarator.
 
-A resource denoted by an expression name or field access expression must be a final or effectively final variable that is definitely assigned before the try-with-resources statement (§16 (Definite Assignment)), or a compile-time error occurs.
+The VariableDeclarator has an initializer.
 
-It is a compile-time error if the LocalVariableType of a variable declared in a resource specification is var and the initializer expression contains a reference to the variable.
+The VariableDeclaratorId has no bracket pairs.
 
-The type of a variable declared in a resource specification is determined as follows:
+The scope and shadowing of a local variable declared in a resource specification is specified in §6.3 and §6.4.
 
-If LocalVariableType is an UnannType, then UnannType denotes the type of the local variable.
+References to the local variable from a nested class or interface, or a lambda expression, are restricted, as specified in §6.5.6.1.
 
-If LocalVariableType is var, then let T be the type of the initializer expression when treated as if it did not appear in an assignment context, and were thus a standalone expression (§15.2). The type of the local variable is the upward projection of T with respect to all synthetic type variables mentioned by T (§4.10.5).
+The type of a local variable declared in a resource specification is specified in §14.4.1.
 
-It is a compile-time error if T is the null type.
+The type of a local variable declared in a resource specification, or the type of an existing variable referred to in a resource specification, must be a subtype of AutoCloseable, or a compile-time error occurs.
 
-The type of a variable declared or referred to as a resource in a resource specification must be a subtype of AutoCloseable, or a compile-time error occurs.
+It is a compile-time error for a resource specification to declare two local variables with the same name.
 
-The scope and shadowing of a variable declared in a resource specification is specified in §6.3 and §6.4.
+Resources are final, in that:
+
+A local variable declared in a resource specification is implicitly declared final if it is not explicitly declared final (§4.12.4).
+
+An existing variable referred to in a resource specification must be a final or effectively final variable that is definitely assigned before the try-with-resources statement (§16 (Definite Assignment)), or a compile-time error occurs.
 
 Resources are initialized in left-to-right order. If a resource fails to initialize (that is, its initializer expression throws an exception), then all resources initialized so far by the try-with-resources statement are closed. If all resources initialize successfully, the try block executes as normal and then all non-null resources of the try-with-resources statement are closed.
 
@@ -1880,9 +1969,9 @@ whether a statement is reachable
 
 whether a statement can complete normally
 
-The definitions here allow a statement to complete normally only if it is reachable.
+The rules allow a statement to complete normally only if it is reachable.
 
-To shorten the description of the rules, the customary abbreviation "iff" is used to mean "if and only if."
+Two further technical terms are used:
 
 A reachable break statement exits a statement if, within the break target, either there are no try statements whose try blocks contain the break statement, or there are try statements whose try blocks contain the break statement and all finally clauses of those try statements can complete normally.
 
@@ -2119,3 +2208,75 @@ interface Flags {
 ensuring that this value is not a constant expression. Similar idioms exist for the other primitive types.
 
 
+
+14.30. Patterns
+
+A pattern describes a test that can be performed on a value. Patterns appear as operands of statements and expressions, which provide the values to be tested. Patterns declare local variables, known as pattern variables.
+
+The process of testing a value against a pattern is known as pattern matching. If a value successfully matches a pattern, then the process of pattern matching initializes the pattern variable declared by the pattern.
+
+Pattern variables are only in scope (§6.3) where pattern matching succeeds and thus the pattern variables will have been initialized. It is not possible to use a pattern variable that has not been initialized.
+
+14.30.1. Kinds of Patterns
+
+A type pattern is used to test whether a value is an instance of the type appearing in the pattern.
+
+Pattern:
+TypePattern
+TypePattern:
+LocalVariableDeclaration
+
+The following productions from §4.3, §8.3, §8.4.1, and §14.4 are shown here for convenience:
+
+LocalVariableDeclaration:
+{VariableModifier} LocalVariableType VariableDeclaratorList
+VariableModifier:
+Annotation
+final
+LocalVariableType:
+UnannType
+var
+VariableDeclaratorList:
+VariableDeclarator {, VariableDeclarator}
+VariableDeclarator:
+VariableDeclaratorId [= VariableInitializer]
+VariableDeclaratorId:
+Identifier [Dims]
+Dims:
+{Annotation} [ ] {{Annotation} [ ]}
+
+See §8.3 for UnannType.
+
+A type pattern declares one local variable, known as a pattern variable. The Identifier in the local variable declaration specifies the name of the pattern variable.
+
+The rules for a local variable declared in a type pattern are specified in §14.4. In addition, all of the following must be true, or a compile-time error occurs:
+
+The LocalVariableType denotes a reference type (and furthermore is not var).
+
+The VariableDeclaratorList consists of a single VariableDeclarator.
+
+The VariableDeclarator has no initializer.
+
+The VariableDeclaratorId has no bracket pairs.
+
+The type of a pattern variable is the reference type denoted by LocalVariableType.
+
+The type of a type pattern is the type of its pattern variable.
+
+An expression e is compatible with a pattern of type T if e is downcast compatible with T (§5.5).
+
+Compatibility of an expression with a pattern is used by the instanceof pattern match operator (§15.20.2).
+
+14.30.2. Pattern Matching
+
+Pattern matching is the process of testing a value against a pattern at run time. Pattern matching is distinct from statement execution (§14.1) and expression evaluation (§15.1).
+
+The rules for determining whether a value matches a pattern, and for initializing pattern variables, are as follows:
+
+A value v that is not the null reference matches a type pattern of type T if v can be cast to T without raising a ClassCastException; and does not match otherwise.
+
+If v matches, then the pattern variable declared by the type pattern is initialized to v.
+
+If v does not match, then the pattern variable declared by the type pattern is not initialized.
+
+There is no rule to cover a value that is the null reference. This is because the solitary construct that performs pattern matching, the instanceof pattern match operator (§15.20.2), only does so when a value is not the null reference. It is possible that future versions of the Java programming language will allow pattern matching in other expressions and statements.

@@ -79,13 +79,13 @@ String[] aas    = { "array", "of", "String", };
 
 
 
-The array type of a variable depends on the bracket pairs that may appear as part of the type at the beginning of a variable declaration, or as part of the declarator for the variable, or both. Specifically, in the declaration of a field, formal parameter, or local variable (§8.3, §8.4.1, §9.3, §9.4, §14.4.1, §14.14.2, §15.27.1), the array type of the variable is denoted by:
+The array type of a variable depends on the bracket pairs that may appear as part of the type at the beginning of a variable declaration, or as part of the declarator for the variable, or both. Specifically, in the declaration of a field, formal parameter, local variable, or record component (§8.3, §8.4.1, §9.3, §9.4, §14.4.1, §14.14.2, §15.27.1, §8.10.1), the array type of the variable is denoted by:
 
 the element type that appears at the beginning of the declaration; then,
 
-any bracket pairs that follow the variable's Identifier in the declarator (not applicable for a variable arity parameter); then,
+any bracket pairs that follow the variable's Identifier in the declarator (not applicable for a variable arity parameter or a record component); then,
 
-any bracket pairs that appear in the type at the beginning of the declaration (where the ellipsis of a variable arity parameter is treated as a bracket pair).
+any bracket pairs that appear in the type at the beginning of the declaration (where the ellipsis of a variable arity parameter or variable arity record component is treated as a bracket pair).
 
 The return type of a method (§8.4.5) may be an array type. The precise array type depends on the bracket pairs that may appear as part of the type at the beginning of the method declaration, or after the method's formal parameter list, or both. The array type is denoted by:
 

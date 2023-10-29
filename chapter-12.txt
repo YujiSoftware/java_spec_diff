@@ -9,9 +9,10 @@ Table of Contents
 12.1.4. Invoke Test.main
 12.2. Loading of Classes and Interfaces
 12.2.1. The Loading Process
+12.2.2. Class Loader Consistency
 12.3. Linking of Classes and Interfaces
 12.3.1. Verification of the Binary Representation
-12.3.2. Preparation of a Class or Interface Type
+12.3.2. Preparation of a Class or Interface
 12.3.3. Resolution of Symbolic References
 12.4. Initialization of Classes and Interfaces
 12.4.1. When Initialization Occurs
@@ -33,7 +34,7 @@ The chapter continues with a specification of the procedures for creation of new
 
 The Java Virtual Machine starts execution by invoking the method main of some specified class or interface, passing it a single argument which is an array of strings. In the examples in this specification, this first class is typically called Test.
 
-The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 15 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 16 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 The manner in which the initial class or interface is specified to the Java Virtual Machine is beyond the scope of this specification, but it is typical, in host environments that use command lines, for the fully qualified name of the class or interface to be specified as a command line argument and for following command line arguments to be used as strings to be provided as the argument to the method main.
 
@@ -52,7 +53,7 @@ The initial attempt to execute the method main of class Test discovers that the 
 
 12.1.2. Link Test: Verify, Prepare, (Optionally) Resolve
 
-After Test is loaded, it must be initialized before main can be invoked. And Test, like all (class or interface) types, must be linked before it is initialized. Linking involves verification, preparation, and (optionally) resolution. Linking is described further in §12.3.
+After Test is loaded, it must be initialized before main can be invoked. And Test, like all classes and interfaces, must be linked before it is initialized. Linking involves verification, preparation, and (optionally) resolution. Linking is described further in §12.3.
 
 Verification checks that the loaded representation of Test is well-formed, with a proper symbol table. Verification also checks that the code that implements Test obeys the semantic requirements of the Java programming language and the Java Virtual Machine. If a problem is detected during verification, then an error is thrown. Verification is described further in §12.3.1.
 
@@ -76,7 +77,7 @@ Initialization consists of execution of any class variable initializers and stat
 
 If class Test has another class Super as its superclass, then Super must be initialized before Test. This requires loading, verifying, and preparing Super if this has not already been done and, depending on the implementation, may also involve resolving the symbolic references from Super and so on, recursively.
 
-Initialization may thus cause loading, linking, and initialization errors, including such errors involving other types.
+Initialization may thus cause loading, linking, and initialization errors, including such errors involving other classes and interfaces.
 
 The initialization process is described further in §12.4.
 
@@ -96,31 +97,21 @@ public static void main(String... args)
 
 12.2. Loading of Classes and Interfaces
 
-Loading refers to the process of finding the binary form of a class or interface type with a particular name, perhaps by computing it on the fly, but more typically by retrieving a binary representation previously computed from source code by a Java compiler, and constructing, from that binary form, a Class object to represent the class or interface.
+Loading refers to the process of finding the binary form of a class or interface with a particular name, perhaps by computing it on the fly, but more typically by retrieving a binary representation previously computed from source code by a Java compiler, and constructing, from that binary form, a Class object to represent the class or interface (§1.4).
 
-The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 15 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 16 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
-The binary format of a class or interface is normally the class file format described in The Java Virtual Machine Specification, Java SE 15 Edition cited above, but other formats are possible, provided they meet the requirements specified in §13.1. The method defineClass of class ClassLoader may be used to construct Class objects from binary representations in the class file format.
-
-Well-behaved class loaders maintain these properties:
-
-Given the same name, a good class loader should always return the same class object.
-
-If a class loader L1 delegates loading of a class C to another loader L2, then for any type T that occurs as the direct superclass or a direct superinterface of C, or as the type of a field in C, or as the type of a formal parameter of a method or constructor in C, or as a return type of a method in C, L1 and L2 should return the same Class object.
-
-A malicious class loader could violate these properties. However, it could not undermine the security of the type system, because the Java Virtual Machine guards against this.
-
-For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 15 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
+The binary representation of a class or interface is normally the class file format described in Chapter 4 of The Java Virtual Machine Specification, Java SE 16 Edition, but other representations are possible, provided they meet the requirements specified in §13.1.
 
 12.2.1. The Loading Process
 
-The loading process is implemented by the class ClassLoader and its subclasses.
+The loading process is implemented by the class ClassLoader and its subclasses. The method defineClass of class ClassLoader may be used to construct Class objects from binary representations in the class file format (§1.4).
 
 Different subclasses of ClassLoader may implement different loading policies. In particular, a class loader may cache binary representations of classes and interfaces, prefetch them based on expected usage, or load a group of related classes together. These activities may not be completely transparent to a running application if, for example, a newly compiled version of a class is not found because an older version is cached by a class loader. It is the responsibility of a class loader, however, to reflect loading errors only at points in the program where they could have arisen without prefetching or group loading.
 
-If an error occurs during class loading, then an instance of one of the following subclasses of class LinkageError will be thrown at any point in the program that (directly or indirectly) uses the type:
+If an error occurs during class loading, then an instance of one of the following subclasses of class LinkageError will be thrown at any point in the program that (directly or indirectly) uses the requested class or interface:
 
-ClassCircularityError: A class or interface could not be loaded because it would be its own superclass or superinterface (§8.1.4, §9.1.3, §13.4.4).
+ClassCircularityError: A requested class or interface could not be loaded because it would be its own superclass or superinterface (§8.1.4, §9.1.3, §13.4.4).
 
 ClassFormatError: The binary data that purports to specify a requested compiled class or interface is malformed.
 
@@ -128,13 +119,25 @@ NoClassDefFoundError: No definition for a requested class or interface could be 
 
 Because loading involves the allocation of new data structures, it may fail with an OutOfMemoryError.
 
+12.2.2. Class Loader Consistency
+
+Well-behaved class loaders maintain these properties:
+
+Given the same name, a class loader should always return the same Class object.
+
+If a class loader L1 delegates loading of a class or interface C to another loader L2, then for any class or interface D that is named by the direct superclass type of C, or by a direct superinterface type of C, or by the type of a field in C, or by the type of a formal parameter of a method or constructor in C, or by the return type of a method in C, L1 and L2 should return the same Class object for D.
+
+A malicious class loader could violate these properties. However, it could not undermine the security of the type system, because the Java Virtual Machine guards against this.
+
+For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 16 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
+
 12.3. Linking of Classes and Interfaces
 
-Linking is the process of taking a binary form of a class or interface type and combining it into the run-time state of the Java Virtual Machine, so that it can be executed. A class or interface type is always loaded before it is linked.
+Linking is the process of taking a binary form of a class or interface and combining it into the run-time state of the Java Virtual Machine, so that it can be executed. A class or interface is always loaded before it is linked.
+
+The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 16 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 Three different activities are involved in linking: verification, preparation, and resolution of symbolic references.
-
-The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 15 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 This specification allows an implementation flexibility as to when linking activities (and, because of recursion, loading) take place, provided that the semantics of the Java programming language are respected, that a class or interface is completely verified and prepared before it is initialized, and that errors detected during linkage are thrown at a point in the program where some action is taken by the program that might require linkage to the class or interface involved in the error.
 
@@ -144,13 +147,13 @@ Because linking involves the allocation of new data structures, it may fail with
 
 12.3.1. Verification of the Binary Representation
 
-Verification ensures that the binary representation of a class or interface is structurally correct. For example, it checks that every instruction has a valid operation code; that every branch instruction branches to the start of some other instruction, rather than into the middle of an instruction; that every method is provided with a structurally correct signature; and that every instruction obeys the type discipline of the Java Virtual Machine language.
+Verification ensures that the binary representation of a class or interface is structurally correct. For example, it checks that every instruction has a valid operation code; that every branch instruction branches to the start of some other instruction, rather than into the middle of an instruction; that every method is provided with a structurally correct signature; and that every instruction obeys the type discipline of the Java Virtual Machine.
 
 If an error occurs during verification, then an instance of the following subclass of class LinkageError will be thrown at the point in the program that caused the class to be verified:
 
 VerifyError: The binary definition for a class or interface failed to pass a set of required checks to verify that it obeys the semantics of the Java Virtual Machine language and that it cannot violate the integrity of the Java Virtual Machine. (See §13.4.2, §13.4.4, §13.4.9, and §13.4.17 for some examples.)
 
-12.3.2. Preparation of a Class or Interface Type
+12.3.2. Preparation of a Class or Interface
 
 Preparation involves creating the static fields (class variables and constants) for a class or interface and initializing such fields to the default values (§4.12.5). This does not require the execution of any source code; explicit initializers for static fields are executed as part of initialization (§12.4), not preparation.
 
@@ -158,11 +161,11 @@ Implementations of the Java Virtual Machine may precompute additional data struc
 
 12.3.3. Resolution of Symbolic References
 
-The binary representation of a class or interface references other classes and interfaces and their fields, methods, and constructors symbolically, using the binary names (§13.1) of the other classes and interfaces (§13.1). For fields and methods, these symbolic references include the name of the class or interface type of which the field or method is a member, as well as the name of the field or method itself, together with appropriate type information.
+The binary representation of a class or interface references other classes and interfaces and their fields, methods, and constructors symbolically, using the binary names (§13.1) of the other classes and interfaces. For fields and methods, these symbolic references include the name of the class or interface of which the field or method is a member, as well as the name of the field or method itself, together with appropriate type information.
 
 Before a symbolic reference can be used it must undergo resolution, wherein a symbolic reference is checked to be correct and, typically, replaced with a direct reference that can be more efficiently processed if the reference is used repeatedly.
 
-If an error occurs during resolution, then an error will be thrown. Most typically, this will be an instance of one of the following subclasses of the class IncompatibleClassChangeError, but it may also be an instance of some other subclass of IncompatibleClassChangeError or even an instance of the class IncompatibleClassChangeError itself. This error may be thrown at any point in the program that uses a symbolic reference to the type, directly or indirectly:
+If an error occurs during resolution, then an error will be thrown. Most typically, this will be an instance of one of the following subclasses of the class IncompatibleClassChangeError, but it may also be an instance of some other subclass of IncompatibleClassChangeError or even an instance of the class IncompatibleClassChangeError itself. This error may be thrown at any point in the program that uses a symbolic reference, directly or indirectly:
 
 IllegalAccessError: A symbolic reference has been encountered that specifies a use or assignment of a field, or invocation of a method, or creation of an instance of a class, to which the code containing the reference does not have access because the field or method was declared with private, protected, or package access (not public), or because the class was not declared public in a package that is exported or opened to the code containing the reference.
 
@@ -190,7 +193,7 @@ Initialization of an interface consists of executing the initializers for fields
 
 12.4.1. When Initialization Occurs
 
-A class or interface type T will be initialized immediately before the first occurrence of any one of the following:
+A class or interface T will be initialized immediately before the first occurrence of any one of the following:
 
 T is a class and an instance of T is created.
 
@@ -210,7 +213,7 @@ A class or interface will not be initialized under any other circumstance.
 
 Note that a compiler may generate synthetic default methods in an interface, that is, default methods that are neither explicitly nor implicitly declared (§13.1). Such methods will trigger the interface's initialization despite the source code giving no indication that the interface should be initialized.
 
-The intent is that a class or interface type has a set of initializers that put it in a consistent state, and that this state is the first state that is observed by other classes. The static initializers and class variable initializers are executed in textual order, and may not refer to class variables declared in the class whose declarations appear textually after the use, even though these class variables are in scope (§8.3.3). This restriction is designed to detect, at compile time, most circular or otherwise malformed initializations.
+The intent is that a class or interface has a set of initializers that put it in a consistent state, and that this state is the first state that is observed by other classes. The static initializers and class variable initializers are executed in textual order, and may not refer to class variables declared in the class whose declarations appear textually after the use, even though these class variables are in scope (§8.3.3). This restriction is designed to detect, at compile time, most circular or otherwise malformed initializations.
 
 The fact that initialization code is unrestricted allows examples to be constructed where the value of a class variable can be observed when it still has its initial default value, before its initializing expression is evaluated, but such examples are rare in practice. (Such examples can be also constructed for instance variable initialization (§12.5).) The full power of the Java programming language is available in these initializers; programmers must exercise some care. This power places an extra burden on code generators, but this burden would arise in any case because the Java programming language is concurrent (§12.4.2).
 
@@ -356,9 +359,9 @@ Acquire LC, label the Class object for C as erroneous, notify all waiting thread
 
 An implementation may optimize this procedure by eliding the lock acquisition in step 1 (and release in step 4/5) when it can determine that the initialization of the class has already completed, provided that, in terms of the memory model, all happens-before orderings that would exist if the lock were acquired, still exist when the optimization is performed.
 
-Code generators need to preserve the points of possible initialization of a class or interface, inserting an invocation of the initialization procedure just described. If this initialization procedure completes normally and the Class object is fully initialized and ready for use, then the invocation of the initialization procedure is no longer necessary and it may be eliminated from the code - for example, by patching it out or otherwise regenerating the code.
+Code generators need to preserve the points of possible initialization of a class or interface, inserting an invocation of the initialization procedure described above. If this initialization procedure completes normally and the Class object is fully initialized and ready for use, then the invocation of the initialization procedure is no longer necessary and it may be eliminated from the code - for example, by patching it out or otherwise regenerating the code.
 
-Compile-time analysis may, in some cases, be able to eliminate many of the checks that a type has been initialized from the generated code, if an initialization order for a group of related types can be determined. Such analysis must, however, fully account for concurrency and for the fact that initialization code is unrestricted.
+Compile-time analysis may, in some cases, be able to eliminate many of the checks that a class or interface has been initialized from the generated code, if an initialization order for a group of related classes and interfaces can be determined. Such analysis must, however, fully account for concurrency and for the fact that initialization code is unrestricted.
 
 12.5. Creation of New Class Instances
 
@@ -372,11 +375,11 @@ Execution of an operation that causes boxing conversion (§5.1.7). Boxing conver
 
 Execution of a string concatenation operator + (§15.18.1) that is not part of a constant expression (§15.29) always creates a new String object to represent the result. String concatenation operators may also create temporary wrapper objects for a value of a primitive type.
 
-Evaluation of a method reference expression (§15.13.3) or a lambda expression (§15.27.4) may require that a new instance of a class that implements a functional interface type be created.
+Evaluation of a method reference expression (§15.13.3) or a lambda expression (§15.27.4) may require that a new instance be created of a class that implements a functional interface type (§9.8).
 
 Each of these situations identifies a particular constructor (§8.8) to be called with specified arguments (possibly none) as part of the class instance creation process.
 
-Whenever a new class instance is created, memory space is allocated for it with room for all the instance variables declared in the class type and all the instance variables declared in each superclass of the class type, including all the instance variables that may be hidden (§8.3).
+Whenever a new class instance is created, memory space is allocated for it with room for all the instance variables declared in the class and all the instance variables declared in each superclass of the class, including all the instance variables that may be hidden (§8.3).
 
 If there is not sufficient space available to allocate memory for the object, then creation of the class instance completes abruptly with an OutOfMemoryError. Otherwise, all the instance variables in the new object, including those declared in superclasses, are initialized to their default values (§4.12.5).
 

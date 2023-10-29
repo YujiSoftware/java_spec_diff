@@ -36,7 +36,7 @@ Table of Contents
 15.11.1. Field Access Using a Primary
 15.11.2. Accessing Superclass Members using super
 15.12. Method Invocation Expressions
-15.12.1. Compile-Time Step 1: Determine Class or Interface to Search
+15.12.1. Compile-Time Step 1: Determine Type to Search
 15.12.2. Compile-Time Step 2: Determine Method Signature
 15.12.2.1. Identify Potentially Applicable Methods
 15.12.2.2. Phase 1: Identify Matching Arity Methods Applicable by Strict Invocation
@@ -77,7 +77,7 @@ Table of Contents
 15.19. Shift Operators
 15.20. Relational Operators
 15.20.1. Numerical Comparison Operators <, <=, >, and >=
-15.20.2. Type Comparison Operator instanceof
+15.20.2. The instanceof Operator
 15.21. Equality Operators
 15.21.1. Numerical Equality Operators == and !=
 15.21.2. Boolean Equality Operators == and !=
@@ -590,7 +590,7 @@ Evaluation of a lexical literal always completes normally.
 
 15.8.2. Class Literals
 
-A class literal is an expression consisting of the name of a class, interface, array, or primitive type, or the pseudo-type void, followed by a '.' and the token class.
+A class literal is an expression consisting of the name of a class, interface, array type, or primitive type, or the pseudo-type void, followed by a '.' and the token class.
 
 ClassLiteral:
 TypeName {[ ]} . class
@@ -598,7 +598,7 @@ NumericType {[ ]} . class
 boolean {[ ]} . class
 void . class
 
-The TypeName must denote a class or interface type that is accessible (§6.6). It is a compile-time error if the TypeName denotes a class or interface type that is not accessible, or denotes a type variable.
+The TypeName must denote a class or interface that is accessible (§6.6). It is a compile-time error if the TypeName denotes a class or interface that is not accessible, or denotes a type variable.
 
 The type of C.class, where C is the name of a class, interface, or array type (§4.3), is Class<C>.
 
@@ -606,13 +606,13 @@ The type of p.class, where p is the name of a primitive type (§4.2), is Class<B
 
 The type of void.class (§8.4.5) is Class<Void>.
 
-A class literal evaluates to the Class object for the named type (or for void) as defined by the defining class loader (§12.2) of the class of the current instance.
+A class literal evaluates to the Class object for the named class, interface, array type, or primitive type (or for void), as defined by the defining class loader (§12.2) of the class of the current instance.
 
 15.8.3. this
 
-The keyword this may be used only in the following contexts:
+The keyword this may be used as an expression in the following contexts:
 
-in the body of an instance method or default method (§8.4.7, §9.4.3)
+in the body of an instance method of a class (§8.4.3.2)
 
 in the body of a constructor of a class (§8.8.7)
 
@@ -620,21 +620,17 @@ in an instance initializer of a class (§8.6)
 
 in the initializer of an instance variable of a class (§8.3.2)
 
-to denote a receiver parameter (§8.4)
+in the body of an instance method of an interface, that is, a default method or a non-static private interface method (§9.4)
 
-If it appears anywhere else, a compile-time error occurs.
+When used as an expression, the keyword this denotes a value that is a reference either to the object for which the instance method was invoked (§15.12), or to the object being constructed. The value denoted by this in a lambda body (§15.27.2) is the same as the value denoted by this in the surrounding context.
 
-The keyword this may be used in a lambda expression only if it is allowed in the context in which the lambda expression appears. Otherwise, a compile-time error occurs.
+The keyword this is also used in explicit constructor invocation statements (§8.8.7.1), and to denote the receiver parameter of a method or constructor (§8.4).
 
-When used as a primary expression, the keyword this denotes a value that is a reference to the object for which the instance method or default method was invoked (§15.12), or to the object being constructed. The value denoted by this in a lambda body is the same as the value denoted by this in the surrounding context.
+It is a compile-time error if a this expression occurs in a static context (§8.1.3).
 
-The keyword this is also used in explicit constructor invocation statements (§8.8.7.1).
+Let C by the innermost enclosing class or interface declaration of a this expression. If C is generic, with type parameters F1,...,Fn, the type of this is C<F1,...,Fn>. Otherwise, the type of this is C.
 
-The type of this is the class or interface type T within which the keyword this occurs.
-
-Default methods provide the unique ability to access this inside an interface. (All other interface methods are either abstract or static, so provide no access to this.) As a result, it is possible for this to have an interface type.
-
-At run time, the class of the actual object referred to may be T, if T is a class type, or a class that is a subtype of T.
+At run time, the class of the actual object referred to may be C or a subclass of C (§8.1.5.
 
 Example 15.8.3-1. The this Expression
 
@@ -661,13 +657,15 @@ Here, the class IntVector implements a method equals, which compares two vectors
 
 Any lexically enclosing instance (§8.1.3) can be referred to by explicitly qualifying the keyword this.
 
-Let T be the type denoted by TypeName. Let n be an integer such that T is the n'th lexically enclosing type declaration of the class or interface in which the qualified this expression appears.
+Let n be an integer such that TypeName denotes the n'th lexically enclosing class or interface declaration of the class or interface whose declaration immediately encloses the qualified this expression.
 
-The value of an expression of the form TypeName.this is the n'th lexically enclosing instance of this.
+The value of a qualified this expression TypeName.this is the n'th lexically enclosing instance of this.
 
-The type of the expression is T.
+If TypeName denotes a generic class, with type parameters F1,...,, the type of the qualified this expression is TypeName<F1,...,>. Otherwise, the type of the qualified this expression is TypeName.
 
-It is a compile-time error if the expression occurs in a class or interface which is not an inner class of class T or T itself.
+It is a compile-time error if a qualified this expression occurs in a static context (§8.1.3).
+
+It is a compile-time error if the class or interface whose declaration immediately encloses a qualified this expression is not an inner class of TypeName or TypeName itself.
 
 15.8.5. Parenthesized Expressions
 
@@ -744,13 +742,13 @@ We say that a class is instantiated when an instance of the class is created by 
 
 If ClassOrInterfaceTypeToInstantiate ends with TypeArguments (rather than <>), then ClassOrInterfaceTypeToInstantiate must denote a well-formed parameterized type (§4.5), or a compile-time error occurs.
 
-If ClassOrInterfaceTypeToInstantiate ends with <>, but the type denoted by the Identifier in ClassOrInterfaceTypeToInstantiate is not generic, then a compile-time error occurs.
+If ClassOrInterfaceTypeToInstantiate ends with <>, but the class or interface denoted by the Identifier in ClassOrInterfaceTypeToInstantiate is not generic, then a compile-time error occurs.
 
 If the class instance creation expression ends in a class body, then the class being instantiated is an anonymous class. Then:
 
 If the class instance creation expression is unqualified, then:
 
-The Identifier in ClassOrInterfaceTypeToInstantiate must denote either a class that is accessible, non-final, and not an enum type, or an interface that is accessible (§6.6). Otherwise a compile-time error occurs.
+The Identifier in ClassOrInterfaceTypeToInstantiate must denote either a class that is accessible, non-final, and not an enum class, or an interface that is accessible. Otherwise, a compile-time error occurs.
 
 If the Identifier in ClassOrInterfaceTypeToInstantiate denotes a class, C, then an anonymous direct subclass of C is declared. If TypeArguments is present, then C has type arguments given by TypeArguments; if <> is present, then C will have its type arguments inferred in §15.9.3; otherwise, C has no type arguments. The body of the subclass is the ClassBody given in the class instance creation expression. The class being instantiated is the anonymous subclass.
 
@@ -758,7 +756,7 @@ If the Identifier in ClassOrInterfaceTypeToInstantiate denotes an interface, I, 
 
 If the class instance creation expression is qualified, then:
 
-The Identifier in ClassOrInterfaceTypeToInstantiate must unambiguously denote an inner class that is accessible, non-final, not an enum type, and a member of the compile-time type of the Primary expression or the ExpressionName. Otherwise, a compile-time error occurs.
+The Identifier in ClassOrInterfaceTypeToInstantiate must unambiguously denote an inner class that is accessible, non-final, not an enum class, and a member of the compile-time type of the Primary expression or the ExpressionName. Otherwise, a compile-time error occurs.
 
 Let the Identifier in ClassOrInterfaceTypeToInstantiate denote a class, C. An anonymous direct subclass of C is declared. If TypeArguments is present, then C has type arguments given by TypeArguments; if <> is present, then C will have its type arguments inferred in §15.9.3; otherwise, C has no type arguments. The body of the subclass is the ClassBody given in the class instance creation expression. The class being instantiated is the anonymous subclass.
 
@@ -766,13 +764,13 @@ If a class instance creation expression does not declare an anonymous class, the
 
 If the class instance creation expression is unqualified, then:
 
-The Identifier in ClassOrInterfaceTypeToInstantiate must denote a class that is accessible, non-abstract, and not an enum type. Otherwise, a compile-time error occurs.
+The Identifier in ClassOrInterfaceTypeToInstantiate must denote a class that is accessible, non-abstract, and not an enum class. Otherwise, a compile-time error occurs.
 
 The class being instantiated is specified by the Identifier in ClassOrInterfaceTypeToInstantiate. If TypeArguments is present, then the class has type arguments given by TypeArguments; if <> is present, then the class will have its type arguments inferred in §15.9.3; otherwise, the class has no type arguments.
 
 If the class instance creation expression is qualified, then:
 
-The ClassOrInterfaceTypeToInstantiate must unambiguously denote an inner class that is accessible, non-abstract, not an enum type, and a member of the compile-time type of the Primary expression or the ExpressionName.
+The ClassOrInterfaceTypeToInstantiate must unambiguously denote an inner class that is accessible, non-abstract, not an enum class, and a member of the compile-time type of the Primary expression or the ExpressionName.
 
 The class being instantiated is specified by the Identifier in ClassOrInterfaceTypeToInstantiate. If TypeArguments is present, then the class has type arguments given by TypeArguments; if <> is present, then the class will have its type arguments inferred in §15.9.3; otherwise, the class has no type arguments.
 
@@ -786,13 +784,17 @@ If the class instance creation expression occurs in a static context, then i has
 
 Otherwise, the immediately enclosing instance of i is this.
 
-If C is a local class, then:
+If C is an inner local class, then:
 
 If C occurs in a static context, then i has no immediately enclosing instance.
 
 Otherwise, if the class instance creation expression occurs in a static context, then a compile-time error occurs.
 
-Otherwise, let O be the immediately enclosing class of C. Let n be an integer such that O is the n'th lexically enclosing type declaration of the class in which the class instance creation expression appears.
+Otherwise, let O be the immediately enclosing class or interface declaration of C, and let U be the immediately enclosing class or interface declaration of the class instance creation expression.
+
+If U is not an inner class of O or O itself, then a compile-time error occurs.
+
+Let n be an integer such that O is the n'th lexically enclosing class or interface declaration of U.
 
 The immediately enclosing instance of i is the n'th lexically enclosing instance of this.
 
@@ -802,23 +804,31 @@ If the class instance creation expression is unqualified, then:
 
 If the class instance creation expression occurs in a static context, then a compile-time error occurs.
 
-Otherwise, if C is a member of a class enclosing the class in which the class instance creation expression appears, then let O be the immediately enclosing class of which C is a member. Let n be an integer such that O is the n'th lexically enclosing type declaration of the class in which the class instance creation expression appears.
+Otherwise, if C is not a member of any class whose declaration lexically encloses the class instance creation expression, then a compile-time error occurs.
+
+Otherwise, let O be the innermost enclosing class declaration of which C is a member, and let U be the immediately enclosing class or interface declaration of the class instance creation expression.
+
+If U is not an inner class of O or O itself, then a compile-time error occurs.
+
+Let n be an integer such that O is the n'th lexically enclosing class or interface declaration of U
 
 The immediately enclosing instance of i is the n'th lexically enclosing instance of this.
-
-Otherwise, a compile-time error occurs.
 
 If the class instance creation expression is qualified, then the immediately enclosing instance of i is the object that is the value of the Primary expression or the ExpressionName.
 
 If C is an anonymous class, and its direct superclass S is an inner class, then i may have an immediately enclosing instance with respect to S, determined as follows:
 
-If S is a local class, then:
+If S is an inner local class, then:
 
 If S occurs in a static context, then i has no immediately enclosing instance with respect to S.
 
 Otherwise, if the class instance creation expression occurs in a static context, then a compile-time error occurs.
 
-Otherwise, let O be the immediately enclosing type declaration of S. Let n be an integer such that O is the n'th lexically enclosing type declaration of the class in which the class instance creation expression appears.
+Otherwise, let O be the immediately enclosing class or interface declaration of S, and let U be the immediately enclosing class or interface declaration of the class instance creation expression.
+
+If U is not an inner class of O or O itself, then a compile-time error occurs.
+
+Let n be an integer such that O is the n'th lexically enclosing class or interface declaration of U.
 
 The immediately enclosing instance of i with respect to S is the n'th lexically enclosing instance of this.
 
@@ -828,7 +838,13 @@ If the class instance creation expression is unqualified, then:
 
 If the class instance creation expression occurs in a static context, then a compile-time error occurs.
 
-Otherwise, if S is a member of a class enclosing the class in which the class instance creation expression appears, then let O be the immediately enclosing class of which S is a member. Let n be an integer such that O is the n'th lexically enclosing type declaration of the class in which the class instance creation expression appears.
+Otherwise, if S is not a member of any class whose declaration encloses the class instance creation expression, then a compile-time error occurs.
+
+Otherwise, let O be the innermost enclosing class declaration of which S is a member, and let U be the immediately enclosing class or interface declaration of the class instance creation expression.
+
+If U is not an inner class of O or O itself, then a compile-time error occurs.
+
+Let n be an integer such that O is the n'th lexically enclosing class or interface declaration of U.
 
 The immediately enclosing instance of i with respect to S is the n'th lexically enclosing instance of this.
 
@@ -868,13 +884,13 @@ Otherwise, the return type corresponding to the chosen constructor is T.
 
 If C is an anonymous class, then:
 
-The process specified in §15.12.2, modified to handle constructors, is used to choose one of the constructors of the direct superclass of C and determine its throws clause.
+The process specified in §15.12.2, modified to handle constructors, is used to choose one of the constructors of the direct superclass type of C and determine its throws clause.
 
-If there is no unique most-specific constructor in the direct superclass of C that is both applicable and accessible, then a compile-time error occurs (as in method invocations).
+If there is no unique most-specific constructor in the direct superclass type of C that is both applicable and accessible, then a compile-time error occurs (as in method invocations).
 
-Otherwise, C's anonymous constructor is chosen as the constructor of C (§15.9.5.1). Its body consists of an explicit constructor invocation (§8.8.7.1) of the constructor chosen in the direct superclass of C.
+Otherwise, C's anonymous constructor is chosen as the constructor of C (§15.9.5.1). Its body consists of an explicit constructor invocation (§8.8.7.1) of the constructor chosen in the direct superclass type of C.
 
-The throws clause of the chosen constructor includes the exceptions in the throws clause of the constructor chosen in the direct superclass of C.
+The throws clause of the chosen constructor includes the exceptions in the throws clause of the constructor chosen in the direct superclass type of C.
 
 The return type corresponding to the chosen constructor is the anonymous class type.
 
@@ -882,7 +898,7 @@ If the class instance creation expression uses <>, then:
 
 If C is not an anonymous class, let D be the same as C. If C is an anonymous class, let D be the superclass or superinterface of C named by the class instance creation expression.
 
-If D is a class, let c1...cn be the constructors of class D. If D is an interface, let c1...cn be a singleton list (n = 1) containing the zero-argument constructor of class Object.
+If D is a class, let c1...cn be the constructors of class D. If D is an interface, let c1...cn be a singleton list (n = 1) containing the zero-argument constructor of the class Object.
 
 A list of methods m1...mn is defined for the purpose of overload resolution and type argument inference. For all j (1 ≤ j ≤ n), mj is defined in terms of cj as follows:
 
@@ -928,9 +944,9 @@ If the class instance creation expression is a poly expression, then its compati
 
 Testing for compatibility with a target type may occur multiple times before making a final determination of the class instance creation expression's target type and the return type corresponding to the chosen constructor. For example, an enclosing method invocation expression may require testing the class instance creation expression for compatibility with different methods' formal parameter types.
 
-If C is an anonymous class, then its superclass or superinterface (§15.9.5) is the return type determined for mj (§15.12.2.6).
+If C is an anonymous class, then its direct superclass type or direct superinterface type is the return type determined for mj (§15.12.2.6).
 
-It is a compile-time error if the superclass or superinterface, or any subexpression therein ("subexpression" includes type arguments of parameterized types, bounds of wildcard type arguments, and element types of array types, but excludes bounds of type variables), has one of the following forms:
+It is a compile-time error if the direct superclass type or direct superinterface type, or any subexpression therein ("subexpression" includes type arguments of parameterized types, bounds of wildcard type arguments, and element types of array types, but excludes bounds of type variables), has one of the following forms:
 
 A type variable that was not declared as a type parameter (such as a type variable produced by capture conversion).
 
@@ -952,11 +968,11 @@ First, if the class instance creation expression is a qualified class instance c
 
 Next, space is allocated for the new class instance. If there is insufficient space to allocate the object, evaluation of the class instance creation expression completes abruptly by throwing an OutOfMemoryError.
 
-The new object contains new instances of all the fields declared in the specified class type and all its superclasses. As each new field instance is created, it is initialized to its default value (§4.12.5).
+The new object contains new instances of all the fields declared in the specified class and all its superclasses. As each new field instance is created, it is initialized to its default value (§4.12.5).
 
 Next, the actual arguments to the constructor are evaluated, left-to-right. If any of the argument evaluations completes abruptly, any argument expressions to its right are not evaluated, and the class instance creation expression completes abruptly for the same reason.
 
-Next, the selected constructor of the specified class type is invoked. This results in invoking at least one constructor for each superclass of the class type. This process can be directed by explicit constructor invocation statements (§8.8.7.1) and is specified in detail in §12.5.
+Next, the selected constructor of the specified class is invoked. This results in invoking at least one constructor for each superclass of the class. This process can be directed by explicit constructor invocation statements (§8.8.7.1) and is specified in detail in §12.5.
 
 The value of a class instance creation expression is a reference to the newly created object of the specified class. Every time the expression is evaluated, a fresh object is created.
 
@@ -1001,19 +1017,27 @@ Compare this to the treatment of array creation expressions, for which the out-o
 
 15.9.5. Anonymous Class Declarations
 
-An anonymous class declaration is automatically derived from a class instance creation expression by the Java compiler.
+An anonymous class is implicitly declared by a class instance creation expression or by an enum constant that ends with a class body (§8.9.1).
 
 An anonymous class is never abstract (§8.1.1.1).
 
-An anonymous class is never final (§8.1.1.2).
+An anonymous class declared by a class instance creation expression is never final (§8.1.1.2).
 
-The fact that an anonymous class is not final is relevant in casting, in particular the narrowing reference conversion allowed for the cast operator (§5.5). It is also of interest in subclassing, in that it is impossible to declare a subclass of an anonymous class, despite an anonymous class being non-final, because an anonymous class cannot be named by an extends clause (§8.1.4).
+An anonymous class declared by an enum constant is always final.
 
-An anonymous class is always an inner class (§8.1.3); it is never static (§8.1.1, §8.5.1).
+An anonymous class being non-final is relevant in casting, in particular the narrowing reference conversion allowed for the cast operator (§5.5). On the other hand, it is not relevant to subclassing, because it is impossible to declare a subclass of an anonymous class (an anonymous class cannot be named by an extends clause) despite the anonymous class being non-final.
 
-The superclass or superinterface of an anonymous class is given by the class instance creation expression (§15.9.1), with type arguments inferred as necessary while choosing a constructor (§15.9.3).
+An anonymous class is always an inner class (§8.1.3).
 
-If the class instance creation expression uses <> with an anonymous class, then for all non-private methods declared in the anonymous class body, it is as if the method declaration is annotated with @Override (§9.6.4.4).
+Like a local class or interface (§14.3), an anonymous class is not a member of any package, class, or interface (§7.1, §8.5).
+
+The direct superclass type or direct superinterface type of an anonymous class declared by a class instance creation expression is given by the expression (§15.9.1), with type arguments inferred as necessary while choosing a constructor (§15.9.3). If a direct superinterface type is given, the direct superclass type is Object.
+
+The direct superclass type of an anonymous class declared by an enum constant is the type of the declaring enum class.
+
+The ClassBody of the class instance creation expression or enum constant declares fields (§8.3), methods (§8.4), member classes (§8.5), member interfaces (§9.1.1.3), instance initializers (§8.6), and static initializers (§8.7) of the anonymous class. The constructor of an anonymous class is always implicit (§15.9.5.1).
+
+If a class instance creation expression with a ClassBody uses a diamond (<>) for the type arguments of the class to be instantiated, then for all non-private methods declared in the ClassBody, it is as if the method declaration is annotated with @Override (§9.6.4.4).
 
 When <> is used, the inferred type arguments may not be as anticipated by the programmer. Consequently, the supertype of the anonymous class may not be as anticipated, and methods declared in the anonymous class may not override supertype methods as intended. Treating such methods as if annotated with @Override (if they are not explicitly annotated with @Override) helps avoid silently incorrect programs.
 
@@ -1021,23 +1045,23 @@ When <> is used, the inferred type arguments may not be as anticipated by the pr
 
 An anonymous class cannot have an explicitly declared constructor. Instead, an anonymous constructor is implicitly declared for an anonymous class. The form of the anonymous constructor for an anonymous class C with direct superclass S is as follows:
 
-If S is not an inner class, or if S is a local class that occurs in a static context, then the anonymous constructor has one formal parameter for each actual argument to the class instance creation expression in which C is declared.
+If S is not an inner class, or if S is a local class that occurs in a static context, then the anonymous constructor has one formal parameter for each actual argument to the class instance creation expression or enum constant that declares C.
 
-The actual arguments to the class instance creation expression are used to determine a constructor cs of S, as specified by §15.9.3. The type of each formal parameter of the anonymous constructor must be identical to the corresponding formal parameter of cs.
+The actual arguments to the class instance creation expression or enum constant are used to determine a constructor x of S, as specified in §15.9.3. The type of each formal parameter of the anonymous constructor is made identical to the corresponding formal parameter of x.
 
-The constructor body consists of an explicit constructor invocation (§8.8.7.1) of the form super(...), where the actual arguments are the formal parameters of the constructor, in the order they were declared. The superclass constructor to be invoked is cs.
+The anonymous constructor body consists of an explicit constructor invocation (§8.8.7.1) of the form super(...), where the actual arguments are the formal parameters of the anonymous constructor, in the order they were declared. The superclass constructor to be invoked is x.
 
-Otherwise, the first formal parameter of the constructor of C represents the value of the immediately enclosing instance of i with respect to S (§15.9.2, §15.9.3). The type of this parameter is the class type that immediately encloses the declaration of S.
+Otherwise, the first formal parameter of the anonymous constructor represents the value of the immediately enclosing instance of i with respect to S (§15.9.2). The type of this parameter is the class type that immediately encloses the declaration of S.
 
-The constructor has an additional formal parameter for each actual argument to the class instance creation expression that declared the anonymous class. The n'th formal parameter e corresponds to the n-1'th actual argument.
+The anonymous constructor has an additional formal parameter for each actual argument to the class instance creation expression that declared the anonymous class. The n'th formal parameter corresponds to the n-1'th actual argument.
 
-The actual arguments to the class instance creation expression are used to determine a constructor cs of S, as specified by §15.9.3. The type of each formal parameter of the anonymous constructor must be identical to the corresponding formal parameter of cs.
+The actual arguments to the class instance creation expression are used to determine a constructor x of S, as specified in §15.9.3. The type of each formal parameter of the anonymous constructor is made identical to the corresponding formal parameter of x.
 
-The constructor body consists of an explicit constructor invocation (§8.8.7.1) of the form o.super(...), where o is the first formal parameter of the constructor, and the actual arguments are the subsequent formal parameters of the constructor, in the order they were declared. The superclass constructor to be invoked is cs
+The anonymous constructor body consists of an explicit constructor invocation of the form o.super(...), where o is the first formal parameter of the anonymous constructor, and the actual arguments are the subsequent formal parameters of the constructor, in the order they were declared. The superclass constructor to be invoked is x.
 
-In all cases, the throws clause of an anonymous constructor must list all the checked exceptions thrown by the explicit superclass constructor invocation statement contained within the anonymous constructor, as specified in §15.9.3, and all checked exceptions thrown by any instance initializers or instance variable initializers of the anonymous class.
+In all cases, the throws clause of an anonymous constructor lists all the checked exceptions thrown by the explicit constructor invocation statement contained in the anonymous constructor, as specified in §15.9.3, and all checked exceptions thrown by any instance initializers or instance variable initializers of the anonymous class.
 
-Note that it is possible for the signature of the anonymous constructor to refer to an inaccessible type (for example, if such a type occurred in the signature of the superclass constructor cs). This does not, in itself, cause any errors at either compile-time or run-time.
+Note that it is possible for the signature of the anonymous constructor to refer to an inaccessible type (for example, if such a type occurred in the signature of the superclass constructor x). This does not, in itself, cause any errors at either compile-time or run-time.
 
 15.10. Array Creation and Access Expressions
 15.10.1. Array Creation Expressions
@@ -1508,11 +1532,19 @@ The form super.Identifier refers to the field named Identifier of the current ob
 
 The form T.super.Identifier refers to the field named Identifier of the lexically enclosing instance corresponding to T, but with that instance viewed as an instance of the superclass of T.
 
-The forms using the keyword super are valid only in an instance method, instance initializer, or constructor of a class, or in the initializer of an instance variable of a class. If they appear anywhere else, a compile-time error occurs.
+The forms using the keyword super may be used in the locations within a class declaration that allow the keyword this as an expression (§15.8.3).
 
-These are exactly the same situations in which the keyword this may be used in a class declaration (§15.8.3).
+It is a compile-time error if a field access expression using the keyword super appears in a static context (§8.1.3).
 
-It is a compile-time error if the forms using the keyword super appear in the declaration of class Object, since Object has no superclass.
+For a field access expression of the form super.Identifier:
+
+It is a compile-time error if the immediately enclosing class or interface declaration of the field access expression is the class Object or an interface.
+
+For a field access expression of the form T.super.Identifier:
+
+It is a compile-time error if T is the class Object or an interface.
+
+Let U be the immediately enclosing class or interface declaration of the field access expression. It is a compile-time error if U is not an inner class of T or T itself.
 
 Suppose that a field access expression super.f appears within class C, and the immediate superclass of C is class S. If f in S is accessible from class C (§6.6), then super.f is treated as if it had been the expression this.f in the body of class S. Otherwise, a compile-time error occurs.
 
@@ -1521,8 +1553,6 @@ Thus, super.f can access the field f that is accessible in class S, even if that
 Suppose that a field access expression T.super.f appears within class C, and the immediate superclass of the class denoted by T is a class whose fully qualified name is S. If f in S is accessible from C, then T.super.f is treated as if it had been the expression this.f in the body of class S. Otherwise, a compile-time error occurs.
 
 Thus, T.super.f can access the field f that is accessible in class S, even if that field is hidden by a declaration of a field f in class T.
-
-It is a compile-time error if the current class is not an inner class of class T or T itself.
 
 Example 15.11.2-1. The super Expression
 
@@ -1593,51 +1623,53 @@ The method to be invoked, as determined by the following subsections, is generic
 
 Otherwise, the method invocation expression is a standalone expression.
 
-15.12.1. Compile-Time Step 1: Determine Class or Interface to Search
+15.12.1. Compile-Time Step 1: Determine Type to Search
 
-The first step in processing a method invocation at compile time is to figure out the name of the method to be invoked and which class or interface to search for definitions of methods of that name.
+The first step in processing a method invocation at compile time is to figure out the name of the method to be invoked and which type to search for definitions of methods of that name.
 
 The name of the method is specified by the MethodName or Identifier which immediately precedes the left parenthesis of the MethodInvocation.
 
-For the class or interface to search, there are six cases to consider, depending on the form that precedes the left parenthesis of the MethodInvocation:
+For the type to search, there are six cases to consider, depending on the form that precedes the left parenthesis of the MethodInvocation:
 
 If the form is MethodName, that is, just an Identifier, then:
 
 If the Identifier appears in the scope of a method declaration with that name (§6.3, §6.4.1), then:
 
-If there is an enclosing type declaration of which that method is a member, let T be the innermost such type declaration. The class or interface to search is T.
+If there is an enclosing class or interface declaration of which that method is a member, let E be the innermost such class or interface declaration. The type to search is the type of E.this (§15.8.4).
 
 This search policy is called the "comb rule". It effectively looks for methods in a nested class's superclass hierarchy before looking for methods in an enclosing class and its superclass hierarchy. See §6.5.7.1 for an example.
 
-Otherwise, the method declaration may be in scope due to one or more single-static-import or static-import-on-demand declarations. There is no class or interface to search, as the method to be invoked is determined later (§15.12.2.1).
+Otherwise, the method declaration may be in scope due to one or more single-static-import or static-import-on-demand declarations. There is no type to search, as the method to be invoked is determined later (§15.12.2.1).
 
-If the form is TypeName . [TypeArguments] Identifier, then the type to search is the type denoted by TypeName.
+If the form is TypeName . [TypeArguments] Identifier, then the type to search is the (possibly raw) type denoted by TypeName.
 
-If the form is ExpressionName . [TypeArguments] Identifier, then the class or interface to search is the declared type T of the variable denoted by ExpressionName if T is a class or interface type, or the upper bound of T if T is a type variable.
+If the form is ExpressionName . [TypeArguments] Identifier, then the type to search is the declared type T of the variable denoted by ExpressionName if T is a class or interface type, or the upper bound of T if T is a type variable.
 
-If the form is Primary . [TypeArguments] Identifier, then let T be the type of the Primary expression. The class or interface to search is T if T is a class or interface type, or the upper bound of T if T is a type variable.
+If the form is Primary . [TypeArguments] Identifier, then let T be the type of the Primary expression. The type to search is T if T is a class or interface type, or the upper bound of T if T is a type variable.
 
 It is a compile-time error if T is not a reference type.
 
-If the form is super . [TypeArguments] Identifier, then the class to search is the superclass of the class whose declaration contains the method invocation.
+If the form is super . [TypeArguments] Identifier, then the type to search is the direct superclass type of the class whose declaration contains the method invocation.
 
-Let T be the type declaration immediately enclosing the method invocation. It is a compile-time error if T is the class Object or T is an interface.
+Let E be the class or interface declaration immediately enclosing the method invocation. It is a compile-time error if E is the class Object or an interface.
 
 If the form is TypeName . super . [TypeArguments] Identifier, then:
 
 It is a compile-time error if TypeName denotes neither a class nor an interface.
 
-If TypeName denote a class, C, then the class to search is the superclass of C.
+If TypeName denote a class, C, then the type to search is the direct superclass type of C.
 
-It is a compile-time error if C is not a lexically enclosing type declaration of the current class, or if C is the class Object.
+It is a compile-time error if C is not a lexically enclosing class declaration of the method invocation, or if C is the class Object.
 
-Let T be the type declaration immediately enclosing the method invocation. It is a compile-time error if T is the class Object.
+Let E be the class or interface declaration immediately enclosing the method invocation. It is a compile-time error if E is the class Object.
 
-Otherwise, TypeName denotes the interface to be searched, I.
+Otherwise, TypeName denotes an interface, I.
 
-Let T be the type declaration immediately enclosing the method invocation. It is a compile-time error if I is not a direct superinterface of T, or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
+Let E be the class or interface declaration immediately enclosing the method invocation. It is a compile-time error if I is not a direct superinterface of E, or if there exists some other direct superclass or direct superinterface of E, J, such that J is a subclass or subinterface of I.
 
-The TypeName . super syntax is overloaded: traditionally, the TypeName refers to a lexically enclosing type declaration which is a class, and the target is the superclass of this class, as if the invocation were an unqualified super in the lexically enclosing type declaration.
+The type to search is the type of I that is a direct superinterface type of E.
+
+The TypeName . super syntax is overloaded: traditionally, the TypeName refers to a lexically enclosing class declaration, and the target is the superclass of this class, as if the invocation were an unqualified super in the lexically enclosing class declaration.
 
 class Superclass {
     void foo() { System.out.println("Hi"); }
@@ -1669,7 +1701,7 @@ class Subclass2 implements Superinterface {
 }
 
 
-No syntax supports a combination of these forms, that is, invoking a superinterface method of a lexically enclosing type declaration which is a class, as if the invocation were of the form InterfaceName . super in the lexically enclosing type declaration.
+No syntax supports a combination of these forms, that is, invoking a superinterface method of a lexically enclosing class declaration, as if the invocation were of the form InterfaceName . super in the lexically enclosing class declaration.
 
 class Subclass3 implements Superinterface {
     void foo() { throw new UnsupportedOperationException(); }
@@ -1682,7 +1714,7 @@ class Subclass3 implements Superinterface {
 }
 
 
-A workaround is to introduce a private method in the lexically enclosing type declaration, that performs the interface super call.
+A workaround is to introduce a private method in the lexically enclosing class declaration, that performs the interface super call.
 
 15.12.2. Compile-Time Step 2: Determine Method Signature
 
@@ -1706,7 +1738,7 @@ The third phase allows overloading to be combined with variable arity methods, b
 
 A method is applicable if it is applicable by one of strict invocation (the first phase, §15.12.2.2), loose invocation (the second phase, §15.12.2.3), or variable arity invocation (the third phase, §15.12.2.4). Deciding whether a method is applicable will, in the case of generic methods (§8.4.4), require an analysis of the type arguments. Type arguments may be passed explicitly or implicitly; if they are passed implicitly, then bounds of the type arguments must be inferred from the argument expressions (§18 (Type Inference)).
 
-If several applicable methods have been identified during one of the three phases of applicability testing, then the most specific one is chosen, as specified in section §15.12.2.5.
+If several applicable methods have been identified during one of the three phases of applicability testing, then the most specific one is chosen, as specified in §15.12.2.5.
 
 To check for applicability, the types of an invocation's arguments cannot, in general, be inputs to the analysis. This is because:
 
@@ -1929,7 +1961,7 @@ Ideally, source code should be recompiled whenever code that it depends on is ch
 
 15.12.2.1. Identify Potentially Applicable Methods
 
-The class or interface determined by compile-time step 1 (§15.12.1) is searched for all member methods that are potentially applicable to this method invocation; members inherited from superclasses and superinterfaces are included in this search.
+The type determined by compile-time step 1 (§15.12.1) is searched for all member methods that are potentially applicable to this method invocation; members inherited from superclasses and superinterfaces are included in this search.
 
 In addition, if the form of the method invocation expression is MethodName - that is, a single Identifier - then the search for potentially applicable methods also examines all member methods that are imported by single-static-import declarations and static-import-on-demand declarations of the compilation unit where the method invocation occurs (§7.5.3, §7.5.4) and that are not shadowed at the point where the method invocation appears.
 
@@ -2207,7 +2239,7 @@ If the form is MethodName - that is, just an Identifier - and the compile-time d
 
 It is a compile-time error if the method invocation occurs in a static context (§8.1.3).
 
-Otherwise, let C be the immediately enclosing class of which the compile-time declaration is a member. If the method invocation is not directly enclosed by C or an inner class of C, then a compile-time error occurs.
+Otherwise, let T be the class or interface to search (§15.12.1). It is a compile-time error if the innermost enclosing class or interface declaration of the method invocation is neither T nor an inner class of T.
 
 If the form is TypeName . [TypeArguments] Identifier, then the compile-time declaration must be static, or a compile-time error occurs.
 
@@ -2225,9 +2257,9 @@ It is a compile-time error if the compile-time declaration is abstract.
 
 It is a compile-time error if the method invocation occurs in a static context.
 
-If TypeName denotes a class C, then if the method invocation is not directly enclosed by C or an inner class of C, a compile-time error occurs.
+If TypeName denotes a class C, then if the class or interface declaration immediately enclosing the method invocation is not C or an inner class of C, a compile-time error occurs.
 
-If TypeName denotes an interface, let T be the type declaration immediately enclosing the method invocation. A compile-time error occurs if there exists a method, distinct from the compile-time declaration, that overrides (§9.4.1) the compile-time declaration from a direct superclass or direct superinterface of T.
+If TypeName denotes an interface, let E be the class or interface declaration immediately enclosing the method invocation. A compile-time error occurs if there exists a method, distinct from the compile-time declaration, that overrides (§9.4.1) the compile-time declaration from a direct superclass or direct superinterface of E.
 
 In the case that a superinterface overrides a method declared in a grandparent interface, this rule prevents the child interface from "skipping" the override by simply adding the grandparent to its list of direct superinterfaces. The appropriate way to access functionality of a grandparent is through the direct superinterface, and only if that interface chooses to expose the desired behavior. (Alternately, the programmer is free to define an additional superinterface that exposes the desired behavior with a super method invocation.)
 
@@ -2265,7 +2297,7 @@ The following compile-time information is then associated with the method invoca
 
 The name of the method.
 
-The qualifying type of the method invocation (§13.1).
+The qualifying class or interface of the method invocation (§13.1).
 
 The number of parameters and the compile-time parameter types, in order.
 
@@ -2277,7 +2309,7 @@ If the compile-time declaration has the static modifier, then the invocation mod
 
 Otherwise, if the part of the method invocation before the left parenthesis is of the form super . Identifier or of the form TypeName . super . Identifier, then the invocation mode is super.
 
-Otherwise, if the qualifying type of the method invocation is an interface, then the invocation mode is interface.
+Otherwise, if the qualifying class or interface of the method invocation is in fact an interface, then the invocation mode is interface.
 
 Otherwise, the invocation mode is virtual.
 
@@ -2386,43 +2418,43 @@ In this section:
 
 Let D be the class containing the method invocation.
 
-Let T be the qualifying type of the method invocation (§13.1).
+Let Q be the qualifying class or interface of the method invocation (§13.1).
 
 Let m be the name of the method as determined at compile time (§15.12.3).
 
-An implementation of the Java programming language must ensure, as part of linkage, that the type T is accessible:
+An implementation of the Java programming language must ensure, as part of linkage, that the class or interface Q is accessible:
 
-If T is in the same package as D, then T is accessible.
+If Q is in the same package as D, then Q is accessible.
 
-If T is in a different package than D, and their packages are in the same module, and T is public or protected, then T is accessible.
+If Q is in a different package than D, and their packages are in the same module, and Q is public or protected, then Q is accessible.
 
-If T is in a different package than D, and their packages are in different modules, and T's module exports T's package to D's module, and T is public or protected, then T is accessible.
+If Q is in a different package than D, and their packages are in different modules, and Q's module exports Q's package to D's module, and Q is public or protected, then Q is accessible.
 
-If T is protected, it is necessarily a nested type, so at compile time, its accessibility is affected by the accessibility of types enclosing its declaration. However, during linkage, its accessibility is not affected by the accessibility of types enclosing its declaration. Moreover, during linkage, a protected T is as accessible as a public T. These discrepancies between access control at compile time (§6.6) and access control at run time are due to limitations in the Java Virtual Machine.
+If Q is protected, it is necessarily a nested class or interface, so at compile time, its accessibility is affected by the accessibility of classes and interfaces enclosing its declaration. However, during linkage, its accessibility is not affected by the accessibility of classes and interfaces enclosing its declaration. Moreover, during linkage, a protected Q is as accessible as a public Q. These discrepancies between access control at compile time (§6.6) and access control at run time are due to limitations in the Java Virtual Machine.
 
-The implementation must also ensure, during linkage, that the method m can still be found in T or a supertype of T. If m cannot be found, then a NoSuchMethodError (which is a subclass of IncompatibleClassChangeError) occurs. If m can be found, then let C be the type that declares m. The implementation must ensure, during linkage, that the declaration of m in C is accessible to D:
+The implementation must also ensure, during linkage, that the method m can still be found in Q or a superclass or superinterface of Q. If m cannot be found, then a NoSuchMethodError (which is a subclass of IncompatibleClassChangeError) occurs. If m can be found, then let C be the class or interface that declares m. The implementation must ensure, during linkage, that the declaration of m in C is accessible to D:
 
 If m is public, then m is accessible.
 
-If m is protected, then m is accessible iff (i) either D is in the same package as C, or D is a subtype of C or C itself; and (ii) if m is a protected instance method, then T must be a subtype of D or D itself.
+If m is protected, then m is accessible iff (i) either D is in the same package as C, or D is a subclass of C or C itself; and (ii) if m is a protected instance method, then Q must be a subclass of D or D itself.
 
-This is the only place where T is involved in checks for m, because a protected instance method may only be invoked via a qualifying type that aligns with the invoker's type.
+This is the only place where Q is involved in checks for m, because a protected instance method may only be invoked via a qualifying class or interface that aligns with the invoker's type.
 
 If m has package access, then m is accessible iff D is in the same package as C.
 
-If m is private, then m is accessible iff D is C, or D encloses C, or C encloses D, or C and D are both enclosed by a third type.
+If m is private, then m is accessible iff D is C, or D encloses C, or C encloses D, or C and D are both enclosed by a third class or interface.
 
-If either T or m is not accessible, then an IllegalAccessError occurs (§12.3).
+If either Q or m is not accessible, then an IllegalAccessError occurs (§12.3).
 
-If the invocation mode is interface, then the implementation must check that the target reference type still implements the specified interface. If the target reference type does not still implement the interface, then an IncompatibleClassChangeError occurs.
+If the invocation mode is interface, then the implementation must check that the target reference class still implements the specified interface. If the target reference class does not still implement the interface, then an IncompatibleClassChangeError occurs.
 
 15.12.4.4. Locate Method to Invoke
 
 As in the previous section (§15.12.4.3):
 
-Let T be the qualifying type of the method invocation (§13.1).
+Let Q be the qualifying class or interface of the method invocation (§13.1).
 
-Let m be the method found in T or a supertype of T. (Note that m was merely the name of the method in the previous section; here it is the actual declaration.)
+Let m be the method found in Q or a superclass or superinterface of Q. (Note that m was merely the name of the method in the previous section; here it is the actual declaration.)
 
 Let C be the class or interface that declares m.
 
@@ -2434,7 +2466,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 15 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 16 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2442,7 +2474,7 @@ If the method m of class or interface C is private, then it is the method to be 
 
 Otherwise, overriding may occur. A dynamic method lookup, specified below, is used to locate the method to invoke. The lookup procedure starts from class R, the actual run-time class of the target object.
 
-Note that for invocation mode interface, R necessarily implements T; for invocation mode virtual, R is necessarily either T or a subclass of T. If the target object is an array, then R is a "class" representing an array type.
+Note that for invocation mode interface, R necessarily implements Q; for invocation mode virtual, R is necessarily either Q or a subclass of Q. If the target object is an array, then R is a "class" representing an array type.
 
 The procedure for dynamic method lookup is as follows. Let S be the class to search, beginning with R. Then:
 
@@ -2464,7 +2496,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 15 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 16 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 
@@ -2636,21 +2668,21 @@ If TypeArguments is present to the right of ::, then it is a compile-time error 
 
 If a method reference expression has the form ExpressionName :: [TypeArguments] Identifier or Primary :: [TypeArguments] Identifier, it is a compile-time error if the type of the ExpressionName or Primary is not a reference type.
 
-If a method reference expression has the form super :: [TypeArguments] Identifier, let T be the type declaration immediately enclosing the method reference expression. It is a compile-time error if T is the class Object or T is an interface.
+If a method reference expression has the form super :: [TypeArguments] Identifier, let E be the class or interface declaration immediately enclosing the method reference expression. It is a compile-time error if E is the class Object or if E is an interface.
 
 If a method reference expression has the form TypeName . super :: [TypeArguments] Identifier, then:
 
 If TypeName denotes a class, C, then it is a compile-time error if C is not a lexically enclosing class of the current class, or if C is the class Object.
 
-If TypeName denotes an interface, I, then let T be the type declaration immediately enclosing the method reference expression. It is a compile-time error if I is not a direct superinterface of T, or if there exists some other direct superclass or direct superinterface of T, J, such that J is a subtype of I.
+If TypeName denotes an interface, I, then let E be the class or interface declaration immediately enclosing the method reference expression. It is a compile-time error if I is not a direct superinterface of E, or if there exists some other direct superclass or direct superinterface of E, J, such that J is a subclass or subinterface of I.
 
 If TypeName denotes a type variable, then a compile-time error occurs.
 
-If a method reference expression has the form super :: [TypeArguments] Identifier or TypeName . super :: [TypeArguments] Identifier, it is a compile-time error if the expression occurs in a static context.
+If a method reference expression has the form super :: [TypeArguments] Identifier or TypeName . super :: [TypeArguments] Identifier, it is a compile-time error if the expression occurs in a static context (§8.1.3).
 
 If a method reference expression has the form ClassType :: [TypeArguments] new, then:
 
-ClassType must denote a class that is accessible (§6.6), non-abstract, and not an enum type, or a compile-time error occurs.
+ClassType must name a class that is accessible (§6.6), non-abstract, and not an enum class, or a compile-time error occurs.
 
 If ClassType denotes a parameterized type (§4.5), then it is a compile-time error if any of its type arguments are wildcards.
 
@@ -2721,9 +2753,17 @@ If the method reference expression has the form ExpressionName :: [TypeArguments
 
 If the method reference expression has the form ReferenceType :: [TypeArguments] Identifier, the type to search is the result of capture conversion (§5.1.10) applied to ReferenceType.
 
-If the method reference expression has the form super :: [TypeArguments] Identifier, the type to search is the superclass type of the class whose declaration contains the method reference.
+If the method reference expression has the form super :: [TypeArguments] Identifier, the type to search is the superclass type of the immediately enclosing class or interface declaration of the method reference expression.
 
-If the method reference expression has the form TypeName . super :: [TypeArguments] Identifier, then if TypeName denotes a class, the type to search is the superclass type of the named class; otherwise, TypeName denotes an interface, and the corresponding superinterface type of the class or interface whose declaration contains the method reference is the type to search.
+Let T be the class or interface declaration immediately enclosing the method reference expression. It is a compile-time error if T is the class Object or an interface.
+
+If the method reference expression has the form TypeName . super :: [TypeArguments] Identifier, then if TypeName denotes a class, the type to search is the superclass type of the named class; otherwise, TypeName denotes an interface to search.
+
+It is a compile-time error if TypeName is neither a lexically enclosing class or interface declaration of the method reference expression, nor a direct superinterface of the immediately enclosing class or interface declaration of the method reference expression.
+
+It is a compile-time error if TypeName is the class Object.
+
+It is a compile-time error if TypeName is an interface, and there exists some other direct superclass or direct superinterface of the immediately enclosing class or interface declaration of the method reference expression, J, such that J is a subclass or subinterface of TypeName.
 
 For the two other forms (involving :: new), the referenced method is notional and there is no type to search.
 
@@ -2775,7 +2815,11 @@ It is a compile-time error if a method reference expression has the form Referen
 
 It is a compile-time error if the method reference expression has the form super :: [TypeArguments] Identifier or TypeName . super :: [TypeArguments] Identifier, and the compile-time declaration is abstract.
 
-It is a compile-time error if the method reference expression has the form TypeName . super :: [TypeArguments] Identifier, and TypeName denotes an interface, and there exists a method, distinct from the compile-time declaration, that overrides (§8.4.8, §9.4.1) the compile-time declaration from a direct superclass or direct superinterface of the type whose declaration immediately encloses the method reference expression.
+It is a compile-time error if the method reference expression has the form super :: [TypeArguments] Identifier or TypeName . super :: [TypeArguments] Identifier, and the method reference expression occurs in a static context (§8.1.3).
+
+It is a compile-time error if the method reference expression has the form TypeName . super :: [TypeArguments] Identifier, and TypeName denotes a class C, and the immediately enclosing class or interface declaration of the method reference expression is not C or an inner class of C.
+
+It is a compile-time error if the method reference expression has the form TypeName . super :: [TypeArguments] Identifier, and TypeName denotes an interface, and there exists a method, distinct from the compile-time declaration, that overrides the compile-time declaration from a direct superclass or direct superinterface of the class or interface whose declaration immediately encloses the method reference expression (§8.4.8, §9.4.1).
 
 It is a compile-time error if the method reference expression is of the form ClassType :: [TypeArguments] new and a compile-time error would occur when determining an enclosing instance for ClassType as specified in §15.9.2 (treating the method reference expression as if it were an unqualified class instance creation expression).
 
@@ -3638,7 +3682,7 @@ RelationalExpression < ShiftExpression
 RelationalExpression > ShiftExpression
 RelationalExpression <= ShiftExpression
 RelationalExpression >= ShiftExpression
-RelationalExpression instanceof ReferenceType
+InstanceofExpression
 
 The relational operators are syntactically left-associative (they group left-to-right).
 
@@ -3682,17 +3726,47 @@ The value produced by the > operator is true if the value of the left-hand opera
 
 The value produced by the >= operator is true if the value of the left-hand operand is greater than or equal to the value of the right-hand operand, and otherwise is false.
 
-15.20.2. Type Comparison Operator instanceof
+15.20.2. The instanceof Operator
 
-The type of the RelationalExpression operand of the instanceof operator must be a reference type or the null type, or a compile-time error occurs.
+An instanceof expression may perform either type comparison or pattern matching.
 
-It is a compile-time error if the ReferenceType mentioned after the instanceof operator does not denote a reference type that is reifiable (§4.7).
+InstanceofExpression:
+RelationalExpression instanceof ReferenceType
+RelationalExpression instanceof Pattern
 
-If a cast of the RelationalExpression to the ReferenceType would be rejected as a compile-time error (§15.16), then the instanceof relational expression likewise produces a compile-time error. In such a situation, the result of the instanceof expression could never be true.
+If the operand to the right of the instanceof keyword is a ReferenceType, then the instanceof keyword is the type comparison operator.
 
-At run time, the result of the instanceof operator is true if the value of the RelationalExpression is not null and the reference could be cast to the ReferenceType without raising a ClassCastException. Otherwise the result is false.
+If the operand to the right of the instanceof keyword is a Pattern, then the instanceof keyword is the pattern match operator.
 
-Example 15.20.2-1. The instanceof Operator
+The following rules apply when instanceof is the type comparison operator:
+
+The type of the expression RelationalExpression must be a reference type or the null type, or a compile-time error occurs.
+
+The RelationalExpression must be downcast compatible with the ReferenceType (§5.5), or a compile-time error occurs.
+
+At run time, the result of the type comparison operator is determined as follows:
+
+If the value of the RelationalExpression is the null reference (§4.1), then the result is false.
+
+If the value of the RelationalExpression is not the null reference, then the result is true if the value could be cast to the ReferenceType without raising a ClassCastException, and false otherwise.
+
+The following rules apply when instanceof is the pattern match operator:
+
+The type of the expression RelationalExpression must be a reference type or the null type, or a compile-time error occurs.
+
+The RelationalExpression must be compatible with the Pattern (§14.30.1), or a compile-time error occurs.
+
+If the type of the RelationalExpression is a subtype of the type of the Pattern, then a compile-time error occurs.
+
+At run time, the result of the pattern match operator is determined as follows:
+
+If the value of the RelationalExpression is the null reference, then the result is false.
+
+If the value of the RelationalExpression is not the null reference, then the result is true if the value matches the Pattern (§14.30.2), and false otherwise.
+
+A side effect of a true result is that pattern variables declared in Pattern will be initialized.
+
+Example 15.20.2-1. The Type Comparison Operator
 
 class Point   { int x, y; }
 class Element { int atomicNumber; }
@@ -3716,6 +3790,31 @@ class Point extends Element { int x, y; }
 
 
 then the cast would be possible, though it would require a run-time check, and the instanceof expression would then be sensible and valid. The cast (Point)e would never raise an exception because it would not be executed if the value of e could not correctly be cast to type Point.
+
+Prior to Java SE 16, the ReferenceType operand of a type comparison operator was required to be reifiable (§4.7). This prevented the use of a parameterized type unless all its type arguments were wildcards. The requirement was lifted in Java SE 16 to allow more parameterized types to be used. For example, in the following program, it is legal to test whether the method parameter x, with static type List<Integer>, has a more "refined" parameterized type ArrayList<Integer> at run time:
+
+import java.util.ArrayList;
+import java.util.List;
+
+class Test2 {
+    public static void main(String[] args) {
+        List<Integer> x = new ArrayList<Integer>();
+	
+        if (x instanceof ArrayList<Integer>) {  // OK
+            System.out.println("ArrayList of Integers");
+        }
+        if (x instanceof ArrayList<String>) {  // error
+            System.out.println("ArrayList of Strings");
+        }
+        if (x instanceof ArrayList<Object>) {  // error
+            System.out.println("ArrayList of Objects");
+        }
+    }
+}
+
+
+
+The first instanceof expression is legal because there is a casting conversion from List<Integer> to ArrayList<Integer>. However, the second and third instanceof expressions both cause a compile-time error because there is no casting conversion from List<Integer> to ArrayList<String> or ArrayList<Object>.
 
 
 
@@ -4843,13 +4942,15 @@ It is a compile-time error if a lambda expression declares a formal parameter wi
 
 This rule prevents a mix of inferred and declared types in the formal parameters, such as (x, int y) -> BODY or (var x, int y) -> BODY. Note that if all the formal parameters have inferred types, the grammar prevents a mix of identifiers and var parameter specifiers, such as (x, var y) -> BODY or (var x, y) -> BODY.
 
-The rules for annotation modifiers on a formal parameter declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a formal parameter declaration are specified in §9.7.4 and §9.7.5.
 
 It is a compile-time error if final appears more than once as a modifier for a formal parameter declaration.
 
 It is a compile-time error if the LambdaParameterType of a formal parameter is var and the VariableDeclaratorId of the same formal parameter has one or more bracket pairs.
 
-The scope and shadowing of a formal parameter declaration is specified in §6.3 and §6.4.
+The scope and shadowing of a formal parameter is specified in §6.3 and §6.4.
+
+References to a formal parameter from a nested class or interface, or a nested lambda expression, are restricted, as specified in §6.5.6.1.
 
 It is a compile-time error for a lambda expression to declare two formal parameters with the same name. (That is, their declarations mention the same Identifier.)
 
@@ -4910,7 +5011,7 @@ The handling of void/value-compatible and the meaning of names in the body joint
 
 Note that the void/value-compatible definition is not a strictly structural property: "can complete normally" depends on the values of constant expressions, and these may include names that reference constant variables.
 
-Any local variable, formal parameter, or exception parameter used but not declared in a lambda expression must either be declared final or be effectively final (§4.12.4), or a compile-time error occurs where the use is attempted.
+Any local variable, formal parameter, or exception parameter used but not declared in a lambda expression must either be final or effectively final (§4.12.4), as specified in §6.5.6.1.
 
 Any local variable used but not declared in a lambda body must be definitely assigned (§16 (Definite Assignment)) before the lambda body, or a compile-time error occurs.
 

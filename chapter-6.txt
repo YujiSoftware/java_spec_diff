@@ -5,6 +5,22 @@ Table of Contents
 6.1. Declarations
 6.2. Names and Identifiers
 6.3. Scope of a Declaration
+6.3.1. Scope for Pattern Variables in Expressions
+6.3.1.1. Conditional-And Operator &&
+6.3.1.2. Conditional-Or Operator ||
+6.3.1.3. Logical Complement Operator !
+6.3.1.4. Conditional Operator ? :
+6.3.1.5. Pattern Match Operator instanceof
+6.3.1.6. switch Expressions
+6.3.1.7. Parenthesized Expressions
+6.3.2. Scope for Pattern Variables in Statements
+6.3.2.1. Blocks
+6.3.2.2. if Statements
+6.3.2.3. while Statements
+6.3.2.4. do Statements
+6.3.2.5. for Statements
+6.3.2.6. switch Statements
+6.3.2.7. Labeled Statements
 6.4. Shadowing and Obscuring
 6.4.1. Shadowing
 6.4.2. Obscuring
@@ -34,13 +50,13 @@ Table of Contents
 
 Names are used to refer to entities declared in a program.
 
-A declared entity (§6.1) is a package, class type (normal or enum), interface type (normal or annotation type), member (class, interface, field, or method) of a reference type, type parameter (of a class, interface, method or constructor), parameter (to a method, constructor, or exception handler), or local variable.
+A declared entity (§6.1) is a package, a class, an interface, a member (class, interface, field, or method) of a reference type, a type parameter, a formal parameter, an exception parameter, or a local variable.
 
 Names in programs are either simple, consisting of a single identifier, or qualified, consisting of a sequence of identifiers separated by "." tokens (§6.2).
 
 Every declaration that introduces a name has a scope (§6.3), which is the part of the program text within which the declared entity can be referred to by a simple name.
 
-A qualified name N.x may be used to refer to a member of a package or reference type, where N is a simple or qualified name and x is an identifier. If N names a package, then x is a member of that package, which is either a class or interface type or a subpackage. If N names a reference type or a variable of a reference type, then x names a member of that type, which is either a class, an interface, a field, or a method.
+A qualified name N.x may be used to refer to a member of a package or reference type, where N is a simple or qualified name and x is an identifier. If N names a package, then x is a member of that package, which is either a class, an interface, or a subpackage. If N names a reference type or a variable of a reference type, then x names a member of that type, which is either a class, an interface, a field, or a method.
 
 In determining the meaning of a name (§6.5), the context of the occurrence is used to disambiguate among packages, types, variables, and methods with the same name.
 
@@ -58,13 +74,13 @@ A module, declared in a module declaration (§7.7)
 
 A package, declared in a package declaration (§7.4)
 
-An imported type, declared in a single-type-import declaration or a type-import-on-demand declaration (§7.5.1, §7.5.2)
+An imported class or interface, declared in a single-type-import declaration or a type-import-on-demand declaration (§7.5.1, §7.5.2)
 
 An imported static member, declared in a single-static-import declaration or a static-import-on-demand declaration (§7.5.3, §7.5.4)
 
-A class, declared in a class type declaration (§8.1)
+A class, declared by a normal class declaration (§8.1), an enum declaration (§8.9), or a record declaration (§8.10)
 
-An interface, declared in an interface type declaration (§9.1)
+An interface, declared by a normal interface declaration (§9.1) or an annotation interface declaration (§9.6).
 
 A type parameter, declared as part of the declaration of a generic class, interface, method, or constructor (§8.1.2, §9.1.2, §8.4.4, §8.8.4)
 
@@ -74,47 +90,61 @@ A member class (§8.5, §9.5)
 
 A member interface (§8.5, §9.5)
 
-An enum constant (§8.9)
-
 A field, one of the following:
 
-A field declared in a class type or enum type (§8.3, §8.9.2)
+A field declared in a class (§8.3)
 
-A field declared in an interface type or annotation type (§9.3, §9.6.1)
+A field declared in an interface (§9.3)
+
+An implicitly declared field of a class corresponding to an enum constant or a record component
 
 The field length, which is implicitly a member of every array type (§10.7)
 
 A method, one of the following:
 
-A method (abstract or otherwise) declared in a class type or enum type (§8.4, §8.9.2)
+A method (abstract or otherwise) declared in a class (§8.4)
 
-A method (abstract or otherwise) declared in an interface type or annotation type (§9.4, §9.6.1)
+A method (abstract or otherwise) declared in an interface (§9.4)
 
-A parameter, one of the following:
+An implicitly declared accessor method corresponding to a record component
 
-A formal parameter of a method or constructor of a class type or enum type (§8.4.1, §8.8.1, §8.9.2), or of a lambda expression (§15.27.1)
+An enum constant (§8.9.1)
 
-A formal parameter of an abstract method of an interface type or annotation type (§9.4, §9.6.1)
+A record component (§8.10.3)
+
+A formal parameter, one of the following:
+
+A formal parameter of a method of a class or interface (§8.4.1)
+
+A formal parameter of a constructor of a class (§8.8.1)
+
+A formal parameter of a lambda expression (§15.27.1)
 
 An exception parameter of an exception handler declared in a catch clause of a try statement (§14.20)
 
 A local variable, one of the following:
 
-A local variable declared in a block (§14.4)
+A local variable declared by a local variable declaration statement in a block (§14.4.2)
 
-A local variable declared in a for statement (§14.14)
+A local variable declared by a for statement or a try-with-resources statement (§14.14, §14.20.3)
 
-Constructors (§8.8) are also introduced by declarations, but use the name of the class in which they are declared rather than introducing a new name.
+A local variable declared by a pattern (§14.30.1)
 
-The declaration of a type which is not generic (class C ...) declares one entity: a non-generic type (C). A non-generic type is not a raw type, despite the syntactic similarity. In contrast, the declaration of a generic type (class C<T> ... or interface C<T> ...) declares two entities: a generic type (C<T>) and a corresponding non-generic type (C). In this case, the meaning of the term C depends on the context where it appears:
+A local class or interface (§14.3), one of the following:
 
-If genericity is unimportant, as in the non-generic contexts identified below, the identifier C denotes the non-generic type C.
+A local class declared by a normal class declaration
 
-If genericity is important, as in all contexts from §6.5 except the non-generic contexts, the identifier C denotes either:
+A local class declared by an enum declaration
 
-The raw type C which is the erasure (§4.6) of the generic type C<T>; or
+A local class declared by an record declaration
 
-A parameterized type which is a particular parameterization (§4.5) of the generic type C<T>.
+A local interface declared by a normal interface declaration
+
+Constructors (§8.8, §8.10.4) are also introduced by declarations, but use the name of the class in which they are declared rather than introducing a new name.
+
+The declaration of a generic class or interface (class C<T> ... or interface C<T> ...) introduces both a class named C and a family of types: the raw type C, the parameterized type C<Foo>, the parameterized type C<Bar>, etc.
+
+When a reference to C occurs where genericity is unimportant, identified below as one of the non-generic contexts, the reference to C denotes the class or interface C. In other contexts, the reference to C denotes a type, or part of a type, introduced by C.
 
 The 14 non-generic contexts are as follows:
 
@@ -158,7 +188,7 @@ We recommend these conventions for use in all programs written in the Java progr
 
 Package Names and Module Names
 
-Developers should take steps to avoid the possibility of two published packages having the same name by choosing unique package names for packages that are widely distributed. This allows packages to be easily and automatically installed and catalogued. This section specifies a suggested convention for generating such unique package names. Implementations of the Java SE Platform are encouraged to provide automatic support for converting a set of packages from local and casual package names to the unique name format described here.
+Programmers should take steps to avoid the possibility of two published packages having the same name by choosing unique package names for packages that are widely distributed. This allows packages to be easily and automatically installed and catalogued. This section specifies a suggested convention for generating such unique package names. Implementations of the Java SE Platform are encouraged to provide automatic support for converting a set of packages from local and casual package names to the unique name format described here.
 
 If unique package names are not used, then package name conflicts may arise far from the point of creation of either of the conflicting packages. This may create a situation that is difficult or impossible for the user or programmer to resolve. The classes ClassLoader and ModuleLayer can be used to isolate packages with the same name from each other in those cases where the packages will have constrained interactions, but not in a way that is transparent to a naïve program.
 
@@ -200,9 +230,9 @@ The first component of a package or module name must not be the identifier java.
 
 The name of a package or module is not meant to imply where the package or module is stored on the Internet. For example, a package named edu.cmu.cs.bovik.cheese is not necessarily obtainable from the host cmu.edu or cs.cmu.edu or bovik.cs.cmu.edu. The suggested convention for generating unique package and module names is merely a way to piggyback a package and module naming convention on top of an existing, widely known unique name registry instead of having to create a separate registry for package and module names.
 
-Class and Interface Type Names
+Class and Interface Names
 
-Names of class types should be descriptive nouns or noun phrases, not overly long, in mixed case with the first letter of each word capitalized.
+Names of class should be descriptive nouns or noun phrases, not overly long, in mixed case with the first letter of each word capitalized.
 
 Example 6.1-3. Descriptive Class Names
 
@@ -215,13 +245,13 @@ BufferedInputStream
 
 
 
-Likewise, names of interface types should be short and descriptive, not overly long, in mixed case with the first letter of each word capitalized. The name may be a descriptive noun or noun phrase, which is appropriate when an interface is used as if it were an abstract superclass, such as interfaces java.io.DataInput and java.io.DataOutput; or it may be an adjective describing a behavior, as for the interfaces Runnable and Cloneable.
+Likewise, names of interface should be short and descriptive, not overly long, in mixed case with the first letter of each word capitalized. The name may be a descriptive noun or noun phrase, which is appropriate when an interface is used as if it were an abstract superclass, such as interfaces java.io.DataInput and java.io.DataOutput; or it may be an adjective describing a behavior, as for the interfaces Runnable and Cloneable.
 
 Type Variable Names
 
 Type variable names should be pithy (single character if possible) yet evocative, and should not include lower case letters. This makes it easy to distinguish type parameters from ordinary classes and interfaces.
 
-Container types should use the name E for their element type. Maps should use K for the type of their keys and V for the type of their values. The name X should be used for arbitrary exception types. We use T for type, whenever there is not anything more specific about the type to distinguish it. (This is often the case in generic methods.)
+Container classes and interfaces should use the name E for their element type. Maps should use K for the type of their keys and V for the type of their values. The name X should be used for arbitrary exception types. We use T for type, whenever there is not anything more specific about the type to distinguish it. (This is often the case in generic methods.)
 
 If there are multiple type parameters that denote arbitrary types, one should use letters that neighbor T in the alphabet, such as S. Alternately, it is acceptable to use numeric subscripts (e.g., T1, T2) to distinguish among the different type variables. In such cases, all the variables with the same prefix should be subscripted.
 
@@ -267,7 +297,7 @@ Examples of this convention are the fields buf, pos, and count of the class java
 
 Constant Names
 
-The names of constants in interface types should be, and final variables of class types may conventionally be, a sequence of one or more words, acronyms, or abbreviations, all uppercase, with components separated by underscore "_" characters. Constant names should be descriptive and not unnecessarily abbreviated. Conventionally they may be any appropriate part of speech.
+The names of constants in interfaces should be, and final variables of classes may conventionally be, a sequence of one or more words, acronyms, or abbreviations, all uppercase, with components separated by underscore "_" characters. Constant names should be descriptive and not unnecessarily abbreviated. Conventionally they may be any appropriate part of speech.
 
 Examples of names for constants include MIN_VALUE, MAX_VALUE, MIN_RADIX, and MAX_RADIX of the class Character.
 
@@ -329,9 +359,9 @@ A simple name is a single identifier.
 
 A qualified name consists of a name, a "." token, and an identifier.
 
-In determining the meaning of a name (§6.5), the context in which the name appears is taken into account. The rules of §6.5 distinguish among contexts where a name must denote (refer to) a package (§6.5.3), a type (§6.5.5), a variable or value in an expression (§6.5.6), or a method (§6.5.7).
+In determining the meaning of a name (§6.5), the context in which the name appears is taken into account. The rules of §6.5 distinguish among contexts where a name must denote (refer to) a package (§6.5.3); a class, interface, or type parameter (§6.5.5); a variable or value in an expression (§6.5.6); or a method (§6.5.7).
 
-Packages and reference types have members which may be accessed by qualified names. As background for the discussion of qualified names and the determination of the meaning of names, see the descriptions of membership in §4.4, §4.5.2, §4.8, §4.9, §7.1, §8.2, §9.2, and §10.7.
+Packages, classes, interfaces, and type parameters have members which may be accessed by qualified names. As background for the discussion of qualified names and the determination of the meaning of names, see the descriptions of membership in §4.4, §4.5.2, §4.8, §4.9, §7.1, §8.2, §9.2, and §10.7.
 
 Not all identifiers in a program are a part of a name. Identifiers are also used in the following situations:
 
@@ -349,7 +379,7 @@ In some method reference expressions (§15.13), wherever an identifier occurs af
 
 In qualified class instance creation expressions (§15.9), where an identifier occurs to the right of the new token to indicate a type that is a member of the compile-time type of the expression preceding the new token.
 
-In element-value pairs of annotations (§9.7.1), to denote an element of the corresponding annotation type.
+In element-value pairs of annotations (§9.7.1), to denote an element of the corresponding annotation interface.
 
 In this program:
 
@@ -384,33 +414,29 @@ The declaration of a subpackage is never in scope.
 
 The package java is always in scope.
 
-The scope of a type imported by a single-type-import declaration (§7.5.1) or a type-import-on-demand declaration (§7.5.2) is the module declaration (§7.7) and all the class and interface type declarations (§7.6) of the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
+The scope of a class or interface imported by a single-type-import declaration (§7.5.1) or a type-import-on-demand declaration (§7.5.2) is the module declaration (§7.7) and all the class and interface declarations (§8.1, §9.1) of the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
 
-The scope of a member imported by a single-static-import declaration (§7.5.3) or a static-import-on-demand declaration (§7.5.4) is the module declaration and all the class and interface type declarations of the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
+The scope of a member imported by a single-static-import declaration (§7.5.3) or a static-import-on-demand declaration (§7.5.4) is the module declaration and all the class and interface declarations of the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
 
-The scope of a top level type (§7.6) is all type declarations in the package in which the top level type is declared.
+The scope of a top level class or interface (§7.6) is all class and interface declarations in the package in which the top level class or interface is declared.
 
-The scope of a declaration of a member m declared in or inherited by a class type C (§8.1.6) is the entire body of C, including any nested type declarations.
-
-The scope of a declaration of a member m declared in or inherited by an interface type I (§9.1.4) is the entire body of I, including any nested type declarations.
-
-The scope of an enum constant C declared in an enum type T is the body of T, and any case label of a switch statement whose expression is of enum type T (§14.11).
+The scope of a declaration of a member m declared in or inherited by a class or interface C (§8.2, §9.2) is the entire body of C, including any nested class or interface declarations.
 
 The scope of a formal parameter of a method (§8.4.1), constructor (§8.8.1), or lambda expression (§15.27) is the entire body of the method, constructor, or lambda expression.
 
-The scope of a class's type parameter (§8.1.2) is the type parameter section of the class declaration, the type parameter section of any superclass or superinterface of the class declaration, and the class body.
+The scope of a class's type parameter (§8.1.2) is the type parameter section of the class declaration, and the type parameter section of any superclass type or superinterface type of the class declaration, and the class body. If the class is a record class (§8.10), then the scope of the type parameter additionally includes the header of the record declaration (§8.10.1).
 
-The scope of an interface's type parameter (§9.1.2) is the type parameter section of the interface declaration, the type parameter section of any superinterface of the interface declaration, and the interface body.
+The scope of an interface's type parameter (§9.1.2) is the type parameter section of the interface declaration, and the type parameter section of any superinterface type of the interface declaration, and the interface body.
 
 The scope of a method's type parameter (§8.4.4) is the entire declaration of the method, including the type parameter section, but excluding the method modifiers.
 
 The scope of a constructor's type parameter (§8.8.4) is the entire declaration of the constructor, including the type parameter section, but excluding the constructor modifiers.
 
-The scope of a local class declaration immediately enclosed by a block (§14.2) is the rest of the immediately enclosing block, including its own class declaration.
+The scope of a local class or interface declaration immediately enclosed by a block (§14.2) is the rest of the immediately enclosing block, including the local class or interface declaration itself.
 
-The scope of a local class declaration immediately enclosed by a switch block statement group (§14.11) is the rest of the immediately enclosing switch block statement group, including its own class declaration.
+The scope of a local class or interface declaration immediately enclosed by a switch block statement group (§14.11) is the rest of the immediately enclosing switch block statement group, including the local class or interface declaration itself.
 
-The scope of a local variable declaration in a block (§14.4) is the rest of the block in which the declaration appears, starting with its own initializer and including any further declarators to the right in the local variable declaration statement.
+The scope of a local variable declared in a block by a local variable declaration statement (§14.4.2) is the rest of the block, starting with the declaration's own initializer and including any further declarators to the right in the local variable declaration statement.
 
 The scope of a local variable declared in the ForInit part of a basic for statement (§14.14.1) includes all of the following:
 
@@ -422,17 +448,17 @@ The Expression and ForUpdate parts of the for statement
 
 The contained Statement
 
-The scope of a local variable declared in the FormalParameter part of an enhanced for statement (§14.14.2) is the contained Statement.
+The scope of a local variable declared in the header of an enhanced for statement (§14.14.2) is the contained Statement.
 
-The scope of a parameter of an exception handler that is declared in a catch clause of a try statement (§14.20) is the entire block associated with the catch.
-
-The scope of a variable declared in the ResourceSpecification of a try-with-resources statement (§14.20.3) is from the declaration rightward over the remainder of the ResourceSpecification and the entire try block associated with the try-with-resources statement.
+The scope of a local variable declared in the resource specification of a try-with-resources statement (§14.20.3) is from the declaration rightward over the remainder of the resource specification and the entire try block associated with the try-with-resources statement.
 
 The translation of a try-with-resources statement implies the rule above.
 
-Example 6.3-1. Scope of Type Declarations
+The scope of a parameter of an exception handler that is declared in a catch clause of a try statement (§14.20) is the entire block associated with the catch.
 
-These rules imply that declarations of class and interface types need not appear before uses of the types. In the following program, the use of PointList in class Point is valid, because the scope of the class declaration PointList includes both class Point and class PointList, as well as any other type declarations in other compilation units of package points.
+Example 6.3-1. Scope of Class Declarations
+
+These rules imply that declarations of class and interface types need not appear before uses of the types. In the following program, the use of PointList in class Point is valid, because the scope of the class declaration PointList includes both class Point and class PointList, as well as any other class or interface declarations in other compilation units of package points.
 
 package points;
 class Point {
@@ -493,27 +519,296 @@ This program produces the output:
 
 
 
+
+The scope of a pattern variable declaration (that is, a local variable declared by a pattern) is the part of the program that might be executed after the matching of a value against the pattern has succeeded (§14.30.2). It is determined by considering the program points where the pattern variable is definitely matched in a region beginning with the pattern that declares the pattern variable.
+
+The remainder of this section is devoted to a precise explanation of the words "definitely matched". The analysis takes into account the structure of statements and expressions, with a special treatment for the boolean expression operators and certain statement forms.
+
+It will be seen that the scope of a pattern variable declaration is a flow-dependent concept similar to definite assignment (§16 (Definite Assignment)). The rules defined in the rest of this section deliberately have a similar form to the rules of definite assignment.
+
+The analysis relies on the technical term "introduced by", which has the following form:
+
+a pattern variable is introduced by an expression when true
+
+a pattern variable is introduced by an expression when false
+
+a pattern variable is introduced by a statement
+
+The simplest example is that the pattern variable s is introduced by the expression a instanceof String s when true. In other words, if the value of the expression is true then the pattern matching must have succeeded, and thus the pattern variable must have been assigned a value.
+
+In contrast, the pattern variable t is introduced by the expression !(b instanceof Integer t) when false. This is because the pattern matching could only have succeeded if the value of the expression is false.
+
+6.3.1. Scope for Pattern Variables in Expressions
+
+Only certain kinds of boolean expressions are involved in introducing pattern variables and determining where those variables are definitely matched. If an expression is not a conditional-and expression, conditional-or expression, logical complement expression, conditional expression, instanceof expression, switch expression, or parenthesized expression, then no scope rules apply.
+
+6.3.1.1. Conditional-And Operator &&
+
+The following rules apply to a conditional-and expression a && b (§15.23):
+
+A pattern variable introduced by a when true is definitely matched at b.
+
+It is a compile-time error if any pattern variable introduced by a when true is already in scope at b.
+
+A pattern variable is introduced by a && b when true iff either (i) it is introduced by a when true or (ii) it is introduced by b when true.
+
+It should be noted that there is no rule for introducing a pattern variable by a && b when false. This is because it cannot be determined at compile time which operand will evaluate to false.
+
+It is a compile-time error if any of the following conditions hold:
+
+A pattern variable is both (i) introduced by a when true and (ii) introduced by b when true.
+
+A pattern variable is both (i) introduced by a when false and (ii) introduced by b when false.
+
+These two error cases exclude the possibility of both operands of the && operator declaring a pattern variable of the same name. For example, consider the problematic expression (a instanceof String s) && (b instanceof String s). The first error case covers the entire expression evaluating to true, where (if the code were legal) two declarations of a pattern variable s would need to be initialized, given that both the left-hand operand and the right-hand operand evaluated to true. Since there is no way to distinguish the two variables called s in the rest of the program, the entire expression is considered erroneous. The second error case covers the opposite scenario where the entire expression evaluates to false.
+
+6.3.1.2. Conditional-Or Operator ||
+
+The following rules apply to a conditional-or expression a || b (§15.24):
+
+A pattern variable introduced by a when false is definitely matched at b.
+
+It is a compile-time error if any pattern variable introduced by a when false is already in scope at b.
+
+A pattern variable is introduced by a || b when false iff either (i) it is introduced by a when false or (ii) it is introduced by b when false.
+
+It should be noted that there is no rule for introducing a pattern variable by a || b when true. This is because it cannot be determined at compile time which operand will evaluate to true.
+
+It is a compile-time error if any of the following conditions hold:
+
+A pattern variable is both (i) introduced by a when true and (ii) introduced by b when true.
+
+A pattern variable is both (i) introduced by a when false and (ii) introduced by b when false.
+
+These two error cases exclude the possibility of both operands of the || operator declaring a pattern variable of the same name. For example, consider the problematic expression (a instanceof String s) || (b instanceof String s). The first error case covers the entire expression evaluating to true, where (if the code were legal) exactly one declaration of a pattern variable s would be initialized depending on whether the left-hand operand or the right-hand operand evaluated to true. Since it cannot be determined at compile time which operand will evaluate to true, and therefore which declaration of s will be initialized, the entire expression is considered erroneous. The second error case covers the opposite scenario where the entire expression evaluates to false.
+
+6.3.1.3. Logical Complement Operator !
+
+The following rules apply to a logical complement expression !a (§15.15.6):
+
+A pattern variable is introduced by !a when true iff it is introduced by a when false.
+
+A pattern variable is introduced by !a when false iff it is introduced by a when true.
+
+6.3.1.4. Conditional Operator ? :
+
+The following rules apply to a conditional expression a ? b : c (§15.25):
+
+A pattern variable introduced by a when true is definitely matched at b.
+
+It is a compile-time error if any pattern variable introduced by a when true is already in scope at b.
+
+A pattern variable introduced by a when false is definitely matched at c.
+
+It is a compile-time error if any pattern variable introduced by a when false is already in scope at c.
+
+It should be noted that there are no rules for introducing a pattern variable by a ? b : c when true or false. This is because it cannot be determined at compile time whether the operand a will evaluate to true.
+
+It is a compile-time error if any of the following conditions hold:
+
+A pattern variable is both (i) introduced by a when true and (ii) introduced by c when true.
+
+A pattern variable is both (i) introduced by a when true and (ii) introduced by c when false.
+
+A pattern variable is both (i) introduced by a when false and (ii) introduced by b when true.
+
+A pattern variable is both (i) introduced by a when false and (ii) introduced by b when false.
+
+A pattern variable is both (i) introduced by b when true and (ii) introduced by c when true.
+
+A pattern variable is both (i) introduced by b when false and (ii) introduced by c when false.
+
+These error cases are analogous to similar error cases for the && and || operators. They eliminate confusing cases where multiple declarations of the same pattern variable may occur across the operands of the ? : operator.
+
+6.3.1.5. Pattern Match Operator instanceof
+
+The following rules apply to an instanceof expression with a pattern operand, a instanceof p (§15.20.2):
+
+A pattern variable is introduced by a instanceof p when true iff it is declared by the pattern p. The rules for determining which pattern variables are declared by a pattern are given in §14.30.1.
+
+It is a compile-time error if any pattern variable introduced by a instanceof p when true is already in scope at the instanceof expression.
+
+A pattern variable is not permitted to shadow another local variable (§6.4).
+
+It should be noted that there is no rule for introducing a pattern variable by a instanceof p when false.
+
+6.3.1.6. switch Expressions
+
+The following rule applies to a switch expression (§15.28):
+
+A pattern variable introduced by a statement S contained in a switch labeled statement group (§14.11.1) is definitely matched at all the statements following S, if any, in the switch labeled statement group.
+
+6.3.1.7. Parenthesized Expressions
+
+The following rules apply to a parenthesized expression (a) (§15.8.5):
+
+A pattern variable is introduced by (a) when true iff it is introduced by a when true.
+
+A pattern variable is introduced by (a) when false iff it is introduced by a when false.
+
+6.3.2. Scope for Pattern Variables in Statements
+
+Only a few kinds of statements play a significant role in determining the scope of pattern variables.
+
+Where an if, while, do, or for statement contains an expression that introduces pattern variables, the scope of those variables can, in certain circumstances, include substatements of the statement.
+
+For example, in the following if-then-else statement, the scope of the pattern variable s includes one substatement but not another:
+
+Object o = ...
+if (o instanceof String s)
+    // s in scope for this substatement; no cast of o needed
+    System.out.println(s.replace('*', '_'));
+else 
+    // s not in scope for this substatement (hence, error)
+    System.out.println(s);
+
+
+Also, in certain circumstances, a pattern variable can be introduced by a statement itself, rather than by an expression within the statement. A pattern variable introduced by a statement is in scope at the following statements in the enclosing block.
+
+For example, in the following method, the scope of the pattern variable s includes the method body following the if statement:
+
+void test(Object o) {
+    if (!(o instanceof String s)) {
+        throw new IllegalArgumentException();
+    }
+    // This point is only reachable if the pattern match succeeded
+    // Thus, s is in scope for the rest of the block
+    ...
+    System.out.println(s.repeat(5));
+    ...
+}
+
+6.3.2.1. Blocks
+
+The following rule applies to a block statement S contained in a block (§14.2) that is not a switch block (§14.11.1):
+
+A pattern variable introduced by S is definitely matched at all the block statements following S, if any, in the block.
+
+6.3.2.2. if Statements
+
+The following rules apply to a statement if (e) S (§14.9.1):
+
+A pattern variable introduced by e when true is definitely matched at S.
+
+It is a compile-time error if any pattern variable introduced by e when true is already in scope at S.
+
+A pattern variable is introduced by if (e) S iff (i) it is introduced by e when false and (ii) S cannot complete normally.
+
+It is a compile-time error if any pattern variable introduced by if (e) S is already in scope at the if statement.
+
+The rule about an if-then statement introducing a pattern variable relies on the notion of "cannot complete normally" (§14.22), which in turn relies on the concept of a constant expression (§15.29). This means that calculating the scope of a pattern variable may require determining whether a simple name, or a qualified name of the form TypeName . Identifier, refers to a constant variable. As pattern variables can never refer to a constant variable, there is no circularity.
+
+The following rules apply to a statement if (e) S else T (§14.9.2):
+
+A pattern variable introduced by e when true is definitely matched at S.
+
+It is a compile-time error if any pattern variable introduced by e when true is already in scope at S.
+
+A pattern variable introduced by e when false is definitely matched at T.
+
+It is a compile-time error if any pattern variable introduced by e when false is already in scope at T.
+
+A pattern variable is introduced by if (e) S else T iff either:
+
+It is introduced by e when true, and S can complete normally, and T cannot complete normally; or
+
+It is introduced by e when false, and S cannot complete normally, and T can complete normally.
+
+It is a compile-time error if any pattern variable introduced by if (e) S else T is already in scope at the if statement.
+
+These rules highlight the flow-like nature of scoping for pattern variables. For example, in the following statement:
+
+if (e instanceof String s) {
+    counter += s.length();
+} else {
+    System.out.println(e);  // s not in scope
+}
+
+
+The pattern variable s is introduced by the instanceof expression and is in scope in the first contained statement (the assignment statement in the then block), but it is not in scope in the second contained statement (the expression statement in the else block).
+
+Moreover, combined with the treatment for boolean expressions, the scope of pattern variables is robust against code refactorings that exploit the familar boolean logical equivalences. For example, the previous code can be rewritten as:
+
+if (!(e instanceof String s)) {
+    System.out.println(e);  // s not in scope
+} else {
+    counter += s.length();
+}
+
+
+The code can even be rewritten as follows, though double use of the ! operator is not necessarily recommended:
+
+if (!!(e instanceof String s)) {
+    counter += s.length();
+} else {
+    System.out.println(e);  // s not in scope
+}
+
+6.3.2.3. while Statements
+
+The following rules apply to a statement while (e) S (§14.12):
+
+A pattern variable introduced by e when true is definitely matched at S.
+
+It is a compile-time error if any pattern variable introduced by e when true is already in scope at S.
+
+A pattern variable is introduced by while (e) S iff (i) it is introduced by e when false and (ii) S does not contain a reachable break statement whose break target contains S (§14.15).
+
+It is a compile-time error if any pattern variable introduced by while (e) S is already in scope at the while statement.
+
+6.3.2.4. do Statements
+
+The following rules apply to a statement do S while (e) (§14.13):
+
+A pattern variable is introduced by do S while (e) iff (i) it is introduced by e when false and (ii) S does not contain a reachable break statement whose break target contains S (§14.15).
+
+It is a compile-time error if any pattern variable introduced by do S while (e) is already in scope at the do statement.
+
+6.3.2.5. for Statements
+
+The following rules apply to a basic for statement (§14.14.1):
+
+A pattern variable introduced by the condition expression when true is definitely matched at both the incrementation part and the contained statement.
+
+It is a compile-time error if any pattern variable introduced by the condition expression when true is already in scope at the incrementation part of the contained statement.
+
+A pattern variable is introduced by a basic for statement iff (i) it is introduced by the condition expression when false and (ii) the contained statement, S, does not contain a reachable break statement whose break target contains S (§14.15).
+
+It is a compile-time error if any pattern variable introduced by a basic for statement is already in scope at the for statement.
+
+An enhanced for statement (§14.14.2) is defined by translation to a basic for statement, so no special rules need to be provided for it.
+
+6.3.2.6. switch Statements
+
+The following rule applies to a switch statement (§14.11):
+
+A pattern variable introduced by a labeled statement S contained in a switch block statement group (§14.11.1) is definitely matched at all the statements following S, if any, in the switch block statement group.
+
+6.3.2.7. Labeled Statements
+
+The following rule applies to a labeled statement (§14.7):
+
+A pattern variable is introduced by a labeled statement iff it is introduced by the labeled statement's immediately contained Statement.
+
 6.4. Shadowing and Obscuring
 
-A local variable (§14.4), formal parameter (§8.4.1, §15.27.1), exception parameter (§14.20), and local class (§14.3) can only be referred to using a simple name, not a qualified name (§6.2).
+A local variable (§14.4), formal parameter (§8.4.1, §8.8.1, §15.27.1), exception parameter (§14.20), local class, or local interface (§14.3) can only be referred to using a simple name, not a qualified name (§6.2).
 
-Some declarations are not permitted within the scope of a local variable, formal parameter, exception parameter, or local class declaration because it would be impossible to distinguish between the declared entities using only simple names.
+Some declarations are not permitted within the scope of a local variable declaration, formal parameter declaration, exception parameter declaration, local class declaration, or local interface declaration because it would be impossible to distinguish between the declared entities using only simple names.
 
 For example, if the name of a formal parameter of a method could be redeclared as the name of a local variable in the method body, then the local variable would shadow the formal parameter and there would be no way to refer to the formal parameter - an undesirable outcome.
 
-It is a compile-time error if the name of a formal parameter is used to declare a new variable within the body of the method, constructor, or lambda expression, unless the new variable is declared within a class declaration contained by the method, constructor, or lambda expression.
+It is a compile-time error if the name of a formal parameter is used to declare a new variable within the body of the method, constructor, or lambda expression, unless the new variable is declared within a class or interface declaration contained by the method, constructor, or lambda expression.
 
-It is a compile-time error if the name of a local variable v is used to declare a new variable within the scope of v, unless the new variable is declared within a class whose declaration is within the scope of v.
+It is a compile-time error if the name of a local variable v is used to declare a new variable within the scope of v, unless the new variable is declared within a class or interface declaration appearing within the scope of v.
 
-It is a compile-time error if the name of an exception parameter is used to declare a new variable within the Block of the catch clause, unless the new variable is declared within a class declaration contained by the Block of the catch clause.
+It is a compile-time error if the name of an exception parameter is used to declare a new variable within the Block of the catch clause, unless the new variable is declared within a class or interface declaration contained by the Block of the catch clause.
 
-It is a compile-time error if the name of a local class C is used to declare a new local class within the scope of C, unless the new local class is declared within another class whose declaration is within the scope of C.
+It is a compile-time error if the name of a local class or interface C is used to declare a new local class or interface within the scope of C, unless the new local class or interface is declared within a class or interface declaration appearing within the scope of C.
 
-These rules allow redeclaration of a variable or local class in nested class declarations that occur in the scope of the variable or local class; such nested class declarations may be local classes (§14.3) or anonymous classes (§15.9). Thus, the declaration of a formal parameter, local variable, or local class may be shadowed in a class declaration nested within a method, constructor, or lambda expression; and the declaration of an exception parameter may be shadowed in a class declaration nested within the Block of the catch clause.
+These rules allow redeclaration of a variable, local class, or local interface in nested class or interface declarations that occur in the scope of the variable, local class, or local interface; such nested class or interface declarations may be local class or interface declarations (§14.3) or anonymous class declarations (§15.9.5). Thus, the declaration of a formal parameter, local variable, local class, or local interface may be shadowed in a class or interface declaration nested within a method, constructor, or lambda expression; and the declaration of an exception parameter may be shadowed in a class or interface declaration nested within the Block of the catch clause.
 
 There are two design alternatives for handling name clashes created by lambda parameters and other variables declared in lambda expressions. One is to mimic class declarations: like local classes, lambda expressions introduce a new "level" for names, and all variable names outside the expression can be redeclared. Another is a "local" strategy: like catch clauses, for loops, and blocks, lambda expressions operate at the same "level" as the enclosing context, and local variables outside the expression cannot be shadowed. The above rules use the local strategy; there is no special dispensation that allows a variable declared in a lambda expression to shadow a variable declared in an enclosing method.
-
-Note that the rule for local classes does not make an exception for a class of the same name declared within the local class itself. However, this case is prohibited by a separate rule: a class cannot have the same name as a class that encloses it (§8.1).
 
 Example 6.4-1. Attempted Shadowing Of A Local Variable
 
@@ -562,6 +857,66 @@ class Test3 {
 This program compiles without error and, when executed, produces the output:
 
 0 1 2 3 4 5 6 7 8 9 10 9 8 7 6 5 4 3 2 1
+
+
+This style is also common with pattern matching, where repeated patterns often employ the same name:
+
+class Point {
+    int x, y;
+    Point(int x, int y) { this.x = x; this.y = y; }
+}
+
+class Test4 {
+    static void test(Object a, Object b, Object c) {
+        if (a instanceof Point p) {
+            System.out.println("a is a point ("+p.x+","+p.y+")");
+        }
+        if (b instanceof Point p){
+            System.out.println("b is a point ("+p.x+","+p.y+")");
+        } else if (c instanceof Point p) {
+            System.out.println("c is a point ("+p.x+","+p.y+")");
+        }
+    }
+
+    public static void main(String[] args) {
+        Point p = new Point(2,3);
+        Point q = new Point(4,5);
+        Point r = new Point(6,7);
+        test(p, q, r);
+    }
+}
+
+
+
+However, pattern variables are not allowed to shadow local variables, including other pattern variables, so two compile-time errors occur for the following program:
+
+class Point {
+    int x, y;
+    Point(int x, int y) { this.x = x; this.y = y; }
+}
+
+class Test5 {
+    static void test(Object a, Object b, Object c) {
+        if (a instanceof Point p) {
+            System.out.println("a is a point ("+p.x+","+p.y+")");
+	    
+            if (b instanceof Point p) {  // compile-time error
+                System.out.println("b is a point ("+p.x+","+p.y+")"); 
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        Point p = new Point(2,3);
+        Point q = new Point(4,5);
+        Point r = new Point(6,7);
+        test(p, q, r);
+
+        if (new Object() instanceof Point q)  // compile-time error
+            System.out.println("I get your point");
+    }
+}
+
 
 
 
@@ -710,7 +1065,7 @@ Obscuring involving field names is rare; however:
 
 If a field name obscures a package name, then an import declaration (§7.5) can usually be used to make available the type names declared in that package.
 
-If a field name obscures a type name, then a fully qualified name for the type can be used unless the type name denotes a local class (§14.3).
+If a field name obscures a type name, then a fully qualified name for the type can be used unless the type name denotes a local class or interface (§14.3).
 
 Field names cannot obscure method names.
 
@@ -773,7 +1128,7 @@ To the left of the "." in a qualified PackageName
 
 A name is syntactically classified as a TypeName in these contexts:
 
-The first eleven non-generic contexts (§6.1):
+To name a class or interface:
 
 In a uses or provides directive in a module declaration (§7.7.1)
 
@@ -797,13 +1152,13 @@ To the left of .Identifier or .super.Identifier in a qualified method invocation
 
 To the left of .super:: in a method reference expression (§15.13)
 
-As the Identifier or dotted Identifier sequence that constitutes any ReferenceType (including a ReferenceType to the left of the brackets in an array type, or to the left of the < in a parameterized type, or in a non-wildcard type argument of a parameterized type, or in an extends or super clause of a wildcard type argument of a parameterized type) in the 16 contexts where types are used (§4.11):
+As the Identifier or dotted Identifier sequence that constitutes any ReferenceType (including a ReferenceType to the left of the brackets in an array type, or to the left of the < in a parameterized type, or in a non-wildcard type argument of a parameterized type, or in an extends or super clause of a wildcard type argument of a parameterized type) in the 17 contexts where types are used (§4.11):
 
-In an extends or implements clause of a class declaration (§8.1.4, §8.1.5, §8.5, §9.5)
+In an extends or implements clause of a class declaration (§8.1.4, §8.1.5)
 
 In an extends clause of an interface declaration (§9.1.3)
 
-The return type of a method (§8.4, §9.4) (including the type of an element of an annotation type (§9.6.1))
+The return type of a method (§8.4.5, §9.4), including the type of an element of an annotation interface (§9.6.1)
 
 In the throws clause of a method or constructor (§8.4.6, §8.8.5, §9.4)
 
@@ -815,9 +1170,11 @@ The type in a formal parameter declaration of a method, constructor, or lambda e
 
 The type of the receiver parameter of a method (§8.4)
 
-The type in a local variable declaration (§14.4, §14.14.1, §14.14.2, §14.20.3)
+The type in a local variable declaration in either a statement (§14.4.2, §14.14.1, §14.14.2, §14.20.3) or a pattern (§14.30.1)
 
 A type in an exception parameter declaration (§14.20)
+
+The type in a record component declaration of a record class (§8.10.1)
 
 In an explicit type argument list to an explicit constructor invocation statement or class instance creation expression or method invocation expression (§8.8.7.1, §15.9, §15.12)
 
@@ -869,7 +1226,7 @@ To the left of the rightmost . that occurs before the "(" in a method invocation
 
 To the left of the "." in a qualified AmbiguousName
 
-In the default value clause of an annotation type element declaration (§9.6.2)
+In the default value clause of an annotation element declaration (§9.6.2)
 
 To the right of an "=" in an an element-value pair (§9.7.1)
 
@@ -881,23 +1238,19 @@ The name of a field, parameter, or local variable may be used as an expression (
 
 The name of a method may appear in an expression only as part of a method invocation expression (§15.12).
 
-The name of a class or interface type may appear in an expression only as part of a class literal (§15.8.2), a qualified this expression (§15.8.4), a class instance creation expression (§15.9), an array creation expression (§15.10.1), a cast expression (§15.16), an instanceof expression (§15.20.2), an enum constant (§8.9), or as part of a qualified name for a field or method.
+The name of a class or interface may appear in an expression only as part of a class literal (§15.8.2), a qualified this expression (§15.8.4), a class instance creation expression (§15.9), an array creation expression (§15.10.1), a cast expression (§15.16), an instanceof expression (§15.20.2), an enum constant (§8.9), or as part of a qualified name for a field or method.
 
-The name of a package may appear in an expression only as part of a qualified name for a class or interface type.
+The name of a package may appear in an expression only as part of a qualified name for a class or interface.
 
 6.5.2. Reclassification of Contextually Ambiguous Names
 
 An AmbiguousName is then reclassified as follows.
 
-If the AmbiguousName is a simple name, consisting of a single Identifier:
+If the AmbiguousName is a simple name, consisting of a single Identifier, then:
 
-If the Identifier appears within the scope (§6.3) of a local variable declaration (§14.4) or parameter declaration (§8.4.1, §8.8.1, §14.20) or field declaration (§8.3) with that name, then the AmbiguousName is reclassified as an ExpressionName.
+If the Identifier appears within the scope of a declaration (§6.3) denoting either a local variable, formal parameter, exception parameter, or field with that name (§14.4, §8.4.1, §8.8.1, §15.27.1, §14.20, §8.3), then the AmbiguousName is reclassified as an ExpressionName.
 
-Otherwise, if a field of that name is declared in the compilation unit (§7.3) containing the Identifier by a single-static-import declaration (§7.5.3), or by a static-import-on-demand declaration (§7.5.4) then the AmbiguousName is reclassified as an ExpressionName.
-
-Otherwise, if the Identifier is a valid TypeIdentifier and appears within the scope (§6.3) of a top level class (§8 (Classes)) or interface type declaration (§9 (Interfaces)), a local class declaration (§14.3) or member type declaration (§8.5, §9.5) with that name, then the AmbiguousName is reclassified as a TypeName.
-
-Otherwise, if the Identifier is a valid TypeIdentifier and a type of that name is declared in the compilation unit (§7.3) containing the Identifier, either by a single-type-import declaration (§7.5.1), or by a type-import-on-demand declaration (§7.5.2), or by a single-static-import declaration (§7.5.3), or by a static-import-on-demand declaration (§7.5.4), then the AmbiguousName is reclassified as a TypeName.
+Otherwise, if the Identifier is a valid TypeIdentifier (§3.8) and appears within the scope of a declaration denoting a class, interface, or type parameter with that name (§8.1, §9.1, §8.4.4, §8.8.4), then the AmbiguousName is reclassified as a TypeName.
 
 Otherwise, the AmbiguousName is reclassified as a PackageName. A later step determines whether or not a package of that name actually exists.
 
@@ -979,13 +1332,13 @@ If Q.Id does not name a package that is uniquely visible to the current module (
 6.5.4. Meaning of PackageOrTypeNames
 6.5.4.1. Simple PackageOrTypeNames
 
-If the PackageOrTypeName, Q, is a valid TypeIdentifier and occurs in the scope of a type named Q, then the PackageOrTypeName is reclassified as a TypeName.
+If the PackageOrTypeName, Q, is a valid TypeIdentifier and occurs in the scope of a class, interface, or type parameter named Q, then the PackageOrTypeName is reclassified as a TypeName.
 
 Otherwise, the PackageOrTypeName is reclassified as a PackageName. The meaning of the PackageOrTypeName is the meaning of the reclassified name.
 
 6.5.4.2. Qualified PackageOrTypeNames
 
-Given a qualified PackageOrTypeName of the form Q.Id, if Id is a valid TypeIdentifier and the type or package denoted by Q has a member type named Id, then the qualified PackageOrTypeName name is reclassified as a TypeName.
+Given a qualified PackageOrTypeName of the form Q.Id, if Id is a valid TypeIdentifier and the class, interface, type parameter, or package denoted by Q has a member class or interface named Id, then the qualified PackageOrTypeName name is reclassified as a TypeName.
 
 Otherwise, it is reclassified as a PackageName. The meaning of the qualified PackageOrTypeName is the meaning of the reclassified name.
 
@@ -995,15 +1348,69 @@ The meaning of a name classified as a TypeName is determined as follows.
 
 6.5.5.1. Simple Type Names
 
-If a type name consists of a single Identifier, then the identifier must occur in the scope of exactly one declaration of a type with this name (§6.3), or a compile-time error occurs. The meaning of the type name is that type.
+If a type name consists of a single Identifier, then the identifier must occur in the scope of exactly one declaration of a class, interface, or type parameter with this name (§6.3), or a compile-time error occurs.
+
+If the declaration denotes a type parameter of a generic class or interface C (§8.1.2, §9.1.2), then both of the following must be true, or a compile-time error occurs:
+
+The type name does not occur in a static context (§8.1.3).
+
+If the type name appears in a nested class or interface declaration of C, then the immediately enclosing class or interface declaration of the type name is an inner class of C.
+
+For example, the type name must not appear in the body of a static method declared by C, nor in the body of an instance method of a static class nested within C.
+
+If the declaration denotes a type parameter of a generic method or constructor m (§8.4.4, §8.8.4), and the type name appears directly or indirectly in the body of a local class, local interface, or anonymous class D declared directly in the body of m, then both of the following must be true, or a compile-time error occurs:
+
+The type name does not occur in a static context.
+
+D is an inner class, and the immediately enclosing class or interface declaration of the type name is D or an inner class of D.
+
+For example, the type name must not appear in the body of a static method declared by D, nor (if D is a local interface) in the body of a default method of D.
+
+The meaning of the type name is the in-scope class, interface, or type parameter.
+
+Example 6.5.5.1-1. References to Type Parameters
+
+class Box<T> {
+    T val;
+    Box(T t) { val = t; }
+    
+    static Box<T> empty() {  // compile-time error
+        return new Box<>(null);
+    }
+
+    static <U> Box<U> make(U val) {
+        interface Checker {
+            void check(U val);  // compile-time error
+        }
+	
+        class NullChecker implements Checker {
+            public void check(U val) {
+                if (val == null) {
+                    throw new IllegalArgumentException();
+                }
+            }
+        }
+	
+        new NullChecker().check(val);
+        return new Box<U>(val);
+    }
+}
+
+
+
+The class type parameter T is in scope throughout the declaration of class Box; however, using the name T in the declaration of static method empty is illegal.
+
+Similarly, the method type parameter U is in scope throughout the declaration of method make; however, using the name U in the declaration of the (implicitly static) local interface Checker is illegal.
+
+
 
 6.5.5.2. Qualified Type Names
 
-If a type name is of the form Q.Id, then Q must be either the name of a type in a package uniquely visible to the current module, or the name of a package uniquely visible to the current module (§7.4.3).
+If a type name is of the form Q.Id, then Q must be either the name of a class, interface, or type parameter in a package uniquely visible to the current module, or the name of a package uniquely visible to the current module (§7.4.3).
 
-If Id names exactly one accessible type (§6.6) that is a member of the type or package denoted by Q, then the qualified type name denotes that type.
+If Id names exactly one accessible class or interface (§6.6) that is a member of the class, interface, type parameter, or package denoted by Q, then the qualified type name denotes that class or interface.
 
-If Id does not name a member type within Q (§8.5, §9.5), or the member type named Id within Q is not accessible (§6.6), or Id names more than one member type within Q, then a compile-time error occurs.
+If Id does not name a member class or interface within Q (§8.5, §9.5), or the member class or interface named Id within Q is not accessible, or Id names more than one member class or interface within Q, then a compile-time error occurs.
 
 Example 6.5.5.2-1. Qualified Type Names
 
@@ -1021,7 +1428,7 @@ This program produced the following output the first time it was run:
 Sun Jan 21 22:56:29 1996
 
 
-In this example, the name java.util.Date must denote a type, so we first use the procedure recursively to determine if java.util is an accessible type or a package, which it is, and then look to see if the type Date is accessible in this package.
+In this example, the name java.util.Date must denote a type, so we first use the procedure recursively to determine if java.util is an accessible class or interface or type parameter, or a package, which it is, and then we look to see if the class Date is accessible in this package.
 
 
 
@@ -1031,9 +1438,27 @@ The meaning of a name classified as an ExpressionName is determined as follows.
 
 6.5.6.1. Simple Expression Names
 
-If an expression name consists of a single Identifier, then there must be exactly one declaration denoting either a local variable, formal parameter, or field in scope at the point at which the Identifier occurs. Otherwise, a compile-time error occurs.
+If an expression name consists of a single Identifier, then there must be exactly one declaration denoting either a local variable, formal parameter, exception parameter, or field in scope at the point at which the identifier occurs. Otherwise, a compile-time error occurs.
 
-If the declaration denotes an instance variable (§8.3.1.1), the expression name must appear within an instance method (§8.4.3.2), instance variable initializer (§8.3.2), instance initializer (§8.6), or constructor (§8.8). If the expression name appears within a class method, class variable initializer, or static initializer (§8.7), then a compile-time error occurs.
+If the declaration denotes an instance variable of a class C (§8.3.1.1), then both of the following must be true, or a compile-time error occurs:
+
+The expression name does not occur in a static context (§8.1.3).
+
+If the expression name appears in a nested class or interface declaration of C, then the immediately enclosing class or interface declaration of the expression name is an inner class of C.
+
+For example, the expression name must not appear in the body of a static method declared by C, nor in the body of an instance method of a static class nested within C.
+
+If the declaration denotes a local variable, formal parameter, or exception parameter, let X be the innermost method declaration, constructor declaration, instance initializer, static initializer, field declaration, or explicit constructor invocation statement which encloses the local variable or parameter declaration. If the expression name appears directly or indirectly in the body of a local class, local interface, or anonymous class D declared directly in X, then both of the following must be true, or a compile-time error occurs:
+
+The expression name does not occur in a static context.
+
+D is an inner class, and the immediately enclosing class or interface declaration of the expression name is D or an inner class of D.
+
+For example, the expression name must not appear in the body of a static method declared by D, nor (if D is a local interface) in the body of a default method of D.
+
+If the declaration denotes a local variable, formal parameter, or exception parameter that is neither final nor effectively final (§4.12.4), it is a compile-time error if the expression name appears either in an inner class enclosed directly or indirectly by X, or in a lambda expression contained by X (§15.27).
+
+The net effect of these rules is that a local variable, formal parameter, or exception parameter can only be referenced from a nested class or interface declared within its scope if (i) the reference is not within a static context, (ii) there is a chain of inner (non-static) classes from the reference to the variable declaration, and (iii) the variable is final or effectively final. References from lambda expressions also require the variable to be final or effectively final.
 
 If the declaration declares a final variable which is definitely assigned before the simple expression, the meaning of the name is the value of that variable. Otherwise, the meaning of the expression name is the variable declared by the declaration.
 
@@ -1064,15 +1489,114 @@ In this program, the names used as the left-hand-sides in the assignments to i, 
 
 
 
+
+Example 6.5.6.1-2. References to Instance Variables
+
+class Test {
+    static String a;
+    String b;
+
+    String concat1() {
+        return a + b;
+    }
+
+    static String concat2() {
+        return a + b;  // compile-time error
+    }
+
+    int index() {
+        interface I {
+            class Matcher {
+                void check() {
+                    if (a == null ||
+                        b == null) {  // compile-time error
+                        throw new IllegalArgumentException();
+                    }
+                }
+                int match(String s, String t) {
+                    return s.indexOf(t);
+                }
+            }
+	}
+        
+	I.Matcher matcher = new I.Matcher();
+	matcher.check();
+	return matcher.match(a, b);
+    }
+}
+
+
+
+The fields a and b are in scope throughout the body of class Test. However, using the name b in the static context of the concat2 method, or in the declaration of the nested class Matcher that is not an inner class of Test, is illegal.
+
+
+
+
+Example 6.5.6.1-3. References to Local Variables and Formal Parameters
+
+class Test {
+    public static void main(String[] args) {
+        String first = args[0];
+
+        class Checker {
+            void checkWhitespace(int x) {
+                String arg = args[x];
+                if (!arg.trim().equals(arg)) {
+                    throw new IllegalArgumentException();
+                }
+            }
+
+            static void checkFlag(int x) {
+                String arg = args[x];  // compile-time error
+                if (!arg.startsWith("-")) {
+                    throw new IllegalArgumentException();
+                }
+            }
+
+            static void checkFirst() {
+                 Runnable r = new Runnable() {
+                     public void run() {
+                         if (first == null) {  // compile-time error
+                             throw new IllegalArgumentException();
+                         }
+                     }
+		 };
+                 r.run();
+             }
+        }
+        
+        final Checker c = new Checker();
+        c.checkFirst();
+        for (int i = 1; i < args.length; i++) {
+            Runnable r = () -> {
+                c.checkWhitespace(i);  // compile-time error
+                c.checkFlag(i);  // compile-time error
+            };
+        }
+    }
+}
+
+
+
+The formal parameter args is in scope throughout the body of method main. args is effectively final, so the name args can be used in the instance method checkWhitespace of local class Checker. However, using the name args in the static context of the checkFlag method of local class Checker is illegal.
+
+The local variable first is in scope for the remainder of the body of method main. first is also effectively final. However, the anonymous class declared in checkFirst is not an inner class of Checker, so using the name first in the anonymous class body is illegal. (A lambda expression in the body of checkFirst would similarly be unable to refer to first, because the lambda expression would occur in a static context.)
+
+The local variable c is in scope for the last few lines of the body of method main, and is declared final, so the name c can be used in the body of the lambda expression.
+
+The local variable i is in scope throughout the for loop. However, i is not effectively final, so using the name i in the body of the lambda expression is illegal.
+
+
+
 6.5.6.2. Qualified Expression Names
 
 If an expression name is of the form Q.Id, then Q has already been classified as a package name, a type name, or an expression name.
 
 If Q is a package name, then a compile-time error occurs.
 
-If Q is a type name that names a class type (§8 (Classes)), then:
+If Q is a type name that names a class type, then:
 
-If there is not exactly one accessible (§6.6) member of the class type that is a field named Id, then a compile-time error occurs.
+If there is not exactly one accessible member (§6.6) of the class type that is a field named Id, then a compile-time error occurs.
 
 Otherwise, if the single accessible member field is not a class variable (that is, it is not declared static), then a compile-time error occurs.
 
@@ -1088,9 +1612,9 @@ The type of the expression Q.Id is the declared type of the class variable after
 
 Note that this clause covers the use of enum constants (§8.9), since these always have a corresponding final class variable.
 
-If Q is a type name that names an interface type (§9 (Interfaces)), then:
+If Q is a type name that names an interface type, then:
 
-If there is not exactly one accessible (§6.6) member of the interface type that is a field named Id, then a compile-time error occurs.
+If there is not exactly one accessible member of the interface type that is a field named Id, then a compile-time error occurs.
 
 Otherwise, Q.Id denotes the value of the field.
 
@@ -1102,7 +1626,7 @@ If Q is an expression name, let T be the type of the expression Q:
 
 If T is not a reference type, a compile-time error occurs.
 
-If there is not exactly one accessible (§6.6) member of the type T that is a field named Id, then a compile-time error occurs.
+If there is not exactly one accessible member of the type T that is a field named Id, then a compile-time error occurs.
 
 Otherwise, if this field is any of the following:
 
@@ -1179,7 +1703,7 @@ The meaning of a name classified as a MethodName is determined as follows.
 
 6.5.7.1. Simple Method Names
 
-A simple method name appears in the context of a method invocation expression (§15.12). The simple method name consists of a single Identifier which specifies the name of the method to be invoked. The rules of method invocation require that the Identifier either denotes a method that is in scope at the point of the method invocation, or denotes a method imported by a single-static-import declaration or static-import-on-demand declaration (§7.5.3, §7.5.4).
+A simple method name appears in the context of a method invocation expression (§15.12). The simple method name consists of a single Identifier which specifies the name of the method to be invoked. The rules of method invocation require that the identifier denotes a method that is in scope at the point of the method invocation. The rules also prohibit (§15.12.3) a reference to an instance method occurring in a static context (§8.1.3), or in a nested class or interface other than an inner class of the class or interface which declares the instance method.
 
 Example 6.5.7.1-1. Simple Method Names
 
@@ -1224,29 +1748,29 @@ The Java programming language provides mechanisms for access control, to prevent
 
 Note that accessibility is a static property that can be determined at compile time; it depends only on types and declaration modifiers.
 
-Qualified names are a means of access to members of packages and reference types. When the name of such a member is classified from its context (§6.5.1) as a qualified type name (denoting a member of a package or reference type, §6.5.5.2) or a qualified expression name (denoting a member of a reference type, §6.5.6.2), access control is applied.
+Qualified names are a means of access to members of packages, classes, interfaces, type parameters, and reference types. When the name of such a member is classified from its context (§6.5.1) as a qualified type name (denoting a member of a package, class, interface, or type parameter) or a qualified expression name (denoting a member of a reference type), access control is applied.
 
-For example, a single-type-import declaration uses a qualified type name (§7.5.1), so the named type must be accessible from the compilation unit containing the import declaration. As another example, a class declaration may use a qualified type name for a superclass (§8.1.5), so again the named type must be accessible.
+For example, a single-type-import declaration uses a qualified type name (§7.5.1), so the named class or interface must be accessible from the compilation unit containing the import declaration. As another example, a class declaration may use a qualified type name for a superclass type (§8.1.5), so again the named class must be accessible.
 
-Some obvious expressions are "missing" from context classification in §6.5.1: field access on a Primary (§15.11.1), method invocation on a Primary (§15.12), method reference via a Primary (§15.13), and the instantiated class in a qualified class instance creation (§15.9). Each of these expressions uses identifiers, rather than names, for the reason given in §6.2. Consequently, access control to members (whether fields, methods, or types) is applied explicitly by field access expressions, method invocation expressions, method reference expressions, and qualified class instance creation expressions. (Note that access to a field may also be denoted by a qualified name occuring as a postfix expression.)
+Some obvious expressions are "missing" from context classification in §6.5.1: field access on a Primary (§15.11.1), method invocation on a Primary (§15.12), method reference via a Primary (§15.13), and the instantiated class in a qualified class instance creation (§15.9). Each of these expressions uses identifiers, rather than names, for the reason given in §6.2. Consequently, access control to members (whether fields, methods, classes, or interfaces) is applied explicitly by field access expressions, method invocation expressions, method reference expressions, and qualified class instance creation expressions. (Note that access to a field may also be denoted by a qualified name occuring as a postfix expression.)
 
-In addition, many statements and expressions allow the use of types rather than type names. For example, a class declaration may use a parameterized type (§4.5) to denote a superclass. Because a parameterized type is not a qualified type name, it is necessary for the class declaration to explicitly perform access control for the denoted superclass. Consequently, most of the statements and expressions that provide contexts in §6.5.1 to classify a TypeName also perform their own access control checks.
+In addition, many statements and expressions allow the use of types that are not expressed exclusively with type names. For example, a class declaration may use a parameterized type (§4.5) to denote the superclass type. Because a parameterized type is not a qualified type name, it is necessary for the class declaration to explicitly perform access control for the denoted superclass. Consequently, of the statements and expressions that provide contexts in §6.5.1 to classify a TypeName, most perform their own access control checks.
 
-Beyond access to members of a package or reference type, there is the matter of access to constructors of a reference type. Access control must be checked when a constructor is invoked explicitly or implicitly. Consequently, access control is checked by an explicit constructor invocation statement (§8.8.7.1) and by a class instance creation expression (§15.9.3). Such checks are necessary because §6.5.1 has no mention of explicit constructor invocation statements (because they reference constructor names indirectly) and is unaware of the distinction between the class type denoted by an unqualified class instance creation expression and a constructor of that class type. Also, constructors do not have qualified names, so we cannot rely on access control being checked during classification of qualified type names.
+Beyond access to members of a package, class, interface, or type parameter, there is the matter of access to constructors of a class. Access control must be checked when a constructor is invoked explicitly or implicitly. Consequently, access control is checked by an explicit constructor invocation statement (§8.8.7.1) and by a class instance creation expression (§15.9.3). Such checks are necessary because §6.5.1 has no mention of explicit constructor invocation statements (as they refer to constructors indirectly, rather than via names) and is unaware of the distinction between the class denoted by an unqualified class instance creation expression and a constructor of that class. Also, constructors do not have qualified names, so we cannot rely on access control being checked during classification of qualified type names.
 
 Accessibility affects inheritance of class members (§8.2), including hiding and method overriding (§8.4.8.1).
 
 6.6.1. Determining Accessibility
 
-If a top level class or interface type is declared public and is a member of a package that is exported by a module, then the type may be accessed by any code in the same module, and by any code in another module to which the package is exported, provided that the compilation unit in which the type is declared is visible to that other module (§7.3).
+If a top level class or interface (§7.6) is declared public and is a member of a package that is exported by a module, then the class or interface may be accessed by any code in the same module, and by any code in another module to which the package is exported, provided that the compilation unit in which the class or interface is declared is visible to that other module (§7.3).
 
-If a top level class or interface type is declared public and is a member of a package that is not exported by a module, then the type may be accessed by any code in the same module.
+If a top level class or interface is declared public and is a member of a package that is not exported by a module, then the class or interface may be accessed by any code in the same module.
 
-If a top level class or interface type is declared with package access, then it may be accessed only from within the package in which it is declared.
+If a top level class or interface is declared with package access, then it may be accessed only from within the package in which it is declared.
 
-A top level class or interface type declared without an access modifier implicitly has package access.
+A top level class or interface declared without an access modifier implicitly has package access.
 
-A member (class, interface, field, or method) of a reference type, or a constructor of a class type, is accessible only if the type is accessible and the member or constructor is declared to permit access:
+A member (class, interface, field, or method) of a class, interface, type parameter, or reference type, or a constructor of a class, is accessible only if (i) the class, interface, type parameter, or reference type is accessible, and (ii) the member or constructor is declared to permit access:
 
 If the member or constructor is declared public, then access is permitted.
 
@@ -1258,11 +1782,11 @@ Access to the member or constructor occurs from within the package containing th
 
 Access is correct as described in §6.6.2.
 
-Otherwise, if the member or constructor is declared with package access, then access is permitted only when the access occurs from within the package in which the type is declared.
+Otherwise, if the member or constructor is declared with package access, then access is permitted only when the access occurs from within the package in which the class, interface, type parameter, or reference type is declared.
 
 A class member or constructor declared without an access modifier implicitly has package access.
 
-Otherwise, the member or constructor is declared private, and access is permitted if and only if it occurs within the body of the top level type (§7.6) that encloses the declaration of the member or constructor.
+Otherwise, the member or constructor is declared private. Access is permitted only when the access occurs from within the body of the top level class or interface that encloses the declaration of the member or constructor.
 
 An array type is accessible if and only if its element type is accessible.
 
@@ -1521,7 +2045,7 @@ An array type has a fully qualified name if and only if its element type has a f
 
 In that case, the fully qualified name of an array type consists of the fully qualified name of the component type of the array type followed by "[]".
 
-A local class or anonymous class does not have a fully qualified name.
+A local class, local interface, or anonymous class does not have a fully qualified name.
 
 Every primitive type, named package, top level class, and top level interface has a canonical name:
 
@@ -1537,7 +2061,7 @@ An array type has a canonical name if and only if its component type has a canon
 
 In that case, the canonical name of the array type consists of the canonical name of the component type of the array type followed by "[]".
 
-A local class or anonymous class does not have a canonical name.
+A local class, local interface, or anonymous class does not have a canonical name.
 
 Example 6.7-1. Fully Qualified Names
 

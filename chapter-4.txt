@@ -685,15 +685,15 @@ If C had been declared in a different package than T, then the call to mCPackage
 
 4.5. Parameterized Types
 
-A class or interface declaration that is generic (§8.1.2, §9.1.2) defines a set of parameterized types.
+A class or interface that is generic (§8.1.2, §9.1.2) defines a set of parameterized types.
 
-A parameterized type is a class or interface type of the form C<T1,...,Tn>, where C is the name of a generic type and <T1,...,Tn> is a list of type arguments that denote a particular parameterization of the generic type.
+A parameterized type is a class or interface type of the form C<T1,...,Tn>, where C is the name of a generic class or interface, and <T1,...,Tn> is a list of type arguments that denote a particular parameterization of the generic class or interface.
 
-A generic type has type parameters F1,...,Fn with corresponding bounds B1,...,Bn. Each type argument Ti of a parameterized type ranges over all types that are subtypes of all types listed in the corresponding bound. That is, for each bound type S in Bi, Ti is a subtype of S[F1:=T1,...,Fn:=Tn] (§4.10).
+A generic class or interface has type parameters F1,...,Fn with corresponding bounds B1,...,Bn. Each type argument Ti of a parameterized type ranges over all types that are subtypes of all types listed in the corresponding bound. That is, for each bound type S in Bi, Ti is a subtype of S[F1:=T1,...,Fn:=Tn] (§4.10).
 
 A parameterized type C<T1,...,Tn> is well-formed if all of the following are true:
 
-C is the name of a generic type.
+C is the name of a generic class or interface.
 
 The number of type arguments is the same as the number of type parameters in the generic declaration of C.
 
@@ -701,7 +701,7 @@ When subjected to capture conversion (§5.1.10) resulting in the type C<X1,...,X
 
 It is a compile-time error if a parameterized type is not well-formed.
 
-In this specification, whenever we speak of a class or interface type, we include the generic version as well, unless explicitly excluded.
+In this specification, whenever we speak of a class or interface type, we include parameterized types as well, unless explicitly excluded.
 
 Two parameterized types are provably distinct if either of the following is true:
 
@@ -709,7 +709,7 @@ They are parameterizations of distinct generic type declarations.
 
 Any of their type arguments are provably distinct.
 
-Given the generic types in the examples of §8.1.2, here are some well-formed parameterized types:
+Given the generic classes in the examples of §8.1.2, here are some well-formed parameterized types:
 
 Seq<String>
 
@@ -719,7 +719,7 @@ Seq<String>.Zipper<Integer>
 
 Pair<String,Integer>
 
-Here are some incorrect parameterizations of those generic types:
+Here are some incorrect parameterizations of those generic classes:
 
 Seq<int> is illegal, as primitive types cannot be type arguments.
 
@@ -727,7 +727,7 @@ Pair<String> is illegal, as there are not enough type arguments.
 
 Pair<String,String,String> is illegal, as there are too many type arguments.
 
-A parameterized type may be an parameterization of a generic class or interface which is nested. For example, if a non-generic class C has a generic member class D<T>, then C.D<Object> is a parameterized type. And if a generic class C<T> has a non-generic member class D, then the member type C<String>.D is a parameterized type, even though the class D is not generic.
+A parameterized type may be a parameterization of a generic class or interface which is nested. For example, if a non-generic class C has a generic member class D with one type parameter, then C.D<Object> is a parameterized type. Meanwhile, if a generic class C with one type parameter has a non-generic member class D, then the member class type C<String>.D is a parameterized type, even though the class D is not generic.
 
 4.5.1. Type Arguments of Parameterized Types
 
@@ -839,13 +839,13 @@ Here, the referent can be inserted into any queue whose element type is a supert
 
 4.5.2. Members and Constructors of Parameterized Types
 
-Let C be a generic class or interface declaration with type parameters A1,...,An, and let C<T1,...,Tn> be a parameterization of C where, for 1 ≤ i ≤ n, Ti is a type (rather than a wildcard). Then:
+Let C be a generic class or interface with type parameters A1,...,An, and let C<T1,...,Tn> be a parameterization of C where, for 1 ≤ i ≤ n, Ti is a type (rather than a wildcard). Then:
 
 Let m be a member or constructor declaration in C, whose type as declared is T (§8.2, §8.8.6).
 
 The type of m in C<T1,...,Tn> is T[A1:=T1,...,An:=Tn].
 
-Let m be a member or constructor declaration in D, where D is a class extended by C or an interface implemented by C. Let D<U1,...,Uk> be the supertype of C<T1,...,Tn> that corresponds to D.
+Let m be a member or constructor declaration in D, where D is a class extended by C or an interface implemented by C. Let D<U1,...,Uk> be the supertype (§4.10.2) of C<T1,...,Tn> that corresponds to D.
 
 The type of m in C<T1,...,Tn> is the type of m in D<U1,...,Uk>.
 
@@ -859,7 +859,7 @@ This is of no consequence, as it is impossible to access a member of a parameter
 
 The sole exception to the previous paragraph is when a nested parameterized type is used as the expression in an instanceof operator (§15.20.2), where capture conversion is not applied.
 
-A static member that is declared in a generic type declaration must be referred to using the non-generic type that corresponds to the generic type (§6.1, §6.5.5.2, §6.5.6.2), or a compile-time error occurs.
+A static member that is declared in a generic class or interface must be referred to using the name of the generic class or interface (§6.1, §6.5.5.2, §6.5.6.2), or a compile-time error occurs.
 
 In other words, it is illegal to refer to a static member declared in a generic type declaration by using a parameterized type.
 
@@ -923,15 +923,15 @@ To facilitate interfacing with non-generic legacy code, it is possible to use as
 
 More precisely, a raw type is defined to be one of:
 
-The reference type that is formed by taking the name of a generic type declaration without an accompanying type argument list.
+The reference type that is formed by taking the name of a generic class or interface declaration without an accompanying type argument list.
 
 An array type whose element type is a raw type.
 
-A non-static member type of a raw type R that is not inherited from a superclass or superinterface of R.
+The name of an inner member class of a raw type R that is not inherited from a superclass or superinterface of R.
 
-A non-generic class or interface type is not a raw type.
+The type of a non-generic class or interface is not a raw type.
 
-To see why a non-static type member of a raw type is considered raw, consider the following example:
+To see why the name of an inner member class of a raw type is considered raw, consider the following example:
 
 class Outer<T>{
     T t;
@@ -943,7 +943,7 @@ class Outer<T>{
 
 The type of the member(s) of Inner depends on the type parameter of Outer. If Outer is raw, Inner must be treated as raw as well, as there is no valid binding for T.
 
-This rule applies only to type members that are not inherited. Inherited type members that depend on type variables will be inherited as raw types as a consequence of the rule that the supertypes of a raw type are erased, described later in this section.
+This rule applies only to inner member classes that are not inherited. Inherited inner member classes that depend on type variables will be inherited as raw types as a consequence of the rule that the supertypes of a raw type are erased, described later in this section.
 
 Another implication of the rules above is that a generic inner class of a raw type can itself only be used as a raw type:
 
@@ -962,15 +962,17 @@ Double d = x.s;
 
 because Outer itself is raw, hence so are all its inner classes including Inner, and so it is not possible to pass any type arguments to Inner.
 
-The superclasses (respectively, superinterfaces) of a raw type are the erasures of the superclasses (superinterfaces) of any of the parameterizations of the generic type.
+The superclass types (respectively, superinterface types) of a raw type are the erasures of the superclass types (superinterface types) of the named class or interface.
 
-The type of a constructor (§8.8), instance method (§8.4, §9.4), or non-static field (§8.3) of a raw type C that is not inherited from its superclasses or superinterfaces is the erasure of its type in the generic declaration corresponding to C.
+The type of a constructor (§8.8), instance method (§8.4, §9.4), or non-static field (§8.3) of a raw type C that is not inherited from its superclasses or superinterfaces is the erasure of its type in the generic class or interface C.
 
-The type of a static method or static field of a raw type C is the same as its type in the generic declaration corresponding to C.
+The type of an inherited instance method or non-static field of a raw type C, where the member was declared in a class or interface D, is the type of the member in the supertype of C that names D.
 
-It is a compile-time error to pass type arguments to a non-static type member of a raw type that is not inherited from its superclasses or superinterfaces.
+The type of a static method or static field of a raw type C is the same as its type in the generic class or interface C.
 
-It is a compile-time error to attempt to use a type member of a parameterized type as a raw type.
+It is a compile-time error to pass type arguments to a non-static member class or interface of a raw type that is not inherited from its superclasses or superinterfaces.
+
+It is a compile-time error to attempt to use a member class or interface of a parameterized type as a raw type.
 
 This means that the ban on "rare" types extends to the case where the qualifying type is parameterized, but we attempt to use the inner class as a raw type:
 
@@ -978,8 +980,6 @@ Outer<Integer>.Inner x = null; // illegal
 
 
 This is the opposite of the case discussed above. There is no practical justification for this half-baked type. In legacy code, no type arguments are used. In non-legacy code, we should use the generic types correctly and pass all the required type arguments.
-
-The supertype of a class may be a raw type. Member accesses for the class are treated as normal, and member accesses for the supertype are treated as for raw types. In the constructor of the class, calls to super are treated as method calls on a raw type.
 
 The use of raw types is allowed only as a concession to compatibility of legacy code. The use of raw types in code written after the introduction of generics into the Java programming language is strongly discouraged. It is possible that future versions of the Java programming language will disallow the use of raw types.
 
@@ -1075,7 +1075,7 @@ For each Ti (1 ≤ i ≤ n), let Ci be the most specific class or array type suc
 
 For 1 ≤ j ≤ n, if Tj is a type variable, then let Tj' be an interface whose members are the same as the public members of Tj; otherwise, if Tj is an interface, then let Tj' be Tj.
 
-If Ck is Object, a notional interface is induced; otherwise, a notional class is induced with direct superclass Ck. This class or interface has direct superinterfaces T1', ..., Tn' and is declared in the package in which the intersection type appears.
+If Ck is Object, a notional interface is induced; otherwise, a notional class is induced with direct superclass type Ck. This class or interface has direct superinterface types T1', ..., Tn' and is declared in the package in which the intersection type appears.
 
 The members of an intersection type are the members of the class or interface it induces.
 
@@ -1115,43 +1115,35 @@ short >1 byte
 
 4.10.2. Subtyping among Class and Interface Types
 
-Given a non-generic type declaration C, the direct supertypes of the type C are all of the following:
+Given a non-generic class or interface C, the direct supertypes of the type of C are all of the following:
 
-The direct superclass of C (§8.1.4).
+The direct superclass type of C (§8.1.4), if C is a class.
 
-The direct superinterfaces of C (§8.1.5).
+The direct superinterface types of C (§8.1.5, §9.1.3).
 
-The type Object, if C is an interface type with no direct superinterfaces (§9.1.3).
+The type Object, if C is an interface with no direct superinterface types (§9.1.3).
 
-Given a generic type declaration C<F1,...,Fn> (n > 0), the direct supertypes of the raw type C (§4.8) are all of the following:
+Given a generic class or interface C with type parameters F1,...,Fn (n > 0), the direct supertypes of the raw type C (§4.8) are all of the following:
 
-The direct superclass of the raw type C.
+The erasure (§4.6) of the direct superclass type of C, if C is a class.
 
-The direct superinterfaces of the raw type C.
+The erasure of the direct superinterface types of C.
 
-The type Object, if C<F1,...,Fn> is a generic interface type with no direct superinterfaces (§9.1.2).
+The type Object, if C is an interface with no direct superinterface types.
 
-Given a generic type declaration C<F1,...,Fn> (n > 0), the direct supertypes of the generic type C<F1,...,Fn> are all of the following:
+Given a generic class or interface C with type parameters F1,...,Fn (n > 0), the direct supertypes of the parameterized type C<T1,...,Tn>, where each of Ti (1 ≤ i ≤ n) is a type, are all of the following:
 
-The direct superclass of C<F1,...,Fn>.
+The substitution [F1:=T1,...,Fn:=Tn] applied to the direct superclass type of C, if C is a class.
 
-The direct superinterfaces of C<F1,...,Fn>.
-
-The type Object, if C<F1,...,Fn> is a generic interface type with no direct superinterfaces.
-
-The raw type C.
-
-Given a generic type declaration C<F1,...,Fn> (n > 0), the direct supertypes of the parameterized type C<T1,...,Tn>, where Ti (1 ≤ i ≤ n) is a type, are all of the following:
-
-D<U1 θ,...,Uk θ>, where D<U1,...,Uk> is a generic type which is a direct supertype of the generic type C<F1,...,Fn> and θ is the substitution [F1:=T1,...,Fn:=Tn].
+The substitution [F1:=T1,...,Fn:=Tn] applied to the direct superinterface types of C.
 
 C<S1,...,Sn>, where Si contains Ti (1 ≤ i ≤ n) (§4.5.1).
 
-The type Object, if C<F1,...,Fn> is a generic interface type with no direct superinterfaces.
+The type Object, if C is an interface with no direct superinterface types.
 
 The raw type C.
 
-Given a generic type declaration C<F1,...,Fn> (n > 0), the direct supertypes of the parameterized type C<R1,...,Rn> where at least one of the Ri (1 ≤ i ≤ n) is a wildcard type argument, are the direct supertypes of the parameterized type C<X1,...,Xn> which is the result of applying capture conversion to C<R1,...,Rn> (§5.1.10).
+Given a generic class or interface C with type parameters F1,...,Fn (n > 0), the direct supertypes of the parameterized type C<R1,...,Rn> where at least one of the Ri (1 ≤ i ≤ n) is a wildcard type argument, are the direct supertypes of the parameterized type C<X1,...,Xn> which is the result of applying capture conversion to C<R1,...,Rn> (§5.1.10).
 
 The direct supertypes of an intersection type T1 & ... & Tn are Ti (1 ≤ i ≤ n).
 
@@ -1329,41 +1321,43 @@ Like lub (§4.10.4), upward projection and downward projection may produce infin
 
 4.11. Where Types Are Used
 
-Types are used in most kinds of declaration and in certain kinds of expression. Specifically, there are 16 type contexts where types are used:
+Types are used in most kinds of declaration and in certain kinds of expression. Specifically, there are 17 type contexts where types are used:
 
 In declarations:
 
-A type in the extends or implements clause of a class declaration (§8.1.4, §8.1.5, §8.5, §9.5)
+A type in the extends or implements clause of a class declaration (§8.1.4, §8.1.5)
 
-A type in the extends clause of an interface declaration (§9.1.3, §8.5, §9.5)
+A type in the extends clause of an interface declaration (§9.1.3)
 
-The return type of a method (including the type of an element of an annotation type) (§8.4.5, §9.4, §9.6.1)
+The return type of a method (§8.4.5, §9.4), including the type of an element of an annotation interface (§9.6.1)
 
 A type in the throws clause of a method or constructor (§8.4.6, §8.8.5, §9.4)
 
 A type in the extends clause of a type parameter declaration of a generic class, interface, method, or constructor (§8.1.2, §9.1.2, §8.4.4, §8.8.4)
 
-The type in a field declaration of a class or interface (including an enum constant) (§8.3, §9.3, §8.9.1)
+The type in a field declaration of a class or interface (§8.3, §9.3), including an enum constant (§8.9.1)
 
 The type in a formal parameter declaration of a method, constructor, or lambda expression (§8.4.1, §8.8.1, §9.4, §15.27.1)
 
 The type of the receiver parameter of a method (§8.4)
 
-The type in a local variable declaration (§14.4, §14.14.1, §14.14.2, §14.20.3)
+The type in a local variable declaration in either a statement (§14.4.2, §14.14.1, §14.14.2, §14.20.3) or a pattern (§14.30.1)
 
-The type in an exception parameter declaration (§14.20)
+A type in an exception parameter declaration (§14.20)
+
+The type in a record component declaration of a record class (§8.10.1)
 
 In expressions:
 
-A type in the explicit type argument list to an explicit constructor invocation statement or class instance creation expression or method invocation expression (§8.8.7.1, §15.9, §15.12)
+A type in the explicit type argument list to an explicit constructor invocation statement, class instance creation expression, method invocation expression, or method reference expression (§8.8.7.1, §15.9, §15.12, §15.13)
 
-In an unqualified class instance creation expression, as the class type to be instantiated (§15.9) or as the direct superclass or direct superinterface of an anonymous class to be instantiated (§15.9.5)
+In an unqualified class instance creation expression, as the class type to be instantiated (§15.9) or as the direct superclass type or direct superinterface type of an anonymous class to be instantiated (§15.9.5)
 
 The element type in an array creation expression (§15.10.1)
 
 The type in the cast operator of a cast expression (§15.16)
 
-The type that follows the instanceof relational operator (§15.20.2)
+The type that follows the instanceof type comparison operator (§15.20.2)
 
 In a method reference expression (§15.13), as the reference type to search for a member method or as the class type or array type to construct.
 
@@ -1393,7 +1387,7 @@ The meaning of types in type contexts is given by:
 
 §4.9, for intersection types in the bounds of type parameters
 
-§6.5, for class and interface types in contexts where genericity is unimportant (§6.1)
+§6.5, for types of non-generic classes, interfaces, and type variables
 
 §10.1, for array types
 
@@ -1405,7 +1399,7 @@ In an extends or implements clause of a class declaration (§8.1.4, §8.1.5)
 
 In an extends clause of an interface declaration (§9.1.3)
 
-In an unqualified class instance creation expression, as the class type to be instantiated (§15.9) or as the direct superclass or direct superinterface of an anonymous class to be instantiated (§15.9.5)
+In an unqualified class instance creation expression, as the class type to be instantiated (§15.9) or as the direct superclass type or direct superinterface type of an anonymous class to be instantiated (§15.9.5)
 
 In a method reference expression (§15.13), as the reference type to search for a member method or as the class type or array type to construct.
 
@@ -1433,9 +1427,9 @@ int @Foo [][] f; annotates the array type int[][]
 
 int[] @Foo [] f; annotates the array type int[] which is the component type of the array type int[][]
 
-Five of the type contexts which appear in declarations occupy the same syntactic real estate as a number of declaration contexts (§9.6.4.1):
+Some of the type contexts which appear in declarations occupy the same syntactic real estate as a number of declaration contexts (§9.6.4.1):
 
-The return type of a method (including the type of an element of an annotation type)
+The return type of a method (including the type of an element of an annotation interface)
 
 The type in a field declaration of a class or interface (including an enum constant)
 
@@ -1444,6 +1438,8 @@ The type in a formal parameter declaration of a method, constructor, or lambda e
 The type in a local variable declaration
 
 The type in an exception parameter declaration
+
+The type in a record component declaration of a record class
 
 The fact that the same syntactic location in a program can be both a type context and a declaration context arises because the modifiers for a declaration immediately precede the type of the declared entity. §9.7.4 explains how an annotation in such a location is deemed to appear in a type context or a declaration context or both.
 
@@ -1484,8 +1480,6 @@ class MiscMath<T extends Number> {
 
 
 In this example, types are used in declarations of the following:
-
-Imported types (§7.5); here the type Random, imported from the type java.util.Random of the package java.util, is declared
 
 Fields, which are the class variables and instance variables of classes (§8.3), and constants of interfaces (§9.3); here the field divisor in the class MiscMath is declared to be of type int
 
@@ -1623,13 +1617,17 @@ An exception parameter is created each time an exception is caught by a catch cl
 
 The new variable is initialized with the actual object associated with the exception (§11.3, §14.18). The exception parameter effectively ceases to exist when execution of the block associated with the catch clause is complete.
 
-Local variables are declared by local variable declaration statements (§14.4).
+Local variables (§14.4) are declared by statements (§14.4.2, §14.14.1, §14.14.2, §14.20.3) and by patterns (§14.30.1). A local variable declared by a pattern is called a pattern variable.
 
-Whenever the flow of control enters a block (§14.2) or for statement (§14.14), a new variable is created for each local variable declared in a local variable declaration statement immediately contained within that block or for statement.
+A local variable declared by a statement is created when the flow of control enters the nearest enclosing block (§14.2), for statement, or try-with-resources statement.
 
-A local variable declaration statement may contain an expression which initializes the variable. The local variable with an initializing expression is not initialized, however, until the local variable declaration statement that declares it is executed. (The rules of definite assignment (§16 (Definite Assignment)) prevent the value of a local variable from being used before it has been initialized or otherwise assigned a value.) The local variable effectively ceases to exist when the execution of the block or for statement is complete.
+A local variable declared by a statement is initialized as part of the execution of the statement, provided the variable's declarator has an initializer. The rules of definite assignment (§16 (Definite Assignment)) prevent the value of a local variable declared by a statement from being used before it has been initialized or otherwise assigned a value.
 
-Were it not for one exceptional situation, a local variable could always be regarded as being created when its local variable declaration statement is executed. The exceptional situation involves the switch statement (§14.11), where it is possible for control to enter a block but bypass execution of a local variable declaration statement. Because of the restrictions imposed by the rules of definite assignment (§16 (Definite Assignment)), however, the local variable declared by such a bypassed local variable declaration statement cannot be used before it has been definitely assigned a value by an assignment expression (§15.26).
+A local variable declared by a pattern is created and initialized when the pattern matches (§14.30.2). The rules of scoping (§6.3) prevent the value of a local variable declared by a pattern from being used unless the pattern has matched.
+
+A local variable ceases to exist when its declaration is no longer in scope.
+
+Were it not for one exceptional situation, a local variable declared by a statement could always be regarded as being created when the statement is executed. The exceptional situation involves the switch statement (§14.11), where it is possible for control to enter a block but bypass execution of a local variable declaration statement. Because of the restrictions imposed by the rules of definite assignment (§16 (Definite Assignment)), however, the local variable declared by such a bypassed local variable declaration statement cannot be used before it has been definitely assigned a value by an assignment expression (§15.26).
 
 Example 4.12.3-1. Different Kinds of Variables
 
@@ -1642,7 +1640,14 @@ class Point {
         this.x = x;
         return oldx;
     }
+    boolean equalAtX(Object o) {
+        if (o instanceof Point p)  // p is a pattern variable
+            return this.x == p.x;
+        else
+            return false;
+    }
 }
+
 
 
 
@@ -1677,7 +1682,7 @@ the class Point declares a final class variable origin. The origin variable hold
 
 Certain variables that are not declared final are instead considered effectively final:
 
-A local variable whose declarator has an initializer (§14.4.2) is effectively final if all of the following are true:
+A local variable declared by a statement and whose declarator has an initializer (§14.4), or a local variable declared by a pattern (§14.30.1), is effectively final if all of the following are true:
 
 It is not declared final.
 
@@ -1685,7 +1690,7 @@ It never occurs as the left hand side in an assignment expression (§15.26). (No
 
 It never occurs as the operand of a prefix or postfix increment or decrement operator (§15.14, §15.15).
 
-A local variable whose declarator lacks an initializer is effectively final if all of the following are true:
+A local variable declared by a statement and whose declarator lacks an initializer is effectively final if all of the following are true:
 
 It is not declared final.
 
@@ -1727,7 +1732,9 @@ Each constructor parameter (§8.8.1) is initialized to the corresponding argumen
 
 An exception parameter (§14.20) is initialized to the thrown object representing the exception (§11.3, §14.18).
 
-A local variable (§14.4, §14.14) must be explicitly given a value before it is used, by either initialization (§14.4) or assignment (§15.26), in a way that can be verified using the rules for definite assignment (§16 (Definite Assignment)).
+A local variable declared by a statement (§14.4.2, §14.14.1, §14.14.2, §14.20.3) must be explicitly given a value before it is used, by either initialization (§14.4) or assignment (§15.26), in a way that can be verified using the rules for definite assignment (§16 (Definite Assignment)).
+
+A local variable declared by a pattern (§14.30.1) is initialized implicitly, by the process of pattern matching (§14.30.2).
 
 Example 4.12.5-1. Initial Values of Variables
 
@@ -1776,7 +1783,7 @@ The correspondence between compile-time types and run-time types is incomplete f
 
 At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
 
-See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 15 Edition for more details.
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 16 Edition for more details.
 
 Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile time. Specifically, all compile-time parameterizations of a given generic type (§8.1.2, §9.1.2) share a single run-time representation.
 

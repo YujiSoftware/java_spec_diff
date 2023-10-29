@@ -14,7 +14,7 @@ Table of Contents
 7.5.2. Type-Import-on-Demand Declarations
 7.5.3. Single-Static-Import Declarations
 7.5.4. Static-Import-on-Demand Declarations
-7.6. Top Level Type Declarations
+7.6. Top Level Class and Interface Declarations
 7.7. Module Declarations
 7.7.1. Dependences
 7.7.2. Exported and Opened Packages
@@ -23,29 +23,29 @@ Table of Contents
 7.7.5. Unnamed Modules
 7.7.6. Observability of a Module
 
-Programs are organized as sets of packages. The members of a package (§7.1) are class and interface types, which are declared in compilation units of the package, and subpackages, which may contain compilation units and subpackages of their own.
+Programs are organized as sets of packages. The members of a package (§7.1) are classes and interfaces, which are declared in compilation units of the package, and subpackages, which may contain compilation units and subpackages of their own.
 
-Each package has its own set of names for types, which helps to prevent name conflicts. The naming structure for packages is hierarchical.
+Each package has its own set of names for classes and interfaces, which helps to prevent name conflicts. The naming structure for packages is hierarchical.
 
-If a set of packages is sufficiently cohesive, then the packages may be grouped into a module. A module categorizes some or all of its packages as exported, which means their types may be accessed from code outside the module. If a package is not exported by a module, then only code inside the module may access its types. Furthermore, if code in a module wishes to access the packages exported by another module, then the first module must explicitly depend on the second module. Thus, a module controls how its packages use other modules (by specifying dependences) and controls how other modules use its packages (by specifying which of its packages are exported).
+If a set of packages is sufficiently cohesive, then the packages may be grouped into a module. A module categorizes some or all of its packages as exported, which means their classes and interfaces may be accessed from code outside the module. If a package is not exported by a module, then only code inside the module may access its classes and interfaces. Furthermore, if code in a module wishes to access the packages exported by another module, then the first module must explicitly depend on the second module. Thus, a module controls how its packages use other modules (by specifying dependences) and controls how other modules use its packages (by specifying which of its packages are exported).
 
-Modules and packages may be stored in a file system or in a database (§7.2). Modules and packages that are stored in a file system may have certain constraints on the organization of their compilation units to allow a simple implementation to find module and type declarations easily.
+Modules and packages may be stored in a file system or in a database (§7.2). Modules and packages that are stored in a file system may have certain constraints on the organization of their compilation units to allow a simple implementation to find module, class, and interface declarations easily.
 
-Code in a compilation unit automatically has access to all types declared in its package and also automatically imports all of the public types declared in the predefined package java.lang.
+Code in a compilation unit automatically has access to all classes and interfaces declared in its package and also automatically imports all of the public classes and interfaces declared in the predefined package java.lang.
 
-A top level type is accessible (§6.6) outside the package that declares it only if the type is declared public. A top level type is accessible outside the module that declares it only if the type is declared public and is a member of an exported package. A type that is declared public but is not a member of an exported package is accessible only to code inside the module.
+A top level class or interface is accessible (§6.6) outside the package that declares it only if the class or interface is declared public. A top level class or interface is accessible outside the module that declares it only if the class or interface is declared public and is a member of an exported package. A class or interface that is declared public but is not a member of an exported package is accessible only to code inside the module.
 
 For small programs and casual development, a package can be unnamed (§7.4.2) or have a simple name, but if code is to be widely distributed, unique package names should be chosen using qualified names. This can prevent the conflicts that would otherwise occur if two development groups happened to pick the same package name and these packages were later to be used in a single program.
 
 7.1. Package Members
 
-The members of a package are its subpackages and all the top level class types (§7.6, §8 (Classes)) and top level interface types (§9 (Interfaces)) declared in all the compilation units (§7.3) of the package.
+The members of a package are its subpackages and all the top level classes (§8 (Classes)) and top level interfaces (§9 (Interfaces)) declared in all the compilation units (§7.3) of the package.
 
 For example, in the Java SE Platform API:
 
 The package java has subpackages awt, applet, io, lang, net, and util, but no compilation units.
 
-The package java.awt has a subpackage named image, as well as a number of compilation units containing declarations of class and interface types.
+The package java.awt has a subpackage named image, as well as a number of compilation units containing declarations of classes and interfaces.
 
 If the fully qualified name (§6.7) of a package is P, and Q is a subpackage of P, then P.Q is the fully qualified name of the subpackage, and furthermore denotes a package.
 
@@ -53,11 +53,11 @@ A package may not contain two members of the same name, or a compile-time error 
 
 Here are some examples:
 
-Because the package java.awt has a subpackage image, it cannot (and does not) contain a declaration of a class or interface type named image.
+Because the package java.awt has a subpackage image, it cannot (and does not) contain a declaration of a class or interface named image.
 
-If there is a package named mouse and a member type Button in that package (which then might be referred to as mouse.Button), then there cannot be any package with the fully qualified name mouse.Button or mouse.Button.Click.
+If there is a package named mouse and a member class Button in that package (which then might be referred to as mouse.Button), then there cannot be any package with the fully qualified name mouse.Button or mouse.Button.Click.
 
-If com.nighthacks.java.jag is the fully qualified name of a type, then there cannot be any package whose fully qualified name is either com.nighthacks.java.jag or com.nighthacks.java.jag.scrabble.
+If com.nighthacks.java.jag is the fully qualified name of a class, then there cannot be any package whose fully qualified name is either com.nighthacks.java.jag or com.nighthacks.java.jag.scrabble.
 
 It is however possible for members of different packages to have the same simple name. For example, it is possible to declare a package:
 
@@ -67,11 +67,11 @@ public class Vector { Object[] vec; }
 
 
 
-that has as a member a public class named Vector, even though the package java.util also declares a class named Vector. These two class types are different, reflected by the fact that they have different fully qualified names (§6.7). The fully qualified name of this example Vector is vector.Vector, whereas java.util.Vector is the fully qualified name of the Vector class included in the Java SE Platform. Because the package vector contains a class named Vector, it cannot also have a subpackage named Vector.
+that has as a member a public class named Vector, even though the package java.util also declares a class named Vector. These two classes are different, reflected by the fact that they have different fully qualified names (§6.7). The fully qualified name of this example Vector is vector.Vector, whereas java.util.Vector is the fully qualified name of the Vector class included in the Java SE Platform. Because the package vector contains a class named Vector, it cannot also have a subpackage named Vector.
 
-The hierarchical naming structure for packages is intended to be convenient for organizing related packages in a conventional manner, but has no significance in itself other than the prohibition against a package having a subpackage with the same simple name as a top level type (§7.6) declared in that package.
+The hierarchical naming structure for packages is intended to be convenient for organizing related packages in a conventional manner, but has no significance in itself other than the prohibition against a package having a subpackage with the same simple name as a top level class or interface (§7.6) declared in that package.
 
-For example, there is no special access relationship between a package named oliver and another package named oliver.twist, or between packages named evelyn.wood and evelyn.waugh. That is, the code in a package named oliver.twist has no better access to the types declared within package oliver than code in any other package.
+For example, there is no special access relationship between a package named oliver and another package named oliver.twist, or between packages named evelyn.wood and evelyn.waugh. That is, the code in a package named oliver.twist has no better access to the classes and interfaces declared within package oliver than code in any other package.
 
 7.2. Host Support for Modules and Packages
 
@@ -81,7 +81,7 @@ Each host system determines which compilation units are observable in a particul
 
 The host system is free to determine that a compilation unit which contains a module declaration is not, in fact, observable, and thus is not associated with the module declared therein. This enables a compiler to choose which directory on a modulesourcepath is "really" the embodiment of a given module. However, if the host system determines that a compilation unit which contains a module declaration is observable, then §7.4.3 mandates that the compilation unit must be associated with the module declared therein, and not with any other module.
 
-The host system is free to determine that a compilation unit which contains a type declaration is (first) observable and (second) associated with an unnamed module or an automatic module - despite no declaration of an unnamed or automatic module existing in any compilation unit, observable or otherwise.
+The host system is free to determine that a compilation unit which contains a class or interface declaration is (first) observable and (second) associated with an unnamed module or an automatic module - despite no declaration of an unnamed or automatic module existing in any compilation unit, observable or otherwise.
 
 In simple implementations of the Java SE Platform, packages and compilation units may be stored in a local file system. Other implementations may store them using a distributed file system or some form of database.
 
@@ -166,7 +166,7 @@ CompilationUnit:
 OrdinaryCompilationUnit
 ModularCompilationUnit
 OrdinaryCompilationUnit:
-[PackageDeclaration] {ImportDeclaration} {TypeDeclaration}
+[PackageDeclaration] {ImportDeclaration} {TopLevelClassOrInterfaceDeclaration}
 ModularCompilationUnit:
 {ImportDeclaration} ModuleDeclaration
 
@@ -176,13 +176,13 @@ A package declaration (§7.4), giving the fully qualified name (§6.7) of the pa
 
 A compilation unit that has no package declaration is part of an unnamed package (§7.4.2).
 
-import declarations (§7.5) that allow types from other packages and static members of types to be referred to using their simple names.
+import declarations (§7.5) that allow classes and interface from other packages, and static members of classes and interfaces, to be referred to using their simple names.
 
-Top level type declarations (§7.6) of class and interface types.
+Top level declarations of classes and interfaces (§7.6).
 
-A modular compilation unit consists of a module declaration (§7.7), optionally preceded by import declarations. The import declarations allow types from packages in this module and other modules, as well as static members of types, to be referred to using their simple names within the module declaration.
+A modular compilation unit consists of a module declaration (§7.7), optionally preceded by import declarations. The import declarations allow classes and interfaces from packages in this module and other modules, as well as static members of classes and interfaces, to be referred to using their simple names within the module declaration.
 
-Every compilation unit implicitly imports every public type name declared in the predefined package java.lang, as if the declaration import java.lang.*; appeared at the beginning of each compilation unit immediately after any package declaration. As a result, the names of all those types are available as simple names in every compilation unit.
+Every compilation unit implicitly imports every public class or interface declared in the predefined package java.lang, as if the declaration import java.lang.*; appeared at the beginning of each compilation unit immediately after any package declaration. As a result, the names of all those classes and interfaces are available as simple names in every compilation unit.
 
 The host system determines which compilation units are observable, except for the compilation units in the predefined package java and its subpackages lang and io, which are all always observable.
 
@@ -200,9 +200,9 @@ The readability relation is reflexive, so M reads itself, and thus all of the mo
 
 The modules read by M drive the packages that are uniquely visible to M (§7.4.3), which in turn drives both the top level packages in scope and the meaning of package names for code in the modular and ordinary compilation units associated with M (§6.3, §6.5.3, §6.5.5).
 
-The rules above ensure that package/type names used in annotations in a modular compilation unit (in particular, annotations applied to the module declaration) are interpreted as if they appeared in an ordinary compilation unit associated with the module.
+The rules above ensure that package and type names used in annotations in a modular compilation unit (in particular, annotations applied to the module declaration) are interpreted as if they appeared in an ordinary compilation unit associated with the module.
 
-Types declared in different ordinary compilation units can refer to each other, circularly. A Java compiler must arrange to compile all such types at the same time.
+Classes and interfaces declared in different ordinary compilation units can refer to each other, circularly. A Java compiler must arrange to compile all such classes and interfaces at the same time.
 
 7.4. Package Declarations
 
@@ -221,7 +221,7 @@ The package name mentioned in a package declaration must be the fully qualified 
 
 The scope and shadowing of a package declaration is specified in §6.3 and §6.4.
 
-The rules for annotation modifiers on a package declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a package declaration are specified in §9.7.4 and §9.7.5.
 
 At most one annotated package declaration is permitted for a given package.
 
@@ -284,9 +284,9 @@ No ordinary compilation unit associated with M contains a declaration of the pac
 
 7.5. Import Declarations
 
-An import declaration allows a named type or a static member to be referred to by a simple name (§6.2) that consists of a single identifier.
+An import declaration allows a named class, interface, or static member to be referred to by a simple name (§6.2) that consists of a single identifier.
 
-Without the use of an appropriate import declaration, the only way to refer to a type declared in another package, or a static member of another type, is to use a fully qualified name (§6.7).
+Without the use of an appropriate import declaration, a reference to a class or interface declared in another package, or a reference to a static member of another class or interface, would typically need to use a fully qualified name (§6.7).
 
 ImportDeclaration:
 SingleTypeImportDeclaration
@@ -294,38 +294,38 @@ TypeImportOnDemandDeclaration
 SingleStaticImportDeclaration
 StaticImportOnDemandDeclaration
 
-A single-type-import declaration (§7.5.1) imports a single named type, by mentioning its canonical name (§6.7).
+A single-type-import declaration (§7.5.1) imports a single named class or interface, by mentioning its canonical name (§6.7).
 
-A type-import-on-demand declaration (§7.5.2) imports all the accessible types of a named type or named package as needed, by mentioning the canonical name of a type or package.
+A type-import-on-demand declaration (§7.5.2) imports all the accessible classes and interfaces of a named package, class, or interface as needed, by mentioning the canonical name of the package, class, or interface.
 
-A single-static-import declaration (§7.5.3) imports all accessible static members with a given name from a type, by giving its canonical name.
+A single-static-import declaration (§7.5.3) imports all accessible static members with a given name from a class or interface, by giving its canonical name.
 
-A static-import-on-demand declaration (§7.5.4) imports all accessible static members of a named type as needed, by mentioning the canonical name of a type.
+A static-import-on-demand declaration (§7.5.4) imports all accessible static members of a named class or interface as needed, by mentioning the canonical name of the class or interface.
 
-The scope and shadowing of a type or member imported by these declarations is specified in §6.3 and §6.4.
+The scope and shadowing of a class, interface, or member imported by these declarations is specified in §6.3 and §6.4.
 
-An import declaration makes types or members available by their simple names only within the compilation unit that actually contains the import declaration. The scope of the type(s) or member(s) introduced by an import declaration specifically does not include other compilation units in the same package, other import declarations in the current compilation unit, or a package declaration in the current compilation unit (except for the annotations of a package declaration).
+An import declaration makes classes, interfaces, or members available by their simple names only within the compilation unit that actually contains the import declaration. The scope of the class(es), interface(s), or member(s) introduced by an import declaration specifically does not include other compilation units in the same package, other import declarations in the current compilation unit, or a package declaration in the current compilation unit (except for the annotations of a package declaration).
 
 7.5.1. Single-Type-Import Declarations
 
-A single-type-import declaration imports a single type by giving its canonical name, making it available under a simple name in the module, class, and interface declarations of the compilation unit in which the single-type-import declaration appears.
+A single-type-import declaration imports a single class or interface by giving its canonical name, making it available under a simple name in the module, class, and interface declarations of the compilation unit in which the single-type-import declaration appears.
 
 SingleTypeImportDeclaration:
 import TypeName ;
 
-The TypeName must be the canonical name of a class type, interface type, enum type, or annotation type (§6.7).
+The TypeName must be the canonical name of a class or interface (§6.7).
 
-The type must be either a member of a named package, or a member of a type whose outermost lexically enclosing type declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
+The class or interface must be either a member of a named package, or a member of a class or interface whose outermost lexically enclosing class or interface declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
 
-It is a compile-time error if the named type is not accessible (§6.6).
+It is a compile-time error if the named class or interface is not accessible (§6.6).
 
-If two single-type-import declarations in the same compilation unit attempt to import types with the same simple name, then a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
+If two single-type-import declarations in the same compilation unit attempt to import classes or interfaces with the same simple name, then a compile-time error occurs, unless the two classes or interface are the same, in which case the duplicate declaration is ignored.
 
-If the type imported by the single-type-import declaration is declared as a top level type (§7.6) in the compilation unit that contains the import declaration, then the import declaration is ignored.
+If the class or interface imported by the single-type-import declaration is declared as a top level class or interface (§7.6) in the compilation unit that contains the import declaration, then the import declaration is ignored.
 
-If a single-type-import declaration imports a type whose simple name is n, and the compilation unit also declares a top level type whose simple name is n, a compile-time error occurs.
+If a single-type-import declaration imports a class or interface whose simple name is x, and the compilation unit also declares a top level class or interface whose simple name is x, a compile-time error occurs.
 
-If a compilation unit contains both a single-type-import declaration that imports a type whose simple name is n, and a single-static-import declaration (§7.5.3) that imports a type whose simple name is n, a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
+If a compilation unit contains both a single-type-import declaration that imports a class or interface whose simple name is x, and a single-static-import declaration (§7.5.3) that imports a class or interface whose simple name is x, a compile-time error occurs, unless the two classes or interfaces are the same, in which case the duplicate declaration is ignored.
 
 Example 7.5.1-1. Single-Type-Import
 
@@ -334,14 +334,14 @@ import java.util.Vector;
 
 
 
-causes the simple name Vector to be available within the class and interface declarations in a compilation unit. Thus, the simple name Vector refers to the type declaration Vector in the package java.util in all places where it is not shadowed (§6.4.1) or obscured (§6.4.2) by a declaration of a field, parameter, local variable, or nested type declaration with the same name.
+causes the simple name Vector to be available within the class and interface declarations in a compilation unit. Thus, the simple name Vector refers to the class declaration Vector in the package java.util in all places where it is not shadowed (§6.4.1) or obscured (§6.4.2) by a declaration of a field, parameter, local variable, or nested class or interface declaration with the same name.
 
-Note that the actual declaration of java.util.Vector is generic (§8.1.2). Once imported, the name Vector can be used without qualification in a parameterized type such as Vector<String>, or as the raw type Vector. A related limitation of the import declaration is that a nested type declared inside a generic type declaration can be imported, but its outer type is always erased.
-
-
+Note that the actual declaration of java.util.Vector is generic (§8.1.2). Once imported, the name Vector can be used without qualification in a parameterized type such as Vector<String>, or as the raw type Vector. A related limitation of the import declaration is that a member class or interface declared inside a generic class or interface declaration can be imported, but its outer type is always erased.
 
 
-Example 7.5.1-2. Duplicate Type Declarations
+
+
+Example 7.5.1-2. Duplicate Class Declarations
 
 This program:
 
@@ -371,7 +371,7 @@ public class Vector { Object[] vec; }
 
 Example 7.5.1-3. No Import of a Subpackage
 
-Note that an import declaration cannot import a subpackage, only a type.
+Note that an import declaration cannot import a subpackage, only a class or interface.
 
 For example, it does not work to try to import java.util and then use the name util.Random to refer to the type java.util.Random:
 
@@ -386,7 +386,7 @@ class Test { util.Random generator; }
 
 Example 7.5.1-4. Importing a Type Name that is also a Package Name
 
-Package names and type names are usually different under the naming conventions described in §6.1. Nevertheless, in a contrived example where there is an unconventionally-named package Vector, which declares a public class whose name is Mosquito:
+Package names and type names are usually different under the naming conventions described in §6.1. Nevertheless, in a contrived example where there is an unconventionally named package Vector, which declares a public class whose name is Mosquito:
 
 package Vector;
 public class Mosquito { int capacity; }
@@ -414,22 +414,22 @@ class Vector.Mosquito
 
 7.5.2. Type-Import-on-Demand Declarations
 
-A type-import-on-demand declaration allows all accessible types of a named package or type to be imported as needed.
+A type-import-on-demand declaration allows all accessible classes and interfaces of a named package, class, or interface to be imported as needed.
 
 TypeImportOnDemandDeclaration:
 import PackageOrTypeName . * ;
 
-The PackageOrTypeName must be the canonical name (§6.7) of a package, a class type, an interface type, an enum type, or an annotation type.
+The PackageOrTypeName must be the canonical name (§6.7) of a package, a class, or an interface.
 
-If the PackageOrTypeName denotes a type (§6.5.4), then the type must be either a member of a named package, or a member of a type whose outermost lexically enclosing type declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
+If the PackageOrTypeName denotes a class or interface (§6.5.4), then the class or interface must be either a member of a named package, or a member of a class or interface whose outermost lexically enclosing class or interface declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
 
-It is a compile-time error if the named package is not uniquely visible to the current module (§7.4.3), or if the named type is not accessible (§6.6).
+It is a compile-time error if the named package is not uniquely visible to the current module (§7.4.3), or if the named class or interface is not accessible (§6.6).
 
 It is not a compile-time error to name either java.lang or the named package of the current compilation unit in a type-import-on-demand declaration. The type-import-on-demand declaration is ignored in such cases.
 
-Two or more type-import-on-demand declarations in the same compilation unit may name the same type or package. All but one of these declarations are considered redundant; the effect is as if that type was imported only once.
+Two or more type-import-on-demand declarations in the same compilation unit may name the same package, class, or interface. All but one of these declarations are considered redundant; the effect is as if that type was imported only once.
 
-If a compilation unit contains both a type-import-on-demand declaration and a static-import-on-demand declaration (§7.5.4) that name the same type, the effect is as if the static member types of that type (§8.5, §9.5) were imported only once.
+If a compilation unit contains both a type-import-on-demand declaration and a static-import-on-demand declaration (§7.5.4) that name the same class or interface, the effect is as if the static member classes and interfaces of that class or interface (§8.5, §9.5) are imported only once.
 
 Example 7.5.2-1. Type-Import-on-Demand
 
@@ -438,9 +438,9 @@ import java.util.*;
 
 
 
-causes the simple names of all public types declared in the package java.util to be available within the class and interface declarations of the compilation unit. Thus, the simple name Vector refers to the type Vector in the package java.util in all places in the compilation unit where that type declaration is not shadowed (§6.4.1) or obscured (§6.4.2).
+causes the simple names of all public classes and interfaces declared in the package java.util to be available within the class and interface declarations of the compilation unit. Thus, the simple name Vector refers to the class Vector of the package java.util in all places in the compilation unit where that class declaration is not shadowed (§6.4.1) or obscured (§6.4.2).
 
-The declaration might be shadowed by a single-type-import declaration of a type whose simple name is Vector; by a type named Vector and declared in the package to which the compilation unit belongs; or any nested classes or interfaces.
+The declaration might be shadowed by a single-type-import declaration of a class or interface whose simple name is Vector; by a class or interface named Vector and declared in the package to which the compilation unit belongs; or any nested classes or interfaces.
 
 The declaration might be obscured by a declaration of a field, parameter, or local variable named Vector.
 
@@ -450,70 +450,70 @@ The declaration might be obscured by a declaration of a field, parameter, or loc
 
 7.5.3. Single-Static-Import Declarations
 
-A single-static-import declaration imports all accessible static members with a given simple name from a type. This makes these static members available under their simple name in the module, class, and interface declarations of the compilation unit in which the single-static-import declaration appears.
+A single-static-import declaration imports all accessible static members with a given simple name from a class or interface. This makes these static members available under their simple name in the module, class, and interface declarations of the compilation unit in which the single-static-import declaration appears.
 
 SingleStaticImportDeclaration:
 import static TypeName . Identifier ;
 
-The TypeName must be the canonical name (§6.7) of a class type, interface type, enum type, or annotation type.
+The TypeName must be the canonical name (§6.7) of a class or interface.
 
-The type must be either a member of a named package, or a member of a type whose outermost lexically enclosing type declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
+The class or interface must be either a member of a named package, or a member of a class or interface whose outermost lexically enclosing class or interface declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
 
-It is a compile-time error if the named type is not accessible (§6.6).
+It is a compile-time error if the named class or interface is not accessible (§6.6).
 
-The Identifier must name at least one static member of the named type. It is a compile-time error if there is no static member of that name, or if all of the named members are not accessible.
+The Identifier must name at least one static member of the named class or interface. It is a compile-time error if there is no static member of that name, or if all of the named members are not accessible.
 
-It is permissible for one single-static-import declaration to import several fields or types with the same name, or several methods with the same name and signature. This occurs when the named type inherits multiple fields, member types, or methods, all with the same name, from its own supertypes.
+It is permissible for one single-static-import declaration to import several fields, classes, or interfaces with the same name, or several methods with the same name and signature. This occurs when the named class or interface inherits multiple fields, member classes, member interfaces, or methods, all with the same name, from its own supertypes.
 
-If two single-static-import declarations in the same compilation unit attempt to import types with the same simple name, then a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
+If two single-static-import declarations in the same compilation unit attempt to import classes or interface with the same simple name, then a compile-time error occurs, unless the two classes or interfaces are the same, in which case the duplicate declaration is ignored.
 
-If a single-static-import declaration imports a type whose simple name is n, and the compilation unit also declares a top level type (§7.6) whose simple name is n, a compile-time error occurs.
+If a single-static-import declaration imports a class or interface whose simple name is x, and the compilation unit also declares a top level class or interface (§7.6) whose simple name is x, a compile-time error occurs.
 
-If a compilation unit contains both a single-static-import declaration that imports a type whose simple name is n, and a single-type-import declaration (§7.5.1) that imports a type whose simple name is n, a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
+If a compilation unit contains both a single-static-import declaration that imports a class or interface whose simple name is x, and a single-type-import declaration (§7.5.1) that imports a class or interface whose simple name is x, a compile-time error occurs, unless the two classes or interfaces are the same, in which case the duplicate declaration is ignored.
 
 7.5.4. Static-Import-on-Demand Declarations
 
-A static-import-on-demand declaration allows all accessible static members of a named type to be imported as needed.
+A static-import-on-demand declaration allows all accessible static members of a named class or interface to be imported as needed.
 
 StaticImportOnDemandDeclaration:
 import static TypeName . * ;
 
-The TypeName must be the canonical name (§6.7) of a class type, interface type, enum type, or annotation type.
+The TypeName must be the canonical name (§6.7) of a class or interface.
 
-The type must be either a member of a named package, or a member of a type whose outermost lexically enclosing type declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
+The class or interface must be either a member of a named package, or a member of a class or interface whose outermost lexically enclosing class or interface declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
 
-It is a compile-time error if the named type is not accessible (§6.6).
+It is a compile-time error if the named class or interface is not accessible (§6.6).
 
-Two or more static-import-on-demand declarations in the same compilation unit may name the same type; the effect is as if there was exactly one such declaration.
+Two or more static-import-on-demand declarations in the same compilation unit may name the same class or interface; the effect is as if there was exactly one such declaration.
 
 Two or more static-import-on-demand declarations in the same compilation unit may name the same member; the effect is as if the member was imported exactly once.
 
-It is permissible for one static-import-on-demand declaration to import several fields or types with the same name, or several methods with the same name and signature. This occurs when the named type inherits multiple fields, member types, or methods, all with the same name, from its own supertypes.
+It is permissible for one static-import-on-demand declaration to import several fields, classes, or interfaces with the same name, or several methods with the same name and signature. This occurs when the named class or interface inherits multiple fields, member classes, member interfaces, or methods, all with the same name, from its own supertypes.
 
-If a compilation unit contains both a static-import-on-demand declaration and a type-import-on-demand declaration (§7.5.2) that name the same type, the effect is as if the static member types of that type (§8.5, §9.5) were imported only once.
+If a compilation unit contains both a static-import-on-demand declaration and a type-import-on-demand declaration (§7.5.2) that name the same class or interface, the effect is as if the static member classes and interfaces of that class or interface (§8.5, §9.5) are imported only once.
 
-7.6. Top Level Type Declarations
+7.6. Top Level Class and Interface Declarations
 
-A top level type declaration declares a top level class type (§8 (Classes)) or a top level interface type (§9 (Interfaces)).
+A top level class or interface declaration declares a top level class (§8.1) or a top level interface (§9.1).
 
-TypeDeclaration:
+TopLevelClassOrInterfaceDeclaration:
 ClassDeclaration
 InterfaceDeclaration
 ;
 
-Extra ";" tokens appearing at the level of type declarations in a compilation unit have no effect on the meaning of the compilation unit. Stray semicolons are permitted in the Java programming language solely as a concession to C++ programmers who are used to placing ";" after a class declaration. They should not be used in new Java code.
+Extra ";" tokens appearing at the level of class and interface declarations in a compilation unit have no effect on the meaning of the compilation unit. Stray semicolons are permitted in the Java programming language solely as a concession to C++ programmers who are used to placing ";" after a class declaration. They should not be used in new Java code.
 
-In the absence of an access modifier, a top level type has package access: it is accessible only within ordinary compilation units of the package in which it is declared (§6.6.1). A type may be declared public to grant access to the type from code in other packages of the same module, and potentially from code in packages of other modules.
+In the absence of an access modifier, a top level class or interface has package access: it is accessible only within ordinary compilation units of the package in which it is declared (§6.6.1). A class or interface may be declared public to grant access to the class or interface from code in other packages of the same module, and potentially from code in packages of other modules.
 
-It is a compile-time error if a top level type declaration contains any one of the following access modifiers: protected, private, or static.
+It is a compile-time error if a top level class or interface declaration contains any one of the following access modifiers: protected, private, or static.
 
-It is a compile-time error if the name of a top level type appears as the name of any other top level class or interface type declared in the same package.
+It is a compile-time error if the name of a top level class or interface appears as the name of any other top level class or interface declared in the same package.
 
-The scope and shadowing of a top level type is specified in §6.3 and §6.4.
+The scope and shadowing of a top level class or interface is specified in §6.3 and §6.4.
 
-The fully qualified name of a top level type is specified in §6.7.
+The fully qualified name of a top level class or interface is specified in §6.7.
 
-Example 7.6-1. Conflicting Top Level Type Declarations
+Example 7.6-1. Conflicting Top Level Class and Interface Declarations
 
 package test;
 import java.util.Vector;
@@ -527,9 +527,9 @@ interface Point {  // compile-time error #1
 class Vector { Point[] pts; }  // compile-time error #2
 
 
-Here, the first compile-time error is caused by the duplicate declaration of the name Point as both a class and an interface in the same package. A second compile-time error is the attempt to declare the name Vector both by a class type declaration and by a single-type-import declaration.
+Here, the first compile-time error is caused by the duplicate declaration of the name Point as both a class and an interface in the same package. A second compile-time error is the attempt to declare the name Vector both by a class declaration and by a single-type-import declaration.
 
-Note, however, that it is not an error for the name of a class to also name a type that otherwise might be imported by a type-import-on-demand declaration (§7.5.2) in the compilation unit (§7.3) containing the class declaration. Thus, in this program:
+Note, however, that it is not an error for the name in a class declaration to overlap with a class or interface that otherwise might be imported by a type-import-on-demand declaration (§7.5.2) in the same compilation unit. Thus, in this program:
 
 package test;
 import java.util.*;
@@ -541,7 +541,7 @@ the declaration of the class Vector is permitted even though there is also a cla
 
 
 
-Example 7.6-2. Scope of Top Level Types
+Example 7.6-2. Scope of Top Level Classes and Interfaces
 
 package points;
 class Point {
@@ -557,7 +557,7 @@ class PointColor {
 }
 
 
-This program defines two classes that use each other in the declarations of their class members. Because the class types Point and PointColor have all the type declarations in package points, including all those in the current compilation unit, as their scope, this program compiles correctly. That is, forward reference is not a problem.
+This program defines two classes that use each other in the declarations of their class members. Because the classes Point and PointColor have all the class declarations in package points, including all those in the current compilation unit, as their scope, this program compiles correctly. That is, forward reference is not a problem.
 
 
 
@@ -582,7 +582,7 @@ the fully qualified name of the class Point is vista.Point. (The package name vi
 
 
 
-An implementation of the Java SE Platform must keep track of types within packages by the combination of their enclosing module names and their binary names (§13.1). Multiple ways of naming a type must be expanded to binary names to make sure that such names are understood as referring to the same type.
+An implementation of the Java SE Platform must keep track of classes and interfaces within packages by the combination of their enclosing module names and their binary names (§13.1). Multiple ways of naming a class or interface must be expanded to binary names to make sure that such names are understood as referring to the same class or interface.
 
 For example, if a compilation unit contains the single-type-import declaration (§7.5.1):
 
@@ -591,17 +591,17 @@ import java.util.Vector;
 
 
 
-then within that compilation unit, the simple name Vector and the fully qualified name java.util.Vector refer to the same type.
+then within that compilation unit, the simple name Vector and the fully qualified name java.util.Vector refer to the same class.
 
-If and only if packages are stored in a file system (§7.2), the host system may choose to enforce the restriction that it is a compile-time error if a type is not found in a file under a name composed of the type name plus an extension (such as .java or .jav) if either of the following is true:
+If and only if packages are stored in a file system (§7.2), the host system may choose to enforce the restriction that it is a compile-time error if a class or interface is not found in a file under a name composed of the class or interface name plus an extension (such as .java or .jav) if either of the following is true:
 
-The type is referred to by code in other ordinary compilation units of the package in which the type is declared.
+The class or interface is referred to by code in other ordinary compilation units of the package in which the class or interface is declared.
 
-The type is declared public (and therefore is potentially accessible from code in other packages).
+The class or interface is declared public (and therefore is potentially accessible from code in other packages).
 
-This restriction implies that there must be at most one such type per compilation unit. This restriction makes it easy for a Java compiler to find a named class within a package. In practice, many programmers choose to put each class or interface type in its own compilation unit, whether or not it is public or is referred to by code in other compilation units.
+This restriction implies that there must be at most one such class or interface per compilation unit. This restriction makes it easy for a Java compiler to find a named class or interface within a package. In practice, many programmers choose to put each class or interface in its own compilation unit, whether or not it is public or is referred to by code in other compilation units.
 
-For example, the source code for a public type wet.sprocket.Toad would be found in a file Toad.java in the directory wet/sprocket, and the corresponding object code would be found in the file Toad.class in the same directory.
+For example, the source code for a public class wet.sprocket.Toad would be found in a file Toad.java in the directory wet/sprocket, and the corresponding object code would be found in the file Toad.class in the same directory.
 
 7.7. Module Declarations
 
@@ -801,9 +801,9 @@ It is a compile-time error if the to clause of a given opens directive specifies
 
 7.7.3. Service Consumption
 
-The uses directive specifies a service for which the current module may discover providers via java.util.ServiceLoader.
+The uses directive specifies a service for which code in the current module may discover providers via java.util.ServiceLoader.
 
-The service must be a class type, an interface type, or an annotation type. It is a compile-time error if a uses directive specifies an enum type (§8.9) as the service.
+It is a compile-time error if a uses directive specifies an enum class (§8.9).
 
 The service may be declared in the current module or in another module. If the service is not declared in the current module, then the service must be accessible to code in the current module (§6.6), or a compile-time error occurs.
 
@@ -813,11 +813,11 @@ It is a compile-time error if more than one uses directive in a module declarati
 
 The provides directive specifies a service for which the with clause specifies one or more service providers to java.util.ServiceLoader.
 
-The service must be a class type, an interface type, or an annotation type. It is a compile-time error if a provides directive specifies an enum type (§8.9) as the service.
+It is a compile-time error if a provides directive specifies an enum class (§8.9) as the service.
 
 The service may be declared in the current module or in another module. If the service is not declared in the current module, then the service must be accessible to code in the current module (§6.6), or a compile-time error occurs.
 
-Every service provider must be a class type or an interface type, that is public, and that is top level or nested static, or a compile-time error occurs.
+Every service provider must be a public class or interface that is either top level or static, or a compile-time error occurs.
 
 Every service provider must be declared in the current module, or a compile-time error occurs.
 

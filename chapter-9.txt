@@ -6,6 +6,7 @@ Table of Contents
 9.1.1. Interface Modifiers
 9.1.1.1. abstract Interfaces
 9.1.1.2. strictfp Interfaces
+9.1.1.3. static Interfaces
 9.1.2. Generic Interfaces and Type Parameters
 9.1.3. Superinterfaces and Subinterfaces
 9.1.4. Interface Body and Member Declarations
@@ -19,12 +20,12 @@ Table of Contents
 9.4.1.3. Inheriting Methods with Override-Equivalent Signatures
 9.4.2. Overloading
 9.4.3. Interface Method Body
-9.5. Member Type Declarations
-9.6. Annotation Types
-9.6.1. Annotation Type Elements
-9.6.2. Defaults for Annotation Type Elements
-9.6.3. Repeatable Annotation Types
-9.6.4. Predefined Annotation Types
+9.5. Member Class and Interface Declarations
+9.6. Annotation Interfaces
+9.6.1. Annotation Interface Elements
+9.6.2. Defaults for Annotation Interface Elements
+9.6.3. Repeatable Annotation Interfaces
+9.6.4. Predefined Annotation Interfaces
 9.6.4.1. @Target
 9.6.4.2. @Retention
 9.6.4.3. @Inherited
@@ -39,43 +40,45 @@ Table of Contents
 9.7.2. Marker Annotations
 9.7.3. Single-Element Annotations
 9.7.4. Where Annotations May Appear
-9.7.5. Multiple Annotations of the Same Type
+9.7.5. Multiple Annotations of the Same Interface
 9.8. Functional Interfaces
 9.9. Function Types
 
-An interface declaration introduces a new reference type whose members are classes, interfaces, constants, and methods. This type has no instance variables, and typically declares one or more abstract methods; otherwise unrelated classes can implement the interface by providing implementations for its abstract methods. Interfaces may not be directly instantiated.
+An interface declaration defines a new interface that can be implemented by one or more classes. Programs can use interfaces to provide a common supertype for otherwise unrelated classes, and to make it unnecessary for related classes to share a common abstract superclass.
 
-A nested interface is any interface whose declaration occurs within the body of another class or interface.
+Interfaces have no instance variables, and typically declare one or more abstract methods; otherwise unrelated classes can implement an interface by providing implementations for its abstract methods. Interfaces may not be directly instantiated.
 
-A top level interface is an interface that is not a nested interface.
+A top level interface (§7.6) is an interface declared directly in a compilation unit.
 
-We distinguish between two kinds of interfaces - normal interfaces and annotation types.
+A nested interface is any interface whose declaration occurs within the body of another class or interface declaration. A nested interface may be a member interface (§8.5, §9.5) or a local interface (§14.3).
 
-This chapter discusses the common semantics of all interfaces - normal interfaces, both top level (§7.6) and nested (§8.5, §9.5), and annotation types (§9.6). Details that are specific to particular kinds of interfaces are discussed in the sections dedicated to these constructs.
+An annotation interface (§9.6) is an interface declared with distinct syntax, intended to be implemented by reflective representations of annotations (§9.7).
 
-Programs can use interfaces to make it unnecessary for related classes to share a common abstract superclass or to add methods to Object.
+This chapter discusses the common semantics of all interfaces. Details that are specific to particular kinds of interfaces are discussed in the sections dedicated to these constructs.
 
-An interface may be declared to be a direct extension of one or more other interfaces, meaning that it inherits all the member types, instance methods, and constants of the interfaces it extends, except for any members that it may override or hide.
+An interface may be declared to be a direct extension of one or more other interfaces, meaning that it inherits all the member classes and interfaces, instance methods, and static fields of the interfaces it extends, except for any members that it may override or hide.
 
-A class may be declared to directly implement one or more interfaces, meaning that any instance of the class implements all the abstract methods specified by the interface or interfaces. A class necessarily implements all the interfaces that its direct superclasses and direct superinterfaces do. This (multiple) interface inheritance allows objects to support (multiple) common behaviors without sharing a superclass.
+A class may be declared to directly implement one or more interfaces (§8.1.5), meaning that any instance of the class implements all the abstract methods specified by the interface or interfaces. A class necessarily implements all the interfaces that its direct superclasses and direct superinterfaces do. This (multiple) interface inheritance allows objects to support (multiple) common behaviors without sharing a superclass.
 
 A variable whose declared type is an interface type may have as its value a reference to any instance of a class which implements the specified interface. It is not sufficient that the class happen to implement all the abstract methods of the interface; the class or one of its superclasses must actually be declared to implement the interface, or else the class is not considered to implement the interface.
 
 9.1. Interface Declarations
 
-An interface declaration specifies a new named reference type. There are two kinds of interface declarations - normal interface declarations and annotation type declarations (§9.6).
+An interface declaration specifies an interface.
+
+There are two kinds of interface declarations: normal interface declarations and annotation interface declarations (§9.6).
 
 InterfaceDeclaration:
 NormalInterfaceDeclaration
-AnnotationTypeDeclaration
+AnnotationInterfaceDeclaration
 NormalInterfaceDeclaration:
-{InterfaceModifier} interface TypeIdentifier [TypeParameters] [ExtendsInterfaces] InterfaceBody
+{InterfaceModifier} interface TypeIdentifier [TypeParameters] [InterfaceExtends] InterfaceBody
 
 The TypeIdentifier in an interface declaration specifies the name of the interface.
 
 It is a compile-time error if an interface has the same simple name as any of its enclosing classes or interfaces.
 
-The scope and shadowing of an interface declaration is specified in §6.3 and §6.4.
+The scope and shadowing of an interface declaration is specified in §6.3 and §6.4.1.
 
 9.1.1. Interface Modifiers
 
@@ -86,15 +89,15 @@ InterfaceModifier:
 Annotation public protected private
 abstract static strictfp
 
-The rules for annotation modifiers on an interface declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for an interface declaration are specified in §9.7.4 and §9.7.5.
 
-The access modifier public (§6.6) pertains to every kind of interface declaration.
+The access modifier public (§6.6) pertains only to top level interfaces (§7.6) and member interfaces (§8.5, §9.5), not to local interfaces (§14.3).
 
-The access modifiers protected and private pertain only to member interfaces whose declarations are directly enclosed by a class declaration (§8.5.1).
+The access modifiers protected and private pertain only to member interfaces.
 
-The modifier static pertains only to member interfaces (§8.5.1, §9.5), not to top level interfaces (§7.6).
+The modifier static pertains only to member interfaces and local interfaces.
 
-It is a compile-time error if the same keyword appears more than once as a modifier for an interface declaration, or if a interface declaration has more than one of the access modifiers public, protected, and private (§6.6).
+It is a compile-time error if the same keyword appears more than once as a modifier for an interface declaration, or if a interface declaration has more than one of the access modifiers public, protected, and private.
 
 If two or more (distinct) interface modifiers appear in an interface declaration, then it is customary, though not required, that they appear in the order consistent with that shown above in the production for InterfaceModifier.
 
@@ -110,9 +113,15 @@ The effect of the strictfp modifier is to make all float or double expressions w
 
 This implies that all methods declared in the interface, and all nested types declared in the interface, are implicitly strictfp.
 
+9.1.1.3. static Interfaces
+
+A nested interface is implicitly static. That is, every member interface and local interface is static. It is permitted for the declaration of a member interface to redundantly specify the static modifier (§9.5), but it is not permitted for the declaration of a local interface (§14.3).
+
+Because a nested interface is static, it has no immediately enclosing instance (§8.1.3). References from a nested interface to type parameters, instance variables, local variables, formal parameters, exception parameters, or instance methods in lexically enclosing class, interface, or method declarations are disallowed (§6.5.5.1, §6.5.6.1, §15.12.3).
+
 9.1.2. Generic Interfaces and Type Parameters
 
-An interface is generic if it declares one or more type variables (§4.4).
+An interface is generic if the interface declaration declares one or more type variables (§4.4).
 
 These type variables are known as the type parameters of the interface. The type parameter section follows the interface name and is delimited by angle brackets.
 
@@ -132,25 +141,25 @@ extends ClassOrInterfaceType {AdditionalBound}
 AdditionalBound:
 & InterfaceType
 
-The rules for annotation modifiers on a type parameter declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a type parameter declaration are specified in §9.7.4 and §9.7.5.
 
 In an interface's type parameter section, a type variable T directly depends on a type variable S if S is the bound of T, while T depends on S if either T directly depends on S or T directly depends on a type variable U that depends on S (using this definition recursively). It is a compile-time error if a type variable in a interface's type parameter section depends on itself.
 
-The scope and shadowing of an interface's type parameter is specified in §6.3.
+The scope and shadowing of an interface's type parameter is specified in §6.3 and §6.4.1.
 
-It is a compile-time error to refer to a type parameter of a generic interface I anywhere in the declaration of a static member of I (§9.3, §9.4, §9.5).
+References to an interface's type parameter from a static context or a nested class or interface are restricted, as specified in §6.5.5.1.
 
 A generic interface declaration defines a set of parameterized types (§4.5), one for each possible parameterization of the type parameter section by type arguments. All of these parameterized types share the same interface at run time.
 
 9.1.3. Superinterfaces and Subinterfaces
 
-If an extends clause is provided, then the interface being declared extends each of the other named interfaces and therefore inherits the member types, instance methods, and constants of each of the other named interfaces.
+If an extends clause is provided, then the interface being declared extends each of the specified interface types and therefore inherits the member classes, member interfaces, instance methods, and static fields of each of those interface types.
 
-These other named interfaces are the direct superinterfaces of the interface being declared.
+The specified interface types are the direct superinterface types of the interface being declared.
 
 Any class that implements the declared interface is also considered to implement all the interfaces that this interface extends.
 
-ExtendsInterfaces:
+InterfaceExtends:
 extends InterfaceTypeList
 
 The following production from §8.1.5 is shown here for convenience:
@@ -158,33 +167,31 @@ The following production from §8.1.5 is shown here for convenience:
 InterfaceTypeList:
 InterfaceType {, InterfaceType}
 
-Each InterfaceType in the extends clause of an interface declaration must name an accessible interface type (§6.6), or a compile-time error occurs.
+Each InterfaceType in the extends clause of an interface declaration must name an accessible interface (§6.6), or a compile-time error occurs.
 
 If an InterfaceType has type arguments, it must denote a well-formed parameterized type (§4.5), and none of the type arguments may be wildcard type arguments, or a compile-time error occurs.
 
-Given a (possibly generic) interface declaration I<F1,...,Fn> (n ≥ 0), the direct superinterfaces of the interface type I<F1,...,Fn> are the types given in the extends clause of the declaration of I, if an extends clause is present.
+One interface is a direct superinterface of another interface if the first interface is named by one of the direct superinterface types of the second interface.
 
-Given a generic interface declaration I<F1,...,Fn> (n > 0), the direct superinterfaces of the parameterized interface type I<T1,...,Tn>, where Ti (1 ≤ i ≤ n) is a type, are all types J<U1 θ,...,Uk θ>, where J<U1,...,Uk> is a direct superinterface of I<F1,...,Fn> and θ is the substitution [F1:=T1,...,Fn:=Tn].
+The superinterface relationship is the transitive closure of the direct superinterface relationship. An interface I is a superinterface of interface K if either of the following is true:
 
-The superinterface relationship is the transitive closure of the direct superinterface relationship. An interface K is a superinterface of interface I if either of the following is true:
+I is a direct superinterface of K.
 
-K is a direct superinterface of I.
+Where J is a direct superinterface of K, I is a superinterface of J, applying this definition recursively.
 
-There exists an interface J such that K is a superinterface of J, and J is a superinterface of I, applying this definition recursively.
-
-Interface I is said to be a subinterface of interface K whenever K is a superinterface of I.
+An interface is said to be a direct subinterface of its direct superinterface, and a subinterface of each of its superinterfaces.
 
 While every class is an extension of class Object, there is no single interface of which all interfaces are extensions.
 
-An interface I directly depends on a type T if T is mentioned in the extends clause of I either as a superinterface or as a qualifier in the fully qualified form of a superinterface name.
+An interface I directly depends on a class or interface A if A is mentioned in the extends clause of I either as a superinterface or as a qualifier in the fully qualified form of a superinterface name.
 
-An interface I depends on a reference type T if any of the following is true:
+An interface I depends on a class or interface A if any of the following is true:
 
-I directly depends on T.
+I directly depends on A.
 
-I directly depends on a class C that depends on T (§8.1.5).
+I directly depends on a class C that depends on A (§8.1.5).
 
-I directly depends on an interface J that depends on T (using this definition recursively).
+I directly depends on an interface J that depends on A, applying this definition recursively.
 
 It is a compile-time error if an interface depends on itself.
 
@@ -192,7 +199,7 @@ If circularly declared interfaces are detected at run time, as interfaces are lo
 
 9.1.4. Interface Body and Member Declarations
 
-The body of an interface may declare members of the interface, that is, fields (§9.3), methods (§9.4), classes (§9.5), and interfaces (§9.5).
+An interface body may contain declarations of members of the interface, that is, fields (§9.3), methods (§9.4), classes, and interfaces (§9.5).
 
 InterfaceBody:
 { {InterfaceMemberDeclaration} }
@@ -203,17 +210,17 @@ ClassDeclaration
 InterfaceDeclaration
 ;
 
-The scope of a declaration of a member m declared in or inherited by an interface type I is specified in §6.3.
+The scope of a declaration of a member m declared in or inherited by an interface I is specified in §6.3.
 
 9.2. Interface Members
 
-The members of an interface type are:
+The members of an interface are:
 
-Members declared in the body of the interface (§9.1.4).
+Members declared in the body of the interface declaration (§9.1.4).
 
-Members inherited from any direct superinterfaces (§9.1.3).
+Members inherited from any direct superinterface types (§9.1.3).
 
-If an interface has no direct superinterfaces, then the interface implicitly declares a public abstract member method m with signature s, return type r, and throws clause t corresponding to each public instance method m with signature s, return type r, and throws clause t declared in Object (§4.3.2), unless an abstract method with the same signature, same return type, and a compatible throws clause is explicitly declared by the interface.
+If an interface has no direct superinterface types, then the interface implicitly declares a public abstract member method m with signature s, return type r, and throws clause t corresponding to each public instance method m with signature s, return type r, and throws clause t declared in Object (§4.3.2), unless an abstract method with the same signature, same return type, and a compatible throws clause is explicitly declared by the interface.
 
 It is a compile-time error if the interface explicitly declares such a method m in the case where m is declared to be final in Object.
 
@@ -221,7 +228,7 @@ It is a compile-time error if the interface explicitly declares a method with a 
 
 The interface inherits, from the interfaces it extends, all members of those interfaces, except for (i) fields, classes, and interfaces that it hides, (ii) abstract methods and default methods that it overrides (§9.4.1), (iii) private methods, and (iv) static methods.
 
-Fields, methods, and member types of an interface type may have the same name, since they are used in different contexts and are disambiguated by different lookup procedures (§6.5). However, this is discouraged as a matter of style.
+Fields, methods, member classes, and member interfaces of an interface may have the same name, since they are used in different contexts and are disambiguated by different lookup procedures (§6.5). However, this is discouraged as a matter of style.
 
 9.3. Field (Constant) Declarations
 ConstantDeclaration:
@@ -245,9 +252,9 @@ VariableInitializer:
 Expression
 ArrayInitializer
 
-The rules for annotation modifiers on an interface field declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for an interface field declaration are specified in §9.7.4 and §9.7.5.
 
-Every field declaration in the body of an interface is implicitly public, static, and final. It is permitted to redundantly specify any or all of these modifiers for such fields.
+Every field declaration in the body of an interface delaration is implicitly public, static, and final. It is permitted to redundantly specify any or all of these modifiers for such fields.
 
 It is a compile-time error if the same keyword appears more than once as a modifier for a field declaration.
 
@@ -255,13 +262,15 @@ If two or more (distinct) field modifiers appear in a field declaration, it is c
 
 The declared type of a field is denoted by UnannType if no bracket pairs appear in UnannType and VariableDeclaratorId, and is specified by §10.2 otherwise.
 
-The scope and shadowing of an interface field declaration is specified in §6.3 and §6.4.
+The scope and shadowing of an interface field declaration is specified in §6.3 and §6.4.1.
+
+Because an interface field is static, its declaration introduces a static context (§8.1.3), which limits the use of constructs that refer to the current object. Notably, the keywords this and super are prohibited in a static context (§15.8.3, §15.11.2), as are unqualified references to instance variables, instance methods, and type parameters of lexically enclosing declarations (§6.5.5.1, §6.5.6.1, §15.12.3).
 
 It is a compile-time error for the body of an interface declaration to declare two fields with the same name.
 
 If the interface declares a field with a certain name, then the declaration of that field is said to hide any and all accessible declarations of fields with the same name in superinterfaces of the interface.
 
-It is possible for an interface to inherit more than one field with the same name. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the interface to refer to any such field by its simple name will result in a compile-time error, because the reference is ambiguous.
+It is possible for an interface to inherit more than one field with the same name. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the interface declaration to refer to any such field by its simple name will result in a compile-time error, because the reference is ambiguous.
 
 There might be several paths by which the same field declaration is inherited from an interface. In such a situation, the field is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
 
@@ -304,9 +313,9 @@ Every declarator in a field declaration of an interface must have a variable ini
 
 The initializer need not be a constant expression (§15.29).
 
-It is a compile-time error if the initializer of an interface field uses the simple name of the same field or another field whose declaration occurs textually later in the same interface.
+It is a compile-time error if the initializer of an interface field uses the simple name of the same field or another field whose declaration occurs to the right of the initializer (§3.5) in the same interface.
 
-It is a compile-time error if the keyword this (§15.8.3) or the keyword super (§15.11.2, §15.12) occurs in the initializer of an interface field, unless the occurrence is within the body of an anonymous class (§15.9.5).
+The initializer of an interface field may not refer to the current object using the keyword this or the keyword super, as specified in §15.8.3, §15.11.2, and §15.12.3.
 
 At run time, the initializer is evaluated and the field assignment performed exactly once, when the interface is initialized (§12.4.2).
 
@@ -347,15 +356,17 @@ MethodBody:
 Block
 ;
 
-The rules for annotation modifiers on an interface method declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for an interface method declaration are specified in §9.7.4 and §9.7.5.
 
-A method in the body of an interface may be declared public or private (§6.6). If no access modifier is given, the method is implicitly public. It is permitted, but discouraged as a matter of style, to redundantly specify the public modifier for a method declaration in an interface.
+A method in the body of an interface declaration may be declared public or private (§6.6). If no access modifier is given, the method is implicitly public. It is permitted, but discouraged as a matter of style, to redundantly specify the public modifier for a method declaration in an interface declaration.
 
 A default method is an instance method declared in an interface with the default modifier. Its body is always represented by a block, which provides a default implementation for any class that implements the interface without overriding the method. Default methods are distinct from concrete methods (§8.4.3.1), which are declared in classes, and from private interface methods, which are neither inherited nor overridden.
 
-An interface can declare static methods, which are invoked without reference to a particular object. static interface methods are distinct from default methods, which are instance methods.
+An interface can declare static methods, which are invoked without reference to a particular object. static interface methods are distinct from default methods, abstract interface methods, and non-static private interface methods, all of which are instance methods.
 
-It is a compile-time error to use the name of a type parameter of any surrounding declaration in the header or body of a static method of an interface.
+The declaration of a static interface method introduces a static context (§8.1.3), which limits the use of constructs that refer to the current object. Notably, the keywords this and super are prohibited in a static context (§15.8.3, §15.11.2), as are unqualified references to instance variables, instance methods, and type parameters of lexically enclosing declarations (§6.5.5.1, §6.5.6.1, §15.12.3).
+
+References to an instance method from a static context or a nested class or interface are restricted (§15.12.3).
 
 The effect of the strictfp modifier is to make all float or double expressions within the body of a default or static method be explicitly FP-strict (§15.4).
 
@@ -371,19 +382,19 @@ It is a compile-time error if an interface method declaration that contains the 
 
 It is a compile-time error if an interface method declaration that contains the keyword abstract also contains the keyword strictfp.
 
-It is a compile-time error for the body of an interface to declare, explicitly or implicitly, two methods with override-equivalent signatures (§8.4.2). However, an interface may inherit several abstract methods with such signatures (§9.4.1).
+It is a compile-time error for the body of an interface declaration to declare, explicitly or implicitly, two methods with override-equivalent signatures (§8.4.2). However, an interface may inherit several abstract methods with such signatures (§9.4.1).
 
 A method declared in an interface may be generic. The rules for type parameters of a generic method in an interface are the same as for a generic method in a class (§8.4.4).
 
 9.4.1. Inheritance and Overriding
 
-An interface I inherits from its direct superinterfaces all abstract and default methods m for which all of the following are true:
+An interface I inherits from its direct superinterface types all abstract and default methods m for which all of the following are true:
 
-m is a member of a direct superinterface, J, of I.
+m is a member of a direct superinterface type of I, J.
 
-No method declared in I has a signature that is a subsignature (§8.4.2) of the signature of m.
+No method declared in I has a signature that is a subsignature (§8.4.2) of the signature of m as a member of J.
 
-There exists no method m' that is a member of a direct superinterface, J', of I (m distinct from m', J distinct from J'), such that m' overrides from J' the declaration of the method m.
+There exists no method m' that is a member of a direct superinterface of I, J' (m distinct from m', J distinct from J'), such that m' overrides from the interface of J' the declaration of the method m (§9.4.1.1).
 
 Note that methods are overridden on a signature-by-signature basis. If, for example, an interface declares two public methods with the same name (§9.4.2), and a subinterface overrides one of them, the subinterface still inherits the other method.
 
@@ -404,11 +415,11 @@ Right inherits name() from Top, but Bottom inherits name() from Left, not Right.
 
 An interface does not inherit private or static methods from its superinterfaces.
 
-If an interface I declares a private or static method m, and the signature of m is a subsignature of a public instance method m' in a superinterface of I, and m' would otherwise be accessible to code in I, then a compile-time error occurs.
+If an interface I declares a private or static method m, and the signature of m is a subsignature of a public instance method m' in a superinterface type of I, and m' would otherwise be accessible to code in I, then a compile-time error occurs.
 
-In essence, a static method in an interface cannot hide an instance method in a superinterface. This is similar to the rule in §8.4.8.2 whereby a static method in a class cannot hide an instance method in a superclass or superinterface. Note that the rule in §8.4.8.2 speaks of a class that "declares or inherits a static method", whereas the rule above speaks only of an interface that "declares a static method", since an interface cannot inherit a static method. Also note that the rule in §8.4.8.2 allows hiding of both instance and static methods in superclasses/superinterfaces, whereas the rule above considers only public instance methods in superinterfaces.
+In essence, a static method in an interface cannot hide an instance method in a superinterface type. This is similar to the rule in §8.4.8.2 whereby a static method in a class cannot hide an instance method in a superclass type or superinterface type. Note that the rule in §8.4.8.2 speaks of a class that "declares or inherits a static method", whereas the rule above speaks only of an interface that "declares a static method", since an interface cannot inherit a static method. Also note that the rule in §8.4.8.2 allows hiding of both instance and static methods in superclasses/superinterfaces, whereas the rule above considers only public instance methods in superinterface types.
 
-Along the same lines, a private method in an interface cannot override an instance method - whether public or private - in a superinterface. This is similar to the rules in §8.4.8.1 and §8.4.8.3 whereby a private method in a class cannot override any instance method in a superclass or superinterface, because §8.4.8.1 requires the overridden method to be non-private and §8.4.8.3 requires the overriding method to provide at least as much access as the overridden method. In summary, only public methods in interfaces can be overridden, and only by public methods in subinterfaces or in implementing classes.
+Along the same lines, a private method in an interface cannot override an instance method - whether public or private - in a superinterface type. This is similar to the rules in §8.4.8.1 and §8.4.8.3 whereby a private method in a class cannot override any instance method in a superclass type or superinterface type, because §8.4.8.1 requires the overridden method to be non-private and §8.4.8.3 requires the overriding method to provide at least as much access as the overridden method. In summary, only public methods in interfaces can be overridden, and only by public methods in subinterfaces or in implementing classes.
 
 9.4.1.1. Overriding (by Instance Methods)
 
@@ -418,7 +429,7 @@ I is a subinterface of J.
 
 I does not inherit mJ.
 
-The signature of mI is a subsignature (§8.4.2) of the signature of mJ.
+The signature of mI is a subsignature (§8.4.2) of the signature of mJ as a member of the supertype of I that names J.
 
 mJ is public.
 
@@ -436,7 +447,7 @@ The relationship between the signature of an interface method and the signatures
 
 The relationship between the accessibility of an interface method and the accessibility of any overridden interface methods is specified in §8.4.8.3.
 
-It is a compile-time error if a default method is override-equivalent with a non-private method of the class Object, because any class implementing the interface will inherit its own implementation of the method.
+It is a compile-time error if a default method is override-equivalent (§8.4.2) with a non-private method of the class Object, because any class implementing the interface will inherit its own implementation of the method.
 
 The prohibition against declaring one of the Object methods as a default method may be surprising. There are, after all, cases like java.util.List in which the behavior of toString and equals are precisely defined. The motivation becomes clearer, however, when some broader design decisions are understood:
 
@@ -493,94 +504,127 @@ Here, the method named move is overloaded in interface RealPointInterface with t
 
 A default method has a block body. This block of code provides an implementation of the method in the event that a class implements the interface but does not provide its own implementation of the method.
 
-A private or static method also has a block body, which provides the implementation of the method.
+A private or static interface method also has a block body, which provides the implementation of the method.
 
 It is a compile-time error if an interface method declaration is abstract (explicitly or implicitly) and has a block for its body.
 
 It is a compile-time error if an interface method declaration is default, private, or static, and has a semicolon for its body.
 
-It is a compile-time error for the body of a static method to attempt to reference the current object using the keyword this or the keyword super.
-
 The rules for return statements in a method body are specified in §14.17.
 
 If a method is declared to have a return type (§8.4.5), then a compile-time error occurs if the body of the method can complete normally (§14.1).
 
-9.5. Member Type Declarations
+9.5. Member Class and Interface Declarations
 
-Interfaces may contain member type declarations (§8.5).
+An interface body (§9.1.4) may contain declarations of member classes and member interfaces (§8.5).
 
-Every member type declaration in the body of an interface is implicitly public and static. It is permitted to redundantly specify either or both of these modifiers.
+Every member class or interface declaration in the body of an interface declaration is implicitly public and static (§9.1.1.3). It is permitted to redundantly specify either or both of these modifiers.
 
-It is a compile-time error if a member type declaration in an interface has the modifier protected or private.
+It is a compile-time error if a member class or interface declaration in an interface has the modifier protected or private.
 
-It is a compile-time error if the same keyword appears more than once as a modifier for a member type declaration in an interface.
+The rules for modifiers of a member class declaration in the body of an interface declaration are specified in §8.1.1.
 
-If an interface declares a member type with a certain name, then the declaration of that type is said to hide any and all accessible declarations of member types with the same name in superinterfaces of the interface.
+The rules for modifiers of a member interface declaration in the body of an interface declaration are specified in §9.1.1.
 
-An interface inherits from its direct superinterfaces all the non-private member types of the superinterfaces that are both accessible to code in the interface and not hidden by a declaration in the interface.
+If an interface declares a member class or interface with a certain name, then the declaration of the member class or interface is said to hide any and all accessible declarations of member classes and interface with the same name in superinterfaces of the interface.
 
-It is possible for an interface to inherit more than one member type with the same name. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the interface to refer to any such member type by its simple name will result in a compile-time error, because the reference is ambiguous.
+An interface inherits from its direct superinterfaces all the member classes and interfaces of the direct superinterfaces that are not hidden by a declaration in the interface.
 
-There might be several paths by which the same member type declaration is inherited from an interface. In such a situation, the member type is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
+It is possible for an interface to inherit more than one member class or interface with the same name. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the interface to refer to any such member class or interface by its simple name will result in a compile-time error, because the reference is ambiguous.
 
-9.6. Annotation Types
+There might be several paths by which the same member class or interface declaration is inherited from an interface. In such a situation, the member class or interface is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
 
-An annotation type declaration specifies a new annotation type, a special kind of interface type. To distinguish an annotation type declaration from a normal interface declaration, the keyword interface is preceded by an at-sign (@).
+9.6. Annotation Interfaces
 
-AnnotationTypeDeclaration:
-{InterfaceModifier} @ interface TypeIdentifier AnnotationTypeBody
+An annotation interface declaration specifies an annotation interface, a specialized kind of interface. To distinguish an annotation interface declaration from a normal interface declaration, the keyword interface is preceded by an at sign (@).
 
-Note that the at-sign (@) and the keyword interface are distinct tokens. It is possible to separate them with whitespace, but this is discouraged as a matter of style.
+AnnotationInterfaceDeclaration:
+{InterfaceModifier} @ interface TypeIdentifier AnnotationInterfaceBody
 
-The rules for annotation modifiers on an annotation type declaration are specified in §9.7.4 and §9.7.5.
+Note that the at sign (@) and the keyword interface are distinct tokens. It is possible to separate them with whitespace, but this is discouraged as a matter of style.
 
-The TypeIdentifier in an annotation type declaration specifies the name of the annotation type.
+Unless explicitly modified in this section and its subsections, all of the rules that apply to normal interface declarations (§9.1) apply to annotation interface declarations.
 
-It is a compile-time error if an annotation type has the same simple name as any of its enclosing classes or interfaces.
+For example, annotation interface declarations have the same rules for modifiers and scope as normal interface declarations.
 
-The direct superinterface of every annotation type is java.lang.annotation.Annotation.
+An annotation interface declaration may specify a top level interface or a member interface, but not a local interface (§14.3).
 
-By virtue of the AnnotationTypeDeclaration syntax, an annotation type declaration cannot be generic, and no extends clause is permitted.
+An annotation interface declaration is not permitted syntactically to appear within a block, by virtue of the LocalClassOrInterfaceDeclaration production in §14.3.
 
-A consequence of the fact that an annotation type cannot explicitly declare a superclass or superinterface is that a subclass or subinterface of an annotation type is never itself an annotation type. Similarly, java.lang.annotation.Annotation is not itself an annotation type.
+It is a compile-time error if an annotation interface declaration appears directly or indirectly in the body of a local class, local interface, or anonymous class declaration (§14.3, §15.9.5).
 
-An annotation type inherits several members from java.lang.annotation.Annotation, including the implicitly declared methods corresponding to the instance methods of Object, yet these methods do not define elements of the annotation type (§9.6.1).
+This rule, together with the syntactic restriction on annotation interface declarations noted above, ensures that an annotation interface always has a canonical name (§6.7). Having such a name is important because the purpose of an annotation interface is to be used by annotations in other compilation units. Since a local class or interface does not have a canonical name, an annotation interface declared anywhere within its syntactic body (if that were allowed) would not have a canonical name either.
 
-Because these methods do not define elements of the annotation type, it is illegal to use them in annotations of that type (§9.7). Without this rule, we could not ensure that elements were of the types representable in annotations, or that accessor methods for them would be available.
+The following code shows the effect of this rule and the related syntactic restriction:
 
-Unless explicitly modified herein, all of the rules that apply to normal interface declarations apply to annotation type declarations.
+class C {
+    @interface A1 {}  /* Legal: an annotation interface can be a
+                         member interface */
 
-For example, annotation types share the same namespace as normal class and interface types; and annotation type declarations are legal wherever interface declarations are legal, and have the same scope and accessibility.
+    void m() {
+        @interface A2 {}  /* Illegal: an annotation interface cannot
+                             be a local interface */
 
-9.6.1. Annotation Type Elements
+        class D {
+            @interface A3 {}  /* Illegal: an annotation interface
+                                 cannot be specified anywhere within
+                                 the body of local class D */
 
-The body of an annotation type declaration may contain method declarations, each of which defines an element of the annotation type. An annotation type has no elements other than those defined by the methods it explicitly declares.
+            class E {
+                @interface A4 {}
+                  /* Illegal: an annotation interface cannot be
+                     specified anywhere within the body of local class
+                     D, even as a member of a class E nested in D */
+            }
+        }
+    }
+}
 
-AnnotationTypeBody:
-{ {AnnotationTypeMemberDeclaration} }
-AnnotationTypeMemberDeclaration:
-AnnotationTypeElementDeclaration
+
+
+An annotation interface is never generic (§9.1.2).
+
+Unlike a normal interface declaration, an annotation interface declaration cannot declare any type variables, by virtue of the AnnotationTypeDeclaration production.
+
+The direct superinterface type of an annotation interface is always java.lang.annotation.Annotation (§9.1.3).
+
+Unlike a normal interface declaration, an annotation interface declaration cannot choose the direct superinterface type via an extends clause, by virtue of the AnnotationTypeDeclaration production.
+
+A consequence of the fact that an annotation interface declaration does not explicitly specify a superinterface type via extends is that a subinterface of an annotation interface is never itself an annotation interface, since the subinterface's declaration necessarily uses an extends clause. Similarly, java.lang.annotation.Annotation is not itself an annotation interface.
+
+An annotation interface inherits several methods from java.lang.annotation.Annotation, including the implicitly declared methods corresponding to the instance methods of Object (§9.2), yet these methods do not define elements of the annotation interface (§9.6.1).
+
+Because these methods do not define elements of the annotation interface, it is illegal to use them in annotations conforming to the annotation interface (§9.7). Without this rule, we could not ensure that elements were of the types representable in annotations, or that accessor methods for them would be available.
+
+9.6.1. Annotation Interface Elements
+
+The body of an annotation interface declaration may contain method declarations, each of which defines an element of the annotation interface. An annotation interface has no elements other than those defined by the methods declared explicitly in the annotation interface declaration.
+
+AnnotationInterfaceBody:
+{ {AnnotationInterfaceMemberDeclaration} }
+AnnotationInterfaceMemberDeclaration:
+AnnotationInterfaceElementDeclaration
 ConstantDeclaration
 ClassDeclaration
 InterfaceDeclaration
 ;
-AnnotationTypeElementDeclaration:
-{AnnotationTypeElementModifier} UnannType Identifier ( ) [Dims] [DefaultValue] ;
-AnnotationTypeElementModifier:
+AnnotationInterfaceElementDeclaration:
+{AnnotationInterfaceElementModifier} UnannType Identifier ( ) [Dims] [DefaultValue] ;
+AnnotationInterfaceElementModifier:
 (one of)
 Annotation public
 abstract
 
-By virtue of the AnnotationTypeElementDeclaration production, a method declaration in an annotation type declaration cannot have formal parameters, type parameters, or a throws clause. The following production from §4.3 is shown here for convenience:
+The following production from §4.3 is shown here for convenience:
 
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 15.
+By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 16.
 
-By convention, the only AnnotationTypeElementModifiers that should be present on an annotation type element are annotations.
+By convention, the only modifiers that should be present on the declaration of an annotation interface element are annotations.
 
-The return type of a method declared in an annotation type must be one of the following, or a compile-time error occurs:
+The return type of a method declared in the body of annotation interface must be one of the following, or a compile-time error occurs:
 
 A primitive type
 
@@ -588,9 +632,9 @@ String
 
 Class or an invocation of Class (§4.5)
 
-An enum type
+An enum class type
 
-An annotation type
+An annotation interface type
 
 An array type whose component type is one of the preceding types (§10.1).
 
@@ -603,9 +647,9 @@ This rule precludes elements with nested array types, such as:
 
 The declaration of a method that returns an array is allowed to place the bracket pair that denotes the array type after the empty formal parameter list. This syntax is supported for compatibility with early versions of the Java programming language. It is very strongly recommended that this syntax is not used in new code.
 
-It is a compile-time error if any method declared in an annotation type has a signature that is override-equivalent to that of any public or protected method declared in class Object or in the interface java.lang.annotation.Annotation.
+It is a compile-time error if any method declared in an annotation interface has a signature that is override-equivalent (§8.4.2) to that of any public or protected method declared in class Object or in interface java.lang.annotation.Annotation.
 
-It is a compile-time error if an annotation type declaration T contains an element of type T, either directly or indirectly.
+It is a compile-time error if the declaration of an annotation interface T contains an element of type T, either directly or indirectly.
 
 For example, this is illegal:
 
@@ -618,15 +662,15 @@ and so is this:
 @interface Pong { Ping value(); }
 
 
-An annotation type with no elements is called a marker annotation type.
+An annotation interface with no elements is called a marker annotation interface.
 
-An annotation type with one element is called a single-element annotation type.
+An annotation interface with one element is called a single-element annotation interface.
 
-By convention, the name of the sole element in a single-element annotation type is value. Linguistic support for this convention is provided by single-element annotations (§9.7.3).
+By convention, the name of the sole element in a single-element annotation interface is value. Linguistic support for this convention is provided by single-element annotations (§9.7.3).
 
-Example 9.6.1-1. Annotation Type Declaration
+Example 9.6.1-1. Annotation Interface Declaration
 
-The following annotation type declaration defines an annotation type with several elements:
+The following annotation interface declaration defines an annotation interface with several elements:
 
 /**
  * Describes the "request-for-enhancement" (RFE)
@@ -642,9 +686,9 @@ The following annotation type declaration defines an annotation type with severa
 
 
 
-Example 9.6.1-2. Marker Annotation Type Declaration
+Example 9.6.1-2. Marker Annotation Interface Declaration
 
-The following annotation type declaration defines a marker annotation type:
+The following annotation interface declaration defines a marker annotation interface:
 
 /**
  * An annotation with this type indicates that the 
@@ -656,9 +700,9 @@ The following annotation type declaration defines a marker annotation type:
 
 
 
-Example 9.6.1-3. Single-Element Annotation Type Declarations
+Example 9.6.1-3. Single-Element Annotation Interface Declarations
 
-The convention that a single-element annotation type defines an element called value is illustrated in the following annotation type declaration:
+The convention that a single-element annotation interface defines an element called value is illustrated in the following annotation interface declaration:
 
 /**
  * Associates a copyright notice with the annotated API element.
@@ -668,7 +712,7 @@ The convention that a single-element annotation type defines an element called v
 }
 
 
-The following annotation type declaration defines a single-element annotation type whose sole element has an array type:
+The following annotation interface declaration defines a single-element annotation interface whose sole element has an array type:
 
 /**
  * Associates a list of endorsers with the annotated class.
@@ -678,7 +722,7 @@ The following annotation type declaration defines a single-element annotation ty
 }
 
 
-The following annotation type declaration shows a Class-typed element whose value is constrained by a bounded wildcard:
+The following annotation interface declaration shows a Class-typed element whose value is constrained by a bounded wildcard:
 
 interface Formatter {}
 
@@ -688,7 +732,7 @@ interface Formatter {}
 }
 
 
-The following annotation type declaration contains an element whose type is also an annotation type:
+The following annotation interface declaration contains an element whose type is an annotation interface type:
 
 /**
  * Indicates the author of the annotated program element.
@@ -697,9 +741,9 @@ The following annotation type declaration contains an element whose type is also
     Name value();
 }
 /**
- * A person's name.  This annotation type is not designed
- * to be used directly to annotate program elements, but to
- * define elements of other annotation types.
+ * A person's name.  This annotation interface is not 
+ * designed to be used directly to annotate program elements, 
+ * but to define elements of other annotation interfaces.
  */
 @interface Name {
     String first();
@@ -707,7 +751,8 @@ The following annotation type declaration contains an element whose type is also
 }
 
 
-The grammar for annotation type declarations permits other element declarations besides method declarations. For example, one might choose to declare a nested enum for use in conjunction with an annotation type:
+
+The grammar for annotation interface declarations permits other member declarations besides method declarations. For example, one might choose to declare a nested enum class for use by an element of the annotation interface:
 
 @interface Quality {
     enum Level { BAD, INDIFFERENT, GOOD }
@@ -716,22 +761,33 @@ The grammar for annotation type declarations permits other element declarations 
 
 
 
-9.6.2. Defaults for Annotation Type Elements
+9.6.2. Defaults for Annotation Interface Elements
 
-An annotation type element may have a default value, specified by following the element's (empty) parameter list with the keyword default and an ElementValue (§9.7.1).
+An annotation interface element may have a default value, specified by attaching the keyword default and a value to the method declaration which defines the element.
 
 DefaultValue:
 default ElementValue
+
+The following productions from §9.7.1 are shown here for convenience:
+
+ElementValue:
+ConditionalExpression
+ElementValueArrayInitializer
+Annotation
+ElementValueArrayInitializer:
+{ [ElementValueList] [,] }
+ElementValueList:
+ElementValue {, ElementValue}
 
 It is a compile-time error if the type of the element is not commensurate (§9.7) with the default value specified.
 
 Default values are not compiled into annotations, but rather applied dynamically at the time annotations are read. Thus, changing a default value affects annotations even in classes that were compiled before the change was made (presuming these annotations lack an explicit value for the defaulted element).
 
-Example 9.6.2-1. Annotation Type Declaration With Default Values
+Example 9.6.2-1. Annotation Interface Declaration With Default Values
 
-Here is a refinement of the RequestForEnhancement annotation type from §9.6.1:
+Here is a refinement of the RequestForEnhancement annotation interface from §9.6.1:
 
-@interface RequestForEnhancementDefault {
+@interface RequestForEnhancement {
     int    id();       // No default - must be specified in 
                        // each annotation
     String synopsis(); // No default - must be specified in 
@@ -742,25 +798,26 @@ Here is a refinement of the RequestForEnhancement annotation type from §9.6.1:
 
 
 
-9.6.3. Repeatable Annotation Types
 
-An annotation type T is repeatable if its declaration is (meta-)annotated with an @Repeatable annotation (§9.6.4.8) whose value element indicates a containing annotation type of T.
+9.6.3. Repeatable Annotation Interfaces
 
-An annotation type TC is a containing annotation type of T if all of the following are true:
+An annotation interface A is repeatable if its declaration is (meta-)annotated with an @Repeatable annotation (§9.6.4.8) whose value element indicates a containing annotation interface of A.
 
-TC declares a value() method whose return type is T[].
+An annotation interface AC is a containing annotation interface of A if all of the following are true:
 
-Any methods declared by TC other than value() have a default value.
+AC declares a value() method whose return type is A[].
 
-TC is retained for at least as long as T, where retention is expressed explicitly or implicitly with the @Retention annotation (§9.6.4.2). Specifically:
+Any methods declared by AC other than value() have a default value.
 
-If the retention of TC is java.lang.annotation.RetentionPolicy.SOURCE, then the retention of T is java.lang.annotation.RetentionPolicy.SOURCE.
+AC is retained for at least as long as A, where retention is expressed explicitly or implicitly with the @Retention annotation (§9.6.4.2). Specifically:
 
-If the retention of TC is java.lang.annotation.RetentionPolicy.CLASS, then the retention of T is either java.lang.annotation.RetentionPolicy.CLASS or java.lang.annotation.RetentionPolicy.SOURCE.
+If the retention of AC is java.lang.annotation.RetentionPolicy.SOURCE, then the retention of A is java.lang.annotation.RetentionPolicy.SOURCE.
 
-If the retention of TC is java.lang.annotation.RetentionPolicy.RUNTIME, then the retention of T is java.lang.annotation.RetentionPolicy.SOURCE, java.lang.annotation.RetentionPolicy.CLASS, or java.lang.annotation.RetentionPolicy.RUNTIME.
+If the retention of AC is java.lang.annotation.RetentionPolicy.CLASS, then the retention of A is either java.lang.annotation.RetentionPolicy.CLASS or java.lang.annotation.RetentionPolicy.SOURCE.
 
-T is applicable to at least the same kinds of program element as TC (§9.6.4.1). Specifically, if the kinds of program element where T is applicable are denoted by the set m1, and the kinds of program element where TC is applicable are denoted by the set m2, then each kind in m2 must occur in m1, except that:
+If the retention of AC is java.lang.annotation.RetentionPolicy.RUNTIME, then the retention of A is java.lang.annotation.RetentionPolicy.SOURCE, java.lang.annotation.RetentionPolicy.CLASS, or java.lang.annotation.RetentionPolicy.RUNTIME.
+
+A is applicable to at least the same kinds of program element as AC (§9.6.4.1). Specifically, if the kinds of program element where A is applicable are denoted by the set m1, and the kinds of program element where AC is applicable are denoted by the set m2, then each kind in m2 must occur in m1, except that:
 
 If the kind in m2 is java.lang.annotation.ElementType.ANNOTATION_TYPE, then at least one of java.lang.annotation.ElementType.ANNOTATION_TYPE or java.lang.annotation.ElementType.TYPE or java.lang.annotation.ElementType.TYPE_USE must occur in m1.
 
@@ -768,19 +825,19 @@ If the kind in m2 is java.lang.annotation.ElementType.TYPE, then at least one of
 
 If the kind in m2 is java.lang.annotation.ElementType.TYPE_PARAMETER, then at least one of java.lang.annotation.ElementType.TYPE_PARAMETER or java.lang.annotation.ElementType.TYPE_USE must occur in m1.
 
-This clause implements the policy that an annotation type may be repeatable on only some of the kinds of program element where it is applicable.
+This clause implements the policy that an annotation interface may be repeatable on only some of the kinds of program element where it is applicable.
 
-If the declaration of T has a (meta-)annotation that corresponds to java.lang.annotation.Documented, then the declaration of TC must have a (meta-)annotation that corresponds to java.lang.annotation.Documented.
+If the declaration of A has a (meta-)annotation that corresponds to java.lang.annotation.Documented, then the declaration of AC must have a (meta-)annotation that corresponds to java.lang.annotation.Documented.
 
-Note that it is permissible for TC to be @Documented while T is not @Documented.
+Note that it is permissible for AC to be @Documented while A is not @Documented.
 
-If the declaration of T has a (meta-)annotation that corresponds to java.lang.annotation.Inherited, then the declaration of TC must have a (meta)-annotation that corresponds to java.lang.annotation.Inherited.
+If the declaration of A has a (meta-)annotation that corresponds to java.lang.annotation.Inherited, then the declaration of AC must have a (meta)-annotation that corresponds to java.lang.annotation.Inherited.
 
-Note that it is permissible for TC to be @Inherited while T is not @Inherited.
+Note that it is permissible for AC to be @Inherited while A is not @Inherited.
 
-It is a compile-time error if an annotation type T is (meta-)annotated with an @Repeatable annotation whose value element indicates a type which is not a containing annotation type of T.
+It is a compile-time error if an annotation interface A is (meta-)annotated with an @Repeatable annotation whose value element indicates a type which is not a containing annotation interface of A.
 
-Example 9.6.3-1. Ill-formed Containing Annotation Type
+Example 9.6.3-1. Ill-formed Containing Annotation Interface
 
 Consider the following declarations:
 
@@ -792,28 +849,28 @@ import java.lang.annotation.Repeatable;
 @interface FooContainer { Object[] value(); }
 
 
-Compiling the Foo declaration produces a compile-time error because Foo uses @Repeatable to attempt to specify FooContainer as its containing annotation type, but FooContainer is not in fact a containing annotation type of Foo. (The return type of FooContainer.value() is not Foo[].)
+Compiling the Foo declaration produces a compile-time error because Foo uses @Repeatable to attempt to specify FooContainer as its containing annotation interface, but FooContainer is not in fact a containing annotation interface of Foo. (The return type of FooContainer.value() is not Foo[].)
 
 
 
 
-The @Repeatable annotation cannot be repeated, so only one containing annotation type can be specified by a repeatable annotation type.
+The @Repeatable annotation cannot be repeated, so only one containing annotation interface can be specified by a repeatable annotation interface.
 
-Allowing more than one containing annotation type to be specified would cause an undesirable choice at compile time, when multiple annotations of the repeatable annotation type are logically replaced with a container annotation (§9.7.5).
+Allowing more than one containing annotation interface to be specified would cause an undesirable choice at compile time, when multiple annotations of the repeatable annotation interface are logically replaced with a container annotation (§9.7.5).
 
-An annotation type can be the containing annotation type of at most one annotation type.
+An annotation interface can be the containing annotation interface of at most one annotation interface.
 
-This is implied by the requirement that if the declaration of an annotation type T specifies a containing annotation type of TC, then the value() method of TC has a return type involving T, specifically T[].
+This is implied by the requirement that if the declaration of an annotation interface A specifies a containing annotation interface of AC, then the value() method of AC has a return type involving A, specifically A[].
 
-An annotation type cannot specify itself as its containing annotation type.
+An annotation interface cannot specify itself as its containing annotation interface.
 
-This is implied by the requirement on the value() method of the containing annotation type. Specifically, if an annotation type A specified itself (via @Repeatable) as its containing annotation type, then the return type of A's value() method would have to be A[]; but this would cause a compile-time error since an annotation type cannot refer to itself in its elements (§9.6.1). More generally, two annotation types cannot specify each other to be their containing annotation types, because cyclic annotation type declarations are illegal.
+This is implied by the requirement on the value() method of the containing annotation interface. Specifically, if an annotation interface A specified itself (via @Repeatable) as its containing annotation interface, then the return type of A's value() method would have to be A[]; but this would cause a compile-time error since an annotation interface cannot refer to itself in its elements (§9.6.1). More generally, two annotation interfaces cannot specify each other as their containing annotation interface, because cyclic annotation interface declarations are illegal.
 
-An annotation type TC may be the containing annotation type of some annotation type T while also having its own containing annotation type TC '. That is, a containing annotation type may itself be a repeatable annotation type.
+An annotation interface AC may be the containing annotation interface of some annotation interface A while also having its own containing annotation interface SC. That is, a containing annotation interface may itself be a repeatable annotation interface.
 
 Example 9.6.3-2. Restricting Where Annotations May Repeat
 
-An annotation whose type declaration indicates a target of java.lang.annotation.ElementType.TYPE can appear in at least as many locations as an annotation whose type declaration indicates a target of java.lang.annotation.ElementType.ANNOTATION_TYPE. For example, given the following declarations of repeatable and containing annotation types:
+An annotation whose interface declaration indicates a target of java.lang.annotation.ElementType.TYPE can appear in at least as many locations as an annotation whose interface declaration indicates a target of java.lang.annotation.ElementType.ANNOTATION_TYPE. For example, given the following declarations of repeatable and containing annotation interfaces:
 
 import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
@@ -829,7 +886,7 @@ import java.lang.annotation.Repeatable;
 }
 
 
-@Foo can appear on any type declaration while @FooContainer can appear on only annotation type declarations. Therefore, the following annotation type declaration is legal:
+@Foo can appear on any class or interface declaration while @FooContainer can appear on only annotation interface declarations. Therefore, the following annotation interface declaration is legal:
 
 @Foo @Foo
 @interface Anno {}
@@ -841,7 +898,7 @@ while the following interface declaration is illegal:
 interface Intf {}
 
 
-More broadly, if Foo is a repeatable annotation type and FooContainer is its containing annotation type, then:
+More broadly, if Foo is a repeatable annotation interface and FooContainer is its containing annotation interface, then:
 
 If Foo has no @Target meta-annotation and FooContainer has no @Target meta-annotation, then @Foo may be repeated on any program element which supports annotations.
 
@@ -849,53 +906,55 @@ If Foo has no @Target meta-annotation but FooContainer has an @Target meta-annot
 
 If Foo has an @Target meta-annotation, then in the judgment of the designers of the Java programming language, FooContainer must be declared with knowledge of the Foo's applicability. Specifically, the kinds of program element where FooContainer may appear must logically be the same as, or a subset of, Foo's kinds.
 
-For example, if Foo is applicable to field and method declarations, then FooContainer may legitimately serve as Foo's containing annotation type if FooContainer is applicable to just field declarations (preventing @Foo from being repeated on method declarations). But if FooContainer is applicable only to formal parameter declarations, then FooContainer was a poor choice of containing annotation type by Foo because @FooContainer cannot be implicitly declared on some program elements where @Foo is repeated.
+For example, if Foo is applicable to field and method declarations, then FooContainer may legitimately serve as Foo's containing annotation interface if FooContainer is applicable to just field declarations (preventing @Foo from being repeated on method declarations). But if FooContainer is applicable only to formal parameter declarations, then FooContainer was a poor choice of containing annotation interface by Foo because @FooContainer cannot be implicitly declared on some program elements where @Foo is repeated.
 
-Similarly, if Foo is applicable to field and method declarations, then FooContainer cannot legitimately serve as Foo's containing annotation type if FooContainer is applicable to field and parameter declarations. While it would be possible to take the intersection of the program elements and make Foo repeatable on field declarations only, the presence of additional program elements for FooContainer indicates that FooContainer was not designed as a containing annotation type for Foo. It would therefore be dangerous for Foo to rely on it.
-
-
+Similarly, if Foo is applicable to field and method declarations, then FooContainer cannot legitimately serve as Foo's containing annotation interface if FooContainer is applicable to field and parameter declarations. While it would be possible to take the intersection of the program elements and make Foo repeatable on field declarations only, the presence of additional program elements for FooContainer indicates that FooContainer was not designed as a containing annotation interface for Foo. It would therefore be dangerous for Foo to rely on it.
 
 
-Example 9.6.3-3. A Repeatable Containing Annotation Type
+
+
+Example 9.6.3-3. A Repeatable Containing Annotation Interface
 
 The following declarations are legal:
 
 import java.lang.annotation.Repeatable;
 
-// Foo: Repeatable annotation type
+// Foo: Repeatable annotation interface
 @Repeatable(FooContainer.class)
 @interface Foo { int value(); }
 
-// FooContainer: Containing annotation type of Foo
-//               Also a repeatable annotation type itself
+// FooContainer: Containing annotation interface of Foo
+// Also a repeatable annotation interface itself
 @Repeatable(FooContainerContainer.class)
 @interface FooContainer { Foo[] value(); }
 
-// FooContainerContainer: Containing annotation type of FooContainer
+// FooContainerContainer: Containing annotation interface
+// of FooContainer
 @interface FooContainerContainer { FooContainer[] value(); }
 
 
-Thus, an annotation whose type is a containing annotation type may itself be repeated:
+
+Thus, an annotation whose interface is a containing annotation interface may itself be repeated:
 
 @FooContainer({@Foo(1)}) @FooContainer({@Foo(2)})
 class Test {}
 
 
-An annotation type which is both repeatable and containing is subject to the rules on mixing annotations of repeatable annotation type with annotations of containing annotation type (§9.7.5). For example, it is not possible to write multiple @Foo annotations alongside multiple @FooContainer annotations, nor is it possible to write multiple @FooContainer annotations alongside multiple @FooContainerContainer annotations. However, if the FooContainerContainer type was itself repeatable, then it would be possible to write multiple @Foo annotations alongside multiple @FooContainerContainer annotations.
+An annotation interface which is both repeatable and containing is subject to the rules on mixing annotations of repeatable annotation interface with annotations of containing annotation interface (§9.7.5). For example, it is not possible to write multiple @Foo annotations alongside multiple @FooContainer annotations, nor is it possible to write multiple @FooContainer annotations alongside multiple @FooContainerContainer annotations. However, if the annotation interface FooContainerContainer was itself repeatable, then it would be possible to write multiple @Foo annotations alongside multiple @FooContainerContainer annotations.
 
 
 
-9.6.4. Predefined Annotation Types
+9.6.4. Predefined Annotation Interfaces
 
-Several annotation types are predefined in the libraries of the Java SE Platform. Some of these predefined annotation types have special semantics. These semantics are specified in this section. This section does not provide a complete specification for the predefined annotations contained here in; that is the role of the appropriate API specifications. Only those semantics that require special behavior on the part of a Java compiler or Java Virtual Machine implementation are specified here.
+Several annotation interfaces are predefined in the Java SE Platform API. Some of the predefined annotation interfaces have special semantics in the Java programming language and require special behavior on the part of a Java compiler, as specified in this section. This section does not provide a complete specification for the predefined annotation interfaces, for which the reader is referred to the Java SE Platform API documentation (§1.4).
 
 9.6.4.1. @Target
 
-An annotation of type java.lang.annotation.Target is used on the declaration of an annotation type T to specify the contexts in which T is applicable. java.lang.annotation.Target has a single element, value, of type java.lang.annotation.ElementType[], to specify contexts.
+An annotation of type java.lang.annotation.Target is used on the declaration of an annotation interface A to specify the contexts in which A is applicable. java.lang.annotation.Target has a single element, value, of type java.lang.annotation.ElementType[], to specify contexts.
 
-Annotation types may be applicable in declaration contexts, where annotations apply to declarations, or in type contexts, where annotations apply to types used in declarations and expressions.
+Annotation interfaces may be applicable in declaration contexts, where annotations apply to declarations, or in type contexts, where annotations apply to types used in declarations and expressions.
 
-There are nine declaration contexts, each corresponding to an enum constant of java.lang.annotation.ElementType:
+There are ten declaration contexts, each corresponding to an enum constant of java.lang.annotation.ElementType:
 
 Module declarations (§7.7)
 
@@ -905,13 +964,13 @@ Package declarations (§7.4.1)
 
 Corresponds to java.lang.annotation.ElementType.PACKAGE
 
-Type declarations: class, interface, enum, and annotation type declarations (§8.1.1, §9.1.1, §8.5, §9.5, §8.9, §9.6)
+Class declarations (including enum declarations and record declarations) and interface declarations (including annotation interface declarations) (§8.1.1, §8.5, §8.9, §8.10, §9.1.1, §9.5, §9.6)
 
 Corresponds to java.lang.annotation.ElementType.TYPE
 
-Additionally, annotation type declarations correspond to java.lang.annotation.ElementType.ANNOTATION_TYPE
+Additionally, annotation interface declarations correspond to java.lang.annotation.ElementType.ANNOTATION_TYPE
 
-Method declarations (including elements of annotation types) (§8.4.3, §9.4, §9.6.1)
+Method declarations (including elements of annotation interfaces) (§8.4.3, §9.4, §9.6.1)
 
 Corresponds to java.lang.annotation.ElementType.METHOD
 
@@ -931,41 +990,45 @@ Formal and exception parameter declarations (§8.4.1, §9.4, §14.20)
 
 Corresponds to java.lang.annotation.ElementType.PARAMETER
 
-Local variable declarations (including loop variables of for statements and resource variables of try-with-resources statements) (§14.4, §14.14.1, §14.14.2, §14.20.3)
+Local variable declarations in statements (§14.4.2, §14.14.1, §14.14.2, §14.20.3) and in patterns (§14.30.1)
 
 Corresponds to java.lang.annotation.ElementType.LOCAL_VARIABLE
 
-There are 16 type contexts (§4.11), all represented by the enum constant TYPE_USE of java.lang.annotation.ElementType.
+Record component declarations (§8.10.1)
+
+Corresponds to java.lang.annotation.ElementType.RECORD_COMPONENT
+
+There are 17 type contexts (§4.11), all represented by the enum constant TYPE_USE of java.lang.annotation.ElementType.
 
 It is a compile-time error if the same enum constant appears more than once in the value element of an annotation of type java.lang.annotation.Target.
 
-If an annotation of type java.lang.annotation.Target is not present on the declaration of an annotation type T, then T is applicable in all nine declaration contexts and in all 16 type contexts.
+If an annotation of type java.lang.annotation.Target is not present on the declaration of an annotation interface A, then A is applicable in all ten declaration contexts and in all 17 type contexts.
 
 9.6.4.2. @Retention
 
-Annotations may be present only in source code, or they may be present in the binary form of a class or interface. An annotation that is present in the binary form may or may not be available at run time via the reflection libraries of the Java SE Platform. The annotation type java.lang.annotation.Retention is used to choose among these possibilities.
+Annotations may be present only in source code, or they may be present in the binary form of a class or interface. An annotation that is present in the binary form may or may not be available at run time via the reflection libraries of the Java SE Platform. The annotation interface java.lang.annotation.Retention is used to choose among these possibilities.
 
-If an annotation a corresponds to a type T, and T has a (meta-)annotation m that corresponds to java.lang.annotation.Retention, then:
+If an annotation a corresponds to an annotation interface A, and A has a (meta-)annotation m that corresponds to java.lang.annotation.Retention, then:
 
 If m has an element whose value is java.lang.annotation.RetentionPolicy.SOURCE, then a Java compiler must ensure that a is not present in the binary representation of the class or interface in which a appears.
 
 If m has an element whose value is java.lang.annotation.RetentionPolicy.CLASS or java.lang.annotation.RetentionPolicy.RUNTIME, then a Java compiler must ensure that a is represented in the binary representation of the class or interface in which a appears, unless a annotates a local variable declaration or a annotates a formal parameter declaration of a lambda expression.
 
-An annotation on the declaration of a local variable, or on the declaration of a formal parameter of a lambda expression, is never retained in the binary representation. In contrast, an annotation on the type of a local variable, or on the type of a formal parameter of a lambda expression, is retained in the binary representation if the annotation type specifies a suitable retention policy.
+An annotation on the declaration of a local variable, or on the declaration of a formal parameter of a lambda expression, is never retained in the binary representation. In contrast, an annotation on the type of a local variable, or on the type of a formal parameter of a lambda expression, is retained in the binary representation if the annotation interface specifies a suitable retention policy.
 
-Note that it is not illegal for an annotation type to be meta-annotated with @Target(java.lang.annotation.ElementType.LOCAL_VARIABLE) and @Retention(java.lang.annotation.RetentionPolicy.CLASS) or @Retention(java.lang.annotation.RetentionPolicy.RUNTIME).
+Note that it is not illegal for an annotation interface to be meta-annotated with @Target(java.lang.annotation.ElementType.LOCAL_VARIABLE) and @Retention(java.lang.annotation.RetentionPolicy.CLASS) or @Retention(java.lang.annotation.RetentionPolicy.RUNTIME).
 
 If m has an element whose value is java.lang.annotation.RetentionPolicy.RUNTIME, the reflection libraries of the Java SE Platform must make a available at run time.
 
-If T does not have a (meta-)annotation m that corresponds to java.lang.annotation.Retention, then a Java compiler must treat T as if it does have such a meta-annotation m with an element whose value is java.lang.annotation.RetentionPolicy.CLASS.
+If A does not have a (meta-)annotation that corresponds to java.lang.annotation.Retention, then a Java compiler must treat A as if it has a (meta-)annotation that corresponds to java.lang.annotation.Retention with an element whose value is java.lang.annotation.RetentionPolicy.CLASS.
 
 9.6.4.3. @Inherited
 
-The annotation type java.lang.annotation.Inherited is used to indicate that annotations on a class C corresponding to a given annotation type are inherited by subclasses of C.
+The annotation interface java.lang.annotation.Inherited is used to indicate that annotations on a class C corresponding to a given annotation interface are inherited by subclasses of C.
 
 9.6.4.4. @Override
 
-Programmers occasionally overload a method declaration when they mean to override it, leading to subtle problems. The annotation type Override supports early detection of such problems.
+Programmers occasionally overload a method declaration when they mean to override it, leading to subtle problems. The annotation interface Override supports early detection of such problems.
 
 The classic example concerns the equals method. Programmers write the following in class Foo:
 
@@ -979,11 +1042,17 @@ public boolean equals(Object that) { ... }
 
 This is perfectly legal, but class Foo inherits the equals implementation from Object, which can cause some subtle bugs.
 
-If a method declaration in type T is annotated with @Override, but the method does not override from T a method declared in a supertype of T (§8.4.8.1, §9.4.1.1), or is not override-equivalent to a public method of Object (§4.3.2, §8.4.2), then a compile-time error occurs.
+If a method declaration in class or interface Q is annotated with @Override, then one of the following three conditions must be true, or a compile-time error occurs:
+
+the method overrides from Q a method declared in a supertype of Q (§8.4.8.1, §9.4.1.1)
+
+the method is override-equivalent to a public method of Object (§4.3.2, §8.4.2)
+
+Q is a record class (§8.10), and the method is an accessor method for a record component of Q (§8.10.3)
 
 This behavior differs from Java SE 5.0, where @Override only caused a compile-time error if applied to a method that implemented a method from a superinterface that was not also present in a superclass.
 
-The clause about overriding a public method is motivated by use of @Override in an interface. Consider the following type declarations:
+The clause about overriding a public method of Object is motivated by use of @Override in an interface. Consider the following declarations:
 
 class Foo     { @Override public int hashCode() {..} }
 interface Bar { @Override int hashCode(); }
@@ -1004,11 +1073,25 @@ In contrast, a class declaration that declares clone is simply overriding Object
 
 class Beep { @Override protected Object clone() {..} }
 
+
+The clause about a record class is due to the special meaning of @Override in a record declaration. Namely, it can be used to specify that a method declaration is an accessor method for a record component. Consider the following record declaration:
+
+record Roo(int x) {
+    @Override
+    public int x() {
+        return Math.abs(x);
+    }
+}
+
+
+
+The use of @Override on the accessor method int x() ensures that if the record component x is modified or removed, then the corresponding accessor method must be modified or removed too.
+
 9.6.4.5. @SuppressWarnings
 
 Java compilers are increasingly capable of issuing helpful "lint-like" warnings. To encourage the use of such warnings, there should be some way to disable a warning in a part of the program when the programmer knows that the warning is inappropriate.
 
-The annotation type SuppressWarnings supports programmer control over warnings otherwise issued by a Java compiler. It defines a single element that is an array of String.
+The annotation interface SuppressWarnings supports programmer control over warnings otherwise issued by a Java compiler. It defines a single element that is an array of String.
 
 If a declaration is annotated with @SuppressWarnings(value = {S1, ..., Sk}), then a Java compiler must suppress (that is, not report) any warning specified by one of S1 ... Sk if that warning would have been generated as a result of the annotated declaration or any of its parts.
 
@@ -1028,9 +1111,9 @@ Compiler vendors are encouraged to document the strings they support for @Suppre
 
 9.6.4.6. @Deprecated
 
-Programmers are sometimes discouraged from using certain program elements (modules, types, fields, methods, and constructors) because they are dangerous or because a better alternative exists. The annotation type Deprecated allows a compiler to warn about uses of these program elements.
+Programmers are sometimes discouraged from using certain program elements (modules, classes, interfaces, fields, methods, and constructors) because they are considered dangerous or because a better alternative exists. The annotation interface Deprecated allows a compiler to warn about uses of these program elements.
 
-A deprecated program element is a module, type, field, method, or constructor whose declaration is annotated with @Deprecated. The manner in which a program element is deprecated depends on the value of the forRemoval element of the annotation:
+A deprecated program element is a module, class, interface, field, method, or constructor whose declaration is annotated with @Deprecated. The manner in which a program element is deprecated depends on the value of the forRemoval element of the annotation:
 
 If forRemoval=false (the default), then the program element is ordinarily deprecated.
 
@@ -1048,7 +1131,7 @@ The use is within a declaration that is annotated to suppress deprecation warnin
 
 The declaration where the use appears and the declaration of the ordinarily deprecated program element are both within the same outermost class; or
 
-The use is within an import declaration that imports the ordinarily deprecated type or member; or
+The use is within an import declaration that imports the ordinarily deprecated class, interface, or member; or
 
 The use is within an exports or opens directive (§7.7.2).
 
@@ -1058,7 +1141,7 @@ The use is within a declaration that is annotated to suppress removal warnings (
 
 The declaration where the use appears and the declaration of the terminally deprecated program element are both within the same outermost class; or
 
-The use is within an import declaration that imports the terminally deprecated type or member; or
+The use is within an import declaration that imports the terminally deprecated class, interface, or member; or
 
 The use is within an exports or opens directive.
 
@@ -1074,13 +1157,13 @@ the name of a module is used by a qualified exports or opens directive, even if 
 
 A module declaration that exports or opens a package is usually controlled by the same programmer or team that controls the package's declaration. As such, there is little benefit in warning that the package declaration is annotated with @Deprecated when the package is exported or opened by the module declaration. In contrast, a module declaration that exports or opens a package to a friend module is usually not controlled by the same programmer or team that controls the friend module. Simply exporting or opening the package does not make the module declaration rely on the friend module, so there is little value in warning if the friend module is deprecated; the programmer of the module declaration would almost always wish to suppress such a warning.
 
-The only implicit declaration that can cause a deprecation warning or removal warning is a container annotation (§9.7.5). Namely, if T is a repeatable annotation type and TC is its containing annotation type, and TC is deprecated, then repeating the @T annotation will cause a warning. The warning is due to the implicit @TC container annotation. It is strongly discouraged to deprecate a containing annotation type without deprecating the corresponding repeatable annotation type.
+The only implicit declaration that can cause a deprecation warning or removal warning is a container annotation (§9.7.5). Namely, if T is a repeatable annotation interface and TC is its containing annotation interface, and TC is deprecated, then repeating the @T annotation will cause a warning. The warning is due to the implicit @TC container annotation. It is strongly discouraged to deprecate a containing annotation interface without deprecating the corresponding repeatable annotation interface.
 
 9.6.4.7. @SafeVarargs
 
-A variable arity parameter with a non-reifiable element type (§4.7) can cause heap pollution (§4.12.2) and give rise to compile-time unchecked warnings (§5.1.9). Such warnings are uninformative if the body of the variable arity method is well-behaved with respect to the variable arity parameter.
+A variable arity parameter with a non-reifiable element type (§4.7) can cause heap pollution (§4.12.2) and give rise to compile-time unchecked warnings (§5.1.9). However, such warnings are uninformative if the body of the variable arity method is well-behaved with respect to the variable arity parameter.
 
-The annotation type SafeVarargs, when used to annotate a method or constructor declaration, makes a programmer assertion that prevents a Java compiler from reporting unchecked warnings for the declaration or invocation of a variable arity method or constructor where the compiler would otherwise do so due to the variable arity parameter having a non-reifiable element type.
+The annotation interface SafeVarargs, when used to annotate a method or constructor declaration, makes a programmer assertion that prevents a Java compiler from reporting unchecked warnings for the declaration or invocation of a variable arity method or constructor where the compiler would otherwise do so due to the variable arity parameter having a non-reifiable element type.
 
 The annotation @SafeVarargs has non-local effects because it suppresses unchecked warnings at method invocation expressions, in addition to an unchecked warning pertaining to the declaration of the variable arity method itself (§8.4.1). In contrast, the annotation @SuppressWarnings("unchecked") has local effects because it only suppresses unchecked warnings pertaining to the declaration of a method.
 
@@ -1100,13 +1183,13 @@ Since @SafeVarargs is only applicable to static methods, final and/or private in
 
 9.6.4.8. @Repeatable
 
-The annotation type java.lang.annotation.Repeatable is used on the declaration of a repeatable annotation type to indicate its containing annotation type (§9.6.3).
+The annotation interface java.lang.annotation.Repeatable is used on the declaration of a repeatable annotation interface to indicate its containing annotation interface (§9.6.3).
 
-Note that an @Repeatable meta-annotation on the declaration of T, indicating TC, is not sufficient to make TC the containing annotation type of T. There are numerous well-formedness rules for TC to be considered the containing annotation type of T.
+Note that an @Repeatable meta-annotation on the declaration of A, indicating AC, is not sufficient to make AC the containing annotation interface of A. There are numerous well-formedness rules for AC to be considered the containing annotation interface of A.
 
 9.6.4.9. @FunctionalInterface
 
-The annotation type FunctionalInterface is used to indicate that an interface is meant to be a functional interface (§9.8). It facilitates early detection of inappropriate method declarations appearing in or inherited by an interface that is meant to be functional.
+The annotation interface FunctionalInterface is used to indicate that an interface is meant to be a functional interface (§9.8). It facilitates early detection of inappropriate method declarations appearing in or inherited by an interface that is meant to be functional.
 
 It is a compile-time error if an interface declaration is annotated with @FunctionalInterface but is not, in fact, a functional interface.
 
@@ -1114,7 +1197,7 @@ Because some interfaces are functional incidentally, it is not necessary or desi
 
 9.7. Annotations
 
-An annotation is a marker which associates information with a program construct, but has no effect at run time. An annotation denotes a specific invocation of an annotation type (§9.6) and usually provides values for the elements of that type.
+An annotation is a marker which associates information with a program element, but has no effect at run time. An annotation denotes a specific instance of an annotation interface (§9.6) and usually provides values for the elements of that interface.
 
 There are three kinds of annotations. The first kind is the most general, while the other kinds are merely shorthands for the first kind.
 
@@ -1123,11 +1206,11 @@ NormalAnnotation
 MarkerAnnotation
 SingleElementAnnotation
 
-Normal annotations are described in §9.7.1, marker annotations in §9.7.2, and single element annotations in §9.7.3. Annotations may appear at various syntactic locations in a program, as described in §9.7.4. The number of annotations of the same type that may appear at a location is determined by their type, as described in §9.7.5.
+Normal annotations are described in §9.7.1, marker annotations in §9.7.2, and single element annotations in §9.7.3. Annotations may appear at various syntactic locations in a program, as described in §9.7.4. The number of annotations of the same interface that may appear at a location is determined by the interface declaration, as described in §9.7.5.
 
 9.7.1. Normal Annotations
 
-A normal annotation specifies the name of an annotation type and optionally a list of comma-separated element-value pairs. Each pair contains an element value that is associated with an element of the annotation type (§9.6.1).
+A normal annotation specifies the name of an annotation interface and optionally a list of comma-separated element-value pairs. Each pair contains an element value that is associated with an element of the annotation interface (§9.6.1).
 
 NormalAnnotation:
 @ TypeName ( [ElementValuePairList] )
@@ -1144,57 +1227,57 @@ ElementValueArrayInitializer:
 ElementValueList:
 ElementValue {, ElementValue}
 
-Note that the at-sign (@) is a token unto itself (§3.11). It is possible to put whitespace between it and the TypeName, but this is discouraged as a matter of style.
+Note that the at sign (@) is a token unto itself (§3.11). It is possible to put whitespace between it and the TypeName, but this is discouraged as a matter of style.
 
-The TypeName specifies the annotation type corresponding to the annotation. The annotation is said to be "of" that type.
+The TypeName specifies the annotation interface corresponding to the annotation. The annotation is said to be "of" that interface.
 
-The TypeName must name an accessible annotation type (§6.6), or a compile-time error occurs.
+The TypeName must name an accessible annotation interface (§6.6), or a compile-time error occurs.
 
-The Identifier in an element-value pair must be the simple name of one of the elements (that is, methods) of the annotation type, or a compile-time error occurs.
+The Identifier in an element-value pair must be the simple name of one of the elements (that is, methods) of the annotation interface, or a compile-time error occurs.
 
 The return type of this method defines the element type of the element-value pair.
 
 If the element type is an array type, then it is not required to use curly braces to specify the element value of the element-value pair. If the element value is not an ElementValueArrayInitializer, then an array value whose sole element is the element value is associated with the element. If the element value is an ElementValueArrayInitializer, then the array value represented by the ElementValueArrayInitializer is associated with the element.
 
-It is a compile-time error if the element type is not commensurate with the element value. An element type T is commensurate with an element value V if and only if one of the following is true:
+It is a compile-time error if the element type is not commensurate with the element value. An element type T is commensurate with an element value v if and only if one of the following is true:
 
 T is an array type E[], and either:
 
-If V is a ConditionalExpression or an Annotation, then V is commensurate with E; or
+If v is a ConditionalExpression or an Annotation, then v is commensurate with E; or
 
-If V is an ElementValueArrayInitializer, then each element value that V contains is commensurate with E.
+If v is an ElementValueArrayInitializer, then each element value that v contains is commensurate with E.
 
-An ElementValueArrayInitializer is similar to a normal array initializer (§10.6), except that an ElementValueArrayInitializer may syntactically contain annotations as well as expressions and nested initializers. However, nested initializers are not semantically legal in an ElementValueArrayInitializer because they are never commensurate with array-typed elements in annotation type declarations (nested array types not permitted).
+An ElementValueArrayInitializer is similar to a normal array initializer (§10.6), except that an ElementValueArrayInitializer may syntactically contain annotations as well as expressions and nested initializers. However, nested initializers are not semantically legal in an ElementValueArrayInitializer because they are never commensurate with array-typed elements in annotation interface declarations (nested array types not permitted).
 
-T is not an array type, and the type of V is assignment compatible (§5.2) with T, and:
+T is not an array type, and the type of v is assignment compatible (§5.2) with T, and:
 
-If T is a primitive type or String, then V is a constant expression (§15.29).
+If T is a primitive type or String, then v is a constant expression (§15.29).
 
-If T is Class or an invocation of Class (§4.5), then V is a class literal (§15.8.2).
+If T is Class or an invocation of Class (§4.5), then v is a class literal (§15.8.2).
 
-If T is an enum type (§8.9), then V is an enum constant (§8.9.1).
+If T is an enum class type (§8.9), then v is an enum constant (§8.9.1).
 
-V is not null.
+v is not null.
 
-Note that if T is not an array type or an annotation type, the element value must be a ConditionalExpression (§15.25). The use of ConditionalExpression rather than a more general production like Expression is a syntactic trick to prevent assignment expressions as element values. Since an assignment expression is not a constant expression, it cannot be a commensurate element value for a primitive or String-typed element.
+Note that if T is not an array type or an annotation interface, the element value must be a ConditionalExpression (§15.25). The use of ConditionalExpression rather than a more general production like Expression is a syntactic trick to prevent assignment expressions as element values. Since an assignment expression is not a constant expression, it cannot be a commensurate element value for a primitive or String-typed element.
 
 Formally, it is invalid to speak of an ElementValue as FP-strict (§15.4) because it might be an annotation or a class literal. Still, we can speak informally of ElementValue as FP-strict when it is either a constant expression or an array of constant expressions or an annotation whose element values are (recursively) found to be constant expressions; after all, every constant expression is FP-strict.
 
-A normal annotation must contain an element-value pair for every element of the corresponding annotation type, except for those elements with default values, or a compile-time error occurs.
+A normal annotation must contain an element-value pair for every element of the corresponding annotation interface, except for those elements with default values, or a compile-time error occurs.
 
 A normal annotation may, but is not required to, contain element-value pairs for elements with default values.
 
-It is customary, though not required, that element-value pairs in an annotation are presented in the same order as the corresponding elements in the annotation type declaration.
+It is customary, though not required, that element-value pairs in an annotation are presented in the same order as the corresponding elements in the annotation interface declaration.
 
-An annotation on an annotation type declaration is known as a meta-annotation.
+An annotation on an annotation interface declaration is known as a meta-annotation.
 
-An annotation of type T may appear as a meta-annotation on the declaration of type T itself. More generally, circularities in the transitive closure of the "annotates" relation are permitted.
+An annotation of interface A may appear as a meta-annotation on the declaration of the interface A itself. More generally, circularities in the transitive closure of the "annotates" relation are permitted.
 
-For example, it is legal to annotate the declaration of an annotation type S with a meta-annotation of type T, and to annotate T's own declaration with a meta-annotation of type S. The pre-defined annotation types contain several such circularities.
+For example, it is legal to annotate the declaration of an annotation interface S with a meta-annotation of interface T, and to annotate T's own declaration with a meta-annotation of interface S. The predefined annotation interfaces (§9.6.4) contain several such circularities.
 
 Example 9.7.1-1. Normal Annotations
 
-Here is an example of a normal annotation using the annotation type from §9.6.1:
+Here is an example of a normal annotation using the annotation interface from §9.6.1:
 
 
 @RequestForEnhancement(
@@ -1207,7 +1290,7 @@ public static void travelThroughTime(Date destination) { ... }
 
 
 
-Here is an example of a normal annotation that takes advantage of default values, using the annotation type from §9.6.2:
+Here is an example of a normal annotation that takes advantage of default values, using the annotation interface from §9.6.2:
 
 
 @RequestForEnhancement(
@@ -1223,7 +1306,7 @@ public static void balanceFederalBudget() {
 
 9.7.2. Marker Annotations
 
-A marker annotation is a shorthand designed for use with marker annotation types (§9.6.1).
+A marker annotation is a shorthand designed for use with marker annotation interfaces (§9.6.1).
 
 MarkerAnnotation:
 @ TypeName
@@ -1233,11 +1316,11 @@ It is shorthand for the normal annotation:
 @TypeName()
 
 
-It is legal to use marker annotations for annotation types with elements, so long as all the elements have default values (§9.6.2).
+It is legal to use marker annotations for annotation interfaces with elements, so long as all the elements have default values (§9.6.2).
 
 Example 9.7.2-1. Marker Annotations
 
-Here is an example using the Preliminary marker annotation type from §9.6.1:
+Here is an example using the Preliminary marker annotation interface from §9.6.1:
 
 @Preliminary public class TimeTravel { ... }
 
@@ -1245,7 +1328,7 @@ Here is an example using the Preliminary marker annotation type from §9.6.1:
 
 9.7.3. Single-Element Annotations
 
-A single-element annotation, is a shorthand designed for use with single-element annotation types (§9.6.1).
+A single-element annotation is a shorthand designed for use with single-element annotation interfaces (§9.6.1).
 
 SingleElementAnnotation:
 @ TypeName ( ElementValue )
@@ -1255,11 +1338,11 @@ It is shorthand for the normal annotation:
 @TypeName(value = ElementValue)
 
 
-It is legal to use single-element annotations for annotation types with multiple elements, so long as one element is named value and all other elements have default values (§9.6.2).
+It is legal to use single-element annotations for annotation interfaces with multiple elements, so long as one element is named value and all other elements have default values (§9.6.2).
 
 Example 9.7.3-1. Single-Element Annotations
 
-The following annotations all use the single-element annotation types from §9.6.1.
+The following annotations all use the single-element annotation interfaces from §9.6.1.
 
 Here is an example of a single-element annotation:
 
@@ -1299,7 +1382,7 @@ public class Begonia { ... }
 
 
 
-Here is an example with of a single-element annotation that contains a normal annotation:
+Here is an example of a single-element annotation that contains a normal annotation:
 
 
 @Author(@Name(first = "Joe", last = "Hacker"))
@@ -1307,7 +1390,7 @@ public class BitTwiddle { ... }
 
 
 
-Here is an example of a single-element annotation that uses an enum type defined inside the annotation type:
+Here is an example of a single-element annotation that uses an enum class defined inside the annotation interface declaration:
 
 
 @Quality(Quality.Level.GOOD)
@@ -1318,9 +1401,9 @@ public class Karma { ... }
 
 9.7.4. Where Annotations May Appear
 
-A declaration annotation is an annotation that applies to a declaration, and whose own type is applicable in the declaration context (§9.6.4.1) represented by that declaration; or an annotation that applies to a class, interface, enum, annotation type, or type parameter declaration, and whose own type is applicable in type contexts (§4.11).
+A declaration annotation is an annotation that applies to a declaration, and whose annotation interface is applicable in the declaration context (§9.6.4.1) represented by that declaration; or an annotation that applies to a class, interface, or type parameter declaration, and whose annotation interface is applicable in type contexts (§4.11).
 
-A type annotation is an annotation that applies to a type (or any part of a type), and whose own type is applicable in type contexts.
+A type annotation is an annotation that applies to a type (or any part of a type), and whose annotation interface is applicable in type contexts.
 
 For example, given the field declaration:
 
@@ -1328,7 +1411,7 @@ For example, given the field declaration:
 
 @Foo is a declaration annotation on f if Foo is meta-annotated by @Target(ElementType.FIELD), and a type annotation on int if Foo is meta-annotated by @Target(ElementType.TYPE_USE). It is possible for @Foo to be both a declaration annotation and a type annotation simultaneously.
 
-Type annotations can apply to an array type or any component type thereof (§10.1). For example, assuming that A, B, and C are annotation types meta-annotated with @Target(ElementType.TYPE_USE), then given the field declaration:
+Type annotations can apply to an array type or any component type thereof (§10.1). For example, assuming that A, B, and C are annotation interfaces meta-annotated with @Target(ElementType.TYPE_USE), then given the field declaration:
 
 @C int @A [] @B [] f;
 
@@ -1343,9 +1426,9 @@ An important property of this syntax is that, in two declarations that differ on
 
 It is customary, though not required, to write declaration annotations before all other modifiers, and type annotations immediately before the type to which they apply.
 
-It is possible for an annotation to appear at a syntactic location in a program where it could plausibly apply to a declaration, or a type, or both. This can happen in any of the five declaration contexts where modifiers immediately precede the type of the declared entity:
+It is possible for an annotation to appear at a syntactic location in a program where it could plausibly apply to a declaration, or a type, or both. This can happen in any of the six declaration contexts where modifiers immediately precede the type of the declared entity:
 
-Method declarations (including elements of annotation types)
+Method declarations (including elements of annotation interfaces)
 
 Constructor declarations
 
@@ -1353,19 +1436,21 @@ Field declarations (including enum constants)
 
 Formal and exception parameter declarations
 
-Local variable declarations (including loop variables of for statements and resource variables of try-with-resources statements)
+Local variable declarations
 
-The grammar of the Java programming language unambiguously treats annotations at these locations as modifiers for a declaration (§8.3), but that is purely a syntactic matter. Whether an annotation applies to the declaration or to the type of the declared entity - and thus, whether the annotation is a declaration annotation or a type annotation - depends on the applicability of the annotation's type:
+Record component declarations
 
-If the annotation's type is applicable in the declaration context corresponding to the declaration, and not in type contexts, then the annotation is deemed to apply only to the declaration.
+The grammar of the Java programming language unambiguously treats annotations at these locations as modifiers for a declaration (§8.3), but that is purely a syntactic matter. Whether an annotation applies to the declaration or to the type of the declared entity - and thus, whether the annotation is a declaration annotation or a type annotation - depends on the applicability of the annotation's interface:
 
-If the annotation's type is applicable in type contexts, and not in the declaration context corresponding to the declaration, then the annotation is deemed to apply only to the type which is closest to the annotation.
+If the annotation's interface is applicable in the declaration context corresponding to the declaration, and not in type contexts, then the annotation is deemed to apply only to the declaration.
 
-If the annotation's type is applicable in the declaration context corresponding to the declaration and in type contexts, then the annotation is deemed to apply to both the declaration and the type which is closest to the annotation.
+If the annotation's interface is applicable in type contexts, and not in the declaration context corresponding to the declaration, then the annotation is deemed to apply only to the type which is closest to the annotation.
+
+If the annotation's interface is applicable in the declaration context corresponding to the declaration and in type contexts, then the annotation is deemed to apply to both the declaration and the type which is closest to the annotation.
 
 In the second and third cases above, the type which is closest to the annotation is determined as follows:
 
-If the annotation appears before a void method declaration or a local variable declaration that uses var (§14.4, §14.14.2, §14.20.3), then there is no closest type. If the annotation's type is deemed to apply only to the type which is closest to the annotation, a compile-time error occurs.
+If the annotation appears before a void method declaration or a local variable declaration that uses var (§14.4), then there is no closest type. If the annotation's interface is deemed to apply only to the type which is closest to the annotation, a compile-time error occurs.
 
 If the annotation appears before a constructor declaration, then the closest type is the type of the newly constructed object. The type of the newly constructed object is the fully qualified name of the type immediately enclosing the constructor declaration. Within that fully qualified name, the annotation applies to the simple type name indicated by the constructor declaration.
 
@@ -1375,29 +1460,33 @@ For example, in the field declaration @Foo public static String f;, the type whi
 
 Local variable declarations which do not use var are similar to formal parameter declarations of lambda expressions, in that both allow declaration annotations and type annotations in source code, but only the type annotations can be stored in the class file.
 
-It is a compile-time error if an annotation of type T is syntactically a modifier for:
+It is a compile-time error if an annotation of interface A is syntactically a modifier for:
 
-a module declaration, but T is not applicable to module declarations.
+a module declaration, but A is not applicable to module declarations.
 
-a package declaration, but T is not applicable to package declarations.
+a package declaration, but A is not applicable to package declarations.
 
-a class, interface, or enum declaration, but T is not applicable to type declarations or type contexts; or an annotation type declaration, but T is not applicable to annotation type declarations or type declarations or type contexts.
+a class or interface declaration, but A is not applicable to type declarations or in type contexts; or
 
-a method declaration (including an element of an annotation type), but T is not applicable to method declarations or type contexts.
+an annotation interface declaration, but A is not applicable to annotation interface declarations or type declarations or in type contexts.
 
-a constructor declaration, but T is not applicable to constructor declarations or type contexts.
+a method declaration (including an element of an annotation interface), but A is not applicable to method declarations or in type contexts.
 
-a type parameter declaration of a generic class, interface, method, or constructor, but T is not applicable to type parameter declarations or type contexts.
+a constructor declaration, but A is not applicable to constructor declarations or in type contexts.
 
-a field declaration (including an enum constant), but T is not applicable to field declarations or type contexts.
+a type parameter declaration of a generic class, interface, method, or constructor, but A is not applicable to type parameter declarations or in type contexts.
 
-a formal or exception parameter declaration, but T is not applicable to either formal and exception parameter declarations or type contexts.
+a field declaration (or an enum constant), but A is not applicable to field declarations or in type contexts.
 
-a receiver parameter, but T is not applicable to type contexts.
+a formal or exception parameter declaration, but A is not applicable to formal and exception parameter declarations or in type contexts.
 
-a local variable declaration (including a loop variable of a for statement or a resource variable of a try-with-resources statement), but T is not applicable to local variable declarations or type contexts.
+a receiver parameter, but A is not applicable in type contexts.
 
-Five of these nine clauses mention "... or type contexts" because they characterize the five syntactic locations where an annotation could plausibly apply either to a declaration or to the type of a declared entity. Furthermore, two of the nine clauses - for class, interface, enum, and annotation type declarations, and for type parameter declarations - mention "... or type contexts" because it may be convenient to apply an annotation whose type is meta-annotated with @Target(ElementType.TYPE_USE) (thus, applicable in type contexts) to a type declaration.
+a local variable declaration in either a statement or a pattern, but A is not applicable to local variable declarations or in type contexts.
+
+a record component, but A is not applicable to record component declarations, field declarations, method declarations, or formal and exception parameter declarations, or in type contexts.
+
+Six of these eleven clauses mention "... or in type contexts" because they characterize the six syntactic locations, mentioned earlier in this section, where an annotation could plausibly apply to a declaration or a type. Furthermore, two of the eleven clauses - for class and interface declarations, and for type parameter declarations - mention "... or in type contexts" because it is sometimes convenient to be able to apply an annotation whose interface is meta-annotated with @Target(ElementType.TYPE_USE) (thus, applicable in type contexts) to the declaration of a class, interface, or type parameter.
 
 A type annotation is admissible if both of the following are true:
 
@@ -1407,7 +1496,7 @@ If the simple name to which the annotation is closest is followed by "." and ano
 
 The intuition behind the second clause is that if Outer.this is legal in a nested class enclosed by Outer, then Outer may be annotated because it represents the type of some object at run time. On the other hand, if Outer.this is not legal - because the class where it appears has no enclosing instance of Outer at run time - then Outer may not be annotated because it is logically just a name, akin to components of a package name in a fully qualified type name.
 
-For example, in the following program, it is not possible to write A.this in the body of B, as B has no lexically enclosing instances (§8.5.1). Therefore, it is not possible to apply @Foo to A in the type A.B, because A is logically just a name, not a type.
+For example, in the following program, it is not possible to write A.this in the body of B, as B has no lexically enclosing instances. Therefore, it is not possible to apply @Foo to A in the type A.B, because A is logically just a name, not a type.
 
 
 @Target(ElementType.TYPE_USE)
@@ -1437,31 +1526,31 @@ class Test {
 
 
 
-It is a compile-time error if an annotation of type T applies to the outermost level of a type in a type context, and T is not applicable in type contexts or the declaration context (if any) which occupies the same syntactic location.
+It is a compile-time error if an annotation of interface A applies to the outermost level of a type in a type context, and A is not applicable in type contexts or the declaration context (if any) which occupies the same syntactic location.
 
-It is a compile-time error if an annotation of type T applies to a part of a type (that is, not the outermost level) in a type context, and T is not applicable in type contexts.
+It is a compile-time error if an annotation of interface A applies to a part of a type (that is, not the outermost level) in a type context, and A is not applicable in type contexts.
 
-It is a compile-time error if an annotation of type T applies to a type (or any part of a type) in a type context, and T is applicable in type contexts, and the annotation is not admissible.
+It is a compile-time error if an annotation of interface A applies to a type (or any part of a type) in a type context, and A is applicable in type contexts, but the annotation is not admissible.
 
-For example, assume an annotation type TA which is meta-annotated with just @Target(ElementType.TYPE_USE). The terms @TA java.lang.Object and java.@TA lang.Object are illegal because the simple name to which @TA is closest is classified as a package name. On the other hand, java.lang.@TA Object is legal.
+For example, assume an annotation interface TA which is meta-annotated with just @Target(ElementType.TYPE_USE). The terms @TA java.lang.Object and java.@TA lang.Object are illegal because the simple name to which @TA is closest is classified as a package name. On the other hand, java.lang.@TA Object is legal.
 
-Note that the illegal terms are illegal "everywhere". The ban on annotating package names applies broadly: to locations which are solely type contexts, such as class ... extends @TA java.lang.Object {...}, and to locations which are both declaration and type contexts, such as @TA java.lang.Object f;. (There are no locations which are solely declaration contexts where a package name could be annotated, as class, package, and type parameter declarations use only simple names.)
+Note that the illegal terms are illegal "everywhere". The ban on annotating package names applies broadly: to locations which are solely type contexts, such as class ... extends @TA java.lang.Object {...}, and to locations which are both declaration and type contexts, such as @TA java.lang.Object f;. (There are no locations which are solely declaration contexts where a package name could be annotated, as package, class, interface, and type parameter declarations introduce only simple names.)
 
 If TA is additionally meta-annotated with @Target(ElementType.FIELD), then the term @TA java.lang.Object is legal in locations which are both declaration and type contexts, such as a field declaration @TA java.lang.Object f;. Here, @TA is deemed to apply to the declaration of f (and not to the type java.lang.Object) because TA is applicable in the field declaration context.
 
-9.7.5. Multiple Annotations of the Same Type
+9.7.5. Multiple Annotations of the Same Interface
 
-It is a compile-time error if multiple annotations of the same type T appear in a declaration context or type context, unless T is repeatable (§9.6.3) and both T and the containing annotation type of T are applicable in the declaration context or type context (§9.6.4.1).
+It is a compile-time error if multiple annotations of the same interface A appear in a declaration context or type context, unless A is repeatable (§9.6.3) and both A and the containing annotation interface of A are applicable in the declaration context or type context (§9.6.4.1).
 
-It is customary, though not required, for multiple annotations of the same type to appear contiguously.
+It is customary, though not required, for multiple annotations of the same interface to appear consecutively.
 
-If a declaration context or type context has multiple annotations of a repeatable annotation type T, then it is as if the context has no explicitly declared annotations of type T and one implicitly declared annotation of the containing annotation type of T.
+If a declaration context or type context has multiple annotations of a repeatable annotation interface A, then it is as if the context has no explicitly declared annotations of interface A and one implicitly declared annotation of the containing annotation interface of A.
 
-The implicitly declared annotation is called the container annotation, and the multiple annotations of type T which appeared in the context are called the base annotations. The elements of the (array-typed) value element of the container annotation are all the base annotations in the left-to-right order in which they appeared in the context.
+The implicitly declared annotation is called the container annotation, and the multiple annotations of interface A which appeared in the context are called the base annotations. The elements of the (array-typed) value element of the container annotation are all the base annotations in the left-to-right order in which they appeared in the context.
 
-It is a compile-time error if, in a declaration context or type context, there are multiple annotations of a repeatable annotation type T and any annotations of the containing annotation type of T.
+It is a compile-time error if, in a declaration context or type context, there are multiple annotations of a repeatable annotation interface A and any annotations of the containing annotation interface of A.
 
-In other words, it is not possible to repeat annotations where an annotation of the same type as their container also appears. This prohibits obtuse code like:
+In other words, it is not possible to repeat annotations where an annotation of the same interface as their container also appears. This prohibits obtuse code like:
 
 
 @Foo(0) @Foo(1) @FooContainer({@Foo(2)})
@@ -1469,9 +1558,9 @@ class A {}
 
 
 
-If this code was legal, then multiple levels of containment would be needed: first the annotations of type Foo would be contained by an implicitly declared container annotation of type FooContainer, then that annotation and the explicitly declared annotation of type FooContainer would be contained in yet another implicitly declared annotation. This complexity is undesirable in the judgment of the designers of the Java programming language. Another approach, treating the annotations of type Foo as if they had occurred alongside @Foo(2) in the explicit @FooContainer annotation, is undesirable because it could change how reflective programs interpret the @FooContainer annotation.
+If this code was legal, then multiple levels of containment would be needed: first the base annotations of interface Foo would be contained by an implicitly declared container annotation of interface FooContainer, then that annotation and the explicitly declared annotation of interface FooContainer would be contained in yet another implicitly declared annotation. This complexity is undesirable in the judgment of the designers of the Java programming language. Another approach, treating the base annotations of interface Foo as if they had occurred alongside @Foo(2) in the explicit @FooContainer annotation, is undesirable because it could change how reflective programs interpret the @FooContainer annotation.
 
-It is a compile-time error if, in a declaration context or type context, there is one annotation of a repeatable annotation type T and multiple annotations of the containing annotation type of T.
+It is a compile-time error if, in a declaration context or type context, there is one annotation of a repeatable annotation interface A and multiple annotations of the containing annotation interface of A.
 
 This rule is designed to allow the following code:
 
@@ -1481,7 +1570,7 @@ class A {}
 
 
 
-With only one annotation of the repeatable annotation type Foo, no container annotation is implicitly declared, even if FooContainer is the containing annotation type of Foo. However, repeating the annotation of type FooContainer, as in:
+With only one base annotation of the repeatable annotation interface Foo, no container annotation is implicitly declared, even if FooContainer is the containing annotation interface of Foo. However, repeating the annotation of interface FooContainer, as in:
 
 
 @Foo(1) @FooContainer({@Foo(2)}) @FooContainer({@Foo(3)})
@@ -1489,7 +1578,7 @@ class A {}
 
 
 
-is prohibited, even if FooContainer is repeatable with a containing annotation type of its own. It is obtuse to repeat annotations which are themselves containers when an annotation of the underlying repeatable type is present.
+is prohibited, even if FooContainer is repeatable with a containing annotation interface of its own. It is obtuse to repeat annotations which are themselves containers when an annotation of the underlying repeatable interface is present.
 
 9.8. Functional Interfaces
 
