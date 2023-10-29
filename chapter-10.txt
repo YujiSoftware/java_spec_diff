@@ -10,7 +10,7 @@ Table of Contents
 10.6. Array Initializers
 10.7. Array Members
 10.8. Class Objects for Arrays
-10.9. An Array of Characters is Not a String
+10.9. An Array of Characters Is Not a String
 
 In the Java programming language, arrays are objects (§4.3.1), are dynamically created, and may be assigned to variables of type Object (§4.3.2). All methods of class Object may be invoked on an array.
 
@@ -30,7 +30,7 @@ Array types are used in declarations and in cast expressions (§15.16).
 
 An array type is written as the name of an element type followed by some number of empty pairs of square brackets []. The number of bracket pairs indicates the depth of array nesting.
 
-An array's length is not part of its type.
+Each bracket pair in an array type may be annotated by type annotations (§9.7.4). An annotation applies to the bracket pair (or ellipsis, in a variable arity parameter declaration) that follows it.
 
 The element type of an array may be any type, whether primitive or reference. In particular:
 
@@ -42,17 +42,15 @@ Arrays with an abstract class type as the element type are allowed.
 
 An element of such an array may have as its value a null reference or an instance of any subclass of the abstract class that is not itself abstract.
 
+An array's length is not part of its type.
+
 The supertypes of an array type are specified in §4.10.3.
 
-The direct superclass of an array type is Object.
-
-Every array type implements the interfaces Cloneable and java.io.Serializable.
+The supertype relation for array types is not the same as the superclass relation. The direct supertype of Integer[] is Number[] according to §4.10.3, but the direct superclass of Integer[] is Object according to the Class object for Integer[] (§10.8). This does not matter in practice, because Object is also a supertype of all array types.
 
 10.2. Array Variables
 
-A variable of array type holds a reference to an object. Declaring a variable of array type does not create an array object or allocate any space for array components. It creates only the variable itself, which can contain a reference to an array.
-
-However, the initializer part of a declarator (§8.3, §9.3, §14.4.1) may create an array, a reference to which then becomes the initial value of the variable.
+A variable of array type holds a reference to an object. Declaring a variable of array type does not create an array object or allocate any space for array components. It creates only the variable itself, which can contain a reference to an array. However, the initializer part of a declarator (§8.3, §9.3, §14.4.1) may create an array, a reference to which then becomes the initial value of the variable.
 
 Example 10.2-1. Declarations of Array Variables
 
@@ -81,33 +79,49 @@ String[] aas    = { "array", "of", "String", };
 
 
 
-The [] may appear as part of the type at the beginning of the declaration, or as part of the declarator for a particular variable, or both.
+The array type of a variable depends on the bracket pairs that may appear as part of the type at the beginning of a variable declaration, or as part of the declarator for the variable, or both. Specifically, in the declaration of a field, formal parameter, or local variable (§8.3, §8.4.1, §9.3, §9.4, §14.4.1, §14.14.2, §15.27.1), the array type of the variable is denoted by:
 
-For example:
+the element type that appears at the beginning of the declaration; then,
+
+any bracket pairs that follow the variable's Identifier in the declarator (not applicable for a variable arity parameter); then,
+
+any bracket pairs that appear in the type at the beginning of the declaration (where the ellipsis of a variable arity parameter is treated as a bracket pair).
+
+The return type of a method (§8.4.5) may be an array type. The precise array type depends on the bracket pairs that may appear as part of the type at the beginning of the method declaration, or after the method's formal parameter list, or both. The array type is denoted by:
+
+the element type that appears in the Result; then,
+
+any bracket pairs that follow the formal parameter list; then,
+
+any bracket pairs that appear in the Result.
+
+We do not recommend "mixed notation" in array variable declarations, where bracket pairs appear on both the type and in declarators; nor in method declarations, where bracket pairs appear both before and after the formal parameter list.
+
+Example 10.2-2. Array Variables and Array Types
+
+The local variable declaration statement:
 
 byte[] rowvector, colvector, matrix[];
 
 
-This declaration is equivalent to:
+is equivalent to:
 
 byte rowvector[], colvector[], matrix[][];
 
 
-In a variable declaration (§8.3, §8.4.1, §9.3, §14.14, §14.20) except for a variable arity parameter, the array type of a variable is denoted by the array type that appears at the beginning of the declaration, followed by any bracket pairs that follow the variable's Identifier in the declarator.
-
-For example, the local variable declaration:
+because the array type of each local variable is unchanged. Similarly, the local variable declaration statement:
 
 int a, b[], c[][];
 
 
-is equivalent to the series of declarations:
+is equivalent to the series of declaration statements:
 
 int a;
 int[] b;
 int[][] c;
 
 
-Brackets are allowed in declarators as a nod to the tradition of C and C++. The general rules for variable declaration, however, permit brackets to appear on both the type and in declarators, so that the local variable declaration:
+Brackets are allowed in declarators as a nod to the tradition of C and C++. The general rules for variable declaration, however, permit brackets to appear on both the type and in declarators, so that the local variable declaration statement:
 
 float[][] f[][], g[][][], h[];  // Yechh!
 
@@ -119,7 +133,19 @@ float[][][][][] g;
 float[][][] h;
 
 
-We do not recommend "mixed notation" in an array variable declaration, where brackets appear on both the type and in declarators.
+Because of how array types are formed, the following parameter declarations have the same array type:
+
+void m(int @A [] @B []  x) {}
+void n(int @A [] @B ... y) {}
+
+
+And perhaps surprisingly, the following field declarations have the same array type:
+
+int @A [] f @B [];
+int @B [] @A [] g;
+
+
+
 
 Once an array object is created, its length never changes. To make an array variable refer to an array of different length, a reference to a different array must be assigned to the variable.
 
@@ -129,7 +155,7 @@ If an array variable v has type A[], where A is a reference type, then v can hol
 
 10.3. Array Creation
 
-An array is created by an array creation expression (§15.10) or an array initializer (§10.6).
+An array is created by an array creation expression (§15.10.1) or an array initializer (§10.6).
 
 An array creation expression specifies the element type, the number of levels of nested arrays, and the length of the array for at least one of the levels of nesting. The array's length is available as a final instance variable length.
 
@@ -137,7 +163,7 @@ An array initializer creates an array and provides initial values for all its co
 
 10.4. Array Access
 
-A component of an array is accessed by an array access expression (§15.13) that consists of an expression whose value is an array reference followed by an indexing expression enclosed by [ and ], as in A[i].
+A component of an array is accessed by an array access expression (§15.10.3) that consists of an expression whose value is an array reference followed by an indexing expression enclosed by [ and ], as in A[i].
 
 All arrays are 0-origin. An array with length n can be indexed by the integers 0 to n-1.
 
@@ -159,7 +185,7 @@ This program produces the output:
 5050
 
 
-The program declares a variable ia that has type array of int, that is, int[]. The variable ia is initialized to reference a newly created array object, created by an array creation expression (§15.10). The array creation expression specifies that the array should have 101 components. The length of the array is available using the field length, as shown. The program fills the array with the integers from 0 to 100, sums these integers, and prints the result.
+The program declares a variable ia that has type array of int, that is, int[]. The variable ia is initialized to reference a newly created array object, created by an array creation expression (§15.10.1). The array creation expression specifies that the array should have 101 components. The length of the array is available using the field length, as shown. The program fills the array with the integers from 0 to 100, sums these integers, and prints the result.
 
 
 
@@ -168,7 +194,7 @@ Arrays must be indexed by int values; short, byte, or char values may also be us
 
 An attempt to access an array component with a long index value results in a compile-time error.
 
-All array accesses are checked at run time; an attempt to use an index that is less than zero or greater than or equal to the length of the array causes an ArrayIndexOutOfBoundsException to be thrown.
+All array accesses are checked at run time; an attempt to use an index that is less than zero or greater than or equal to the length of the array causes an ArrayIndexOutOfBoundsException to be thrown (§15.10.4).
 
 10.5. Array Store Exception
 
@@ -176,7 +202,7 @@ For an array whose type is A[], where A is a reference type, an assignment to a 
 
 If the type of the value being assigned is not assignment-compatible (§5.2) with the component type, an ArrayStoreException is thrown.
 
-If the component type of an array were not reifiable (§4.7), the Java Virtual Machine could not perform the store check described in the preceding paragraph. This is why an array creation expression with a non-reifiable element type is forbidden (§15.10). One may declare a variable of an array type whose element type is non-reifiable, but assignment of the result of an array creation expression to the variable will necessarily cause an unchecked warning (§5.1.9).
+If the component type of an array were not reifiable (§4.7), the Java Virtual Machine could not perform the store check described in the preceding paragraph. This is why an array creation expression with a non-reifiable element type is forbidden (§15.10.1). One may declare a variable of an array type whose element type is non-reifiable, but assignment of the result of an array creation expression to the variable will necessarily cause an unchecked warning (§5.1.9).
 
 Example 10.5-1. ArrayStoreException
 
@@ -214,24 +240,18 @@ The Java Virtual Machine checks for such a situation at run time to ensure that 
 
 10.6. Array Initializers
 
-An array initializer may be specified in a declaration (§8.3, §9.3, §14.4), or as part of an array creation expression (§15.10), to create an array and provide some initial values.
-
+An array initializer may be specified in a field declaration (§8.3, §9.3) or local variable declaration (§14.4), or as part of an array creation expression (§15.10.1), to create an array and provide some initial values.
 
 ArrayInitializer:
-    { VariableInitializersopt ,opt }
+{ [VariableInitializerList] [,] }
+VariableInitializerList:
+VariableInitializer {, VariableInitializer}
 
-VariableInitializers:
-    VariableInitializer
-    VariableInitializers , VariableInitializer
-
-
-The following is repeated from §8.3 to make the presentation here clearer:
-
+The following production from §8.3 is shown here for convenience:
 
 VariableInitializer:
-    Expression
-    ArrayInitializer
-
+Expression
+ArrayInitializer
 
 An array initializer is written as a comma-separated list of expressions, enclosed by braces { and }.
 
@@ -283,14 +303,16 @@ A clone of a multidimensional array is shallow, which is to say that it creates 
 
 All the members inherited from class Object; the only method of Object that is not inherited is its clone method.
 
+See §9.6.4.4 for another situation where the difference between public and non-public methods of Object requires special care.
+
 An array thus has the same public fields and methods as the following class:
 
 
 class A<T> implements Cloneable, java.io.Serializable {
-    public final int length = X ;
+    public final int length = X;
     public T[] clone() {
         try {
-            return (T[])super.clone(); // unchecked warning
+            return (T[])super.clone();
         } catch (CloneNotSupportedException e) {
             throw new InternalError(e.getMessage());
         }
@@ -299,9 +321,7 @@ class A<T> implements Cloneable, java.io.Serializable {
 
 
 
-Note that the cast in the example above would generate an unchecked warning (§5.1.9) if arrays were really implemented this way.
-
-See §9.6.3.4 for another situation where the difference between public and non-public methods of Object requires special care.
+Note that the cast to T[] in the code above would generate an unchecked warning (§5.1.9) if arrays were really implemented this way.
 
 Example 10.7-1. Arrays Are Cloneable
 
@@ -353,13 +373,21 @@ showing that the int[] array that is ia[0] and the int[] array that is ja[0] are
 
 Every array has an associated Class object, shared with all other arrays with the same component type.
 
+Although an array type is not a class, the Class object of every array acts as if:
+
+The direct superclass of every array type is Object.
+
+Every array type implements the interfaces Cloneable and java.io.Serializable.
+
 Example 10.8-1. Class Object Of Array
 
-class Test {
+class Test1 {
     public static void main(String[] args) {
         int[] ia = new int[3];
         System.out.println(ia.getClass());
         System.out.println(ia.getClass().getSuperclass());
+        for (Class<?> c : ia.getClass().getInterfaces())
+            System.out.println("Superinterface: " + c);
     }
 }
 
@@ -368,36 +396,38 @@ This program produces the output:
 
 class [I
 class java.lang.Object
+Superinterface: interface java.lang.Cloneable
+Superinterface: interface java.io.Serializable
 
 
-where the string "[I" is the run-time type signature for the class object "array with component type int".
+where the string "[I" is the run-time type signature for the Class object "array with component type int".
 
 
 
 
 Example 10.8-2. Array Class Objects Are Shared
 
-class Test {
+class Test2 {
     public static void main(String[] args) {
         int[] ia = new int[3];
         int[] ib = new int[6];
+        System.out.println(ia == ib);
         System.out.println(ia.getClass() == ib.getClass());
-        System.out.println("ia has length=" + ia.length);
     }
 }
 
 
 This program produces the output:
 
+false
 true
-ia has length=3
 
 
-The program uses the method getClass inherited from class Object, and the field length. The result of the comparison of the Class objects in the first println demonstrates that all arrays whose components are of type int are instances of the same array type, which is int[].
+While ia and ib refer to different arrays, the result of the comparison of the Class objects demonstrates that all arrays whose components are of type int are instances of the same array type (namely int[]).
 
 
 
-10.9. An Array of Characters is Not a String
+10.9. An Array of Characters Is Not a String
 
 In the Java programming language, unlike C, an array of char is not a String, and neither a String nor an array of char is terminated by '\u0000' (the NUL character).
 

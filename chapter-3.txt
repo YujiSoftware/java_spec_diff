@@ -32,9 +32,9 @@ The Unicode characters resulting from the lexical translations are reduced to a 
 
 Programs are written using the Unicode character set. Information about this character set and its associated character encodings may be found at http://www.unicode.org/.
 
-The Java SE platform tracks the Unicode specification as it evolves. The precise version of Unicode used by a given release is specified in the documentation of the class Character.
+The Java SE platform tracks the Unicode Standard as it evolves. The precise version of Unicode used by a given release is specified in the documentation of the class Character.
 
-Versions of the Java programming language prior to 1.1 used Unicode version 1.1.5. Upgrades to newer versions of the Unicode Standard occurred in JDK 1.1 (to Unicode 2.0), JDK 1.1.7 (to Unicode 2.1), Java SE 1.4 (to Unicode 3.0), and Java SE 5.0 (to Unicode 4.0).
+Versions of the Java programming language prior to JDK 1.1 used Unicode 1.1.5. Upgrades to newer versions of the Unicode Standard occurred in JDK 1.1 (to Unicode 2.0), JDK 1.1.7 (to Unicode 2.1), Java SE 1.4 (to Unicode 3.0), Java SE 5.0 (to Unicode 4.0), Java SE 7 (to Unicode 6.0), and Java SE 8 (to Unicode 6.2).
 
 The Unicode standard was originally designed as a fixed-width 16-bit character encoding. It has since been changed to allow for characters whose representation requires more than 16 bits. The range of legal code points is now U+0000 to U+10FFFF, using the hexadecimal U+n notation. Characters whose code points are greater than U+FFFF are called supplementary characters. To represent the complete range of characters using only 16-bit units, the Unicode standard defines an encoding called UTF-16. In this encoding, supplementary characters are represented as pairs of 16-bit code units, the first from the high-surrogates range, (U+D800 to U+DBFF), the second from the low-surrogates range (U+DC00 to U+DFFF). For characters in the range U+0000 to U+FFFF, the values of code points and UTF-16 code units are the same.
 
@@ -58,38 +58,34 @@ A translation of the Unicode stream resulting from step 1 into a stream of input
 
 A translation of the stream of input characters and line terminators resulting from step 2 into a sequence of input elements (§3.5) which, after white space (§3.6) and comments (§3.7) are discarded, comprise the tokens (§3.5) that are the terminal symbols of the syntactic grammar (§2.3).
 
-The longest possible translation is used at each step, even if the result does not ultimately make a correct program while another lexical translation would.
+The longest possible translation is used at each step, even if the result does not ultimately make a correct program while another lexical translation would. There is one exception: if lexical translation occurs in a type context (§4.11) and the input stream has two or more consecutive > characters that are followed by a non-> character, then each > character must be translated to the token for the numerical comparison operator >.
 
-Thus, the input characters a--b are tokenized (§3.5) as a, --, b, which is not part of any grammatically correct program, even though the tokenization a, -, -, b could be part of a grammatically correct program.
+The input characters a--b are tokenized (§3.5) as a, --, b, which is not part of any grammatically correct program, even though the tokenization a, -, -, b could be part of a grammatically correct program.
+
+Without the rule for > characters, two consecutive > brackets in a type such as List<List<String>> would be tokenized as the signed right shift operator >>, while three consecutive > brackets in a type such as List<List<List<String>>> would be tokenized as the unsigned right shift operator >>>. Worse, the tokenization of four or more consecutive > brackets in a type such as List<List<List<List<String>>>> would be ambiguous, as various combinations of >, >>, and >>> tokens could represent the >>>> characters.
 
 3.3. Unicode Escapes
 
-A compiler for the Java programming language ("Java compiler") first recognizes Unicode escapes in its input, translating the ASCII characters \u followed by four hexadecimal digits to the UTF-16 code unit (§3.1) of the indicated hexadecimal value, and passing all other characters unchanged. Representing supplementary characters requires two consecutive Unicode escapes. This translation step results in a sequence of Unicode input characters.
-
+A compiler for the Java programming language ("Java compiler") first recognizes Unicode escapes in its input, translating the ASCII characters \u followed by four hexadecimal digits to the UTF-16 code unit (§3.1) for the indicated hexadecimal value, and passing all other characters unchanged. Representing supplementary characters requires two consecutive Unicode escapes. This translation step results in a sequence of Unicode input characters.
 
 UnicodeInputCharacter:
-    UnicodeEscape
-    RawInputCharacter
-
+UnicodeEscape
+RawInputCharacter
 UnicodeEscape:
-    \ UnicodeMarker HexDigit HexDigit HexDigit HexDigit
-
+\ UnicodeMarker HexDigit HexDigit HexDigit HexDigit
 UnicodeMarker:
-    u
-    UnicodeMarker u
-
+u {u}
+HexDigit:
+(one of)
+0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
 RawInputCharacter:
-    any Unicode character
-
-HexDigit: one of
-    0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
-
+any Unicode character
 
 The \, u, and hexadecimal digits here are all ASCII characters.
 
 In addition to the processing implied by the grammar, for each raw input character that is a backslash \, input processing must consider how many other \ characters contiguously precede it, separating it from a non-\ character or the start of the input stream. If this number is even, then the \ is eligible to begin a Unicode escape; if the number is odd, then the \ is not eligible to begin a Unicode escape.
 
-For example, the raw input "\\u2126=\u2126" results in the eleven characters " \ \ u 2 1 2 6 = Ω " (\u2126 is the Unicode encoding of the character Ω).
+For example, the raw input "\\u2122=\u2122" results in the eleven characters " \ \ u 2 1 2 2 = ™ " (\u2122 is the Unicode encoding of the character ™).
 
 If an eligible \ is not followed by u, then it is treated as a RawInputCharacter and remains part of the escaped Unicode stream.
 
@@ -109,15 +105,12 @@ A Java compiler should use the \uxxxx notation as an output format to display Un
 
 A Java compiler next divides the sequence of Unicode input characters into lines by recognizing line terminators.
 
-
 LineTerminator:
-    the ASCII LF character, also known as "newline"
-    the ASCII CR character, also known as "return"
-    the ASCII CR character followed by the ASCII LF character
-
+the ASCII LF character, also known as "newline"
+the ASCII CR character, also known as "return"
+the ASCII CR character followed by the ASCII LF character
 InputCharacter:
-    UnicodeInputCharacter but not CR or LF
-
+UnicodeInputCharacter but not CR or LF
 
 Lines are terminated by the ASCII characters CR, or LF, or CR LF. The two characters CR immediately followed by LF are counted as one line terminator, not two.
 
@@ -131,31 +124,22 @@ The result is a sequence of line terminators and input characters, which are the
 
 The input characters and line terminators that result from escape processing (§3.3) and then input line recognition (§3.4) are reduced to a sequence of input elements.
 
-
 Input:
-    InputElementsopt Subopt
-
-InputElements:
-    InputElement
-    InputElements InputElement
-
+{InputElement} [Sub]
 InputElement:
-    WhiteSpace
-    Comment
-    Token
-
+WhiteSpace
+Comment
+Token
 Token:
-    Identifier
-    Keyword
-    Literal
-    Separator
-    Operator
-
+Identifier
+Keyword
+Literal
+Separator
+Operator
 Sub:
-    the ASCII SUB character, also known as "control-Z"
+the ASCII SUB character, also known as "control-Z"
 
-
-Those input elements that are not white space (§3.6) or comments (§3.7) are tokens. The tokens are the terminal symbols of the syntactic grammar (§2.3).
+Those input elements that are not white space or comments are tokens. The tokens are the terminal symbols of the syntactic grammar (§2.3).
 
 White space (§3.6) and comments (§3.7) can serve to separate tokens that, if adjacent, might be tokenized in another manner. For example, the ASCII characters - and = in the input can form the operator token -= (§3.12) only if there is no intervening white space or comment.
 
@@ -175,17 +159,14 @@ we say that the } token is to the right of the { token, even though it appears, 
 
 White space is defined as the ASCII space character, horizontal tab character, form feed character, and line terminator characters (§3.4).
 
-
 WhiteSpace:
-    the ASCII SP character, also known as "space"
-    the ASCII HT character, also known as "horizontal tab"
-    the ASCII FF character, also known as "form feed"
-    LineTerminator
-
-
+the ASCII SP character, also known as "space"
+the ASCII HT character, also known as "horizontal tab"
+the ASCII FF character, also known as "form feed"
+LineTerminator
 3.7. Comments
 
-There are two kinds of comments.
+There are two kinds of comments:
 
 /* text */
 
@@ -195,38 +176,26 @@ A traditional comment: all the text from the ASCII characters /* to the ASCII ch
 
 An end-of-line comment: all the text from the ASCII characters // to the end of the line is ignored (as in C++).
 
-
 Comment:
-    TraditionalComment
-    EndOfLineComment
-
+TraditionalComment
+EndOfLineComment
 TraditionalComment:
-    / * CommentTail
-
-EndOfLineComment:
-    / / CharactersInLineopt
-
+/ * CommentTail
 CommentTail:
-    * CommentTailStar
-    NotStar CommentTail
-
+* CommentTailStar
+NotStar CommentTail
 CommentTailStar:
-    /
-    * CommentTailStar
-    NotStarNotSlash CommentTail
-
+/
+* CommentTailStar
+NotStarNotSlash CommentTail
 NotStar:
-    InputCharacter but not *
-    LineTerminator
-
+InputCharacter but not *
+LineTerminator
 NotStarNotSlash:
-    InputCharacter but not * or /
-    LineTerminator
-
-CharactersInLine:
-    InputCharacter
-    CharactersInLine InputCharacter
-
+InputCharacter but not * or /
+LineTerminator
+EndOfLineComment:
+/ / {InputCharacter}
 
 These productions imply all of the following properties:
 
@@ -236,12 +205,10 @@ Comments do not nest.
 
 // has no special meaning in comments that begin with /* or /**.
 
-As a result, the text:
+As a result, the following text is a single complete comment:
 
 /* this comment /* // /** ends here: */
 
-
-is a single complete comment.
 
 The lexical grammar implies that comments do not occur within character literals (§3.10.4) or string literals (§3.10.5).
 
@@ -249,26 +216,20 @@ The lexical grammar implies that comments do not occur within character literals
 
 An identifier is an unlimited-length sequence of Java letters and Java digits, the first of which must be a Java letter.
 
-
 Identifier:
-    IdentifierChars but not a Keyword or BooleanLiteral or NullLiteral
-
+IdentifierChars but not a Keyword or BooleanLiteral or NullLiteral
 IdentifierChars:
-    JavaLetter
-    IdentifierChars JavaLetterOrDigit
-
+JavaLetter {JavaLetterOrDigit}
 JavaLetter:
-    any Unicode character that is a Java letter (see below)
-
+any Unicode character that is a "Java letter"
 JavaLetterOrDigit:
-    any Unicode character that is a Java letter-or-digit (see below)
-
+any Unicode character that is a "Java letter-or-digit"
 
 A "Java letter" is a character for which the method Character.isJavaIdentifierStart(int) returns true.
 
 A "Java letter-or-digit" is a character for which the method Character.isJavaIdentifierPart(int) returns true.
 
-The "Java letters" include uppercase and lowercase ASCII Latin letters A-Z (\u0041-\u005a), and a-z (\u0061-\u007a), and, for historical reasons, the ASCII underscore (_, or \u005f) and dollar sign ($, or \u0024). The $ character should be used only in mechanically generated source code or, rarely, to access pre-existing names on legacy systems.
+The "Java letters" include uppercase and lowercase ASCII Latin letters A-Z (\u0041-\u005a), and a-z (\u0061-\u007a), and, for historical reasons, the ASCII underscore (_, or \u005f) and dollar sign ($, or \u0024). The $ sign should be used only in mechanically generated source code or, rarely, to access pre-existing names on legacy systems.
 
 The "Java digits" include the ASCII digits 0-9 (\u0030-\u0039).
 
@@ -298,64 +259,55 @@ isLetterOrDigit
 
 50 character sequences, formed from ASCII letters, are reserved for use as keywords and cannot be used as identifiers (§3.8).
 
+Keyword:
+(one of)
 
-Keyword: one of
-    abstract   continue   for          new         switch
-    assert     default    if           package     synchronized
-    boolean    do         goto         private     this
-    break      double     implements   protected   throw
-    byte       else       import       public      throws
-    case       enum       instanceof   return      transient
-    catch      extends    int          short       try
-    char       final      interface    static      void
-    class      finally    long         strictfp    volatile
-    const      float      native       super       while
-
+abstract   continue   for          new         switch
+assert     default    if           package     synchronized
+boolean    do         goto         private     this
+break      double     implements   protected   throw
+byte       else       import       public      throws
+case       enum       instanceof   return      transient
+catch      extends    int          short       try
+char       final      interface    static      void
+class      finally    long         strictfp    volatile
+const      float      native       super       while
 
 The keywords const and goto are reserved, even though they are not currently used. This may allow a Java compiler to produce better error messages if these C++ keywords incorrectly appear in programs.
 
-While true and false might appear to be keywords, they are technically Boolean literals (§3.10.3). Similarly, while null might appear to be a keyword, it is technically the null literal (§3.10.7).
+While true and false might appear to be keywords, they are technically boolean literals (§3.10.3). Similarly, while null might appear to be a keyword, it is technically the null literal (§3.10.7).
 
 3.10. Literals
 
 A literal is the source code representation of a value of a primitive type (§4.2), the String type (§4.3.3), or the null type (§4.1).
 
-
 Literal:
-    IntegerLiteral
-    FloatingPointLiteral
-    BooleanLiteral
-    CharacterLiteral
-    StringLiteral
-    NullLiteral
-
-
+IntegerLiteral
+FloatingPointLiteral
+BooleanLiteral
+CharacterLiteral
+StringLiteral
+NullLiteral
 3.10.1. Integer Literals
 
 An integer literal may be expressed in decimal (base 10), hexadecimal (base 16), octal (base 8), or binary (base 2).
 
-
 IntegerLiteral:
-    DecimalIntegerLiteral
-    HexIntegerLiteral
-    OctalIntegerLiteral
-    BinaryIntegerLiteral 
-
+DecimalIntegerLiteral
+HexIntegerLiteral
+OctalIntegerLiteral
+BinaryIntegerLiteral
 DecimalIntegerLiteral:
-    DecimalNumeral IntegerTypeSuffixopt
-
+DecimalNumeral [IntegerTypeSuffix]
 HexIntegerLiteral:
-    HexNumeral IntegerTypeSuffixopt
-
+HexNumeral [IntegerTypeSuffix]
 OctalIntegerLiteral:
-    OctalNumeral IntegerTypeSuffixopt
-
+OctalNumeral [IntegerTypeSuffix]
 BinaryIntegerLiteral:
-    BinaryNumeral IntegerTypeSuffixopt
-
-IntegerTypeSuffix: one of
-    l L
-
+BinaryNumeral [IntegerTypeSuffix]
+IntegerTypeSuffix:
+(one of)
+l L
 
 An integer literal is of type long if it is suffixed with an ASCII letter L or l (ell); otherwise it is of type int (§4.2.1).
 
@@ -369,116 +321,89 @@ In a decimal or octal literal, the integer is denoted by all the digits in the l
 
 A decimal numeral is either the single ASCII digit 0, representing the integer zero, or consists of an ASCII digit from 1 to 9 optionally followed by one or more ASCII digits from 0 to 9 interspersed with underscores, representing a positive integer.
 
-
 DecimalNumeral:
-    0
-    NonZeroDigit Digitsopt
-    NonZeroDigit Underscores Digits 
-
+0
+NonZeroDigit [Digits]
+NonZeroDigit Underscores Digits
+NonZeroDigit:
+(one of)
+1 2 3 4 5 6 7 8 9
 Digits:
-    Digit
-    Digit DigitsAndUnderscoresopt Digit 
-
+Digit
+Digit [DigitsAndUnderscores] Digit
 Digit:
-    0
-    NonZeroDigit
-
-NonZeroDigit: one of
-    1 2 3 4 5 6 7 8 9
-
+0
+NonZeroDigit
 DigitsAndUnderscores:
-    DigitOrUnderscore
-    DigitsAndUnderscores DigitOrUnderscore 
-
+DigitOrUnderscore {DigitOrUnderscore}
 DigitOrUnderscore:
-    Digit
-    _
-
+Digit
+_
 Underscores:
-    _
-    Underscores _
-
+_ {_}
 
 A hexadecimal numeral consists of the leading ASCII characters 0x or 0X followed by one or more ASCII hexadecimal digits interspersed with underscores, and can represent a positive, zero, or negative integer.
 
 Hexadecimal digits with values 10 through 15 are represented by the ASCII letters a through f or A through F, respectively; each letter used as a hexadecimal digit may be uppercase or lowercase.
 
-
 HexNumeral:
-    0 x HexDigits
-    0 X HexDigits
-
+0 x HexDigits
+0 X HexDigits
 HexDigits:
-    HexDigit
-    HexDigit HexDigitsAndUnderscoresopt HexDigit 
-
-HexDigit: one of
-    0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
-
+HexDigit
+HexDigit [HexDigitsAndUnderscores] HexDigit
+HexDigit:
+(one of)
+0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
 HexDigitsAndUnderscores:
-    HexDigitOrUnderscore
-    HexDigitsAndUnderscores HexDigitOrUnderscore
-
+HexDigitOrUnderscore {HexDigitOrUnderscore}
 HexDigitOrUnderscore:
-    HexDigit
-    _
-
+HexDigit
+_
 
 The HexDigit production above comes from §3.3.
 
 An octal numeral consists of an ASCII digit 0 followed by one or more of the ASCII digits 0 through 7 interspersed with underscores, and can represent a positive, zero, or negative integer.
 
-
 OctalNumeral:
-    0 OctalDigits
-    0 Underscores OctalDigits
-
+0 OctalDigits
+0 Underscores OctalDigits
 OctalDigits:
-    OctalDigit
-    OctalDigit OctalDigitsAndUnderscoresopt OctalDigit 
-
-OctalDigit: one of
-    0 1 2 3 4 5 6 7
-
+OctalDigit
+OctalDigit [OctalDigitsAndUnderscores] OctalDigit
+OctalDigit:
+(one of)
+0 1 2 3 4 5 6 7
 OctalDigitsAndUnderscores:
-    OctalDigitOrUnderscore
-    OctalDigitsAndUnderscores OctalDigitOrUnderscore
-
+OctalDigitOrUnderscore {OctalDigitOrUnderscore}
 OctalDigitOrUnderscore:
-    OctalDigit
-    _
+OctalDigit
+_
 
-
-Note that octal numerals always consist of two or more digits; 0 is always considered to be a decimal numeral - not that it matters much in practice, for the numerals 0, 00, and 0x0 all represent exactly the same integer value.
+Note that octal numerals always consist of two or more digits, as 0 alone is always considered to be a decimal numeral - not that it matters much in practice, for the numerals 0, 00, and 0x0 all represent exactly the same integer value.
 
 A binary numeral consists of the leading ASCII characters 0b or 0B followed by one or more of the ASCII digits 0 or 1 interspersed with underscores, and can represent a positive, zero, or negative integer.
 
-
 BinaryNumeral:
-    0 b BinaryDigits 
-    0 B BinaryDigits
-
+0 b BinaryDigits
+0 B BinaryDigits
 BinaryDigits:
-    BinaryDigit 
-    BinaryDigit BinaryDigitsAndUnderscoresopt BinaryDigit
-
-BinaryDigit: one of
-    0 1 
-
+BinaryDigit
+BinaryDigit [BinaryDigitsAndUnderscores] BinaryDigit
+BinaryDigit:
+(one of)
+0 1
 BinaryDigitsAndUnderscores:
-    BinaryDigitOrUnderscore 
-    BinaryDigitsAndUnderscores BinaryDigitOrUnderscore 
-
+BinaryDigitOrUnderscore {BinaryDigitOrUnderscore}
 BinaryDigitOrUnderscore:
-    BinaryDigit
-    _ 
-
+BinaryDigit
+_
 
 The largest decimal literal of type int is 2147483648 (231).
 
-All decimal literals from 0 to 2147483647 may appear anywhere an int literal may appear.
+All decimal literals from 0 to 2147483647 may appear anywhere an int literal may appear. The decimal literal 2147483648 may appear only as the operand of the unary minus operator - (§15.15.4).
 
-It is a compile-time error if a decimal literal of type int is larger than 2147483648 (231), or if the decimal literal 2147483648 appears anywhere other than as the operand of the unary minus operator (§15.15.4).
+It is a compile-time error if the decimal literal 2147483648 appears anywhere other than as the operand of the unary minus operator; or if a decimal literal of type int is larger than 2147483648 (231).
 
 The largest positive hexadecimal, octal, and binary literals of type int - each of which represents the decimal value 2147483647 (231-1) - are respectively:
 
@@ -508,9 +433,9 @@ It is a compile-time error if a hexadecimal, octal, or binary int literal does n
 
 The largest decimal literal of type long is 9223372036854775808L (263).
 
-All decimal literals from 0L to 9223372036854775807L may appear anywhere a long literal may appear.
+All decimal literals from 0L to 9223372036854775807L may appear anywhere a long literal may appear. The decimal literal 9223372036854775808L may appear only as the operand of the unary minus operator - (§15.15.4).
 
-It is a compile-time error if a decimal literal of type long is larger than 9223372036854775808L (263), or if the decimal literal 9223372036854775808L appears anywhere other than as the operand of the unary minus operator (§15.15.4).
+It is a compile-time error if the decimal literal 9223372036854775808L appears anywhere other than as the operand of the unary minus operator; or if a decimal literal of type long is larger than 9223372036854775808L (263).
 
 The largest positive hexadecimal, octal, and binary literals of type long - each of which represents the decimal value 9223372036854775807L (263-1) - are respectively:
 
@@ -559,49 +484,38 @@ For hexadecimal floating-point literals, at least one digit is required (in eith
 
 Underscores are allowed as separators between digits that denote the whole-number part, and between digits that denote the fraction part, and between digits that denote the exponent.
 
-
 FloatingPointLiteral:
-    DecimalFloatingPointLiteral
-    HexadecimalFloatingPointLiteral
-
+DecimalFloatingPointLiteral
+HexadecimalFloatingPointLiteral
 DecimalFloatingPointLiteral:
-    Digits . Digitsopt ExponentPartopt FloatTypeSuffixopt
-    . Digits ExponentPartopt FloatTypeSuffixopt
-    Digits ExponentPart FloatTypeSuffixopt
-    Digits ExponentPartopt FloatTypeSuffix
-
+Digits . [Digits] [ExponentPart] [FloatTypeSuffix]
+. Digits [ExponentPart] [FloatTypeSuffix]
+Digits ExponentPart [FloatTypeSuffix]
+Digits [ExponentPart] FloatTypeSuffix
 ExponentPart:
-    ExponentIndicator SignedInteger
-
-ExponentIndicator: one of
-    e E
-
+ExponentIndicator SignedInteger
+ExponentIndicator:
+(one of)
+e E
 SignedInteger:
-    Signopt Digits
-
-Sign: one of
-    + -
-
-FloatTypeSuffix: one of
-    f F d D
-
-
-
+[Sign] Digits
+Sign:
+(one of)
++ -
+FloatTypeSuffix:
+(one of)
+f F d D
 HexadecimalFloatingPointLiteral:
-    HexSignificand BinaryExponent FloatTypeSuffixopt
-
+HexSignificand BinaryExponent [FloatTypeSuffix]
 HexSignificand:
-    HexNumeral
-    HexNumeral .
-    0 x HexDigitsopt . HexDigits
-    0 X HexDigitsopt . HexDigits
-
+HexNumeral [.]
+0 x [HexDigits] . HexDigits
+0 X [HexDigits] . HexDigits
 BinaryExponent:
-    BinaryExponentIndicator SignedInteger
-
-BinaryExponentIndicator:one of
-    p P
-
+BinaryExponentIndicator SignedInteger
+BinaryExponentIndicator:
+(one of)
+p P
 
 A floating-point literal is of type float if it is suffixed with an ASCII letter F or f; otherwise its type is double and it can optionally be suffixed with an ASCII letter D or d (§4.2.3).
 
@@ -640,10 +554,9 @@ Examples of double literals:
 
 The boolean type has two values, represented by the boolean literals true and false, formed from ASCII letters.
 
-
-BooleanLiteral: one of
-    true false
-
+BooleanLiteral:
+(one of)
+true false
 
 A boolean literal is always of type boolean (§4.2.5).
 
@@ -651,14 +564,11 @@ A boolean literal is always of type boolean (§4.2.5).
 
 A character literal is expressed as a character or an escape sequence (§3.10.6), enclosed in ASCII single quotes. (The single-quote, or apostrophe, character is \u0027.)
 
-
 CharacterLiteral:
-    ' SingleCharacter '
-    ' EscapeSequence '
-
+' SingleCharacter '
+' EscapeSequence '
 SingleCharacter:
-    InputCharacter but not ' or \
-
+InputCharacter but not ' or \
 
 See §3.10.6 for the definition of EscapeSequence.
 
@@ -690,7 +600,7 @@ The following are examples of char literals:
 
 '\177'
 
-'Ω'
+'™'
 
 Because Unicode escapes are processed very early, it is not correct to write '\u000a' for a character literal whose value is linefeed (LF); the Unicode escape \u000a is transformed into an actual linefeed in translation step 1 (§3.3) and the linefeed becomes a LineTerminator in step 2 (§3.4), and so the character literal is not valid in step 3. Instead, one should use the escape sequence '\n' (§3.10.6). Similarly, it is not correct to write '\u000d' for a character literal whose value is carriage return (CR). Instead, use '\r'.
 
@@ -700,18 +610,11 @@ In C and C++, a character literal may contain representations of more than one c
 
 A string literal consists of zero or more characters enclosed in double quotes. Characters may be represented by escape sequences (§3.10.6) - one escape sequence for characters in the range U+0000 to U+FFFF, two escape sequences for the UTF-16 surrogate code units of characters in the range U+010000 to U+10FFFF.
 
-
 StringLiteral:
-    " StringCharactersopt "
-
-StringCharacters:
-    StringCharacter
-    StringCharacters StringCharacter
-
+" {StringCharacter} "
 StringCharacter:
-    InputCharacter but not " or \
-    EscapeSequence
-
+InputCharacter but not " or \
+EscapeSequence
 
 See §3.10.6 for the definition of EscapeSequence.
 
@@ -770,7 +673,7 @@ true true true true false true
 
 This example illustrates six points:
 
-Literal strings within the same class (§8) in the same package (§7) represent references to the same String object (§4.3.1).
+Literal strings within the same class (§8 (Classes)) in the same package (§7 (Packages)) represent references to the same String object (§4.3.1).
 
 Literal strings within different classes in the same package represent references to the same String object.
 
@@ -786,33 +689,33 @@ The result of explicitly interning a computed string is the same string as any p
 
 3.10.6. Escape Sequences for Character and String Literals
 
-The character and string escape sequences allow for the representation of some nongraphic characters as well as the single quote, double quote, and backslash characters in character literals (§3.10.4) and string literals (§3.10.5).
-
+The character and string escape sequences allow for the representation of some nongraphic characters without using Unicode escapes, as well as the single quote, double quote, and backslash characters, in character literals (§3.10.4) and string literals (§3.10.5).
 
 EscapeSequence:
-    \ b    /* \u0008: backspace BS */
-    \ t    /* \u0009: horizontal tab HT */
-    \ n    /* \u000a: linefeed LF */
-    \ f    /* \u000c: form feed FF */
-    \ r    /* \u000d: carriage return CR */
-    \ "    /* \u0022: double quote " */
-    \ '    /* \u0027: single quote ' */
-    \ \              /* \u005c: backslash \ */
-    OctalEscape        /* \u0000 to \u00ff: from octal value */
-
+\ b (backspace BS, Unicode \u0008)
+\ t (horizontal tab HT, Unicode \u0009)
+\ n (linefeed LF, Unicode \u000a)
+\ f (form feed FF, Unicode \u000c)
+\ r (carriage return CR, Unicode \u000d)
+\ " (double quote ", Unicode \u0022)
+\ ' (single quote ', Unicode \u0027)
+\ \ (backslash \, Unicode \u005c)
+OctalEscape (octal value, Unicode \u0000 to \u00ff)
 OctalEscape:
-    \ OctalDigit
-    \ OctalDigit OctalDigit
-    \ ZeroToThree OctalDigit OctalDigit
+\ OctalDigit
+\ OctalDigit OctalDigit
+\ ZeroToThree OctalDigit OctalDigit
 
-OctalDigit: one of
-    0 1 2 3 4 5 6 7
+OctalDigit:
+(one of)
+0 1 2 3 4 5 6 7
+ZeroToThree:
+(one of)
+0 1 2 3
 
-ZeroToThree: one of
-    0 1 2 3
+The OctalDigit production above comes from §3.10.1.
 
-
-It is a compile-time error if the character following a backslash in an escape is not an ASCII b, t, n, f, r, ", ', \, 0, 1, 2, 3, 4, 5, 6, or 7. The Unicode escape \u is processed earlier (§3.3).
+It is a compile-time error if the character following a backslash in an escape sequence is not an ASCII b, t, n, f, r, ", ', \, 0, 1, 2, 3, 4, 5, 6, or 7. The Unicode escape \u is processed earlier (§3.3).
 
 Octal escapes are provided for compatibility with C, but can express only Unicode values \u0000 through \u00FF, so Unicode escapes are usually preferred.
 
@@ -820,29 +723,27 @@ Octal escapes are provided for compatibility with C, but can express only Unicod
 
 The null type has one value, the null reference, represented by the null literal null, which is formed from ASCII characters.
 
-
 NullLiteral:
-    null
-
+null
 
 A null literal is always of the null type (§4.1).
 
 3.11. Separators
 
-Nine ASCII characters are the separators (punctuators).
+Twelve tokens, formed from ASCII characters, are the separators (punctuators).
 
+Separator:
+(one of)
 
-Separator: one of
-    (    )    {    }    [    ]    ;    ,    .
-
-
+(   )   {   }   [   ]   ;   ,   .   ...   @   ::
 3.12. Operators
 
-37 tokens are the operators, formed from ASCII characters.
+38 tokens, formed from ASCII characters, are the operators.
 
+Operator:
+(one of)
 
-Operator: one of
-    =   >   <   !   ~   ?   :
-    ==  <=  >=  !=  &&  ||  ++  --
-    +   -   *   /   &   |   ^   %   <<   >>   >>>
-    +=  -=  *=  /=  &=  |=  ^=  %=  <<=  >>=  >>>=
+=   >   <   !   ~   ?   :   ->
+==  >=  <=  !=  &&  ||  ++  --
++   -   *   /   &   |   ^   %   <<   >>   >>>
++=  -=  *=  /=  &=  |=  ^=  %=  <<=  >>=  >>>=

@@ -33,7 +33,7 @@ The chapter continues with a specification of the procedures for creation of new
 
 The Java Virtual Machine starts execution by invoking the method main of some specified class, passing it a single argument, which is an array of strings. In the examples in this specification, this first class is typically called Test.
 
-The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 7 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 8 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 The manner in which the initial class is specified to the Java Virtual Machine is beyond the scope of this specification, but it is typical, in host environments that use command lines, for the fully-qualified name of the class to be specified as a command-line argument and for following command-line arguments to be used as strings to be provided as the argument to the method main.
 
@@ -98,9 +98,9 @@ public static void main(String... args)
 
 Loading refers to the process of finding the binary form of a class or interface type with a particular name, perhaps by computing it on the fly, but more typically by retrieving a binary representation previously computed from source code by a Java compiler, and constructing, from that binary form, a Class object to represent the class or interface.
 
-The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 7 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 8 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
-The binary format of a class or interface is normally the class file format described in The Java Virtual Machine Specification, Java SE 7 Edition cited above, but other formats are possible, provided they meet the requirements specified in §13.1. The method defineClass of class ClassLoader may be used to construct Class objects from binary representations in the class file format.
+The binary format of a class or interface is normally the class file format described in The Java Virtual Machine Specification, Java SE 8 Edition cited above, but other formats are possible, provided they meet the requirements specified in §13.1. The method defineClass of class ClassLoader may be used to construct Class objects from binary representations in the class file format.
 
 Well-behaved class loaders maintain these properties:
 
@@ -110,7 +110,7 @@ If a class loader L1 delegates loading of a class C to another loader L2, then f
 
 A malicious class loader could violate these properties. However, it could not undermine the security of the type system, because the Java Virtual Machine guards against this.
 
-For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 7 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
+For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 8 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
 
 12.2.1. The Loading Process
 
@@ -134,7 +134,7 @@ Linking is the process of taking a binary form of a class or interface type and 
 
 Three different activities are involved in linking: verification, preparation, and resolution of symbolic references.
 
-The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 7 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 8 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 This specification allows an implementation flexibility as to when linking activities (and, because of recursion, loading) take place, provided that the semantics of the Java programming language are respected, that a class or interface is completely verified and prepared before it is initialized, and that errors detected during linkage are thrown at a point in the program where some action is taken by the program that might require linkage to the class or interface involved in the error.
 
@@ -164,7 +164,7 @@ Before a symbolic reference can be used it must undergo resolution, wherein a sy
 
 If an error occurs during resolution, then an error will be thrown. Most typically, this will be an instance of one of the following subclasses of the class IncompatibleClassChangeError, but it may also be an instance of some other subclass of IncompatibleClassChangeError or even an instance of the class IncompatibleClassChangeError itself. This error may be thrown at any point in the program that uses a symbolic reference to the type, directly or indirectly:
 
-IllegalAccessError: A symbolic reference has been encountered that specifies a use or assignment of a field, or invocation of a method, or creation of an instance of a class, to which the code containing the reference does not have access because the field or method was declared with private, protected, or default access (not public), or because the class was not declared public.
+IllegalAccessError: A symbolic reference has been encountered that specifies a use or assignment of a field, or invocation of a method, or creation of an instance of a class, to which the code containing the reference does not have access because the field or method was declared with private, protected, or package access (not public), or because the class was not declared public.
 
 This can occur, for example, if a field that is originally declared public is changed to be private after another class that refers to the field has been compiled (§13.4.7).
 
@@ -188,21 +188,21 @@ Initialization of a class consists of executing its static initializers and the 
 
 Initialization of an interface consists of executing the initializers for fields (constants) declared in the interface.
 
-Before a class is initialized, its direct superclass must be initialized, but interfaces implemented by the class are not initialized. Similarly, the superinterfaces of an interface are not initialized before the interface is initialized.
-
 12.4.1. When Initialization Occurs
 
 A class or interface type T will be initialized immediately before the first occurrence of any one of the following:
 
 T is a class and an instance of T is created.
 
-T is a class and a static method declared by T is invoked.
+A static method declared by T is invoked.
 
 A static field declared by T is assigned.
 
 A static field declared by T is used and the field is not a constant variable (§4.12.4).
 
-T is a top level class (§7.6), and an assert statement (§14.10) lexically nested within T (§8.1.3) is executed.
+T is a top level class (§7.6) and an assert statement (§14.10) lexically nested within T (§8.1.3) is executed.
+
+When a class is initialized, its superclasses are initialized (if they have not been previously initialized), as well as any superinterfaces (§8.1.5) that declare any default methods (§9.4.3) (if they have not been previously initialized). Initialization of an interface does not, of itself, cause initialization of any of its superinterfaces.
 
 A reference to a static field (§8.3.1.1) causes initialization of only the class or interface that actually declares it, even though it might be referred to through the name of a subclass, a subinterface, or a class that implements an interface.
 
@@ -210,9 +210,11 @@ Invocation of certain reflective methods in class Class and in package java.lang
 
 A class or interface will not be initialized under any other circumstance.
 
-The intent is that a class or interface type has a set of initializers that put it in a consistent state, and that this state is the first state that is observed by other classes. The static initializers and class variable initializers are executed in textual order, and may not refer to class variables declared in the class whose declarations appear textually after the use, even though these class variables are in scope (§8.3.2.3). This restriction is designed to detect, at compile time, most circular or otherwise malformed initializations.
+Note that a compiler may generate synthetic default methods in an interface, that is, default methods that are neither explicitly nor implicitly declared (§13.1). Such methods will trigger the interface's initialization despite the source code giving no indication that the interface should be initialized.
 
-The fact that initialization code is unrestricted allows examples to be constructed (§8.3.2.3) where the value of a class variable can be observed when it still has its initial default value, before its initializing expression is evaluated, but such examples are rare in practice. (Such examples can be also constructed for instance variable initialization (§12.5).) The full power of the Java programming language is available in these initializers; programmers must exercise some care. This power places an extra burden on code generators, but this burden would arise in any case because the Java programming language is concurrent (§12.4.2).
+The intent is that a class or interface type has a set of initializers that put it in a consistent state, and that this state is the first state that is observed by other classes. The static initializers and class variable initializers are executed in textual order, and may not refer to class variables declared in the class whose declarations appear textually after the use, even though these class variables are in scope (§8.3.3). This restriction is designed to detect, at compile time, most circular or otherwise malformed initializations.
+
+The fact that initialization code is unrestricted allows examples to be constructed where the value of a class variable can be observed when it still has its initial default value, before its initializing expression is evaluated, but such examples are rare in practice. (Such examples can be also constructed for instance variable initialization (§12.5).) The full power of the Java programming language is available in these initializers; programmers must exercise some care. This power places an extra burden on code generators, but this burden would arise in any case because the Java programming language is concurrent (§12.4.2).
 
 Example 12.4.1-1. Superclasses Are Initialized Before Subclasses
 
@@ -336,9 +338,13 @@ If the Class object for C is in an erroneous state, then initialization is not p
 
 Otherwise, record the fact that initialization of the Class object for C is in progress by the current thread, and release LC.
 
-Then, initialize the final class variables and fields of interfaces whose values are compile-time constant expressions (§8.3.2.1, §9.3.1, §13.4.9, §15.28).
+Then, initialize the static fields of C which are constant variables (§4.12.4, §8.3.2, §9.3.1).
 
-Next, if C is a class rather than an interface, and its superclass SC has not yet been initialized, then recursively perform this entire procedure for SC. If necessary, verify and prepare SC first. If the initialization of SC completes abruptly because of a thrown exception, then acquire LC, label the Class object for C as erroneous, notify all waiting threads, release LC, and complete abruptly, throwing the same exception that resulted from initializing SC.
+Next, if C is a class rather than an interface, and its superclass has not yet been initialized, then let SC be its superclass and let SI1, ..., SIn be all superinterfaces of C that declare at least one default method. The order of superinterfaces is given by a recursive enumeration over the superinterface hierarchy of each interface directly implemented by C (in the left-to-right order of C's implements clause). For each interface I directly implemented by C, the enumeration recurs on I's superinterfaces (in the left-to-right order of I's extends clause) before returning I.
+
+For each S in the list [ SC, SI1, ..., SIn ], recursively perform this entire procedure for S. If necessary, verify and prepare S first.
+
+If the initialization of S completes abruptly because of a thrown exception, then acquire LC, label the Class object for C as erroneous, notify all waiting threads, release LC, and complete abruptly, throwing the same exception that resulted from initializing S.
 
 Next, determine whether assertions are enabled (§14.10) for C by querying its defining class loader.
 
@@ -346,7 +352,7 @@ Next, execute either the class variable initializers and static initializers of 
 
 If the execution of the initializers completes normally, then acquire LC, label the Class object for C as fully initialized, notify all waiting threads, release LC, and complete this procedure normally.
 
-Otherwise, the initializers must have completed abruptly by throwing some exception E. If the class of E is not Error or one of its subclasses, then create a new instance of the class ExceptionInInitializerError, with E as the argument, and use this object in place of E in the following step. But if a new instance of ExceptionInInitializerError cannot be created because an OutOfMemoryError occurs, then instead use an OutOfMemoryError object in place of E in the following step.
+Otherwise, the initializers must have completed abruptly by throwing some exception E. If the class of E is not Error or one of its subclasses, then create a new instance of the class ExceptionInInitializerError, with E as the argument, and use this object in place of E in the following step. If a new instance of ExceptionInInitializerError cannot be created because an OutOfMemoryError occurs, then instead use an OutOfMemoryError object in place of E in the following step.
 
 Acquire LC, label the Class object for C as erroneous, notify all waiting threads, release LC, and complete this procedure abruptly with reason E or its replacement as determined in the previous step.
 
@@ -366,7 +372,9 @@ Loading of a class or interface that contains a String literal (§3.10.5) may cr
 
 Execution of an operation that causes boxing conversion (§5.1.7). Boxing conversion may create a new object of a wrapper class associated with one of the primitive types.
 
-Execution of a string concatenation operator (§15.18.1) that is not part of a constant expression (§15.28) sometimes creates a new String object to represent the result. String concatenation operators may also create temporary wrapper objects for a value of a primitive type.
+Execution of a string concatenation operator + (§15.18.1) that is not part of a constant expression (§15.28) always creates a new String object to represent the result. String concatenation operators may also create temporary wrapper objects for a value of a primitive type.
+
+Evaluation of a method reference expression (§15.13.3) or a lambda expression (§15.27.4) may require that a new instance of a class that implements a functional interface type be created.
 
 Each of these situations identifies a particular constructor (§8.8) to be called with specified arguments (possibly none) as part of the class instance creation process.
 
@@ -405,12 +413,10 @@ class Test {
 }
 
 
-Here, a new instance of ColoredPoint is created. First, space is allocated for the new ColoredPoint, to hold the fields x, y, and color. All these fields are then initialized to their default values (in this case, 0 for each field). Next, the ColoredPoint constructor with no arguments is first invoked. Since ColoredPoint declares no constructors, a default constructor of the form:
+Here, a new instance of ColoredPoint is created. First, space is allocated for the new ColoredPoint, to hold the fields x, y, and color. All these fields are then initialized to their default values (in this case, 0 for each field). Next, the ColoredPoint constructor with no arguments is first invoked. Since ColoredPoint declares no constructors, a default constructor of the following form is implicitly declared:
 
 ColoredPoint() { super(); }
 
-
-is provided for it automatically by the Java compiler.
 
 This constructor then invokes the Point constructor with no arguments. The Point constructor does not begin with an invocation of a constructor, so the Java compiler provides an implicit invocation of its superclass constructor of no arguments, as though it had been written:
 
@@ -574,7 +580,7 @@ All active uses of X in thread t that come-after di must occur in the finalizer 
 
 All reads that come-after di that see a reference to X must see writes to elements of objects that were unreachable at di, or see writes that came-after di.
 
-An action a is an active use of X if and only if at least one of the following conditions holds:
+An action a is an active use of X if and only if at least one of the following is true:
 
 a reads or writes an element of X
 

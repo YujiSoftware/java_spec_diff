@@ -42,7 +42,7 @@ Table of Contents
 
 The sequence of execution of a program is controlled by statements, which are executed for their effect and do not have values.
 
-Some statements contain other statements as part of their structure; such other statements are substatements of the statement. We say that statement S immediately contains statement U if there is no statement T different from S and U such that S contains T and T contains U. In the same manner, some statements contain expressions (§15) as part of their structure.
+Some statements contain other statements as part of their structure; such other statements are substatements of the statement. We say that statement S immediately contains statement U if there is no statement T different from S and U such that S contains T and T contains U. In the same manner, some statements contain expressions (§15 (Expressions)) as part of their structure.
 
 The first section of this chapter discusses the distinction between normal and abrupt completion of statements (§14.1). Most of the remaining sections explain the various kinds of statements, describing in detail both their normal behavior and any special treatment of abrupt completion.
 
@@ -80,7 +80,7 @@ A return with a given value
 
 A throw with a given value, including exceptions thrown by the Java Virtual Machine
 
-The terms "complete normally" and "complete abruptly" also apply to the evaluation of expressions (§15.6). The only reason an expression can complete abruptly is that an exception is thrown, because of either a throw with a given value (§14.18) or a run-time exception or error (§11, §15.6).
+The terms "complete normally" and "complete abruptly" also apply to the evaluation of expressions (§15.6). The only reason an expression can complete abruptly is that an exception is thrown, because of either a throw with a given value (§14.18) or a run-time exception or error (§11 (Exceptions), §15.6).
 
 If a statement evaluates an expression, abrupt completion of the expression always causes the immediate abrupt completion of the statement, with the same reason. All succeeding steps in the normal mode of execution are not performed.
 
@@ -92,25 +92,20 @@ Unless otherwise specified, a statement completes normally if all expressions it
 
 A block is a sequence of statements, local class declarations, and local variable declaration statements within braces.
 
-
 Block:
-    { BlockStatementsopt }
-
+{ [BlockStatements] }
 BlockStatements:
-    BlockStatement
-    BlockStatements BlockStatement
-
+BlockStatement {BlockStatement}
 BlockStatement:
-    LocalVariableDeclarationStatement
-    ClassDeclaration
-    Statement
-
+LocalVariableDeclarationStatement
+ClassDeclaration
+Statement
 
 A block is executed by executing each of the local variable declaration statements and other statements in order from first to last (left to right). If all of these block statements complete normally, then the block completes normally. If any of these block statements complete abruptly for any reason, then the block completes abruptly for the same reason.
 
 14.3. Local Class Declarations
 
-A local class is a nested class (§8) that is not a member of any class and that has a name (§6.2, §6.7).
+A local class is a nested class (§8 (Classes)) that is not a member of any class and that has a name (§6.2, §6.7).
 
 All local classes are inner classes (§8.1.3).
 
@@ -148,13 +143,13 @@ class Global {
 }
 
 
-The first statement of method foo creates an instance of the member class Global.Cyclic rather than an instance of the local class Cyclic, because the local class declaration is not yet in scope.
+The first statement of method foo creates an instance of the member class Global.Cyclic rather than an instance of the local class Cyclic, because the statement appears prior to the scope of the local class declaration.
 
-The fact that the scope of a local class encompasses its own declaration (not only its body) means that the definition of the local class Cyclic is indeed cyclic because it extends itself rather than Global.Cyclic. Consequently, the declaration of the local class Cyclic will be rejected at compile time.
+The fact that the scope of a local class declaration encompasses its whole declaration (not only its body) means that the definition of the local class Cyclic is indeed cyclic because it extends itself rather than Global.Cyclic. Consequently, the declaration of the local class Cyclic is rejected at compile time.
 
 Since local class names cannot be redeclared within the same method (or constructor or initializer, as the case may be), the second and third declarations of Local result in compile-time errors. However, Local can be redeclared in the context of another, more deeply nested, class such as AnotherLocal.
 
-The fourth and last declaration of Local is legal, since it occurs outside the scope of any prior declaration of Local.
+The final declaration of Local is legal, since it occurs outside the scope of any prior declaration of Local.
 
 
 
@@ -162,70 +157,59 @@ The fourth and last declaration of Local is legal, since it occurs outside the s
 
 A local variable declaration statement declares one or more local variable names.
 
-
 LocalVariableDeclarationStatement:
-    LocalVariableDeclaration ;
-
+LocalVariableDeclaration ;
 LocalVariableDeclaration:
-    VariableModifiersopt Type VariableDeclarators
+{VariableModifier} UnannType VariableDeclaratorList
 
+See §8.3 for UnannType. The following productions from §4.3, §8.4.1, and §8.3 are shown here for convenience:
 
-The following are repeated from §8.4.1 and §8.3 to make the presentation here clearer:
-
-
-VariableModifiers:
-    VariableModifier
-    VariableModifiers VariableModifier
-
-VariableModifier: one of
-    Annotation final
-
-VariableDeclarators:
-    VariableDeclarator
-    VariableDeclarators , VariableDeclarator
-
+VariableModifier:
+(one of)
+Annotation final
+VariableDeclaratorList:
+VariableDeclarator {, VariableDeclarator}
 VariableDeclarator:
-    VariableDeclaratorId
-    VariableDeclaratorId = VariableInitializer
-
+VariableDeclaratorId [= VariableInitializer]
 VariableDeclaratorId:
-    Identifier
-    VariableDeclaratorId []
-
+Identifier [Dims]
+Dims:
+{Annotation} [ ] {{Annotation} [ ]}
 VariableInitializer:
-    Expression
-    ArrayInitializer
-
+Expression
+ArrayInitializer
 
 Every local variable declaration statement is immediately contained by a block. Local variable declaration statements may be intermixed freely with other kinds of statements in the block.
 
-A local variable declaration can also appear in the header of a for statement (§14.14). In this case it is executed in the same manner as if it were part of a local variable declaration statement.
+Apart from local variable declaration statements, a local variable declaration can appear in the header of a for statement (§14.14) or try-with-resources statement (§14.20.3). In these cases, it is executed in the same manner as if it were part of a local variable declaration statement.
+
+The rules for annotation modifiers on a local variable declaration are specified in §9.7.4 and §9.7.5.
+
+It is a compile-time error if final appears more than once as a modifier for a local variable declaration.
 
 14.4.1. Local Variable Declarators and Types
 
 Each declarator in a local variable declaration declares one local variable, whose name is the Identifier that appears in the declarator.
 
-If the optional keyword final appears at the start of the declarator, the variable being declared is a final variable (§4.12.4).
+If the optional keyword final appears at the start of the declaration, the variable being declared is a final variable (§4.12.4).
 
-If an annotation a (§9.7) on a local variable declaration corresponds to an annotation type T, and T has a (meta-)annotation m that corresponds to java.lang.annotation.Target, then m must have an element whose value is java.lang.annotation.ElementType.LOCAL_VARIABLE, or a compile-time error occurs.
-
-The declared type of a local variable is denoted by the Type that appears in the local variable declaration, followed by any bracket pairs that follow the Identifier in the declarator.
+The declared type of a local variable is denoted by UnannType if no bracket pairs appear in UnannType and VariableDeclaratorId, and is specified by §10.2 otherwise.
 
 A local variable of type float always contains a value that is an element of the float value set (§4.2.3); similarly, a local variable of type double always contains a value that is an element of the double value set. It is not permitted for a local variable of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a local variable of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
 
-The scope and shadowing of a local variable is specified in §6.3 and §6.4.
+The scope and shadowing of a local variable declaration is specified in §6.3 and §6.4.
 
 14.4.2. Execution of Local Variable Declarations
 
-A local variable declaration statement is an executable statement. Every time it is executed, the declarators are processed in order from left to right. If a declarator has an initialization expression, the expression is evaluated and its value is assigned to the variable.
+A local variable declaration statement is an executable statement. Every time it is executed, the declarators are processed in order from left to right. If a declarator has an initializer, the initializer is evaluated and its value is assigned to the variable.
 
-If a declarator does not have an initialization expression, then every reference to the variable must be preceded by execution of an assignment to the variable, or a compile-time error occurs by the rules of §16.
+If a declarator does not have an initializer, then every reference to the variable must be preceded by execution of an assignment to the variable, or a compile-time error occurs by the rules of §16 (Definite Assignment).
 
-Each initialization (except the first) is executed only if evaluation of the preceding initialization expression completes normally.
+Each initializer (except the first) is evaluated only if evaluation of the preceding initializer completes normally.
 
-Execution of the local variable declaration completes normally only if evaluation of the last initialization expression completes normally.
+Execution of the local variable declaration completes normally only if evaluation of the last initializer completes normally.
 
-If the local variable declaration contains no initialization expressions, then executing it always completes normally.
+If the local variable declaration contains no initializers, then executing it always completes normally.
 
 14.5. Statements
 
@@ -243,49 +227,41 @@ The problem is that both the outer if statement and the inner if statement might
 
 The Java programming language, like C and C++ and many programming languages before them, arbitrarily decrees that an else clause belongs to the innermost if to which it might possibly belong. This rule is captured by the following grammar:
 
-
 Statement:
-    StatementWithoutTrailingSubstatement
-    LabeledStatement
-    IfThenStatement
-    IfThenElseStatement
-    WhileStatement
-    ForStatement
-
-StatementWithoutTrailingSubstatement:
-    Block
-    EmptyStatement
-    ExpressionStatement
-    AssertStatement
-    SwitchStatement
-    DoStatement
-    BreakStatement
-    ContinueStatement
-    ReturnStatement
-    SynchronizedStatement
-    ThrowStatement
-    TryStatement
-
+StatementWithoutTrailingSubstatement
+LabeledStatement
+IfThenStatement
+IfThenElseStatement
+WhileStatement
+ForStatement
 StatementNoShortIf:
-    StatementWithoutTrailingSubstatement
-    LabeledStatementNoShortIf
-    IfThenElseStatementNoShortIf
-    WhileStatementNoShortIf
-    ForStatementNoShortIf
+StatementWithoutTrailingSubstatement
+LabeledStatementNoShortIf
+IfThenElseStatementNoShortIf
+WhileStatementNoShortIf
+ForStatementNoShortIf
+StatementWithoutTrailingSubstatement:
+Block
+EmptyStatement
+ExpressionStatement
+AssertStatement
+SwitchStatement
+DoStatement
+BreakStatement
+ContinueStatement
+ReturnStatement
+SynchronizedStatement
+ThrowStatement
+TryStatement
 
-
-The following are repeated from §14.9 to make the presentation here clearer:
-
+The following productions from §14.9 are shown here for convenience:
 
 IfThenStatement:
-    if ( Expression ) Statement
-
+if ( Expression ) Statement
 IfThenElseStatement:
-    if ( Expression ) StatementNoShortIf else Statement
-
+if ( Expression ) StatementNoShortIf else Statement
 IfThenElseStatementNoShortIf:
-    if ( Expression ) StatementNoShortIf else StatementNoShortIf
-
+if ( Expression ) StatementNoShortIf else StatementNoShortIf
 
 Statements are thus grammatically divided into two categories: those that might end in an if statement that has no else clause (a "short if statement") and those that definitely do not.
 
@@ -297,10 +273,8 @@ This simple rule prevents the "dangling else" problem. The execution behavior of
 
 An empty statement does nothing.
 
-
 EmptyStatement:
-    ;
-
+;
 
 Execution of an empty statement always completes normally.
 
@@ -308,21 +282,18 @@ Execution of an empty statement always completes normally.
 
 Statements may have label prefixes.
 
-
 LabeledStatement:
-    Identifier : Statement
-
+Identifier : Statement
 LabeledStatementNoShortIf:
-    Identifier : StatementNoShortIf
-
+Identifier : StatementNoShortIf
 
 The Identifier is declared to be the label of the immediately contained Statement.
 
-Unlike C and C++, the Java programming language has no goto statement; identifier statement labels are used with break (§14.15) or continue (§14.16) statements appearing anywhere within the labeled statement.
+Unlike C and C++, the Java programming language has no goto statement; identifier statement labels are used with break or continue statements (§14.15, §14.16) appearing anywhere within the labeled statement.
 
 The scope of a label of a labeled statement is the immediately contained Statement.
 
-It is a compile-time error if the name of a label of a labeled statement (§14.7) is used within the scope of the label as a label of another labeled statement.
+It is a compile-time error if the name of a label of a labeled statement is used within the scope of the label as a label of another labeled statement.
 
 There is no restriction against using the same identifier as a label and as the name of a package, class, interface, method, field, parameter, or local variable. Use of an identifier to label a statement does not obscure (§6.4.2) a package, class, interface, method, field, parameter, or local variable with the same name. Use of an identifier as a class, interface, method, field, local variable or as the parameter of an exception handler (§14.20) does not obscure a statement label with the same name.
 
@@ -330,49 +301,81 @@ A labeled statement is executed by executing the immediately contained Statement
 
 If the statement is labeled by an Identifier and the contained Statement completes abruptly because of a break with the same Identifier, then the labeled statement completes normally. In all other cases of abrupt completion of the Statement, the labeled statement completes abruptly for the same reason.
 
+Example 14.7-1. Labels and Identifiers
+
+The following code was taken from a version of the class String and its method indexOf, where the label was originally called test. Changing the label to have the same name as the local variable i does not obscure the label in the scope of the declaration of i. Thus, the code is valid.
+
+class Test {
+    char[] value;
+    int offset, count;
+    int indexOf(TestString str, int fromIndex) {
+        char[] v1 = value, v2 = str.value;
+        int max = offset + (count - str.count);
+        int start = offset + ((fromIndex < 0) ? 0 : fromIndex);
+    i:
+        for (int i = start; i <= max; i++) {
+            int n = str.count, j = i, k = str.offset;
+            while (n-- != 0) {
+                if (v1[j++] != v2[k++])
+                    continue i;
+            } 
+            return i - offset;
+        }
+        return -1;
+    }
+}
+
+
+The identifier max could also have been used as the statement label; the label would not obscure the local variable max within the labeled statement.
+
+
+
 14.8. Expression Statements
 
 Certain kinds of expressions may be used as statements by following them with semicolons.
 
-
 ExpressionStatement:
-    StatementExpression ;
-
+StatementExpression ;
 StatementExpression:
-    Assignment
-    PreIncrementExpression
-    PreDecrementExpression
-    PostIncrementExpression
-    PostDecrementExpression
-    MethodInvocation
-    ClassInstanceCreationExpression
-
+Assignment
+PreIncrementExpression
+PreDecrementExpression
+PostIncrementExpression
+PostDecrementExpression
+MethodInvocation
+ClassInstanceCreationExpression
 
 An expression statement is executed by evaluating the expression; if the expression has a value, the value is discarded.
 
 Execution of the expression statement completes normally if and only if evaluation of the expression completes normally.
 
-Unlike C and C++, the Java programming language allows only certain forms of expressions to be used as expression statements. Note that the Java programming language does not allow a "cast to void" - void is not a type - so the traditional C trick of writing an expression statement such as:
+Unlike C and C++, the Java programming language allows only certain forms of expressions to be used as expression statements. For example, it is legal to use a method invocation expression (§15.12):
+
+System.out.println("Hello world");  // OK
+
+
+but it is not legal to use a parenthesized expression (§15.8.5):
+
+(System.out.println("Hello world"));  // illegal
+
+
+Note that the Java programming language does not allow a "cast to void" - void is not a type - so the traditional C trick of writing an expression statement such as:
 
 (void)... ;  // incorrect!
 
 
-does not work. On the other hand, the Java programming language allows all the most useful kinds of expressions in expressions statements, and it does not require a method invocation used as an expression statement to invoke a void method, so such a trick is almost never needed. If a trick is needed, either an assignment statement (§15.26) or a local variable declaration statement (§14.4) can be used instead.
+does not work. On the other hand, the Java programming language allows all the most useful kinds of expressions in expression statements, and it does not require a method invocation used as an expression statement to invoke a void method, so such a trick is almost never needed. If a trick is needed, either an assignment statement (§15.26) or a local variable declaration statement (§14.4) can be used instead.
 
 14.9. The if Statement
 
 The if statement allows conditional execution of a statement or a conditional choice of two statements, executing one or the other but not both.
 
-
 IfThenStatement:
-    if ( Expression ) Statement
-
+if ( Expression ) Statement
 IfThenElseStatement:
-    if ( Expression ) StatementNoShortIf else Statement
-
+if ( Expression ) StatementNoShortIf else Statement
 IfThenElseStatementNoShortIf:
-    if ( Expression ) StatementNoShortIf else StatementNoShortIf
-
+if ( Expression ) StatementNoShortIf else StatementNoShortIf
 
 The Expression must have type boolean or Boolean, or a compile-time error occurs.
 
@@ -402,23 +405,23 @@ If the value is false, then the second contained Statement (the one after the el
 
 14.10. The assert Statement
 
-An assertion is an assert statement containing a boolean expression. An assertion is either enabled or disabled. If the assertion is enabled, execution of the assertion causes evaluation of the boolean expression and an error is reported if the expression evaluates to false. If the assertion is disabled, execution of the assertion has no effect whatsoever.
-
+An assertion is an assert statement containing a boolean expression. An assertion is either enabled or disabled. If an assertion is enabled, execution of the assertion causes evaluation of the boolean expression and an error is reported if the expression evaluates to false. If the assertion is disabled, execution of the assertion has no effect whatsoever.
 
 AssertStatement:
-    assert Expression1 ;
-    assert Expression1 : Expression2 ;
+assert Expression ;
+assert Expression : Expression ;
 
+To ease the presentation, the first Expression in both forms of the assert statement is referred to as Expression1. In the second form of the assert statement, the second Expression is referred to as Expression2.
 
 It is a compile-time error if Expression1 does not have type boolean or Boolean.
 
 In the second form of the assert statement, it is a compile-time error if Expression2 is void (§15.1).
 
-An assert statement that is executed after its class has completed initialization is enabled if and only if the host system has determined that the top level class that lexically contains the assert statement enables assertions.
+An assert statement that is executed after its class or interface has completed initialization is enabled if and only if the host system has determined that the top level class or interface that lexically contains the assert statement enables assertions.
 
-Whether or not a top level class enables assertions is determined no later than the earliest of the initialization of the top level class and the initialization of any class nested in the top level class, and cannot be changed after it has been determined.
+Whether a top level class or interface enables assertions is determined no later than the earliest of i) the initialization of the top level class or interface, and ii) the initialization of any class or interface nested in the top level class or interface. Whether a top level class or interface enables assertions cannot be changed after it has been determined.
 
-An assert statement that is executed before its class has completed initialization is enabled.
+An assert statement that is executed before its class or interface has completed initialization is enabled.
 
 This rule is motivated by a case that demands special treatment. Recall that the assertion status of a class is set no later than the time it is initialized. It is possible, though generally not desirable, to execute methods or constructors prior to initialization. This can happen when a class hierarchy contains a circularity in its static initialization, as in the following example:
 
@@ -464,86 +467,68 @@ If the value is true, no further action is taken and the assert statement comple
 
 If the value is false, the execution behavior depends on whether Expression2 is present:
 
-If Expression2 is present, it is evaluated.
+If Expression2 is present, it is evaluated. Then:
 
 If the evaluation completes abruptly for some reason, the assert statement completes abruptly for the same reason.
 
-If the evaluation completes normally, an AssertionError instance whose "detail message" is the resulting value of Expression2 is created.
+If the evaluation completes normally, an AssertionError instance whose "detail message" is the resulting value of Expression2 is created. Then:
 
 If the instance creation completes abruptly for some reason, the assert statement completes abruptly for the same reason.
 
 If the instance creation completes normally, the assert statement completes abruptly by throwing the newly created AssertionError object.
 
-If Expression2 is not present, an AssertionError instance with no "detail message" is created.
+If Expression2 is not present, an AssertionError instance with no "detail message" is created. Then:
 
 If the instance creation completes abruptly for some reason, the assert statement completes abruptly for the same reason.
 
 If the instance creation completes normally, the assert statement completes abruptly by throwing the newly created AssertionError object.
 
-For example, after unmarshalling all of the arguments from a data buffer, a programmer might assert that the number of bytes of data remaining in the buffer is zero. By verifying that the boolean expression is indeed true, the system corroborates the programmer's knowledge of the program and increases one's confidence that the program is free of bugs.
+Typically, assertion checking is enabled during program development and testing, and disabled for deployment, to improve performance.
 
-Typically, assertion-checking is enabled during program development and testing, and disabled for deployment, to improve performance.
+Because assertions may be disabled, programs must not assume that the expressions contained in assertions will be evaluated. Thus, these boolean expressions should generally be free of side effects. Evaluating such a boolean expression should not affect any state that is visible after the evaluation is complete. It is not illegal for a boolean expression contained in an assertion to have a side effect, but it is generally inappropriate, as it could cause program behavior to vary depending on whether assertions were enabled or disabled.
 
-Because assertions may be disabled, programs must not assume that the expressions contained in assertions will be evaluated. Thus, these boolean expressions should generally be free of side effects.
+In light of this, assertions should not be used for argument checking in public methods. Argument checking is typically part of the contract of a method, and this contract must be upheld whether assertions are enabled or disabled.
 
-Evaluating such a boolean expression should not affect any state that is visible after the evaluation is complete. It is not illegal for a boolean expression contained in an assertion to have a side effect, but it is generally inappropriate, as it could cause program behavior to vary depending on whether assertions were enabled or disabled.
-
-Along similar lines, assertions should not be used for argument-checking in public methods. Argument-checking is typically part of the contract of a method, and this contract must be upheld whether assertions are enabled or disabled.
-
-Another problem with using assertions for argument checking is that erroneous arguments should result in an appropriate run-time exception (such as IllegalArgumentException, ArrayIndexOutOfBoundsException, or NullPointerException). An assertion failure will not throw an appropriate exception. Again, it is not illegal to use assertions for argument checking on public methods, but it is generally inappropriate. It is intended that AssertionError never be caught, but it is possible to do so, thus the rules for try statements should treat assertions appearing in a try block similarly to the current treatment of throw statements.
+A secondary problem with using assertions for argument checking is that erroneous arguments should result in an appropriate run-time exception (such as IllegalArgumentException, ArrayIndexOutOfBoundsException, or NullPointerException). An assertion failure will not throw an appropriate exception. Again, it is not illegal to use assertions for argument checking on public methods, but it is generally inappropriate. It is intended that AssertionError never be caught, but it is possible to do so, thus the rules for try statements should treat assertions appearing in a try block similarly to the current treatment of throw statements.
 
 14.11. The switch Statement
 
 The switch statement transfers control to one of several statements depending on the value of an expression.
 
-
 SwitchStatement:
-    switch ( Expression ) SwitchBlock
-
+switch ( Expression ) SwitchBlock
 SwitchBlock:
-    { SwitchBlockStatementGroupsopt SwitchLabelsopt }
-
-SwitchBlockStatementGroups:
-    SwitchBlockStatementGroup
-    SwitchBlockStatementGroups SwitchBlockStatementGroup
-
+{ {SwitchBlockStatementGroup} {SwitchLabel} }
 SwitchBlockStatementGroup:
-    SwitchLabels BlockStatements
-
+SwitchLabels BlockStatements
 SwitchLabels:
-    SwitchLabel
-    SwitchLabels SwitchLabel
-
+SwitchLabel {SwitchLabel}
 SwitchLabel:
-    case ConstantExpression :
-    case EnumConstantName :
-    default :
-
+case ConstantExpression :
+case EnumConstantName :
+default :
 EnumConstantName:
-    Identifier
-
+Identifier
 
 The type of the Expression must be char, byte, short, int, Character, Byte, Short, Integer, String, or an enum type (§8.9), or a compile-time error occurs.
 
-The body of a switch statement is known as a switch block.
+The body of a switch statement is known as a switch block. Any statement immediately contained by the switch block may be labeled with one or more switch labels, which are case or default labels. Every case label has a case constant, which is either a constant expression or the name of an enum constant. Switch labels and their case constants are said to be associated with the switch statement.
 
-Any statement immediately contained by the switch block may be labeled with one or more switch labels, which are case or default labels.
+Given a switch statement, all of the following must be true or a compile-time error occurs:
 
-These labels are said to be associated with the switch statement, as are the values of the constant expressions (§15.28) or enum constants (§8.9.1) in the case labels.
+Every case constant associated with the switch statement must be assignment compatible with the type of the switch statement's Expression (§5.2).
 
-All of the following must be true, or a compile-time error occurs:
+If the type of the switch statement's Expression is an enum type, then every case constant associated with the switch statement must be an enum constant of that type.
 
-Every case constant expression associated with a switch statement must be assignable (§5.2) to the type of the switch Expression.
+No two of the case constants associated with the switch statement have the same value.
 
-No two of the case constant expressions associated with a switch statement may have the same value.
+No case constant associated with the switch statement is null.
 
-No switch label is null.
+At most one default label is associated with the switch statement.
 
-At most one default label may be associated with the same switch statement.
+The prohibition against using null as a case constant prevents code being written that can never be executed. If the switch statement's Expression is of a reference type, that is, String or a boxed primitive type or an enum type, then an exception will be thrown will occur if the Expression evaluates to null at run time. In the judgment of the designers of the Java programming language, this is a better outcome than silently skipping the entire switch statement or choosing to execute the statements (if any) after the default label (if any).
 
-The prohibition against using null as a switch label prevents one from writing code that can never be executed. If the switch expression is of a reference type, that is, String or a boxed primitive type or an enum type, then a run-time error will occur if the expression evaluates to null at run time. In the judgment of the designers of the Java programming language, this is a better outcome than silently skipping the entire switch statement or choosing to execute the statements (if any) after the default label (if any).
-
-A Java compiler is encouraged (but not required) to provide a warning if a switch on an enum-valued expression lacks a default label and lacks case labels for one or more of the enum type's constants. (Such a statement will silently do nothing if the expression evaluates to one of the missing constants.)
+A Java compiler is encouraged (but not required) to provide a warning if a switch on an enum-valued expression lacks a default label and lacks case labels for one or more of the enum's constants. Such a switch will silently do nothing if the expression evaluates to one of the missing constants.
 
 In C and C++ the body of a switch statement can be a statement and statements with case labels do not have to be immediately contained by that statement. Consider the simple loop:
 
@@ -574,15 +559,15 @@ If evaluation of the Expression or the subsequent unboxing conversion (if any) c
 
 Otherwise, execution continues by comparing the value of the Expression with each case constant, and there is a choice:
 
-If one of the case constants is equal to the value of the expression, then we say that the case matches, and all statements after the matching case label in the switch block, if any, are executed in sequence.
+If one of the case constants is equal to the value of the expression, then we say that the case label matches. All statements after the matching case label in the switch block, if any, are executed in sequence.
 
 If all these statements complete normally, or if there are no statements after the matching case label, then the entire switch statement completes normally.
 
-If no case matches but there is a default label, then all statements after the matching default label in the switch block, if any, are executed in sequence.
+If no case label matches but there is a default label, then all statements after the default label in the switch block, if any, are executed in sequence.
 
 If all these statements complete normally, or if there are no statements after the default label, then the entire switch statement completes normally.
 
-If no case matches and there is no default label, then no further action is taken and the switch statement completes normally.
+If no case label matches and there is no default label, then no further action is taken and the switch statement completes normally.
 
 If any statement immediately contained by the Block body of the switch statement completes abruptly, it is handled as follows:
 
@@ -654,13 +639,10 @@ many
 
 The while statement executes an Expression and a Statement repeatedly until the value of the Expression is false.
 
-
 WhileStatement:
-    while ( Expression ) Statement
-
+while ( Expression ) Statement
 WhileStatementNoShortIf:
-    while ( Expression ) StatementNoShortIf
-
+while ( Expression ) StatementNoShortIf
 
 The Expression must have type boolean or Boolean, or a compile-time error occurs.
 
@@ -702,10 +684,8 @@ The case of abrupt completion because of a break with a label is handled by the 
 
 The do statement executes a Statement and an Expression repeatedly until the value of the Expression is false.
 
-
 DoStatement:
-    do Statement while ( Expression ) ;
-
+do Statement while ( Expression ) ;
 
 The Expression must have type boolean or Boolean, or a compile-time error occurs.
 
@@ -779,34 +759,27 @@ The basic for statement.
 
 The enhanced for statement
 
-
 ForStatement:
-    BasicForStatement
-    EnhancedForStatement
-
-
+BasicForStatement
+EnhancedForStatement
+ForStatementNoShortIf:
+BasicForStatementNoShortIf
+EnhancedForStatementNoShortIf
 14.14.1. The basic for Statement
 
 The basic for statement executes some initialization code, then executes an Expression, a Statement, and some update code repeatedly until the value of the Expression is false.
 
-
 BasicForStatement:
-    for ( ForInitopt ; Expressionopt ; ForUpdateopt ) Statement
-
-ForStatementNoShortIf:
-    for ( ForInitopt ; Expressionopt ; ForUpdateopt ) StatementNoShortIf
-
+for ( [ForInit] ; [Expression] ; [ForUpdate] ) Statement
+BasicForStatementNoShortIf:
+for ( [ForInit] ; [Expression] ; [ForUpdate] ) StatementNoShortIf
 ForInit:
-    StatementExpressionList
-    LocalVariableDeclaration
-
+StatementExpressionList
+LocalVariableDeclaration
 ForUpdate:
-    StatementExpressionList
-
+StatementExpressionList
 StatementExpressionList:
-    StatementExpression
-    StatementExpressionList , StatementExpression
-
+StatementExpression {, StatementExpression}
 
 The Expression must have type boolean or Boolean, or a compile-time error occurs.
 
@@ -820,7 +793,7 @@ If the ForInit code is a list of statement expressions (§14.8), the expressions
 
 If evaluation of any expression completes abruptly for some reason, the for statement completes abruptly for the same reason; any ForInit statement expressions to the right of the one that completed abruptly are not evaluated.
 
-If the ForInit code is a local variable declaration, it is executed as if it were a local variable declaration statement (§14.4) appearing in a block.
+If the ForInit code is a local variable declaration (§14.4), it is executed as if it were a local variable declaration statement appearing in a block.
 
 If execution of the local variable declaration completes abruptly for any reason, the for statement completes abruptly for the same reason.
 
@@ -888,26 +861,26 @@ Note that the case of abrupt completion because of a break with a label is handl
 
 The enhanced for statement has the form:
 
-
 EnhancedForStatement:
+for ( {VariableModifier} UnannType VariableDeclaratorId : Expression ) Statement
+EnhancedForStatementNoShortIf:
+for ( {VariableModifier} UnannType VariableDeclaratorId : Expression ) StatementNoShortIf
 
-    for ( FormalParameter : Expression ) Statement
+See §8.3 for UnannType. The following productions from §4.3, §8.4.1, and §8.3 are shown here for convenience:
 
-
-The following is repeated from §8.4.1 and §8.3 to make the presentation here clearer:
-
-
-FormalParameter:
-    VariableModifiersopt Type VariableDeclaratorId
-
+VariableModifier:
+(one of)
+Annotation final
 VariableDeclaratorId:
-    Identifier
-    VariableDeclaratorId []
-
+Identifier [Dims]
+Dims:
+{Annotation} [ ] {{Annotation} [ ]}
 
 The type of the Expression must be Iterable or an array type (§10.1), or a compile-time error occurs.
 
-The scope and shadowing of a local variable declared in the FormalParameter part of an enhanced for statement is specified in §6.3 and §6.4.
+The declared type of the local variable in the header of the enhanced for statement is denoted by UnannType if no bracket pairs appear in UnannType and VariableDeclaratorId, and is specified by §10.2 otherwise.
+
+The scope and shadowing of the local variable declared in the header of an enhanced for statement is specified in §6.3 and §6.4.
 
 The meaning of the enhanced for statement is given by translation into a basic for statement, as follows:
 
@@ -918,7 +891,7 @@ If the type of Expression is a subtype of Iterable<X> for some type argument X, 
 The enhanced for statement is equivalent to a basic for statement of the form:
 
 for (I #i = Expression.iterator(); #i.hasNext(); ) {
-    VariableModifiersopt TargetType Identifier =
+    {VariableModifier} TargetType Identifier =
         (TargetType) #i.next();
     Statement
 }
@@ -926,7 +899,9 @@ for (I #i = Expression.iterator(); #i.hasNext(); ) {
 
 #i is an automatically generated identifier that is distinct from any other identifiers (automatically generated or otherwise) that are in scope (§6.3) at the point where the enhanced for statement occurs.
 
-If Type (in the FormalParameter production) is a reference type, then TargetType is Type; otherwise, TargetType is the upper bound of the capture conversion of the type argument of I, or Object if I is raw.
+If the declared type of the local variable in the header of the enhanced for statement is a reference type, then TargetType is that declared type; otherwise, TargetType is the upper bound of the capture conversion (§5.1.10) of the type argument of I, or Object if I is raw.
+
+For example, this code:
 
 List<? extends Integer> l = ...
 for (float i : l) ...
@@ -948,16 +923,16 @@ The enhanced for statement is equivalent to a basic for statement of the form:
 T[] #a = Expression;
 L1: L2: ... Lm:
 for (int #i = 0; #i < #a.length; #i++) {
-    VariableModifiersopt TargetType Identifier = #a[#i];
+    {VariableModifier} TargetType Identifier = #a[#i];
     Statement
 }
     
 
 #a and #i are automatically generated identifiers that are distinct from any other identifiers (automatically generated or otherwise) that are in scope at the point where the enhanced for statement occurs.
 
-TargetType is the type of the loop variable as denoted by the Type that appears in the FormalParameter followed by any bracket pairs that follow the Identifier in the FormalParameter (§10.2).
+TargetType is the declared type of the local variable in the header of the enhanced for statement.
 
-Example 14.14-1. Enhanced-for And Arrays
+Example 14.14-1. Enhanced for And Arrays
 
 The following program, which calculates the sum of an integer array, shows how enhanced for works for arrays:
 
@@ -972,7 +947,7 @@ int sum(int[] a) {
 
 
 
-Example 14.14-2. Enhanced-for And Unboxing Conversion
+Example 14.14-2. Enhanced for And Unboxing Conversion
 
 The following program combines the enhanced for statement with auto-unboxing to translate a histogram into a frequency table:
 
@@ -992,10 +967,8 @@ for (Map.Entry<String, Integer> e : histogram.entrySet())
 
 A break statement transfers control out of an enclosing statement.
 
-
 BreakStatement:
-    break Identifieropt ;
-
+break [Identifier] ;
 
 A break statement with no label attempts to transfer control to the innermost enclosing switch, while, do, or for statement of the immediately enclosing method or initializer; this statement, which is called the break target, then immediately completes normally.
 
@@ -1007,7 +980,7 @@ A break statement with label Identifier attempts to transfer control to the encl
 
 To be precise, a break statement with label Identifier always completes abruptly, the reason being a break with label Identifier.
 
-A break statement must refer to a label within the immediately enclosing method, constructor, or initializer. There are no non-local jumps. If no labeled statement with Identifier as its label in the immediately enclosing method, constructor, or initializer contains the break statement, a compile-time error occurs.
+A break statement must refer to a label within the immediately enclosing method, constructor, initializer, or lambda body. There are no non-local jumps. If no labeled statement with Identifier as its label in the immediately enclosing method, constructor, initializer, or lambda body contains the break statement, a compile-time error occurs.
 
 It can be seen, then, that a break statement always completes abruptly.
 
@@ -1070,10 +1043,8 @@ Note the use of two statement labels, edgelist and search, and the use of break 
 
 A continue statement may occur only in a while, do, or for statement; statements of these three kinds are called iteration statements. Control passes to the loop-continuation point of an iteration statement.
 
-
 ContinueStatement:
-    continue Identifieropt ;
-
+continue [Identifier] ;
 
 A continue statement with no label attempts to transfer control to the innermost enclosing while, do, or for statement of the immediately enclosing method, constructor, or initializer; this statement, which is called the continue target, then immediately ends the current iteration and begins a new one.
 
@@ -1087,7 +1058,7 @@ To be precise, a continue statement with label Identifier always completes abrup
 
 The continue target must be a while, do, or for statement, or a compile-time error occurs.
 
-A continue statement must refer to a label within the immediately enclosing method, constructor, or initializer. There are no non-local jumps. If no labeled statement with Identifier as its label in the immediately enclosing method, constructor, or initializer contains the continue statement, a compile-time error occurs.
+A continue statement must refer to a label within the immediately enclosing method, constructor, initializer, or lambda body. There are no non-local jumps. If no labeled statement with Identifier as its label in the immediately enclosing method, constructor, initializer, or lambda body contains the continue statement, a compile-time error occurs.
 
 It can be seen, then, that a continue statement always completes abruptly.
 
@@ -1146,26 +1117,34 @@ Which to use, if either, is largely a matter of programming style.
 
 A return statement returns control to the invoker of a method (§8.4, §15.12) or constructor (§8.8, §15.9).
 
-
 ReturnStatement:
-    return Expressionopt ;
+return [Expression] ;
 
-
-A return statement is contained in the innermost constructor, method, or initializer whose body encloses the return statement.
+A return statement is contained in the innermost constructor, method, initializer, or lambda expression whose body encloses the return statement.
 
 It is a compile-time error if a return statement is contained in an instance initializer or a static initializer (§8.6, §8.7).
 
-A return statement with no Expression must be contained in a method that is declared, using the keyword void, not to return any value (§8.4), or in a constructor (§8.8), or a compile-time error occurs.
+A return statement with no Expression must be contained in one of the following, or a compile-time error occurs:
 
-A return statement with no Expression attempts to transfer control to the invoker of the method or constructor that contains it. To be precise, a return statement with no Expression always completes abruptly, the reason being a return with no value.
+A method that is declared, using the keyword void, not to return a value (§8.4.5)
 
-A return statement with an Expression must be contained in a method declaration that is declared to return a value (§8.4), or a compile-time error occurs.
+A constructor (§8.8.7)
 
-The Expression must denote a variable or value of some type T, or a compile-time error occurs.
+A lambda expression (§15.27)
 
-The type T must be assignable (§5.2) to the declared result type of the method, or a compile-time error occurs.
+A return statement with no Expression attempts to transfer control to the invoker of the method, constructor, or lambda body that contains it. To be precise, a return statement with no Expression always completes abruptly, the reason being a return with no value.
 
-A return statement with an Expression attempts to transfer control to the invoker of the method that contains it; the value of the Expression becomes the value of the method invocation. More precisely, execution of such a return statement first evaluates the Expression. If the evaluation of the Expression completes abruptly for some reason, then the return statement completes abruptly for that reason. If evaluation of the Expression completes normally, producing a value V, then the return statement completes abruptly, the reason being a return with value V.
+A return statement with an Expression must be contained in one of the following, or a compile-time error occurs:
+
+A method that is declared to return a value
+
+A lambda expression
+
+The Expression must denote a variable or a value, or a compile-time error occurs.
+
+When a return statement with an Expression appears in a method declaration, the Expression must be assignable (§5.2) to the declared return type of the method, or a compile-time error occurs.
+
+A return statement with an Expression attempts to transfer control to the invoker of the method or lambda body that contains it; the value of the Expression becomes the value of the method invocation. More precisely, execution of such a return statement first evaluates the Expression. If the evaluation of the Expression completes abruptly for some reason, then the return statement completes abruptly for that reason. If evaluation of the Expression completes normally, producing a value V, then the return statement completes abruptly, the reason being a return with value V.
 
 If the expression is of type float and is not FP-strict (§15.4), then the value may be an element of either the float value set or the float-extended-exponent value set (§4.2.3). If the expression is of type double and is not FP-strict, then the value may be an element of either the double value set or the double-extended-exponent value set.
 
@@ -1175,14 +1154,12 @@ The preceding descriptions say "attempts to transfer control" rather than just "
 
 14.18. The throw Statement
 
-A throw statement causes an exception (§11) to be thrown. The result is an immediate transfer of control (§11.3) that may exit multiple statements and multiple constructor, instance initializer, static initializer and field initializer evaluations, and method invocations until a try statement (§14.20) is found that catches the thrown value. If no such try statement is found, then execution of the thread (§17) that executed the throw is terminated (§11.3) after invocation of the uncaughtException method for the thread group to which the thread belongs.
-
+A throw statement causes an exception (§11 (Exceptions)) to be thrown. The result is an immediate transfer of control (§11.3) that may exit multiple statements and multiple constructor, instance initializer, static initializer and field initializer evaluations, and method invocations until a try statement (§14.20) is found that catches the thrown value. If no such try statement is found, then execution of the thread (§17 (Threads and Locks)) that executed the throw is terminated (§11.3) after invocation of the uncaughtException method for the thread group to which the thread belongs.
 
 ThrowStatement:
-    throw Expression ;
+throw Expression ;
 
-
-The Expression in a throw statement must denote either 1) a variable or value of a reference type which is assignable (§5.2) to the type Throwable, or 2) the null reference, or a compile-time error occurs.
+The Expression in a throw statement must either denote a variable or value of a reference type which is assignable (§5.2) to the type Throwable, or denote the null reference, or a compile-time error occurs.
 
 The reference type of the Expression will always be a class type (since no interface types are assignable to Throwable) which is not parameterized (since a subclass of Throwable cannot be generic (§8.1.2)).
 
@@ -1208,7 +1185,7 @@ It can be seen, then, that a throw statement always completes abruptly.
 
 If there are any enclosing try statements (§14.20) whose try blocks contain the throw statement, then any finally clauses of those try statements are executed as control is transferred outward, until the thrown value is caught. Note that abrupt completion of a finally clause can disrupt the transfer of control initiated by a throw statement.
 
-If a throw statement is contained in a method declaration, but its value is not caught by some try statement that contains it, then the invocation of the method completes abruptly because of the throw.
+If a throw statement is contained in a method declaration or a lambda expression, but its value is not caught by some try statement that contains it, then the invocation of the method completes abruptly because of the throw.
 
 If a throw statement is contained in a constructor declaration, but its value is not caught by some try statement that contains it, then the class instance creation expression that invoked the constructor will complete abruptly because of the throw (§15.9.4).
 
@@ -1222,10 +1199,8 @@ By convention, user-declared throwable types should usually be declared to be su
 
 A synchronized statement acquires a mutual-exclusion lock (§17.1) on behalf of the executing thread, executes a block, then releases the lock. While the executing thread owns the lock, no other thread may acquire the lock.
 
-
 SynchronizedStatement:
-    synchronized ( Expression ) Block
-
+synchronized ( Expression ) Block
 
 The type of Expression must be a reference type, or a compile-time error occurs.
 
@@ -1272,29 +1247,30 @@ Note that this program would deadlock if a single thread were not permitted to l
 
 A try statement executes a block. If a value is thrown and the try statement has one or more catch clauses that can catch it, then control will be transferred to the first such catch clause. If the try statement has a finally clause, then another block of code is executed, no matter whether the try block completes normally or abruptly, and no matter whether a catch clause is first given control.
 
-
 TryStatement:
-    try Block Catches
-    try Block Catchesopt Finally
-    TryWithResourcesStatement
-
+try Block Catches
+try Block [Catches] Finally
+TryWithResourcesStatement
 Catches:
-    CatchClause
-    Catches CatchClause
-
+CatchClause {CatchClause}
 CatchClause:
-    catch ( CatchFormalParameter ) Block
-
+catch ( CatchFormalParameter ) Block
 CatchFormalParameter:
-    VariableModifiersopt CatchType VariableDeclaratorId
-
+{VariableModifier} CatchType VariableDeclaratorId
 CatchType:
-    ClassType
-    ClassType | CatchType 
-
+UnannClassType {| ClassType}
 Finally:
-    finally Block
+finally Block
 
+See §8.3 for UnannClassType. The following productions from §4.3, §8.3, and §8.4.1 are shown here for convenience:
+
+VariableModifier:
+(one of)
+Annotation final
+VariableDeclaratorId:
+Identifier [Dims]
+Dims:
+{Annotation} [ ] {{Annotation} [ ]}
 
 The Block immediately after the keyword try is called the try block of the try statement.
 
@@ -1302,7 +1278,9 @@ The Block immediately after the keyword finally is called the finally block of t
 
 A try statement may have catch clauses, also called exception handlers.
 
-A catch clause has exactly one parameter, which is called an exception parameter.
+A catch clause declares exactly one parameter, which is called an exception parameter.
+
+It is a compile-time error if final appears more than once as a modifier for an exception parameter declaration.
 
 The scope and shadowing of an exception parameter is specified in §6.3 and §6.4.
 
@@ -1320,17 +1298,17 @@ It is a compile-time error if a union of types contains two alternatives Di and 
 
 The declared type of an exception parameter that denotes its type with a single class type is that class type.
 
-The declared type of an exception parameter that denotes its type as a union with alternatives D1 | D2 | ... | Dn is lub(D1, D2, ..., Dn) (§15.12.2.7).
+The declared type of an exception parameter that denotes its type as a union with alternatives D1 | D2 | ... | Dn is lub(D1, D2, ..., Dn).
 
 An exception parameter of a multi-catch clause is implicitly declared final if it is not explicitly declared final.
 
 It is a compile-time error if an exception parameter that is implicitly or explicitly declared final is assigned to within the body of the catch clause.
 
-In a uni-catch clause, an exception parameter that is not declared final (implicitly or explicitly) is considered effectively final if it never occurs within its scope as the left-hand operand of an assignment operator (§15.26).
+An exception parameter of a uni-catch clause is never implicitly declared final, but it may be explicitly declared final or be effectively final (§4.12.4).
 
-An implicitly final exception parameter is final by virtue of its declaration, while an effectively final exception parameter is (as it were) final by virtue of how it is used. An exception parameter of a multi-catch clause is implicitly final, so will never occur as the left-hand operand of an assignment operator, but it is not considered effectively final.
+An implicitly final exception parameter is final by virtue of its declaration, while an effectively final exception parameter is (as it were) final by virtue of how it is used. An exception parameter of a multi-catch clause is implicitly declared final, so will never occur as the left-hand operand of an assignment operator, but it is not considered effectively final.
 
-If an exception parameter is effectively final (in a uni-catch clause) or implicitly final (in a multi-catch clause), then adding an explicit final modifier to its declaration will not introduce any compile-time errors. However, if the exception parameter of a uni-catch clause is explicitly declared final, then removing the final modifier may introduce compile-time errors. This is because the exception parameter, while still effectively final, can no longer be referenced by, for example, local classes. On the other hand, if there are no compile-time errors, it is possible to further change the program so that the exception parameter is re-assigned and no longer effectively final.
+If an exception parameter is effectively final (in a uni-catch clause) or implicitly final (in a multi-catch clause), then adding an explicit final modifier to its declaration will not introduce any compile-time errors. On the other hand, if the exception parameter of a uni-catch clause is explicitly declared final, then removing the final modifier may introduce compile-time errors because the exception parameter, now considered to be effectively final, can no longer longer be referenced by anonymous and local class declarations in the body of the catch clause. If there are no compile-time errors, it is possible to further change the program so that the exception parameter is re-assigned in the body of the catch clause and thus will no longer be considered effectively final.
 
 The exception types that a try statement can throw are specified in §11.2.2.
 
@@ -1338,7 +1316,7 @@ The relationship of the exceptions thrown by the try block of a try statement an
 
 Exception handlers are considered in left-to-right order: the earliest possible catch clause accepts the exception, receiving as its argument the thrown exception object, as specified in §11.3.
 
-A multi-catch clause can be thought of as a sequence of uni-catch clauses. That is, a catch clause whose exception parameter type is denoted as a union D1|D2|...|Dn is equivalent to a sequence of n catch clauses whose exception parameters have class types D1, D2, ..., Dn, respectively. For example, the following code:
+A multi-catch clause can be thought of as a sequence of uni-catch clauses. That is, a catch clause where the type of the exception parameter is denoted as a union D1|D2|...|Dn is equivalent to a sequence of n catch clauses where the types of the exception parameters are class types D1, D2, ..., Dn respectively. In the Block of each of the n catch clauses, the declared type of the exception parameter is lub(D1, D2, ..., Dn). For example, the following code:
 
 try {
     ... throws ReflectiveOperationException ...
@@ -1352,14 +1330,18 @@ is semantically equivalent to the following code:
 
 try {
     ... throws ReflectiveOperationException ...
-} catch (final ClassNotFoundException ex1) {
+}
+catch (final ClassNotFoundException ex1) {
+    final ReflectiveOperationException ex = ex1;
     ... body ...
-} catch (final IllegalAccessException ex2) {
+}
+catch (final IllegalAccessException ex2) {
+    final ReflectiveOperationException ex = ex2;
     ... body ...
 }
 
 
-whereby the multi-catch clause with two alternatives has been translated into two separate catch clauses, one for each alternative. A Java compiler is neither required nor recommended to compile a multi-catch clause by duplicating code in this manner, since it is possible to represent the multi-catch clause in a class file without duplication.
+where the multi-catch clause with two alternatives has been translated into two uni-catch clauses, one for each alternative. A Java compiler is neither required nor recommended to compile a multi-catch clause by duplicating code in this manner, since it is possible to represent the multi-catch clause in a class file without duplication.
 
 A finally clause ensures that the finally block is executed after the try block and any catch block that might be executed, no matter how control leaves the try block or catch block. Handling of the finally block is rather complex, so the two cases of a try statement with and without a finally block are described separately (§14.20.1, §14.20.2).
 
@@ -1488,36 +1470,42 @@ The problem with mandating a backtrace is that an exception can be created at on
 
 A try-with-resources statement is parameterized with variables (known as resources) that are initialized before execution of the try block and closed automatically, in the reverse order from which they were initialized, after execution of the try block. catch clauses and a finally clause are often unnecessary when resources are closed automatically.
 
-
 TryWithResourcesStatement:
-    try ResourceSpecification Block Catchesopt Finallyopt
-
+try ResourceSpecification Block [Catches] [Finally]
 ResourceSpecification:
-    ( Resources ;opt )
-
-Resources:
-    Resource
-    Resource ; Resources
-
+( ResourceList [;] )
+ResourceList:
+Resource {; Resource}
 Resource:
-    VariableModifiersopt Type VariableDeclaratorId = Expression
+{VariableModifier} UnannType VariableDeclaratorId = Expression
 
+See §8.3 for UnannType. The following productions from §4.3, §8.3, and §8.4.1 are shown here for convenience:
 
-A ResourceSpecification declares one or more local variables with initializer expressions to act as resources for the try statement.
+VariableModifier:
+(one of)
+Annotation final
+VariableDeclaratorId:
+Identifier [Dims]
+Dims:
+{Annotation} [ ] {{Annotation} [ ]}
 
-A resource declared in a ResourceSpecification is implicitly declared final (§4.12.4) if it is not explicitly declared final.
+A resource specification declares one or more local variables with initializer expressions to act as resources for the try statement.
 
-The type of a variable declared in a ResourceSpecification must be a subtype of AutoCloseable, or a compile-time error occurs.
+It is a compile-time error for a resource specification to declare two variables with the same name.
 
-The scope and shadowing of a variable declared in a ResourceSpecification is specified in §6.3 and §6.4.
+It is a compile-time error if final appears more than once as a modifier for each variable declared in a resource specification.
 
-It is a compile-time error for a ResourceSpecification to declare two variables with the same name.
+A variable declared in a resource specification is implicitly declared final (§4.12.4) if it is not explicitly declared final.
+
+The type of a variable declared in a resource specification must be a subtype of AutoCloseable, or a compile-time error occurs.
+
+The scope and shadowing of a variable declared in a resource specification is specified in §6.3 and §6.4.
 
 Resources are initialized in left-to-right order. If a resource fails to initialize (that is, its initializer expression throws an exception), then all resources initialized so far by the try-with-resources statement are closed. If all resources initialize successfully, the try block executes as normal and then all non-null resources of the try-with-resources statement are closed.
 
 Resources are closed in the reverse order from that in which they were initialized. A resource is closed only if it initialized to a non-null value. An exception from the closing of one resource does not prevent the closing of other resources. Such an exception is suppressed if an exception was thrown previously by an initializer, the try block, or the closing of a resource.
 
-A try-with-resources statement with a ResourceSpecification clause that declares multiple resources is treated as if it were multiple try-with-resources statements, each of which has a ResourceSpecification clause that declares a single Resource. When a try-with-resources statement with n Resources (n > 1) is translated, the result is a try-with-resources statement with n-1 Resources. After n such translations, there are n nested try-catch-finally statements, and the overall translation is complete.
+A try-with-resources statement whose resource specification declares multiple resources is treated as if it were multiple try-with-resources statements, each of which has a resource specification that declares a single resource. When a try-with-resources statement with n resources (n > 1) is translated, the result is a try-with-resources statement with n-1 resources. After n such translations, there are n nested try-catch-finally statements, and the overall translation is complete.
 
 14.20.3.1. Basic try-with-resources
 
@@ -1525,14 +1513,14 @@ A try-with-resources statement with no catch clauses or finally clause is called
 
 The meaning of a basic try-with-resources statement:
 
-try (VariableModifiersopt R Identifier = Expression ...)
+try ({VariableModifier} R Identifier = Expression ...)
     Block
 
 
 is given by the following translation to a local variable declaration and a try-catch-finally statement:
 
 {
-    final VariableModifiers_minus_final R Identifier = Expression;
+    final {VariableModifierNoFinal} R Identifier = Expression;
     Throwable #primaryExc = null;
 
     try ResourceSpecification_tail
@@ -1556,13 +1544,13 @@ is given by the following translation to a local variable declaration and a try-
 }
 
 
-VariableModifiersopt_minus_final is defined as VariableModifiersopt without final, if present.
+{VariableModifierNoFinal} is defined as {VariableModifier} without final, if present.
 
 #t, #primaryExc, and #suppressedExc are automatically generated identifiers that are distinct from any other identifiers (automatically generated or otherwise) that are in scope at the point where the try-with-resources statement occurs.
 
-If the ResourceSpecification declares one resource, then ResourceSpecification_tail is empty (and the try-catch-finally statement is not itself a try-with-resources statement).
+If the resource specification declares one resource, then ResourceSpecification_tail is empty (and the try-catch-finally statement is not itself a try-with-resources statement).
 
-If the ResourceSpecification declares n > 1 resources, then ResourceSpecification_tail consists of the 2nd, 3rd, ..., n'th resources declared in ResourceSpecification, in the same order (and the try-catch-finally statement is itself a try-with-resources statement).
+If the resource specification declares n > 1 resources, then ResourceSpecification_tail consists of the 2nd, 3rd, ..., n'th resources declared in resource specification, in the same order (and the try-catch-finally statement is itself a try-with-resources statement).
 
 Reachability and definite assignment rules for the basic try-with-resources statement are implicitly specified by the translation above.
 
@@ -1606,21 +1594,21 @@ The meaning of an extended try-with-resources statement:
 
 try ResourceSpecification
     Block
-Catchesopt
-Finallyopt
+[Catches]
+[Finally]
 
 
-is given by the following translation to a basic try-with-resources statement (§14.20.3.1) nested inside a try-catch or try-finally or try-catch-finally statement:
+is given by the following translation to a basic try-with-resources statement nested inside a try-catch or try-finally or try-catch-finally statement:
 
 try {
     try ResourceSpecification
         Block
 }
-Catchesopt
-Finallyopt
+[Catches]
+[Finally]
 
 
-The effect of the translation is to put the ResourceSpecification "inside" the try statement. This allows a catch clause of an extended try-with-resources statement to catch an exception due to the automatic initialization or closing of any resource.
+The effect of the translation is to put the resource specification "inside" the try statement. This allows a catch clause of an extended try-with-resources statement to catch an exception due to the automatic initialization or closing of any resource.
 
 Furthermore, all resources will have been closed (or attempted to be closed) by the time the finally block is executed, in keeping with the intent of the finally keyword.
 
@@ -1764,9 +1752,7 @@ The try block is reachable iff the try statement is reachable.
 
 A catch block C is reachable iff both of the following are true:
 
-Either the type of C's parameter is an unchecked exception type or Throwable; or some expression or throw statement in the try block is reachable and can throw a checked exception whose type is assignable to the parameter of the catch clause C.
-
-An expression is reachable iff the innermost statement containing it is reachable.
+Either the type of C's parameter is an unchecked exception type or Exception or a superclass of Exception, or some expression or throw statement in the try block is reachable and can throw a checked exception whose type is assignable to the type of C's parameter. (An expression is reachable iff the innermost statement containing it is reachable.)
 
 See §15.6 for normal and abrupt completion of expressions.
 
@@ -1818,4 +1804,4 @@ if (DEBUG) { x=3; }
 
 The idea is that it should be possible to change the value of DEBUG from false to true or from true to false and then compile the code correctly with no other changes to the program text.
 
-This ability to "conditionally compile" has a significant impact on, and relationship to, binary compatibility (§13). If a set of classes that use such a "flag" variable are compiled and conditional code is omitted, it does not suffice later to distribute just a new version of the class or interface that contains the definition of the flag. A change to the value of a flag is, therefore, not binary compatible with pre-existing binaries (§13.4.9). (There are other reasons for such incompatibility as well, such as the use of constants in case labels in switch statements; see §13.4.9.)
+This ability to "conditionally compile" has no relationship to binary compatibility (§13 (Binary Compatibility)). If a set of classes that use such a "flag" variable are compiled and conditional code is omitted, it does not suffice later to distribute just a new version of the class or interface that contains the definition of the flag. The classes that use the flag will not see its new value, so their behavior may be surprising, but no LinkageError will occur. A change to the value of a flag is, therefore, binary compatible with pre-existing binaries, but not behaviorally compatible.

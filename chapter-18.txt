@@ -1,0 +1,915 @@
+Chapter 18. Type Inference
+
+Table of Contents
+
+18.1. Concepts and Notation
+18.1.1. Inference Variables
+18.1.2. Constraint Formulas
+18.1.3. Bounds
+18.2. Reduction
+18.2.1. Expression Compatibility Constraints
+18.2.2. Type Compatibility Constraints
+18.2.3. Subtyping Constraints
+18.2.4. Type Equality Constraints
+18.2.5. Checked Exception Constraints
+18.3. Incorporation
+18.3.1. Complementary Pairs of Bounds
+18.3.2. Bounds Involving Capture Conversion
+18.4. Resolution
+18.5. Uses of Inference
+18.5.1. Invocation Applicability Inference
+18.5.2. Invocation Type Inference
+18.5.3. Functional Interface Parameterization Inference
+18.5.4. More Specific Method Inference
+
+A variety of compile-time analyses require reasoning about types that are not yet known. Principal among these are generic method applicability testing (§18.5.1) and generic method invocation type inference (§18.5.2). In general, we refer to the process of reasoning about unknown types as type inference.
+
+At a high level, type inference can be decomposed into three processes:
+
+Reduction takes a compatibility assertion about an expression or type, called a constraint formula, and reduces it to a set of bounds on inference variables. Often, a constraint formula reduces to other constraint formulas, which must be recursively reduced. A procedure is followed to identify these additional constraint formulas and, ultimately, to express via a bound set the conditions under which the choices for inferred types would render each constraint formula true.
+
+Incorporation maintains a set of inference variable bounds, ensuring that these are consistent as new bounds are added. Because the bounds on one variable can sometimes impact the possible choices for another variable, this process propagates bounds between such interdependent variables.
+
+Resolution examines the bounds on an inference variable and determines an instantiation that is compatible with those bounds. It also decides the order in which interdependent inference variables are to be resolved.
+
+These processes interact closely: reduction can trigger incorporation; incorporation may lead to further reduction; and resolution may cause further incorporation.
+
+§18.1 more precisely defines the concepts used as intermediate results and the notation used to express them.
+
+§18.2 describes reduction in detail.
+
+§18.3 describes incorporation in detail.
+
+§18.4 describes resolution in detail.
+
+§18.5 defines how these inference tools are used to solve certain compile-time analysis problems.
+
+In comparison to the Java SE 7 Edition of The Java® Language Specification, important changes to inference include:
+
+Adding support for lambda expressions and method references as method invocation arguments.
+
+Generalizing to define inference in terms of poly expressions, which may not have well-defined types until after inference is complete. This has the notable effect of improving inference for nested generic method and diamond constructor invocations.
+
+Describing how inference is used to handle wildcard-parameterized functional interface target types and most specific method analysis.
+
+Clarifying the distinction between invocation applicability testing (which involves only the invocation arguments) and invocation type inference (which incorporates a target type).
+
+Delaying resolution of all inference variables, even those with lower bounds, until invocation type inference, in order to get better results.
+
+Improving inference behavior for interdependent (or self-dependent) variables.
+
+Eliminating bugs and potential sources of confusion. This revision more carefully and precisely handles the distinction between specific conversion contexts and subtyping, and describes reduction by paralleling the corresponding non-inference relations. Where there are intentional departures from the non-inference relations, these are explicitly identified as such.
+
+Laying a foundation for future evolution: enhancements to or new applications of inference will be easier to integrate into the specification.
+
+18.1. Concepts and Notation
+
+This section defines inference variables, constraint formulas, and bounds, as the terms will be used throughout this chapter. It also presents notation.
+
+18.1.1. Inference Variables
+
+Inference variables are meta-variables for types - that is, they are special names that allow abstract reasoning about types. To distinguish them from type variables, inference variables are represented with Greek letters, principally α.
+
+The term "type" is used loosely in this chapter to include type-like syntax that contains inference variables. The term proper type excludes such "types" that mention inference variables. Assertions that involve inference variables are assertions about every proper type that can be produced by replacing each inference variable with a proper type.
+
+18.1.2. Constraint Formulas
+
+Constraint formulas are assertions of compatibility or subtyping that may involve inference variables. The formulas may take one of the following forms:
+
+‹Expression → T›: An expression is compatible in a loose invocation context with type T (§5.3).
+
+‹S → T›: A type S is compatible in a loose invocation context with type T (§5.3).
+
+‹S <: T›: A reference type S is a subtype of a reference type T (§4.10).
+
+‹S <= T›: A type argument S is contained by a type argument T (§4.5.1).
+
+‹S = T›: A type S is the same as a type T (§4.3.4), or a type argument S is the same as type argument T.
+
+‹LambdaExpression →throws T›: The checked exceptions thrown by the body of the LambdaExpression are declared by the throws clause of the function type derived from T.
+
+‹MethodReference →throws T›: The checked exceptions thrown by the referenced method are declared by the throws clause of the function type derived from T.
+
+Examples of constraint formulas:
+
+From Collections.singleton("hi"), we have the constraint formula ‹"hi" → α›. Through reduction, this will become the constraint formula: ‹String <: α›.
+
+From Arrays.asList(1, 2.0), we have the constraint formulas ‹1 → α› and ‹2.0 → α›. Through reduction, these will become the constraint formulas ‹int → α› and ‹double → α›, and then ‹Integer <: α› and ‹Double <: α›.
+
+From the target type of the constructor invocation List<Thread> lt = new ArrayList<>(), we have the constraint formula ‹ArrayList<α> → List<Thread>›. Through reduction, this will become the constraint formula ‹α <= Thread›, and then ‹α = Thread›.
+
+18.1.3. Bounds
+
+During the inference process, a set of bounds on inference variables is maintained. A bound has one of the following forms:
+
+S = T, where at least one of S or T is an inference variable: S is the same as T.
+
+S <: T, where at least one of S or T is an inference variable: S is a subtype of T.
+
+false: No valid choice of inference variables exists.
+
+G<α1, ..., αn> = capture(G<A1, ..., An>): The variables α1, ..., αn represent the result of capture conversion (§5.1.10) applied to G<A1, ..., An> (where A1, ..., An may be types or wildcards and may mention inference variables).
+
+throws α: The inference variable α appears in a throws clause.
+
+A bound is satisfied by an inference variable substitution if, after applying the substitution, the assertion is true. The bound false can never be satisfied.
+
+Some bounds relate an inference variable to a proper type. Let T be a proper type. Given a bound of the form α = T or T = α, we say T is an instantiation of α. Similarly, given a bound of the form α <: T, we say T is a proper upper bound of α, and given a bound of the form T <: α, we say T is a proper lower bound of α.
+
+Other bounds relate two inference variables, or an inference variable to a type that contains inference variables. Such bounds, of the form S = T or S <: T, are called dependencies.
+
+A bound of the form G<α1, ..., αn> = capture(G<A1, ..., An>) indicates that α1, ..., αn are placeholders for the results of capture conversion. This is necessary because capture conversion can only be performed on a proper type, and the inference variables in A1, ..., An may not yet be resolved.
+
+A bound of the form throws α is purely informational: it directs resolution to optimize the instantiation of α so that, if possible, it is not a checked exception type.
+
+An important intermediate result of inference is a bound set. It is sometimes convenient to refer to an empty bound set with the symbol true; this is merely out of convenience, and the two are interchangeable.
+
+Examples of bound sets:
+
+{ α = String } contains a single bound, instantiating α as String.
+
+{ Integer <: α, Double <: α, α <: Object } describes two proper lower bounds and one proper upper bound for α.
+
+{ α <: Iterable<?>, β <: Object, α <: List<β> } describes a proper upper bound for each of α and β, along with a dependency between them.
+
+{ } contains no bounds nor dependencies, and can be referred to as true.
+
+{ false } expresses the fact that no satisfactory instantiation exists.
+
+When inference begins, a bound set is typically generated from a list of type parameter declarations P1, ..., Pp and associated inference variables α1, ..., αp. Such a bound set is constructed as follows. For each l (1 ≤ l ≤ p):
+
+If Pl has no TypeBound, the bound αl <: Object appears in the set.
+
+Otherwise, for each type T delimited by & in the TypeBound, the bound αl <: T[P1:=α1, ..., Pp:=αp] appears in the set; if this results in no proper upper bounds for αl (only dependencies), then the bound αl <: Object also appears in the set.
+
+18.2. Reduction
+
+Reduction is the process by which a set of constraint formulas (§18.1.2) is simplified to produce a bound set (§18.1.3).
+
+Each constraint formula is considered in turn. The rules in this section specify how the formula is reduced to one or both of:
+
+A bound or bound set, which is to be incorporated with the "current" bound set. Initially, the current bound set is empty.
+
+Further constraint formulas, which are to be reduced recursively.
+
+Reduction completes when no further constraint formulas remain to be reduced.
+
+The results of a reduction step are always soundness-preserving: if an inference variable instantiation satisfies the reduced constraints and bounds, it will also satisfy the original constraint. On the other hand, reduction is not completeness-preserving: there may exist inference variable instantiations that satisfy the original constraint but do not satisfy a reduced constraint or bound. This is due to inherent limitations of the algorithm, along with a desire to avoid undue complexity. One effect is that there are expressions for which type argument inference fails to find a solution, but that can be well-typed if the programmer explicitly inserts appropriate types.
+
+18.2.1. Expression Compatibility Constraints
+
+A constraint formula of the form ‹Expression → T› is reduced as follows:
+
+If T is a proper type, the constraint reduces to true if the expression is compatible in a loose invocation context with T (§5.3), and false otherwise.
+
+Otherwise, if the expression is a standalone expression (§15.2) of type S, the constraint reduces to ‹S → T›.
+
+Otherwise, the expression is a poly expression (§15.2). The result depends on the form of the expression:
+
+If the expression is a parenthesized expression of the form ( Expression' ), the constraint reduces to ‹Expression' → T›.
+
+If the expression is a class instance creation expression or a method invocation expression, the constraint reduces to the bound set B3 which would be used to determine the expression's invocation type when targeting T, as defined in §18.5.2. (For a class instance creation expression, the corresponding "method" used for inference is defined in §15.9.3).
+
+This bound set may contain new inference variables, as well as dependencies between these new variables and the inference variables in T.
+
+If the expression is a conditional expression of the form e1 ? e2 : e3, the constraint reduces to two constraint formulas, ‹e2 → T› and ‹e3 → T›.
+
+If the expression is a lambda expression or a method reference expression, the result is specified below.
+
+By treating nested generic method invocations as poly expressions, we improve the behavior of inference for nested invocations. For example, the following is illegal in Java SE 7 but legal in Java SE 8:
+
+ProcessBuilder b = new ProcessBuilder(Collections.emptyList());
+  // ProcessBuilder's constructor expects a List<String>
+
+
+When both the outer and the nested invocation require inference, the problem is more difficult. For example:
+
+List<String> ls = new ArrayList<>(Collections.emptyList());
+
+Our approach is to "lift" the bounds inferred for the nested invocation (simply { α <: Object } in the case of emptyList) into the outer inference process (in this case, trying to infer β where the constructor is for type ArrayList<β>). We also infer dependencies between the nested inference variables and the outer inference variables (the constraint ‹List<α> → Collection<β>› would reduce to the dependency α = β). In this way, resolution of the inference variables in the nested invocation can wait until additional information can be inferred from the outer invocation (based on the assignment target, β = String).
+
+A constraint formula of the form ‹LambdaExpression → T›, where T mentions at least one inference variable, is reduced as follows:
+
+If T is not a functional interface type (§9.8), the constraint reduces to false.
+
+Otherwise, let T' be the ground target type derived from T, as specified in §15.27.3. If §18.5.3 is used to derive a functional interface type which is parameterized, then the test that F<A'1, ..., A'm> is a subtype of F<A1, ..., Am> is not performed (instead, it is asserted with a constraint formula below). Let the target function type for the lambda expression be the function type of T'. Then:
+
+If no valid function type can be found, the constraint reduces to false.
+
+Otherwise, the congruence of LambdaExpression with the target function type is asserted as follows:
+
+If the number of lambda parameters differs from the number of parameter types of the function type, the constraint reduces to false.
+
+If the lambda expression is implicitly typed and one or more of the function type's parameter types is not a proper type, the constraint reduces to false.
+
+This condition never arises in practice, due to the handling of implicitly typed lambda expressions in §18.5.1 and the substitution applied to the target type in §18.5.2.
+
+If the function type's result is void and the lambda body is neither a statement expression nor a void-compatible block, the constraint reduces to false.
+
+If the function type's result is not void and the lambda body is a block that is not value-compatible, the constraint reduces to false.
+
+Otherwise, the constraint reduces to all of the following constraint formulas:
+
+If the lambda parameters have explicitly declared types F1, ..., Fn and the function type has parameter types G1, ..., Gn, then i) for all i (1 ≤ i ≤ n), ‹Fi = Gi›, and ii) ‹T' <: T›.
+
+If the function type's return type is a (non-void) type R, assume the lambda's parameter types are the same as the function type's parameter types. Then:
+
+If R is a proper type, and if the lambda body or some result expression in the lambda body is not compatible in an assignment context with R, then false.
+
+Otherwise, if R is not a proper type, then where the lambda body has the form Expression, the constraint ‹Expression → R›; or where the lambda body is a block with result expressions e1, ..., em, for all i (1 ≤ i ≤ m), ‹ei → R›.
+
+The key piece of information to derive from a compatibility constraint involving a lambda expression is the set of bounds on inference variables appearing in the target function type's return type. This is crucial, because functional interfaces are often generic, and many methods operating on these types are generic, too.
+
+In the simplest case, a lambda expression may simply provide a lower bound for an inference variable:
+
+<T> List<T> makeThree(Factory<T> factory) { ... }
+String s = makeThree(() -> "abc").get(2);
+
+
+In more complex cases, a result expression may be a poly expression - perhaps even another lambda expression - and so the inference variable might be passed through multiple constraint formulas with different target types before a bound is produced.
+
+Most of the work described in this section precedes assertions about the result expressions; its purpose is to derive the lambda expression's function type, and to check for expressions that are clearly disqualified from compatibility.
+
+We do not attempt to produce bounds on inference variables that appear in the target function type's throws clause. This is because exception containment is not part of compatibility (§15.27.3) - in particular, it must not influence method applicability (§18.5.1). However, we do get bounds on these variables later, because invocation type inference (§18.5.2) produces exception containment constraint formulas (§18.2.5).
+
+Note that if the target type is an inference variable, or if the target type's parameter types contain inference variables, we produce false. During invocation type inference (§18.5.2), extra substitutions are performed in order to instantiate these inference variables, thus avoiding this scenario. (In other words, reduction will, in practice, never be "invoked" with a target type of one of these forms.)
+
+Finally, note that the result expressions of a lambda expression are required by §15.27.3 to be compatible in an assignment context with the target type's return type, R. If R is a proper type, such as Byte derived from Function<α,Byte>, then assignability is easy enough to test, and reduction does so above. If R is not a proper type, such as α derived from Function<String,α>, then we make the simplifying assumption above that loose invocation compatibility will be sufficient. The difference between assignment compatibility and loose invocation compatibility is that only assignment allows narrowing of constant expressions, such as Byte b = 100;. Consequently, our simplifying assumption is not completeness-preserving: given target return type α and an integer literal result expression 100, it is conceivable that α could be instantiated to Byte, but reduction will not in fact produce such a bound.
+
+A constraint formula of the form ‹MethodReference → T›, where T mentions at least one inference variable, is reduced as follows:
+
+If T is not a functional interface type, or if T is a functional interface type that does not have a function type (§9.9), the constraint reduces to false.
+
+Otherwise, if there does not exist a potentially applicable method for the method reference when targeting T, the constraint reduces to false.
+
+Otherwise, if the method reference is exact (§15.13.1), then let P1, ..., Pn be the parameter types of the function type of T, and let F1, ..., Fk be the parameter types of the potentially applicable method. The constraint reduces to a new set of constraints, as follows:
+
+In the special case where n = k+1, the parameter of type P1 is to act as the target reference of the invocation. The method reference expression necessarily has the form ReferenceType :: [TypeArguments] Identifier. The constraint reduces to ‹P1 <: ReferenceType› and, for all i (2 ≤ i ≤ n), ‹Pi → Fi-1›.
+
+In all other cases, n = k, and the constraint reduces to, for all i (1 ≤ i ≤ n), ‹Pi → Fi›.
+
+If the function type's result is not void, let R be its return type. Then, if the result of the potentially applicable compile-time declaration is void, the constraint reduces to false. Otherwise, the constraint reduces to ‹R' → R›, where R' is the result of applying capture conversion (§5.1.10) to the return type of the potentially applicable compile-time declaration.
+
+Otherwise, the method reference is inexact, and:
+
+If one or more of the function type's parameter types is not a proper type, the constraint reduces to false.
+
+This condition never arises in practice, due to the handling of inexact method references in §18.5.1 and the substitution applied to the target type in §18.5.2.
+
+Otherwise, a search for a compile-time declaration is performed, as specified in §15.13.1. If there is no compile-time declaration for the method reference, the constraint reduces to false. Otherwise, there is a compile-time declaration, and:
+
+If the result of the function type is void, the constraint reduces to true.
+
+Otherwise, if the method reference expression elides TypeArguments, and the compile-time declaration is a generic method, and the return type of the compile-time declaration mentions at least one of the method's type parameters, then the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type when targeting the return type of the function type, as defined in §18.5.2. B3 may contain new inference variables, as well as dependencies between these new variables and the inference variables in T.
+
+Otherwise, let R be the return type of the function type, and let R' be the result of applying capture conversion (§5.1.10) to the return type of the invocation type (§15.12.2.6) of the compile-time declaration. If R' is void, the constraint reduces to false; otherwise, the constraint reduces to ‹R' → R›.
+
+The strategy used to determine a return type for a generic referenced method follows the same pattern as for generic method invocations (§18.2.1). This may involve "lifting" bounds into the outer context and inferring dependencies between the two sets of inference variables.
+
+18.2.2. Type Compatibility Constraints
+
+A constraint formula of the form ‹S → T› is reduced as follows:
+
+If S and T are proper types, the constraint reduces to true if S is compatible in a loose invocation context with T (§5.3), and false otherwise.
+
+Otherwise, if S is a primitive type, let S' be the result of applying boxing conversion (§5.1.7) to S. Then the constraint reduces to ‹S' → T›.
+
+Otherwise, if T is a primitive type, let T' be the result of applying boxing conversion (§5.1.7) to T. Then the constraint reduces to ‹S = T'›.
+
+Otherwise, if T is a parameterized type of the form G<T1, ..., Tn>, and there exists no type of the form G<...> that is a supertype of S, but the raw type G is a supertype of S, then the constraint reduces to true.
+
+Otherwise, if T is an array type of the form G<T1, ..., Tn>[]k, and there exists no type of the form G<...>[]k that is a supertype of S, but the raw type G[]k is a supertype of S, then the constraint reduces to true. (The notation []k indicates an array type of k dimensions.)
+
+Otherwise, the constraint reduces to ‹S <: T›.
+
+The fourth and fifth cases are implicit uses of unchecked conversion (§5.1.9). These, along with any use of unchecked conversion in the first case, may result in compile-time unchecked warnings, and may influence a method's invocation type (§15.12.2.6).
+
+Boxing T to T' is not completeness-preserving; for example, if T were long, S might be instantiated to Integer, which is not a subtype of Long but could be unboxed and then widened to long. We avoid this problem in most cases by giving special treatment to inference-variable return types that we know are already constrained to be certain boxed primitive types. See §18.5.2.
+
+Similarly, the treatment of unchecked conversion sacrifices completeness in cases in which T is not a parameterized type (for example, if T is an inference variable). It is not usually clear in such situations whether the unchecked conversion is necessary or not. Since unchecked conversions introduce unchecked warnings, inference prefers to avoid them unless it is clearly necessary.
+
+18.2.3. Subtyping Constraints
+
+A constraint formula of the form ‹S <: T› is reduced as follows:
+
+If S and T are proper types, the constraint reduces to true if S is a subtype of T (§4.10), and false otherwise.
+
+Otherwise, if S is the null type, the constraint reduces to true.
+
+Otherwise, if T is the null type, the constraint reduces to false.
+
+Otherwise, if S is an inference variable, α, the constraint reduces to the bound α <: T.
+
+Otherwise, if T is an inference variable, α, the constraint reduces to the bound S <: α.
+
+Otherwise, the constraint is reduced according to the form of T:
+
+If T is a parameterized class or interface type, or an inner class type of a parameterized class or interface type (directly or indirectly), let A1, ..., An be the type arguments of T. Among the supertypes of S, a corresponding class or interface type is identified, with type arguments B1, ..., Bn. If no such type exists, the constraint reduces to false. Otherwise, the constraint reduces to the following new constraints: for all i (1 ≤ i ≤ n), ‹Bi <= Ai›.
+
+If T is any other class or interface type, then the constraint reduces to true if T is among the supertypes of S, and false otherwise.
+
+If T is an array type, T'[], then among the supertypes of S that are array types, a most specific type is identified, S'[] (this may be S itself). If no such array type exists, the constraint reduces to false. Otherwise:
+
+If neither S' nor T' is a primitive type, the constraint reduces to ‹S' <: T'›.
+
+Otherwise, the constraint reduces to true if S' and T' are the same primitive type, and false otherwise.
+
+If T is a type variable, there are three cases:
+
+If S is an intersection type of which T is an element, the constraint reduces to true.
+
+Otherwise, if T has a lower bound, B, the constraint reduces to ‹S <: B›.
+
+Otherwise, the constraint reduces to false.
+
+If T is an intersection type, I1 & ... & In, the constraint reduces to the following new constraints: for all i (1 ≤ i ≤ n), ‹S <: Ii›.
+
+A constraint formula of the form ‹S <= T›, where S and T are type arguments (§4.5.1), is reduced as follows:
+
+If T is a type:
+
+If S is a type, the constraint reduces to ‹S = T›.
+
+If S is a wildcard, the constraint reduces to false.
+
+If T is a wildcard of the form ?, the constraint reduces to true.
+
+If T is a wildcard of the form ? extends T':
+
+If S is a type, the constraint reduces to ‹S <: T'›.
+
+If S is a wildcard of the form ?, the constraint reduces to ‹Object <: T'›.
+
+If S is a wildcard of the form ? extends S', the constraint reduces to ‹S' <: T'›.
+
+If S is a wildcard of the form ? super S', the constraint reduces to ‹Object = T'›.
+
+If T is a wildcard of the form ? super T':
+
+If S is a type, the constraint reduces to ‹T' <: S›.
+
+If S is a wildcard of the form ? super S', the constraint reduces to ‹T' <: S'›.
+
+Otherwise, the constraint reduces to false.
+
+18.2.4. Type Equality Constraints
+
+A constraint formula of the form ‹S = T›, where S and T are types, is reduced as follows:
+
+If S and T are proper types, the constraint reduces to true if S is the same as T (§4.3.4), and false otherwise.
+
+Otherwise, if S or T is the null type, the constraint reduces to false.
+
+Otherwise, if S is an inference variable, α, and T is not a primitive type, the constraint reduces to the bound α = T.
+
+Otherwise, if T is an inference variable, α, and S is not a primitive type, the constraint reduces to the bound S = α.
+
+Otherwise, if S and T are class or interface types with the same erasure, where S has type arguments B1, ..., Bn and T has type arguments A1, ..., An, the constraint reduces to the following new constraints: for all i (1 ≤ i ≤ n), ‹Bi = Ai›.
+
+Otherwise, if S and T are array types, S'[] and T'[], the constraint reduces to ‹S' = T'›.
+
+Otherwise, the constraint reduces to false.
+
+Note that we do not address intersection types above, because it is impossible for reduction to encounter an intersection type that is not a proper type.
+
+A constraint formula of the form ‹S = T›, where S and T are type arguments (§4.5.1), is reduced as follows:
+
+If S and T are types, the constraint is reduced as described above.
+
+If S has the form ? and T has the form ?, the constraint reduces to true.
+
+If S has the form ? and T has the form ? extends T', the constraint reduces to ‹Object = T'›.
+
+If S has the form ? extends S' and T has the form ?, the constraint reduces to ‹S' = Object›.
+
+If S has the form ? extends S' and T has the form ? extends T', the constraint reduces to ‹S' = T'›.
+
+If S has the form ? super S' and T has the form ? super T', the constraint reduces to ‹S' = T'›.
+
+Otherwise, the constraint reduces to false.
+
+18.2.5. Checked Exception Constraints
+
+A constraint formula of the form ‹LambdaExpression →throws T› is reduced as follows:
+
+If T is not a functional interface type (§9.8), the constraint reduces to false.
+
+Otherwise, let the target function type for the lambda expression be determined as specified in §15.27.3. If no valid function type can be found, the constraint reduces to false.
+
+Otherwise, if the lambda expression is implicitly typed, and one or more of the function type's parameter types is not a proper type, the constraint reduces to false.
+
+This condition never arises in practice, due to the substitution applied to the target type in §18.5.2.
+
+Otherwise, if the function type's return type is neither void nor a proper type, the constraint reduces to false.
+
+This condition never arises in practice, due to the substitution applied to the target type in §18.5.2.
+
+Otherwise, let E1, ..., En be the types in the function type's throws clause that are not proper types. If the lambda expression is implicitly typed, let its parameter types be the function type's parameter types. If the lambda body is a poly expression or a block containing a poly result expression, let the targeted return type be the function type's return type. Let X1, ..., Xm be the checked exception types that the lambda body can throw (§11.2). Then there are two cases:
+
+If n = 0 (the function type's throws clause consists only of proper types), then if there exists some i (1 ≤ i ≤ m) such that Xi is not a subtype of any proper type in the throws clause, the constraint reduces to false; otherwise, the constraint reduces to true.
+
+If n > 0, the constraint reduces to a set of subtyping constraints: for all i (1 ≤ i ≤ m), if Xi is not a subtype of any proper type in the throws clause, then the constraints include, for all j (1 ≤ j ≤ n), ‹Xi <: Ej›. In addition, for all j (1 ≤ j ≤ n), the constraint reduces to the bound throws Ej.
+
+A constraint formula of the form ‹MethodReference →throws T› is reduced as follows:
+
+If T is not a functional interface type, or if T is a functional interface type but does not have a function type (§9.9), the constraint reduces to false.
+
+Otherwise, let the target function type for the method reference expression be the function type of T. If the method reference is inexact (§15.13.1) and one or more of the function type's parameter types is not a proper type, the constraint reduces to false.
+
+Otherwise, if the method reference is inexact and the function type's result is neither void nor a proper type, the constraint reduces to false.
+
+Otherwise, let E1, ..., En be the types in the function type's throws clause that are not proper types. Let X1, ..., Xm be the checked exceptions in the throws clause of the invocation type of the method reference's compile-time declaration (§15.13.2) (as derived from the function type's parameter types and return type). Then there are two cases:
+
+If n = 0 (the function type's throws clause consists only of proper types), then if there exists some i (1 ≤ i ≤ m) such that Xi is not a subtype of any proper type in the throws clause, the constraint reduces to false; otherwise, the constraint reduces to true.
+
+If n > 0, the constraint reduces to a set of subtyping constraints: for all i (1 ≤ i ≤ m), if Xi is not a subtype of any proper type in the throws clause, then the constraints include, for all j (1 ≤ j ≤ n), ‹Xi <: Ej›. In addition, for all j (1 ≤ j ≤ n), the constraint reduces to the bound throws Ej.
+
+Constraints on checked exceptions are handled separately from constraints on return types, because return type compatibility influences applicability of methods (§18.5.1), while exceptions only influence the invocation type after overload resolution is complete (§18.5.2). This could be simplified by including exception compatibility in the definition of lambda expression compatibility (§15.27.3), but this would lead to possibly surprising cases in which exceptions that can be thrown by an explicitly typed lambda body change overload resolution.
+
+The exceptions thrown by a lambda body cannot be determined until i) the parameter types of the lambda are known, and ii) the target type of result expressions in the body is known. (The second requirement is to account for generic method invocations in which, for example, the same type parameter appears in the return type and the throws clause.) Hence, we require both of these, as derived from the target type T, to be proper types.
+
+One consequence is that lambda expressions returned from other lambda expressions cannot generate constraints from their thrown exceptions. These constraints can only be generated from top-level lambda expressions.
+
+Note that the handling of the case in which more than one inference variable appears in a function type's throws clause is not completeness-preserving. Either variable may, on its own, satisfy the constraint that each checked exception be declared, but we cannot be sure which one is intended. So, for predictability, we constrain them both.
+
+18.3. Incorporation
+
+As bound sets are constructed and grown during inference, it is possible that new bounds can be inferred based on the assertions of the original bounds. The process of incorporation identifies these new bounds and adds them to the bound set.
+
+Incorporation can happen in two scenarios. One scenario is that the bound set contains complementary pairs of bounds; this implies new constraint formulas, as specified in §18.3.1. The other scenario is that the bound set contains a bound involving capture conversion; this implies new bounds and may imply new constraint formulas, as specified in §18.3.2. In both scenarios, any new constraint formulas are reduced, and any new bounds are added to the bound set. This may trigger further incorporation; ultimately, the set will reach a fixed point and no further bounds can be inferred.
+
+If incorporation of a bound set has reached a fixed point, and the set does not contain the bound false, then the bound set has the following properties:
+
+For each combination of a proper lower bound L and a proper upper bound U of an inference variable, L <: U.
+
+If every inference variable mentioned by a bound has an instantiation, the bound is satisfied by the corresponding substitution.
+
+Given a dependency α = β, every bound of α matches a bound of β, and vice versa.
+
+Given a dependency α <: β, every lower bound of α is a lower bound of β, and every upper bound of β is an upper bound of α.
+
+The assertion that incorporation reaches a fixed point oversimplifies the matter slightly. Building on the work of Kennedy and Pierce, On Decidability of Nominal Subtyping with Variance, this property can be proven by making the argument that the set of types that may appear in the bound set is finite. The argument relies on two assumptions:
+
+New capture variables are not generated when reducing subtyping constraints (§18.2.3).
+
+Expansive inheritance paths are not pursued.
+
+This specification does not currently guarantee these properties (it is imprecise about the handling of wildcards when reducing subtyping constraints, and does not detect expansive inheritance paths), but may do so in a future version. (This is not a new problem: the Java subtyping algorithm is also at risk of non-termination.)
+
+18.3.1. Complementary Pairs of Bounds
+
+(In this section, S and T are inference variables or types, and U is a proper type. For conciseness, a bound of the form α = T may also match a bound of the form T = α.)
+
+When a bound set contains a pair of bounds that match one of the following rules, a new constraint formula is implied:
+
+α = S and α = T imply ‹S = T›
+
+α = S and α <: T imply ‹S <: T›
+
+α = S and T <: α imply ‹T <: S›
+
+S <: α and α <: T imply ‹S <: T›
+
+α = U and S = T imply ‹S[α:=U] = T[α:=U]›
+
+α = U and S <: T imply ‹S[α:=U] <: T[α:=U]›
+
+When a bound set contains a pair of bounds α <: S and α <: T, and there exists a supertype of S of the form G<S1, ..., Sn> and a supertype of T of the form G<T1, ..., Tn> (for some generic class or interface, G), then for all i (1 ≤ i ≤ n), if Si and Ti are types (not wildcards), the constraint formula ‹Si = Ti› is implied.
+
+18.3.2. Bounds Involving Capture Conversion
+
+When a bound set contains a bound of the form G<α1, ..., αn> = capture(G<A1, ..., An>), new bounds are implied and new constraint formulas may be implied, as follows.
+
+Let P1, ..., Pn represent the type parameters of G and let B1, ..., Bn represent the bounds of these type parameters. Let θ represent the substitution [P1:=α1, ..., Pn:=αn]. Let R be a type that is not an inference variable (but is not necessarily a proper type).
+
+A set of bounds on α1, ..., αn is implied, constructed from the declared bounds of P1, ..., Pn as specified in §18.1.3.
+
+In addition, for all i (1 ≤ i ≤ n):
+
+If Ai is not a wildcard, then the bound αi = Ai is implied.
+
+If Ai is a wildcard of the form ?:
+
+αi = R implies the bound false
+
+αi <: R implies the constraint formula ‹Bi θ <: R›
+
+R <: αi implies the bound false
+
+If Ai is a wildcard of the form ? extends T:
+
+αi = R implies the bound false
+
+If Bi is Object, then αi <: R implies the constraint formula ‹T <: R›
+
+If T is Object, then αi <: R implies the constraint formula ‹Bi θ <: R›
+
+R <: αi implies the bound false
+
+If Ai is a wildcard of the form ? super T:
+
+αi = R implies the bound false
+
+αi <: R implies the constraint formula ‹Bi θ <: R›
+
+R <: αi implies the constraint formula ‹R <: T›
+
+18.4. Resolution
+
+Given a bound set that does not contain the bound false, a subset of the inference variables mentioned by the bound set may be resolved. This means that a satisfactory instantiation may be added to the set for each inference variable, until all the requested variables have instantiations.
+
+Dependencies in the bound set may require that the variables be resolved in a particular order, or that additional variables be resolved. Dependencies are specified as follows:
+
+Given a bound of one of the following forms, where T is either an inference variable β or a type that mentions β:
+
+α = T
+
+α <: T
+
+T = α
+
+T <: α
+
+If α appears on the left-hand side of another bound of the form G<..., α, ...> = capture(G<...>), then β depends on the resolution of α. Otherwise, α depends on the resolution of β.
+
+An inference variable α appearing on the left-hand side of a bound of the form G<..., α, ...> = capture(G<...>) depends on the resolution of every other inference variable mentioned in this bound (on both sides of the = sign).
+
+An inference variable α depends on the resolution of an inference variable β if there exists an inference variable γ such that α depends on the resolution of γ and γ depends on the resolution of β.
+
+An inference variable α depends on the resolution of itself.
+
+Given a set of inference variables to resolve, let V be the union of this set and all variables upon which the resolution of at least one variable in this set depends.
+
+If every variable in V has an instantiation, then resolution succeeds and this procedure terminates.
+
+Otherwise, let { α1, ..., αn } be a non-empty subset of uninstantiated variables in V such that i) for all i (1 ≤ i ≤ n), if αi depends on the resolution of a variable β, then either β has an instantiation or there is some j such that β = αj; and ii) there exists no non-empty proper subset of { α1, ..., αn } with this property. Resolution proceeds by generating an instantiation for each of α1, ..., αn based on the bounds in the bound set:
+
+If the bound set does not contain a bound of the form G<..., αi, ...> = capture(G<...>) for all i (1 ≤ i ≤ n), then a candidate instantiation Ti is defined for each αi:
+
+If αi has one or more proper lower bounds, L1, ..., Lk, then Ti = lub(L1, ..., Lk) (§4.10.4).
+
+Otherwise, if the bound set contains throws αi, and the proper upper bounds of αi are, at most, Exception, Throwable, and Object, then Ti = RuntimeException.
+
+Otherwise, where αi has proper upper bounds U1, ..., Uk, Ti = glb(U1, ..., Uk) (§5.1.10).
+
+The bounds α1 = T1, ..., αn = Tn are incorporated with the current bound set.
+
+If the result does not contain the bound false, then the result becomes the new bound set, and resolution proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
+
+Otherwise, the result contains the bound false, so a second attempt is made to instantiate { α1, ..., αn } by performing the step below.
+
+If the bound set contains a bound of the form G<..., αi, ...> = capture(G<...>) for some i (1 ≤ i ≤ n), or;
+
+If the bound set produced in the step above contains the bound false;
+
+then let Y1, ..., Yn be fresh type variables whose bounds are as follows:
+
+For all i (1 ≤ i ≤ n), if αi has one or more proper lower bounds L1, ..., Lk, then let the lower bound of Yi be lub(L1, ..., Lk); if not, then Yi has no lower bound.
+
+For all i (1 ≤ i ≤ n), where αi has upper bounds U1, ..., Uk, let the upper bound of Yi be glb(U1 θ, ..., Uk θ), where θ is the substitution [α1:=Y1, ..., αn:=Yn].
+
+If the type variables Y1, ..., Yn do not have well-formed bounds (that is, a lower bound is not a subtype of an upper bound, or an intersection type is inconsistent), then resolution fails.
+
+Otherwise, for all i (1 ≤ i ≤ n), all bounds of the form G<..., αi, ...> = capture(G<...>) are removed from the current bound set, and the bounds α1 = Y1, ..., αn = Yn are incorporated.
+
+If the result does not contain the bound false, then the result becomes the new bound set, and resolution proceeds by selecting a new set of variables to instantiate (if necessary), as described above.
+
+Otherwise, the result contains the bound false, and resolution fails.
+
+The first method of instantiating an inference variable derives the instantiation from that variable's bounds. Sometimes, however, complex dependencies mean that the result is not within the variable's bounds. In that case, a different method of instantiation is performed, analogous to capture conversion (§5.1.10): fresh type variables are introduced, with bounds derived from the bounds of the inference variables. Note that the lower bounds of these "capture" variables are computed using only proper types: this is important in order to avoid attempts to perform typing computations on uninstantiated type variables.
+
+18.5. Uses of Inference
+
+Using the inference processes defined above, the following analyses are performed at compile time.
+
+18.5.1. Invocation Applicability Inference
+
+Given a method invocation that provides no explicit type arguments, the process to determine whether a potentially applicable generic method m is applicable is as follows:
+
+Where P1, ..., Pp (p ≥ 1) are the type parameters of m, let α1, ..., αp be inference variables, and let θ be the substitution [P1:=α1, ..., Pp:=αp].
+
+An initial bound set, B0, is constructed from the declared bounds of P1, ..., Pp, as described in §18.1.3.
+
+For all i (1 ≤ i ≤ p), if Pi appears in the throws clause of m, then the bound throws αi is implied. These bounds, if any, are incorporated with B0 to produce a new bound set, B1.
+
+A set of constraint formulas, C, is constructed as follows.
+
+Let F1, ..., Fn be the formal parameter types of m, and let e1, ..., ek be the actual argument expressions of the invocation. Then:
+
+To test for applicability by strict invocation:
+
+If k ≠ n, or if there exists an i (1 ≤ i ≤ n) such that ei is pertinent to applicability (§15.12.2.2) and either i) ei is a standalone expression of a primitive type but Fi is a reference type, or ii) Fi is a primitive type but ei is not a standalone expression of a primitive type; then the method is not applicable and there is no need to proceed with inference.
+
+Otherwise, C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → Fi θ›.
+
+To test for applicability by loose invocation:
+
+If k ≠ n, the method is not applicable and there is no need to proceed with inference.
+
+Otherwise, C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → Fi θ›.
+
+To test for applicability by variable arity invocation:
+
+Let F'1, ..., F'k be the first k variable arity parameter types of m (§15.12.2.4). C includes, for all i (1 ≤ i ≤ k) where ei is pertinent to applicability, ‹ei → F'i θ›.
+
+C is reduced (§18.2) and the resulting bounds are incorporated with B1 to produce a new bound set, B2.
+
+Finally, the method m is applicable if B2 does not contain the bound false and resolution of all the inference variables in B2 succeeds (§18.4).
+
+Consider the following method invocation and assignment:
+
+List<Number> ln = Arrays.asList(1, 2.0);
+
+A most specific applicable method for the invocation must be identified as described in §15.12. The only potentially applicable method (§15.12.2.1) is declared as follows:
+
+public static <T> List<T> asList(T... a)
+
+Trivially (because of its arity), this method is neither applicable by strict invocation (§15.12.2.2) nor applicable by loose invocation (§15.12.2.3). But since there are no other candidates, in a third phase the method is checked for applicability by variable arity invocation.
+
+The initial bound set, B, is a trivial upper bound for a single inference variable, α:
+
+{ α <: Object }
+
+The initial constraint formula set is as follows:
+
+{ ‹1 → α›, ‹2.0 → α› }
+
+These are reduced to a new bound set, B1:
+
+{ α <: Object, Integer <: α, Double <: α }
+
+Then, to test whether the method is applicable, we attempt to resolve these bounds. We succeed, producing the rather complex instantiation
+
+α = Number & Comparable<? extends Number & Comparable<?>>
+
+We have thus demonstrated that the method is applicable; since no other candidates exist, it is the most specific applicable method. Still, the type of the method invocation, and its compatibility with the target type in the assignment, is not determined until further inference can occur, as described in the next section.
+
+18.5.2. Invocation Type Inference
+
+Given a method invocation that provides no explicit type arguments, and a corresponding most specific applicable generic method m, the process to infer the invocation type (§15.12.2.6) of the chosen method is as follows:
+
+Let θ be the substitution [P1:=α1, ..., Pp:=αp] defined in §18.5.1 to replace the type parameters of m with inference variables.
+
+Let B2 be the bound set produced by reduction in order to demonstrate that m is applicable in §18.5.1. (While it was necessary in §18.5.1 to demonstrate that the inference variables in B2 could be resolved, in order to establish applicability, the instantiations produced by this resolution step are not considered part of B2.)
+
+If the invocation is not a poly expression, let the bound set B3 be the same as B2.
+
+If the invocation is a poly expression, let the bound set B3 be derived from B2 as follows. Let R be the return type of m, let T be the invocation's target type, and then:
+
+If unchecked conversion was necessary for the method to be applicable during constraint set reduction in §18.5.1, the constraint formula ‹|R| → T› is reduced and incorporated with B2.
+
+Otherwise, if R θ is a parameterized type, G<A1, ..., An>, and one of A1, ..., An is a wildcard, then, for fresh inference variables β1, ..., βn, the constraint formula ‹G<β1, ..., βn> → T› is reduced and incorporated, along with the bound G<β1, ..., βn> = capture(G<A1, ..., An>), with B2.
+
+Otherwise, if R θ is an inference variable α, and one of the following is true:
+
+T is a reference type, but is not a wildcard-parameterized type, and either i) B2 contains a bound of one of the forms α = S or S <: α, where S is a wildcard-parameterized type, or ii) B2 contains two bounds of the forms S1 <: α and S2 <: α, where S1 and S2 have supertypes that are two different parameterizations of the same generic class or interface.
+
+T is a parameterization of a generic class or interface, G, and B2 contains a bound of one of the forms α = S or S <: α, where there exists no type of the form G<...> that is a supertype of S, but the raw type |G<...>| is a supertype of S.
+
+T is a primitive type, and one of the primitive wrapper classes mentioned in §5.1.7 is an instantiation, upper bound, or lower bound for α in B2.
+
+then α is resolved in B2, and where the capture of the resulting instantiation of α is U, the constraint formula ‹U → T› is reduced and incorporated with B2.
+
+Otherwise, the constraint formula ‹R θ → T› is reduced and incorporated with B2.
+
+A set of constraint formulas, C, is constructed as follows.
+
+Let e1, ..., ek be the actual argument expressions of the invocation. If m is applicable by strict or loose invocation, let F1, ..., Fk be the formal parameter types of m; if m is applicable by variable arity invocation, let F1, ..., Fk the first k variable arity parameter types of m (§15.12.2.4). Then:
+
+For all i (1 ≤ i ≤ k), if ei is not pertinent to applicability, C contains ‹ei → Fi θ›.
+
+For all i (1 ≤ i ≤ k), additional constraints may be included, depending on the form of ei:
+
+If ei is a LambdaExpression, C contains ‹LambdaExpression →throws Fi θ›.
+
+In addition, the lambda body is searched for additional constraints:
+
+For a block lambda body, the search is applied recursively to each result expression.
+
+For a poly class instance creation expression (§15.9) or a poly method invocation expression (§15.12), C contains all the constraint formulas that would appear in the set C generated by §18.5.2 when inferring the poly expression's invocation type.
+
+For a parenthesized expression, the search is applied recursively to the contained expression.
+
+For a conditional expression, the search is applied recursively to the second and third operands.
+
+For a lambda expression, the search is applied recursively to the lambda body.
+
+If ei is a MethodReference, C contains ‹MethodReference →throws Fi θ›.
+
+If ei is a poly class instance creation expression (§15.9) or a poly method invocation expression (§15.12), C contains all the constraint formulas that would appear in the set C generated by §18.5.2 when inferring the poly expression's invocation type.
+
+If ei is a parenthesized expression, these rules are applied recursively to the contained expression.
+
+If ei is a conditional expression, these rules are applied recursively to the second and third operands.
+
+While C is not empty, the following process is repeated, starting with the bound set B3 and accumulating new bounds into a "current" bound set, ultimately producing a new bound set, B4:
+
+A subset of constraints is selected in C, satisfying the property that, for each constraint, no input variable can influence an output variable of another constraint in C. The terms input variable and output variable are defined below. An inference variable α can influence an inference variable β if α depends on the resolution of β (§18.4), or vice versa; or if there exists a third inference variable γ such that α can influence γ and γ can influence β.
+
+If this subset is empty, then there is a cycle (or cycles) in the graph of dependencies between constraints. In this case, all constraints are considered that participate in a dependency cycle (or cycles) and do not depend on any constraints outside of the cycle (or cycles). A single constraint is selected from the considered constraints, as follows:
+
+If any of the considered constraints have the form ‹Expression → T›, then the selected constraint is the considered constraint of this form that contains the expression to the left (§3.5) of the expression of every other considered constraint of this form.
+
+If no considered constraint has the form ‹Expression → T›, then the selected constraint is the considered constraint that contains the expression to the left of the expression of every other considered constraint.
+
+The selected constraint(s) are removed from C.
+
+The input variables α1, ..., αm of all the selected constraint(s) are resolved.
+
+Where T1, ..., Tm are the instantiations of α1, ..., αm, the substitution [α1:=T1, ..., αm:=Tm] is applied to every constraint.
+
+The constraint(s) resulting from substitution are reduced and incorporated with the current bound set.
+
+Finally, if B4 does not contain the bound false, the inference variables in B4 are resolved.
+
+If resolution succeeds with instantiations T1, ..., Tp for inference variables α1, ..., αp, let θ' be the substitution [P1:=T1, ..., Pp:=Tp]. Then:
+
+If unchecked conversion was necessary for the method to be applicable during constraint set reduction in §18.5.1, then the parameter types of the invocation type of m are obtained by applying θ' to the parameter types of m's type, and the return type and thrown types of the invocation type of m are given by the erasure of the return type and thrown types of m's type.
+
+If unchecked conversion was not necessary for the method to be applicable, then the invocation type of m is obtained by applying θ' to the type of m.
+
+If B4 contains the bound false, or if resolution fails, then a compile-time error occurs.
+
+Invocation type inference may require carefully sequencing the reduction of constraint formulas of the forms ‹Expression → T›, ‹LambdaExpression →throws T›, and ‹MethodReference →throws T›. To facilitate this sequencing, the input variables of these constraints are defined as follows:
+
+For ‹LambdaExpression → T›:
+
+If T is an inference variable, it is the (only) input variable.
+
+If T is a functional interface type, and a function type can be derived from T (§15.27.3), then the input variables include i) if the lambda expression is implicitly typed, the inference variables mentioned by the function type's parameter types; and ii) if the function type's return type, R, is not void, then for each result expression e in the lambda body (or for the body itself if it is an expression), the input variables of ‹e → R›.
+
+Otherwise, there are no input variables.
+
+For ‹LambdaExpression →throws T›:
+
+If T is an inference variable, it is the (only) input variable.
+
+If T is a functional interface type, and a function type can be derived, as described in §15.27.3, the input variables include i) if the lambda expression is implicitly typed, the inference variables mentioned by the function type's parameter types; and ii) the inference variables mentioned by the function type's return type.
+
+Otherwise, there are no input variables.
+
+For ‹MethodReference → T›:
+
+If T is an inference variable, it is the (only) input variable.
+
+If T is a functional interface type with a function type, and if the method reference is inexact (§15.13.1), the input variables are the inference variables mentioned by the function type's parameter types.
+
+Otherwise, there are no input variables.
+
+For ‹MethodReference →throws T›:
+
+If T is an inference variable, it is the (only) input variable.
+
+If T is a functional interface type with a function type, and if the method reference is inexact (§15.13.1), the input variables are the inference variables mentioned by the function type's parameter types and the function type's return type.
+
+Otherwise, there are no input variables.
+
+For ‹Expression → T›, if Expression is a parenthesized expression:
+
+Where the contained expression of Expression is Expression', the input variables are the input variables of ‹Expression' → T›.
+
+For ‹ConditionalExpression → T›:
+
+Where the conditional expression has the form e1 ? e2 : e3, the input variables are the input variables of ‹e2 → T› and ‹e3 → T›.
+
+For all other constraint formulas, there are no input variables.
+
+The output variables of these constraints are all inference variables mentioned by the type on the right-hand side of the constraint, T, that are not input variables.
+
+It is important to note that two "rounds" of inference are involved in finding the type of a method invocation. This is necessary to allow a target type to influence the type of the invocation without allowing it to influence the choice of an applicable method. The first round produces a bound set and tests that a resolution exists, but does not commit to that resolution. The second round reduces additional constraints and then performs a second resolution, this time "for real".
+
+Consider the example from the previous section:
+
+List<Number> ln = Arrays.asList(1, 2.0);
+
+The most specific applicable method was identified as:
+
+public static <T> List<T> asList(T... a)
+
+In order to complete type-checking of the method invocation, we must determine whether it is compatible with its target type, List<Number>.
+
+The bound set used to demonstrate applicability in the previous section, B2, was:
+
+{ α <: Object, Integer <: α, Double <: α }
+
+The new constraint formula set is as follows:
+
+{ ‹List<α> → List<Number>› }
+
+This compatibility constraint produces an equality bound for α, which is included in the new bound set, B3:
+
+{ α <: Object, Integer <: α, Double <: α, α = Number }
+
+These bounds are trivially resolved:
+
+α = Number
+
+Finally, we perform a substitution on the declared return type of asList to determine that the method invocation has type List<Number>; clearly, this is compatible with the target type.
+
+This inference strategy is different than the Java SE 7 Edition of The Java® Language Specification, which would have instantiated α based on its lower bounds (before even considering the invocation's target type), as we did in the previous section. This would result in a type error, since the resulting type is not a subtype of List<Number>.
+
+Under various special circumstances, based on the bounds appearing in B2, we eagerly resolve an inference variable that appears as the return type of the invocation. This is to avoid unfortunate situations in which the usual constraint, ‹R θ → T›, is not completeness-preserving. It is, unfortunately, possible that by eagerly resolving the variable, we are unable to make use of bounds that would be inferred later. It is also possible that, in some cases, bounds that will later be inferred from the invocation arguments (such as implicitly typed lambda expressions) would have caused a different outcome if they had been present in B2. Despite these limitations, the strategy allows for reasonable outcomes in typical use cases, and is backwards compatible with the algorithm in the Java SE 7 Edition of The Java® Language Specification.
+
+18.5.3. Functional Interface Parameterization Inference
+
+Where a lambda expression with explicit parameter types P1, ..., Pn targets a functional interface type F<A1, ..., Am> with at least one wildcard type argument, then a parameterization of F may be derived as the ground target type of the lambda expression as follows.
+
+Let Q1, ..., Qk be the parameter types of the function type of the type F<α1, ..., αm>, where α1, ..., αm are fresh inference variables.
+
+If n ≠ k, no valid parameterization exists. Otherwise, a set of constraint formulas is formed with, for all i (1 ≤ i ≤ n), ‹Pi = Qi›. This constraint formula set is reduced to form the bound set B.
+
+If B contains the bound false, no valid parameterization exists. Otherwise, a new parameterization of the functional interface type, F<A'1, ..., A'm>, is constructed as follows, for 1 ≤ i ≤ m:
+
+If B contains an instantiation (§18.1.3) for αi, T, then A'i = T.
+
+Otherwise, A'i = Ai.
+
+If F<A'1, ..., A'm> is not a well-formed type (that is, the type arguments are not within their bounds), or if F<A'1, ..., A'm> is not a subtype of F<A1, ..., Am>, no valid parameterization exists. Otherwise, the inferred parameterization is either F<A'1, ..., A'm>, if all the type arguments are types, or the non-wildcard parameterization (§9.9) of F<A'1, ..., A'm>, if one or more type arguments are still wildcards.
+
+In order to determine the function type of a wildcard-parameterized functional interface, we have to "instantiate" the wildcard type arguments with specific types. The "default" approach is to simply replace the wildcards with their bounds, as described in §9.8, but this produces spurious errors in cases where a lambda expression has explicit parameter types that do not correspond to the wildcard bounds. For example:
+
+Predicate<? super Integer> p = (Number n) -> n.equals(23);
+
+The lambda expression is a Predicate<Number>, which is a subtype of Predicate<? super Integer> but not Predicate<Integer>. The analysis in this section is used to infer that Number is an appropriate choice for the type argument to Predicate.
+
+That said, the analysis here, while described in terms of general type inference, is intentionally quite simple. The only constraints are equality constraints, which means that reduction amounts to simple pattern matching. A more powerful strategy might also infer constraints from the body of the lambda expression. But, given possible interactions with inference for surrounding and/or nested generic method invocations, this would introduce a lot of extra complexity.
+
+18.5.4. More Specific Method Inference
+
+When testing that one applicable method is more specific than another (§15.12.2.5), where the second method is generic, it is necessary to test whether some instantiation of the second method's type parameters can be inferred to make the first method more specific than the second.
+
+Let m1 be the first method and m2 be the second method. Where m2 has type parameters P1, ..., Pp, let α1, ..., αp be inference variables, and let θ be the substitution [P1:=α1, ..., Pp:=αp].
+
+Let e1, ..., ek be the argument expressions of the corresponding invocation. Then:
+
+If m1 and m2 are applicable by strict or loose invocation (§15.12.2.2, §15.12.2.3), then let S1, ..., Sk be the formal parameter types of m1, and let T1, ..., Tk be the result of θ applied to the formal parameter types of m2.
+
+If m1 and m2 are applicable by variable arity invocation (§15.12.2.4), then let S1, ..., Sk be the first k variable arity parameter types of m1, and let T1, ..., Tk be the result of θ applied to the first k variable arity parameter types of m2.
+
+Note that no substitution is applied to S1, ..., Sk; even if m1 is generic, the type parameters of m1 are treated as type variables, not inference variables.
+
+The process to determine if m1 is more specific than m2 is as follows:
+
+First, an initial bound set, B, is constructed from the declared bounds of P1, ..., Pp, as specified in §18.1.3.
+
+Second, for all i (1 ≤ i ≤ k), a set of constraint formulas or bounds is generated.
+
+If Ti is a proper type, the result is true if Si is more specific than Ti for ei (§15.12.2.5), and false otherwise. (Note that Si is always a proper type.)
+
+Otherwise, if Ti is not a functional interface type, the constraint formula ‹Si <: Ti› is generated.
+
+Otherwise, Ti is a parameterization of a functional interface, I. It must be determined whether Si satisfies the following five conditions:
+
+Si is a functional interface type.
+
+Si is not a superinterface of I, nor a parameterization of a superinterface of I.
+
+Si is not a subinterface of I, nor a parameterization of a subinterface of I.
+
+If Si is an intersection type, at least one element of the intersection is not a superinterface of I, nor a parameterization of a superinterface of I.
+
+If Si is an intersection type, no element of the intersection is a subinterface of I, nor a parameterization of a subinterface of I.
+
+If all five conditions are true, then the following constraint formulas or bounds are generated (where U1 ... Uk and R1 are the parameter types and return type of the function type of the capture of Si, and V1 ... Vk and R2 are the parameter types and return type of the function type of Ti):
+
+If ei is an explicitly typed lambda expression:
+
+For all j (1 ≤ j ≤ k), ‹Uj = Vj›.
+
+If R2 is void, true.
+
+Otherwise, if R1 and R2 are functional interface types, and neither interface is a subinterface of the other, and ei has at least one result expression, then these rules are applied recursively to R1 and R2, for each result expression in ei.
+
+Otherwise, if R1 is a primitive type and R2 is not, and ei has at least one result expression, and each result expression of ei is a standalone expression (§15.2) of a primitive type, true.
+
+Otherwise, if R2 is a primitive type and R1 is not, and ei has at least one result expression, and each result expression of ei is either a standalone expression of a reference type or a poly expression, true.
+
+Otherwise, ‹R1 <: R2›.
+
+If ei is an exact method reference:
+
+For all j (1 ≤ j ≤ k), ‹Uj = Vj›.
+
+If R2 is void, true.
+
+Otherwise, if R1 is a primitive type and R2 is not, and the compile-time declaration for ei has a primitive return type, true.
+
+Otherwise if R2 is a primitive type and R1 is not, and the compile-time declaration for ei has a reference return type, true.
+
+Otherwise, ‹R1 <: R2›.
+
+If ei is a parenthesized expression, these rules are applied recursively to the contained expression.
+
+If ei is a conditional expression, these rules are applied recursively to each of the second and third operands.
+
+Otherwise, false.
+
+If the five constraints on Si are not satisfied, the constraint formula ‹Si <: Ti› is generated instead.
+
+Third, if m2 is applicable by variable arity invocation and has k+1 parameters, then where Sk+1 is the k+1'th variable arity parameter type of m1 and Tk+1 is the result of θ applied to the k+1'th variable arity parameter type of m2, the constraint ‹Sk+1 <: Tk+1› is generated.
+
+Fourth, the generated bounds and constraint formulas are reduced and incorporated with B to produce a bound set B'.
+
+If B' does not contain the bound false, and resolution of all the inference variables in B' succeeds, then m1 is more specific than m2.
+
+Otherwise, m1 is not more specific than m2.

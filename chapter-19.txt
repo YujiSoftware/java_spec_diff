@@ -1,573 +1,663 @@
-Chapter 18. Syntax
+Chapter 19. Syntax
 
-This chapter presents a grammar for the Java programming language.
+This chapter repeats the syntactic grammar given in Chapters 4, 6-10, 14, and 15, as well as key parts of the lexical grammar from Chapter 3, using the notation from §2.4.
 
-The grammar presented piecemeal in the preceding chapters (§2.3) is much better for exposition, but it is not well suited as a basis for a parser. The grammar presented in this chapter is the basis for the reference implementation. Note that it is not an LL(1) grammar, though in many cases it minimizes the necessary look ahead.
-
-The grammar below uses the following BNF-style conventions:
-
-[x] denotes zero or one occurrences of x.
-
-{x} denotes zero or more occurrences of x.
-
-(x | y) means one of either x or y.
-
+Productions from §3 (Lexical Structure)
 
 Identifier:
-    IDENTIFIER
+IdentifierChars but not a Keyword or BooleanLiteral or NullLiteral
+IdentifierChars:
+JavaLetter {JavaLetterOrDigit}
+JavaLetter:
+any Unicode character that is a "Java letter"
+JavaLetterOrDigit:
+any Unicode character that is a "Java letter-or-digit"
+Literal:
+IntegerLiteral
+FloatingPointLiteral
+BooleanLiteral
+CharacterLiteral
+StringLiteral
+NullLiteral
 
-QualifiedIdentifier:
-    Identifier { . Identifier }
-
-QualifiedIdentifierList: 
-    QualifiedIdentifier { , QualifiedIdentifier }
-
-
-
-CompilationUnit: 
-    [[Annotations] package QualifiedIdentifier ;]
-                                {ImportDeclaration} {TypeDeclaration}
-
-ImportDeclaration: 
-    import [static] Identifier { . Identifier } [. *] ;
-
-TypeDeclaration: 
-    ClassOrInterfaceDeclaration
-    ;
-
-ClassOrInterfaceDeclaration: 
-    {Modifier} (ClassDeclaration | InterfaceDeclaration)
-
-ClassDeclaration: 
-    NormalClassDeclaration
-    EnumDeclaration
-
-InterfaceDeclaration: 
-    NormalInterfaceDeclaration
-    AnnotationTypeDeclaration
-
-
-
-NormalClassDeclaration: 
-    class Identifier [TypeParameters]
-                                [extends Type] [implements TypeList] ClassBody
-
-EnumDeclaration:
-    enum Identifier [implements TypeList] EnumBody
-
-NormalInterfaceDeclaration: 
-    interface Identifier [TypeParameters] [extends TypeList] InterfaceBody
-
-AnnotationTypeDeclaration:
-    @ interface Identifier AnnotationTypeBody
-
-
+Productions from §4 (Types, Values, and Variables)
 
 Type:
-    BasicType {[]}
-    ReferenceType  {[]}
-
-BasicType: 
-    byte
-    short
-    char
-    int
-    long
-    float
-    double
-    boolean
-
+PrimitiveType
+ReferenceType
+PrimitiveType:
+{Annotation} NumericType
+{Annotation} boolean
+NumericType:
+IntegralType
+FloatingPointType
+IntegralType:
+(one of)
+byte short int long char
+FloatingPointType:
+(one of)
+float double
 ReferenceType:
-    Identifier [TypeArguments] { . Identifier [TypeArguments] }
-
-TypeArguments: 
-    < TypeArgument { , TypeArgument } >
-
-TypeArgument:  
-    ReferenceType
-    ? [ (extends | super) ReferenceType ]
-
-
-
-NonWildcardTypeArguments:
-    < TypeList >
-
-TypeList:  
-    ReferenceType { , ReferenceType }
-
-
-
-TypeArgumentsOrDiamond:
-    < > 
-    TypeArguments
-
-NonWildcardTypeArgumentsOrDiamond:
-    < >
-    NonWildcardTypeArguments
-
-
-
-TypeParameters:
-    < TypeParameter { , TypeParameter } >
-
+ClassOrInterfaceType
+TypeVariable
+ArrayType
+ClassOrInterfaceType:
+ClassType
+InterfaceType
+ClassType:
+{Annotation} Identifier [TypeArguments]
+ClassOrInterfaceType . {Annotation} Identifier [TypeArguments]
+InterfaceType:
+ClassType
+TypeVariable:
+{Annotation} Identifier
+ArrayType:
+PrimitiveType Dims
+ClassOrInterfaceType Dims
+TypeVariable Dims
+Dims:
+{Annotation} [ ] {{Annotation} [ ]}
 TypeParameter:
-    Identifier [extends Bound]
+{TypeParameterModifier} Identifier [TypeBound]
+TypeParameterModifier:
+Annotation
+TypeBound:
+extends TypeVariable
+extends ClassOrInterfaceType {AdditionalBound}
+AdditionalBound:
+& InterfaceType
+TypeArguments:
+< TypeArgumentList >
+TypeArgumentList:
+TypeArgument {, TypeArgument}
+TypeArgument:
+ReferenceType
+Wildcard
+Wildcard:
+{Annotation} ? [WildcardBounds]
+WildcardBounds:
+extends ReferenceType
+super ReferenceType
 
-Bound:  
-    ReferenceType { & ReferenceType }
+Productions from §6 (Names)
 
+TypeName:
+Identifier
+PackageOrTypeName . Identifier
+PackageOrTypeName:
+Identifier
+PackageOrTypeName . Identifier
+ExpressionName:
+Identifier
+AmbiguousName . Identifier
+MethodName:
+Identifier
 
+PackageName:
+Identifier
+PackageName . Identifier
+AmbiguousName:
+Identifier
+AmbiguousName . Identifier
 
-Modifier: 
-    Annotation
-    public
-    protected
-    private
-    static 
-    abstract
-    final
-    native
-    synchronized
-    transient
-    volatile
-    strictfp
+Productions from §7 (Packages)
 
-Annotations:
-    Annotation {Annotation}
+CompilationUnit:
+[PackageDeclaration] {ImportDeclaration} {TypeDeclaration}
+PackageDeclaration:
+{PackageModifier} package Identifier {. Identifier} ;
+PackageModifier:
+Annotation
+ImportDeclaration:
+SingleTypeImportDeclaration
+TypeImportOnDemandDeclaration
+SingleStaticImportDeclaration
+StaticImportOnDemandDeclaration
+SingleTypeImportDeclaration:
+import TypeName ;
+TypeImportOnDemandDeclaration:
+import PackageOrTypeName . * ;
+SingleStaticImportDeclaration:
+import static TypeName . Identifier ;
+StaticImportOnDemandDeclaration:
+import static TypeName . * ;
+TypeDeclaration:
+ClassDeclaration
+InterfaceDeclaration
+;
 
-Annotation:
-    @ QualifiedIdentifier [ ( [AnnotationElement] ) ]
+Productions from §8 (Classes)
 
-AnnotationElement:
-    ElementValuePairs
-    ElementValue
-
-ElementValuePairs:
-    ElementValuePair { , ElementValuePair }
-
-ElementValuePair:
-    Identifier = ElementValue
-    
-ElementValue:
-    Annotation
-    Expression1 
-    ElementValueArrayInitializer
-
-ElementValueArrayInitializer:
-    { [ElementValues] [,] }
-
-ElementValues:
-    ElementValue { , ElementValue }
-
-
-
-ClassBody: 
-    { { ClassBodyDeclaration } }
-
+ClassDeclaration:
+NormalClassDeclaration
+EnumDeclaration
+NormalClassDeclaration:
+{ClassModifier} class Identifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
+ClassModifier:
+(one of)
+Annotation public protected private
+abstract static final strictfp
+TypeParameters:
+< TypeParameterList >
+TypeParameterList:
+TypeParameter {, TypeParameter}
+Superclass:
+extends ClassType
+Superinterfaces:
+implements InterfaceTypeList
+InterfaceTypeList:
+InterfaceType {, InterfaceType}
+ClassBody:
+{ {ClassBodyDeclaration} }
 ClassBodyDeclaration:
-    ; 
-    {Modifier} MemberDecl
-    [static] Block
-
-MemberDecl:
-    MethodOrFieldDecl
-    void Identifier VoidMethodDeclaratorRest
-    Identifier ConstructorDeclaratorRest
-    GenericMethodOrConstructorDecl
-    ClassDeclaration
-    InterfaceDeclaration
-
-MethodOrFieldDecl:
-    Type Identifier MethodOrFieldRest
-
-MethodOrFieldRest:  
-    FieldDeclaratorsRest ;
-    MethodDeclaratorRest
-
-FieldDeclaratorsRest:  
-    VariableDeclaratorRest { , VariableDeclarator }
-
-MethodDeclaratorRest:
-    FormalParameters {[]} [throws QualifiedIdentifierList] (Block | ;)
-
-VoidMethodDeclaratorRest:
-    FormalParameters [throws QualifiedIdentifierList] (Block | ;)
-
-ConstructorDeclaratorRest:
-    FormalParameters [throws QualifiedIdentifierList] Block
-
-GenericMethodOrConstructorDecl:
-    TypeParameters GenericMethodOrConstructorRest
-
-GenericMethodOrConstructorRest:
-    (Type | void) Identifier MethodDeclaratorRest
-    Identifier ConstructorDeclaratorRest
-
-
-
-InterfaceBody: 
-    { { InterfaceBodyDeclaration } }
-
-InterfaceBodyDeclaration:
-    ; 
-    {Modifier} InterfaceMemberDecl
-
-InterfaceMemberDecl:
-    InterfaceMethodOrFieldDecl
-    void Identifier VoidInterfaceMethodDeclaratorRest
-    InterfaceGenericMethodDecl
-    ClassDeclaration
-    InterfaceDeclaration
-
-InterfaceMethodOrFieldDecl:
-    Type Identifier InterfaceMethodOrFieldRest
-
-InterfaceMethodOrFieldRest:
-    ConstantDeclaratorsRest ;
-    InterfaceMethodDeclaratorRest
-
-ConstantDeclaratorsRest: 
-    ConstantDeclaratorRest { , ConstantDeclarator }
-
-ConstantDeclaratorRest: 
-    {[]} = VariableInitializer
-
-ConstantDeclarator: 
-    Identifier ConstantDeclaratorRest
-
-InterfaceMethodDeclaratorRest:
-    FormalParameters {[]} [throws QualifiedIdentifierList] ; 
-
-VoidInterfaceMethodDeclaratorRest:
-    FormalParameters [throws QualifiedIdentifierList] ;  
-
-InterfaceGenericMethodDecl:
-    TypeParameters (Type | void) Identifier InterfaceMethodDeclaratorRest
-
-
-
-FormalParameters: 
-    ( [FormalParameterDecls] )
-
-FormalParameterDecls: 
-    {VariableModifier}  Type FormalParameterDeclsRest
-
-VariableModifier:
-    final
-    Annotation
-
-FormalParameterDeclsRest: 
-    VariableDeclaratorId [, FormalParameterDecls]
-    ... VariableDeclaratorId
-
-
-
-VariableDeclaratorId:
-    Identifier {[]}
-
-
-
-VariableDeclarators:
-    VariableDeclarator { , VariableDeclarator }
-
+ClassMemberDeclaration
+InstanceInitializer
+StaticInitializer
+ConstructorDeclaration
+ClassMemberDeclaration:
+FieldDeclaration
+MethodDeclaration
+ClassDeclaration
+InterfaceDeclaration
+;
+FieldDeclaration:
+{FieldModifier} UnannType VariableDeclaratorList ;
+FieldModifier:
+(one of)
+Annotation public protected private
+static final transient volatile
+VariableDeclaratorList:
+VariableDeclarator {, VariableDeclarator}
 VariableDeclarator:
-    Identifier VariableDeclaratorRest
-
-VariableDeclaratorRest:
-    {[]} [ = VariableInitializer ]
-
+VariableDeclaratorId [= VariableInitializer]
+VariableDeclaratorId:
+Identifier [Dims]
 VariableInitializer:
-    ArrayInitializer
-    Expression
+Expression
+ArrayInitializer
+UnannType:
+UnannPrimitiveType
+UnannReferenceType
+UnannPrimitiveType:
+NumericType
+boolean
+UnannReferenceType:
+UnannClassOrInterfaceType
+UnannTypeVariable
+UnannArrayType
+UnannClassOrInterfaceType:
+UnannClassType
+UnannInterfaceType
+UnannClassType:
+Identifier [TypeArguments]
+UnannClassOrInterfaceType . {Annotation} Identifier [TypeArguments]
+UnannInterfaceType:
+UnannClassType
+UnannTypeVariable:
+Identifier
+UnannArrayType:
+UnannPrimitiveType Dims
+UnannClassOrInterfaceType Dims
+UnannTypeVariable Dims
+MethodDeclaration:
+{MethodModifier} MethodHeader MethodBody
+MethodModifier:
+(one of)
+Annotation public protected private
+abstract static final synchronized native strictfp
+MethodHeader:
+Result MethodDeclarator [Throws]
+TypeParameters {Annotation} Result MethodDeclarator [Throws]
+Result:
+UnannType
+void
+MethodDeclarator:
+Identifier ( [FormalParameterList] ) [Dims]
+FormalParameterList:
+ReceiverParameter
+FormalParameters , LastFormalParameter
+LastFormalParameter
+FormalParameters:
+FormalParameter {, FormalParameter}
+ReceiverParameter {, FormalParameter}
+FormalParameter:
+{VariableModifier} UnannType VariableDeclaratorId
+VariableModifier:
+(one of)
+Annotation final
+LastFormalParameter:
+{VariableModifier} UnannType {Annotation} ... VariableDeclaratorId
+FormalParameter
+ReceiverParameter:
+{Annotation} UnannType [Identifier .] this
+Throws:
+throws ExceptionTypeList
+ExceptionTypeList:
+ExceptionType {, ExceptionType}
+ExceptionType:
+ClassType
+TypeVariable
+MethodBody:
+Block
+;
+InstanceInitializer:
+Block
+StaticInitializer:
+static Block
+ConstructorDeclaration:
+{ConstructorModifier} ConstructorDeclarator [Throws] ConstructorBody
+ConstructorModifier:
+(one of)
+Annotation public protected private
+ConstructorDeclarator:
+[TypeParameters] SimpleTypeName ( [FormalParameterList] )
+SimpleTypeName:
+Identifier
+ConstructorBody:
+{ [ExplicitConstructorInvocation] [BlockStatements] }
+ExplicitConstructorInvocation:
+[TypeArguments] this ( [ArgumentList] ) ;
+[TypeArguments] super ( [ArgumentList] ) ;
+ExpressionName . [TypeArguments] super ( [ArgumentList] ) ;
+Primary . [TypeArguments] super ( [ArgumentList] ) ;
+EnumDeclaration:
+{ClassModifier} enum Identifier [Superinterfaces] EnumBody
+EnumBody:
+{ [EnumConstantList] [,] [EnumBodyDeclarations] }
+EnumConstantList:
+EnumConstant {, EnumConstant}
+EnumConstant:
+{EnumConstantModifier} Identifier [( [ArgumentList] )] [ClassBody]
+EnumConstantModifier:
+Annotation
+EnumBodyDeclarations:
+; {ClassBodyDeclaration}
+
+Productions from §9 (Interfaces)
+
+InterfaceDeclaration:
+NormalInterfaceDeclaration
+AnnotationTypeDeclaration
+NormalInterfaceDeclaration:
+{InterfaceModifier} interface Identifier [TypeParameters] [ExtendsInterfaces] InterfaceBody
+InterfaceModifier:
+(one of)
+Annotation public protected private
+abstract static strictfp
+ExtendsInterfaces:
+extends InterfaceTypeList
+InterfaceBody:
+{ {InterfaceMemberDeclaration} }
+InterfaceMemberDeclaration:
+ConstantDeclaration
+InterfaceMethodDeclaration
+ClassDeclaration
+InterfaceDeclaration
+;
+ConstantDeclaration:
+{ConstantModifier} UnannType VariableDeclaratorList ;
+ConstantModifier:
+(one of)
+Annotation public
+static final
+InterfaceMethodDeclaration:
+{InterfaceMethodModifier} MethodHeader MethodBody
+InterfaceMethodModifier:
+(one of)
+Annotation public
+abstract default static strictfp
+AnnotationTypeDeclaration:
+{InterfaceModifier} @ interface Identifier AnnotationTypeBody
+AnnotationTypeBody:
+{ {AnnotationTypeMemberDeclaration} }
+AnnotationTypeMemberDeclaration:
+AnnotationTypeElementDeclaration
+ConstantDeclaration
+ClassDeclaration
+InterfaceDeclaration
+;
+AnnotationTypeElementDeclaration:
+{AnnotationTypeElementModifier} UnannType Identifier ( ) [Dims] [DefaultValue] ;
+AnnotationTypeElementModifier:
+(one of)
+Annotation public
+abstract
+DefaultValue:
+default ElementValue
+Annotation:
+NormalAnnotation
+MarkerAnnotation
+SingleElementAnnotation
+NormalAnnotation:
+@ TypeName ( [ElementValuePairList] )
+ElementValuePairList:
+ElementValuePair {, ElementValuePair}
+ElementValuePair:
+Identifier = ElementValue
+ElementValue:
+ConditionalExpression
+ElementValueArrayInitializer
+Annotation
+ElementValueArrayInitializer:
+{ [ElementValueList] [,] }
+ElementValueList:
+ElementValue {, ElementValue}
+MarkerAnnotation:
+@ TypeName
+SingleElementAnnotation:
+@ TypeName ( ElementValue )
+
+Productions from §10 (Arrays)
 
 ArrayInitializer:
-    { [ VariableInitializer { , VariableInitializer } [,] ] }
+{ [VariableInitializerList] [,] }
+VariableInitializerList:
+VariableInitializer {, VariableInitializer}
 
+Productions from §14 (Blocks and Statements)
 
-
-Block: 
-    { BlockStatements }
-
-BlockStatements: 
-    { BlockStatement }
-
+Block:
+{ [BlockStatements] }
+BlockStatements:
+BlockStatement {BlockStatement}
 BlockStatement:
-    LocalVariableDeclarationStatement
-    ClassOrInterfaceDeclaration
-    [Identifier :] Statement
-
+LocalVariableDeclarationStatement
+ClassDeclaration
+Statement
 LocalVariableDeclarationStatement:
-    { VariableModifier }  Type VariableDeclarators ;
-
+LocalVariableDeclaration ;
+LocalVariableDeclaration:
+{VariableModifier} UnannType VariableDeclaratorList
 Statement:
-    Block
-    ;
-    Identifier : Statement
-    StatementExpression ;
-    if ParExpression Statement [else Statement] 
-    assert Expression [: Expression] ;
-    switch ParExpression { SwitchBlockStatementGroups } 
-    while ParExpression Statement
-    do Statement while ParExpression ;
-    for ( ForControl ) Statement
-    break [Identifier] ;
-    continue [Identifier] ;
-    return [Expression] ;
-    throw Expression ;
-    synchronized ParExpression Block
-    try Block (Catches | [Catches] Finally)
-    try ResourceSpecification Block [Catches] [Finally]
-
-StatementExpression: 
-    Expression
-
-
-
-Catches:
-    CatchClause { CatchClause }
-
-CatchClause:  
-    catch ( {VariableModifier} CatchType Identifier ) Block
-
-CatchType:
-    QualifiedIdentifier { | QualifiedIdentifier }
-
-Finally:
-    finally Block
-
-ResourceSpecification:
-    ( Resources [;] )
-
-Resources:
-    Resource { ; Resource }
-
-Resource:
-    {VariableModifier} ReferenceType VariableDeclaratorId = Expression 
-
-
-
-SwitchBlockStatementGroups: 
-    { SwitchBlockStatementGroup }
-
-SwitchBlockStatementGroup: 
-    SwitchLabels BlockStatements
-
+StatementWithoutTrailingSubstatement
+LabeledStatement
+IfThenStatement
+IfThenElseStatement
+WhileStatement
+ForStatement
+StatementNoShortIf:
+StatementWithoutTrailingSubstatement
+LabeledStatementNoShortIf
+IfThenElseStatementNoShortIf
+WhileStatementNoShortIf
+ForStatementNoShortIf
+StatementWithoutTrailingSubstatement:
+Block
+EmptyStatement
+ExpressionStatement
+AssertStatement
+SwitchStatement
+DoStatement
+BreakStatement
+ContinueStatement
+ReturnStatement
+SynchronizedStatement
+ThrowStatement
+TryStatement
+EmptyStatement:
+;
+LabeledStatement:
+Identifier : Statement
+LabeledStatementNoShortIf:
+Identifier : StatementNoShortIf
+ExpressionStatement:
+StatementExpression ;
+StatementExpression:
+Assignment
+PreIncrementExpression
+PreDecrementExpression
+PostIncrementExpression
+PostDecrementExpression
+MethodInvocation
+ClassInstanceCreationExpression
+IfThenStatement:
+if ( Expression ) Statement
+IfThenElseStatement:
+if ( Expression ) StatementNoShortIf else Statement
+IfThenElseStatementNoShortIf:
+if ( Expression ) StatementNoShortIf else StatementNoShortIf
+AssertStatement:
+assert Expression ;
+assert Expression : Expression ;
+SwitchStatement:
+switch ( Expression ) SwitchBlock
+SwitchBlock:
+{ {SwitchBlockStatementGroup} {SwitchLabel} }
+SwitchBlockStatementGroup:
+SwitchLabels BlockStatements
 SwitchLabels:
-    SwitchLabel { SwitchLabel }
-
-SwitchLabel: 
-    case Expression :
-    case EnumConstantName :
-    default :
-
+SwitchLabel {SwitchLabel}
+SwitchLabel:
+case ConstantExpression :
+case EnumConstantName :
+default :
 EnumConstantName:
-    Identifier
-
-
-
-ForControl:
-    ForVarControl
-    ForInit ; [Expression] ; [ForUpdate]
-
-ForVarControl:
-    {VariableModifier} Type VariableDeclaratorId  ForVarControlRest
-
-ForVarControlRest:
-    ForVariableDeclaratorsRest ; [Expression] ; [ForUpdate]
-    : Expression
-
-ForVariableDeclaratorsRest:
-    [= VariableInitializer] { , VariableDeclarator }
-
-ForInit: 
+Identifier
+WhileStatement:
+while ( Expression ) Statement
+WhileStatementNoShortIf:
+while ( Expression ) StatementNoShortIf
+DoStatement:
+do Statement while ( Expression ) ;
+ForStatement:
+BasicForStatement
+EnhancedForStatement
+ForStatementNoShortIf:
+BasicForStatementNoShortIf
+EnhancedForStatementNoShortIf
+BasicForStatement:
+for ( [ForInit] ; [Expression] ; [ForUpdate] ) Statement
+BasicForStatementNoShortIf:
+for ( [ForInit] ; [Expression] ; [ForUpdate] ) StatementNoShortIf
+ForInit:
+StatementExpressionList
+LocalVariableDeclaration
 ForUpdate:
-    StatementExpression { , StatementExpression }    
+StatementExpressionList
+StatementExpressionList:
+StatementExpression {, StatementExpression}
+EnhancedForStatement:
+for ( {VariableModifier} UnannType VariableDeclaratorId : Expression ) Statement
+EnhancedForStatementNoShortIf:
+for ( {VariableModifier} UnannType VariableDeclaratorId : Expression ) StatementNoShortIf
+BreakStatement:
+break [Identifier] ;
+ContinueStatement:
+continue [Identifier] ;
+ReturnStatement:
+return [Expression] ;
+ThrowStatement:
+throw Expression ;
+SynchronizedStatement:
+synchronized ( Expression ) Block
+TryStatement:
+try Block Catches
+try Block [Catches] Finally
+TryWithResourcesStatement
+Catches:
+CatchClause {CatchClause}
+CatchClause:
+catch ( CatchFormalParameter ) Block
+CatchFormalParameter:
+{VariableModifier} CatchType VariableDeclaratorId
+CatchType:
+UnannClassType {| ClassType}
+Finally:
+finally Block
+TryWithResourcesStatement:
+try ResourceSpecification Block [Catches] [Finally]
+ResourceSpecification:
+( ResourceList [;] )
+ResourceList:
+Resource {; Resource}
+Resource:
+{VariableModifier} UnannType VariableDeclaratorId = Expression
 
+Productions from §15 (Expressions)
 
+Primary:
+PrimaryNoNewArray
+ArrayCreationExpression
+PrimaryNoNewArray:
+Literal
+ClassLiteral
+this
+TypeName . this
+( Expression )
+ClassInstanceCreationExpression
+FieldAccess
+ArrayAccess
+MethodInvocation
+MethodReference
+ClassLiteral:
+TypeName {[ ]} . class
+NumericType {[ ]} . class
+boolean {[ ]} . class
+void . class
+ClassInstanceCreationExpression:
+UnqualifiedClassInstanceCreationExpression
+ExpressionName . UnqualifiedClassInstanceCreationExpression
+Primary . UnqualifiedClassInstanceCreationExpression
+UnqualifiedClassInstanceCreationExpression:
+new [TypeArguments] ClassOrInterfaceTypeToInstantiate ( [ArgumentList] ) [ClassBody]
+ClassOrInterfaceTypeToInstantiate:
+{Annotation} Identifier {. {Annotation} Identifier} [TypeArgumentsOrDiamond]
+TypeArgumentsOrDiamond:
+TypeArguments
+<>
+FieldAccess:
+Primary . Identifier
+super . Identifier
+TypeName . super . Identifier
+ArrayAccess:
+ExpressionName [ Expression ]
+PrimaryNoNewArray [ Expression ]
+MethodInvocation:
+MethodName ( [ArgumentList] )
+TypeName . [TypeArguments] Identifier ( [ArgumentList] )
+ExpressionName . [TypeArguments] Identifier ( [ArgumentList] )
+Primary . [TypeArguments] Identifier ( [ArgumentList] )
+super . [TypeArguments] Identifier ( [ArgumentList] )
+TypeName . super . [TypeArguments] Identifier ( [ArgumentList] )
+ArgumentList:
+Expression {, Expression}
+MethodReference:
+ExpressionName :: [TypeArguments] Identifier
+ReferenceType :: [TypeArguments] Identifier
+Primary :: [TypeArguments] Identifier
+super :: [TypeArguments] Identifier
+TypeName . super :: [TypeArguments] Identifier
+ClassType :: [TypeArguments] new
+ArrayType :: new
+ArrayCreationExpression:
+new PrimitiveType DimExprs [Dims]
+new ClassOrInterfaceType DimExprs [Dims]
+new PrimitiveType Dims ArrayInitializer
+new ClassOrInterfaceType Dims ArrayInitializer
+DimExprs:
+DimExpr {DimExpr}
+DimExpr:
+{Annotation} [ Expression ]
+Expression:
+LambdaExpression
+AssignmentExpression
+LambdaExpression:
+LambdaParameters -> LambdaBody
+LambdaParameters:
+Identifier
+( [FormalParameterList] )
+( InferredFormalParameterList )
+InferredFormalParameterList:
+Identifier {, Identifier}
+LambdaBody:
+Expression
+Block
+AssignmentExpression:
+ConditionalExpression
+Assignment
+Assignment:
+LeftHandSide AssignmentOperator Expression
+LeftHandSide:
+ExpressionName
+FieldAccess
+ArrayAccess
+AssignmentOperator:
+(one of)
 
-Expression: 
-    Expression1 [AssignmentOperator Expression1]
+=  *=  /=  %=  +=  -=  <<=  >>=  >>>=  &=  ^=  |=
+ConditionalExpression:
+ConditionalOrExpression
+ConditionalOrExpression ? Expression : ConditionalExpression
+ConditionalOrExpression ? Expression : LambdaExpression
 
-AssignmentOperator: 
-    = 
-    +=
-    -= 
-    *=
-    /=
-    &=
-    |=
-    ^=
-    %=
-    <<=
-    >>=
-    >>>=
+ConditionalOrExpression:
+ConditionalAndExpression
+ConditionalOrExpression || ConditionalAndExpression
+ConditionalAndExpression:
+InclusiveOrExpression
+ConditionalAndExpression && InclusiveOrExpression
+InclusiveOrExpression:
+ExclusiveOrExpression
+InclusiveOrExpression | ExclusiveOrExpression
+ExclusiveOrExpression:
+AndExpression
+ExclusiveOrExpression ^ AndExpression
+AndExpression:
+EqualityExpression
+AndExpression & EqualityExpression
+EqualityExpression:
+RelationalExpression
+EqualityExpression == RelationalExpression
+EqualityExpression != RelationalExpression
+RelationalExpression:
+ShiftExpression
+RelationalExpression < ShiftExpression
+RelationalExpression > ShiftExpression
+RelationalExpression <= ShiftExpression
+RelationalExpression >= ShiftExpression
+RelationalExpression instanceof ReferenceType
+ShiftExpression:
+AdditiveExpression
+ShiftExpression << AdditiveExpression
+ShiftExpression >> AdditiveExpression
+ShiftExpression >>> AdditiveExpression
+AdditiveExpression:
+MultiplicativeExpression
+AdditiveExpression + MultiplicativeExpression
+AdditiveExpression - MultiplicativeExpression
+MultiplicativeExpression:
+UnaryExpression
+MultiplicativeExpression * UnaryExpression
+MultiplicativeExpression / UnaryExpression
+MultiplicativeExpression % UnaryExpression
+UnaryExpression:
+PreIncrementExpression
+PreDecrementExpression
++ UnaryExpression
+- UnaryExpression
+UnaryExpressionNotPlusMinus
+PreIncrementExpression:
+++ UnaryExpression
+PreDecrementExpression:
+-- UnaryExpression
+UnaryExpressionNotPlusMinus:
+PostfixExpression
+~ UnaryExpression
+! UnaryExpression
+CastExpression
+PostfixExpression:
+Primary
+ExpressionName
+PostIncrementExpression
+PostDecrementExpression
+PostIncrementExpression:
+PostfixExpression ++
+PostDecrementExpression:
+PostfixExpression --
+CastExpression:
+( PrimitiveType ) UnaryExpression
+( ReferenceType {AdditionalBound} ) UnaryExpressionNotPlusMinus
+( ReferenceType {AdditionalBound} ) LambdaExpression
 
-Expression1: 
-    Expression2 [Expression1Rest]
-
-Expression1Rest: 
-    ? Expression : Expression1
-
-Expression2:
-    Expression3 [Expression2Rest]
-
-Expression2Rest:
-    { InfixOp Expression3 }
-    instanceof Type
-
-
-
-InfixOp: 
-    || 
-    &&
-    |
-    ^
-    &
-    ==
-    !=
-    <
-    >
-    <=
-    >=
-    <<
-    >>
-    >>>
-    +
-    -
-    *
-    /
-    %
-
-Expression3: 
-    PrefixOp Expression3
-    ( (Expression | Type) ) Expression3
-    Primary { Selector } { PostfixOp }
-
-PrefixOp: 
-    ++
-    --
-    !
-    ~
-    +
-    -
-
-PostfixOp: 
-    ++
-    --
-
-
-
-Primary: 
-    Literal
-    ParExpression
-    this [Arguments]
-    super SuperSuffix
-    new Creator
-    NonWildcardTypeArguments (ExplicitGenericInvocationSuffix | this Arguments)
-    Identifier { . Identifier } [IdentifierSuffix]
-    BasicType {[]} . class
-    void . class
-
-
-
-Literal:
-    IntegerLiteral
-    FloatingPointLiteral
-    CharacterLiteral 
-    StringLiteral 
-    BooleanLiteral
-    NullLiteral
-
-ParExpression: 
-    ( Expression )
-
-Arguments:
-    ( [ Expression { , Expression } ] )
-
-SuperSuffix: 
-    Arguments 
-    . Identifier [Arguments]
-
-ExplicitGenericInvocationSuffix: 
-    super SuperSuffix
-    Identifier Arguments
-
-
-
-Creator:  
-    NonWildcardTypeArguments CreatedName ClassCreatorRest
-    CreatedName (ClassCreatorRest | ArrayCreatorRest)
-
-CreatedName:   
-    Identifier [TypeArgumentsOrDiamond] { . Identifier [TypeArgumentsOrDiamond] }
-
-ClassCreatorRest: 
-    Arguments [ClassBody]
-
-ArrayCreatorRest:
-    [ (] {[]} ArrayInitializer  |  Expression ] {[ Expression ]} {[]})
-
-
-
-IdentifierSuffix:
-    [ ({[]} . class | Expression) ]
-    Arguments 
-    . (class | ExplicitGenericInvocation | this | super Arguments |
-                                new [NonWildcardTypeArguments] InnerCreator)
-
-ExplicitGenericInvocation:
-    NonWildcardTypeArguments ExplicitGenericInvocationSuffix
-
-InnerCreator:  
-    Identifier [NonWildcardTypeArgumentsOrDiamond] ClassCreatorRest
-
-
-
-Selector:
-    . Identifier [Arguments]
-    . ExplicitGenericInvocation
-    . this
-    . super SuperSuffix
-    . new [NonWildcardTypeArguments] InnerCreator
-    [ Expression ]
-
-
-
-EnumBody:
-    { [EnumConstants] [,] [EnumBodyDeclarations] }
-
-EnumConstants:
-    EnumConstant
-    EnumConstants , EnumConstant
-
-EnumConstant:
-    [Annotations] Identifier [Arguments] [ClassBody]
-
-EnumBodyDeclarations:
-    ; {ClassBodyDeclaration}
-
-
-
-AnnotationTypeBody:
-    { [AnnotationTypeElementDeclarations] }
-
-AnnotationTypeElementDeclarations:
-    AnnotationTypeElementDeclaration
-    AnnotationTypeElementDeclarations AnnotationTypeElementDeclaration
-
-AnnotationTypeElementDeclaration:
-    {Modifier} AnnotationTypeElementRest
-
-AnnotationTypeElementRest:
-    Type Identifier AnnotationMethodOrConstantRest ;
-    ClassDeclaration
-    InterfaceDeclaration
-    EnumDeclaration  
-    AnnotationTypeDeclaration
-
-AnnotationMethodOrConstantRest:
-    AnnotationMethodRest
-    ConstantDeclaratorsRest  
-
-AnnotationMethodRest:
-    ( ) [[]] [default ElementValue]
+ConstantExpression:
+Expression

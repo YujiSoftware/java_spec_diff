@@ -37,27 +37,27 @@ An exception is represented by an instance of the class Throwable (a direct subc
 
 Throwable and all its subclasses are, collectively, the exception classes.
 
-Note that a subclass of Throwable must not be generic (§8.1.2).
-
-The classes Exception and Error are direct subclasses of Throwable.
+The classes Exception and Error are direct subclasses of Throwable:
 
 Exception is the superclass of all the exceptions from which ordinary programs may wish to recover.
-
-Error is the superclass of all the exceptions from which ordinary programs are not ordinarily expected to recover.
-
-Error and all its subclasses are, collectively, the error classes.
-
-The class Error is a separate subclass of Throwable, distinct from Exception in the class hierarchy, to allow programs to use the idiom "} catch (Exception e) {" (§11.2.3) to catch all exceptions from which recovery may be possible without catching errors from which recovery is typically not possible.
 
 The class RuntimeException is a direct subclass of Exception. RuntimeException is the superclass of all the exceptions which may be thrown for many reasons during expression evaluation, but from which recovery may still be possible.
 
 RuntimeException and all its subclasses are, collectively, the run-time exception classes.
 
+Error is the superclass of all the exceptions from which ordinary programs are not ordinarily expected to recover.
+
+Error and all its subclasses are, collectively, the error classes.
+
 The unchecked exception classes are the run-time exception classes and the error classes.
 
-The checked exception classes are all exception classes other than the unchecked exception classes. That is, the checked exception classes are all subclasses of Throwable other than RuntimeException and its subclasses and Error and its subclasses.
+The checked exception classes are all exception classes other than the unchecked exception classes. That is, the checked exception classes are Throwable and all its subclasses other than RuntimeException and its subclasses and Error and its subclasses.
 
 Programs can use the pre-existing exception classes of the Java SE platform API in throw statements, or define additional exception classes as subclasses of Throwable or of any of its subclasses, as appropriate. To take advantage of compile-time checking for exception handlers (§11.2), it is typical to define most new exception classes as checked exception classes, that is, as subclasses of Exception that are not subclasses of RuntimeException.
+
+The class Error is a separate subclass of Throwable, distinct from Exception in the class hierarchy, to allow programs to use the idiom "} catch (Exception e) {" (§11.2.3) to catch all exceptions from which recovery may be possible without catching errors from which recovery is typically not possible.
+
+Note that a subclass of Throwable cannot be generic (§8.1.2).
 
 11.1.2. The Causes of Exceptions
 
@@ -71,7 +71,7 @@ evaluation of an expression violates the normal semantics of the Java programmin
 
 an error occurs while loading, linking, or initializing part of the program (§12.2, §12.3, §12.4); in this case, an instance of a subclass of LinkageError is thrown.
 
-an internal error or resource limitation prevents the Java Virtual Machine from implementing the semantics of the Java programming language; in this case, an instance of a subclass of VirtualMethodError is thrown.
+an internal error or resource limitation prevents the Java Virtual Machine from implementing the semantics of the Java programming language; in this case, an instance of a subclass of VirtualMachineError is thrown.
 
 These exceptions are not thrown at an arbitrary point in the program, but rather at a point where they are specified as a possible result of an expression evaluation or statement execution.
 
@@ -87,9 +87,9 @@ An invocation of the (deprecated) stop method of class Thread or ThreadGroup.
 
 The (deprecated) stop methods may be invoked by one thread to affect another thread or all the threads in a specified thread group. They are asynchronous because they may occur at any point in the execution of the other thread or threads.
 
-An internal error or resource limitation in the Java Virtual Machine that prevents it from implementing the semantics of the Java programming language. In this case, the asynchronous exception that is thrown is an instance of a subclass of VirtualMethodError.
+An internal error or resource limitation in the Java Virtual Machine that prevents it from implementing the semantics of the Java programming language. In this case, the asynchronous exception that is thrown is an instance of a subclass of VirtualMachineError.
 
-Note that StackOverflowError, a subclass of VirtualMethodError, may be thrown synchronously by method invocation (§15.12.4.5) as well as asynchronously due to native method execution or Java Virtual Machine resource limitations. Similarly, OutOfMemoryError, another subclass of VirtualMethodError, may be thrown synchronously during object creation (§12.5), array creation (§15.10.1, §10.6), class initialization (§12.4.2), and boxing conversion (§5.1.7), as well as asynchronously.
+Note that StackOverflowError, a subclass of VirtualMachineError, may be thrown synchronously by method invocation (§15.12.4.5) as well as asynchronously due to native method execution or Java Virtual Machine resource limitations. Similarly, OutOfMemoryError, another subclass of VirtualMachineError, may be thrown synchronously during class instance creation (§15.9.4, §12.5), array creation (§15.10.2, §10.6), class initialization (§12.4.2), and boxing conversion (§5.1.7), as well as asynchronously.
 
 The Java SE platform permits a small but bounded amount of execution to occur before an asynchronous exception is thrown.
 
@@ -99,27 +99,25 @@ The delay noted above is permitted to allow optimized code to detect and throw t
 
 11.2. Compile-Time Checking of Exceptions
 
-The Java programming language requires that a program contains handlers for checked exceptions which can result from execution of a method or constructor. For each checked exception which is a possible result, the throws clause for the method (§8.4.6) or constructor (§8.8.5) must mention the class of that exception or one of the superclasses of the class of that exception (§11.2.3).
+The Java programming language requires that a program contains handlers for checked exceptions which can result from execution of a method or constructor (§8.4.6, §8.8.5). This compile-time checking for the presence of exception handlers is designed to reduce the number of exceptions which are not properly handled. For each checked exception which is a possible result, the throws clause for the method or constructor must mention the class of that exception or one of the superclasses of the class of that exception (§11.2.3).
 
-This compile-time checking for the presence of exception handlers is designed to reduce the number of exceptions which are not properly handled. The checked exception classes (§11.1.1) named in the throws clause are part of the contract between the implementor and user of the method or constructor. The throws clause of an overriding method may not specify that this method will result in throwing any checked exception which the overridden method is not permitted, by its throws clause, to throw (§8.4.8.3).
-
-When interfaces are involved, more than one method declaration may be overridden by a single overriding declaration. In this case, the overriding declaration must have a throws clause that is compatible with all the overridden declarations (§9.4.1).
+The checked exception classes (§11.1.1) named in the throws clause are part of the contract between the implementor and user of the method or constructor. The throws clause of an overriding method may not specify that this method will result in throwing any checked exception which the overridden method is not permitted, by its throws clause, to throw (§8.4.8.3). When interfaces are involved, more than one method declaration may be overridden by a single overriding declaration. In this case, the overriding declaration must have a throws clause that is compatible with all the overridden declarations (§9.4.1).
 
 The unchecked exception classes (§11.1.1) are exempted from compile-time checking.
 
-Of the unchecked exception classes, error classes are exempted because they can occur at many points in the program and recovery from them is difficult or impossible. A program declaring such exceptions would be cluttered, pointlessly. Sophisticated programs may yet wish to catch and attempt to recover from some of these conditions.
+Error classes are exempted because they can occur at many points in the program and recovery from them is difficult or impossible. A program declaring such exceptions would be cluttered, pointlessly. Sophisticated programs may yet wish to catch and attempt to recover from some of these conditions.
 
-Of the unchecked exception classes, run-time exception classes are exempted because, in the judgment of the designers of the Java programming language, having to declare such exceptions would not aid significantly in establishing the correctness of programs. Many of the operations and constructs of the Java programming language can result in exceptions at run time. The information available to a Java compiler, and the level of analysis a compiler performs, are usually not sufficient to establish that such run-time exceptions cannot occur, even though this may be obvious to the programmer. Requiring such exception classes to be declared would simply be an irritation to programmers.
+Run-time exception classes are exempted because, in the judgment of the designers of the Java programming language, having to declare such exceptions would not aid significantly in establishing the correctness of programs. Many of the operations and constructs of the Java programming language can result in exceptions at run time. The information available to a Java compiler, and the level of analysis a compiler performs, are usually not sufficient to establish that such run-time exceptions cannot occur, even though this may be obvious to the programmer. Requiring such exception classes to be declared would simply be an irritation to programmers.
 
 For example, certain code might implement a circular data structure that, by construction, can never involve null references; the programmer can then be certain that a NullPointerException cannot occur, but it would be difficult for a Java compiler to prove it. The theorem-proving technology that is needed to establish such global properties of data structures is beyond the scope of this specification.
 
-We say that a statement or expression can throw a checked exception class E if, according to the rules in §11.2.1 and §11.2.2, the execution of the statement or expression can result in an exception of class E being thrown.
+We say that a statement or expression can throw an exception class E if, according to the rules in §11.2.1 and §11.2.2, the execution of the statement or expression can result in an exception of class E being thrown.
 
-We say that a catch clause can catch its catchable exception class(es).
+We say that a catch clause can catch its catchable exception class(es):
 
 The catchable exception class of a uni-catch clause is the declared type of its exception parameter (§14.20).
 
-The catchable exception classes of a multi-catch clause are the alternatives in the union that denotes the type of its exception parameter (§14.20).
+The catchable exception classes of a multi-catch clause are the alternatives in the union that denotes the type of its exception parameter.
 
 11.2.1. Exception Analysis of Expressions
 
@@ -129,19 +127,23 @@ The expression is a qualified class instance creation expression and the qualify
 
 Some expression of the argument list can throw E; or
 
-E is determined to be an exception class of the throws clause of the constructor that is invoked (§15.12.2.6); or
+E is one of the exception types of the invocation type of the chosen constructor (§15.12.2.6); or
 
-The class instance creation expression includes a ClassBody, and some instance initializer block or instance variable initializer expression in the ClassBody can throw E.
+The class instance creation expression includes a ClassBody, and some instance initializer or instance variable initializer in the ClassBody can throw E.
 
 A method invocation expression (§15.12) can throw an exception class E iff either:
 
-The method to be invoked is of the form Primary.Identifier and the Primary expression can throw E; or
+The method invocation expression is of the form Primary . [TypeArguments] Identifier and the Primary expression can throw E; or
 
 Some expression of the argument list can throw E; or
 
-E is determined to be an exception class of the throws clause of the method that is invoked (§15.12.2.6).
+E is one of the exception types of the invocation type of the chosen method (§15.12.2.6).
+
+A lambda expression (§15.27) can throw no exception classes.
 
 For every other kind of expression, the expression can throw an exception class E iff one of its immediate subexpressions can throw E.
+
+Note that a method reference expression (§15.13) of the form Primary :: [TypeArguments] Identifier can throw an exception class if the Primary subexpression can throw an exception class. In contrast, a lambda expression can throw nothing, and has no immediate subexpressions on which to perform exception analysis. It is the body of a lambda expression, containing expressions and statements, that can throw exception classes.
 
 11.2.2. Exception Analysis of Statements
 
@@ -177,17 +179,19 @@ Any other statement S can throw an exception class E iff an expression or statem
 
 It is a compile-time error if a method or constructor body can throw some exception class E when E is a checked exception class and E is not a subclass of some class declared in the throws clause of the method or constructor.
 
+It is a compile-time error if a lambda body can throw some exception class E when E is a checked exception class and E is not a subclass of some class declared in the throws clause of the function type targeted by the lambda expression.
+
 It is a compile-time error if a class variable initializer (§8.3.2) or static initializer (§8.7) of a named class or interface can throw a checked exception class.
 
-It is a compile-time error if an instance variable initializer or instance initializer of a named class can throw a checked exception class unless that exception class or one of its superclasses is explicitly declared in the throws clause of each constructor of its class and the class has at least one explicitly declared constructor.
+It is a compile-time error if an instance variable initializer (§8.3.2) or instance initializer (§8.6) of a named class can throw a checked exception class, unless the named class has at least one explicitly declared constructor and the exception class or one of its superclasses is explicitly declared in the throws clause of each constructor.
 
-Note that no compile-time error is due if an instance variable initializer or instance initializer of an anonymous class (§15.9.5) can throw an exception class. In a named class, it is the responsibility of the programmer to propagate information about which exception classes can be thrown by initializers, by declaring a suitable throws clause on any explicit constructor declaration. This relationship between the checked exception classes thrown by a class's initializers and the checked exception classes declared by a class's constructors is assured implicitly for an anonymous class declaration, because no explicit constructor declarations are possible and a Java compiler always generates a constructor with a suitable throws clause for that anonymous class declaration based on the checked exception classes that its initializers can throw.
+Note that no compile-time error is due if an instance variable initializer or instance initializer of an anonymous class (§15.9.5) can throw an exception class. In a named class, it is the responsibility of the programmer to propagate information about which exception classes can be thrown by initializers, by declaring a suitable throws clause on any explicit constructor declaration. This relationship between the checked exception classes thrown by a class's initializers and the checked exception classes declared by a class's constructors is assured for an anonymous class declaration, because no explicit constructor declarations are possible and a Java compiler always generates a constructor with a suitable throws clause for the anonymous class declaration based on the checked exception classes that its initializers can throw.
 
 It is a compile-time error if a catch clause can catch checked exception class E1 and it is not the case that the try block corresponding to the catch clause can throw a checked exception class that is a subclass or superclass of E1, unless E1 is Exception or a superclass of Exception.
 
-It is a compile-time error if a catch clause can catch (§11.2) checked exception class E1 and a preceding catch clause of the immediately enclosing try statement can catch E1 or a superclass of E1.
+It is a compile-time error if a catch clause can catch an exception class E1 and a preceding catch clause of the immediately enclosing try statement can catch E1 or a superclass of E1.
 
-A Java compiler is encouraged to issue a warning if a catch clause can catch (§11.2) checked exception class E1 and the try block corresponding to the catch clause can throw checked exception class E2, a subclass of E1, and a preceding catch clause of the immediately enclosing try statement can catch checked exception class E3 where E2 <: E3 <: E1.
+A Java compiler is encouraged to issue a warning if a catch clause can catch checked exception class E1 and the try block corresponding to the catch clause can throw checked exception class E2, where E2 <: E1, and a preceding catch clause of the immediately enclosing try statement can catch checked exception class E3, where E2 <: E3 <: E1.
 
 Example 11.2.3-1. Catching Checked Exceptions
 
@@ -198,8 +202,8 @@ class StaticallyThrownExceptionsIncludeSubtypes {
         try {
             throw new FileNotFoundException();
         } catch (IOException ioe) {
-            // Legal in Java SE 6 and 7. "catch IOException"
-            // catches IOException and any subtype.
+            // "catch IOException" catches IOException 
+            // and any subtype.
         }
 
         try {
@@ -208,28 +212,28 @@ class StaticallyThrownExceptionsIncludeSubtypes {
               // It is not the case that statement "can throw"
               // a subtype or supertype of FileNotFoundException.
         } catch (FileNotFoundException fnfe) {
-            // Legal in Java SE 6 and 7.
+            // ... Handle exception ...
         } catch (IOException ioe) {
-            // Legal in Java SE 6 and 7, but compilers are
-            // encouraged to throw warnings as of Java SE 7.
-            // All subtypes of IOException that the try block
-            // can throw have already been caught.
+            // Legal, but compilers are encouraged to give
+            // warnings as of Java SE 7, because all subtypes of
+            // IOException that the try block "can throw" have 
+            // already been caught by the prior catch clause.
         }
 
         try {
             m();
-              // Method m's declaration says "throws IOException".
+              // m's declaration says "throws IOException", so
               // m "can throw" IOException. It is not the case
               // that m "can throw" a subtype or supertype of
-              // IOException, e.g. Exception, though Exception or
-              // a supertype of Exception can always be caught.
+              // IOException (e.g. Exception).
         } catch (FileNotFoundException fnfe) {
-            // Legal in Java SE 6 and 7, because the dynamic type
-            // of the IOException might be FileNotFoundException.
+            // Legal, because the dynamic type of the exception 
+            // might be FileNotFoundException.
         } catch (IOException ioe) {
-            // Legal in Java SE 6 and 7.
+            // Legal, because the dynamic type of the exception
+            // might be a different subtype of IOException.
         } catch (Throwable t) {
-            // Legal in Java SE 6 and 7.
+            // Can always catch Throwable.
         }
     }
 
@@ -283,7 +287,7 @@ If a try or catch block in a try-finally or try-catch-finally statement complete
 
 If a finally clause is executed because of abrupt completion of a try block and the finally clause itself completes abruptly, then the reason for the abrupt completion of the try block is discarded and the new reason for abrupt completion is propagated from there.
 
-The exact rules for abrupt completion and for the catching of exceptions are specified in detail with the specification of each statement in §14 and for expressions in §15 (especially §15.6).
+The exact rules for abrupt completion and for the catching of exceptions are specified in detail with the specification of each statement in §14 (Blocks and Statements) and for expressions in §15 (Expressions) (especially §15.6).
 
 Example 11.3-1. Throwing and Catching Exceptions
 

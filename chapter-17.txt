@@ -23,9 +23,9 @@ Table of Contents
 17.5.1. Semantics of final Fields
 17.5.2. Reading final Fields During Construction
 17.5.3. Subsequent Modification of final Fields
-17.5.4. Write-protected Fields
+17.5.4. Write-Protected Fields
 17.6. Word Tearing
-17.7. Non-atomic Treatment of double and long
+17.7. Non-Atomic Treatment of double and long
 
 While most of the discussion in the preceding chapters is concerned only with the behavior of code as executed a single statement or expression at a time, that is, by a single thread, the Java Virtual Machine can support many threads of execution at once. These threads independently execute code that operates on values and objects residing in a shared main memory. Threads may be supported by having many hardware processors, by time-slicing a single hardware processor, or by time-slicing many hardware processors.
 
@@ -171,9 +171,9 @@ Example 17.4-1. Incorrectly Synchronized Programs May Exhibit Surprising Behav
 
 The semantics of the Java programming language allow compilers and microprocessors to perform optimizations that can interact with incorrectly synchronized code in ways that can produce behaviors that seem paradoxical. Here are some examples of how incorrectly synchronized programs may exhibit surprising behaviors.
 
-Consider, for example, the example program traces shown in Table 17.1. This program uses local variables r1 and r2 and shared variables A and B. Initially, A == B == 0.
+Consider, for example, the example program traces shown in Table 17.4-A. This program uses local variables r1 and r2 and shared variables A and B. Initially, A == B == 0.
 
-Table 17.1. Surprising results caused by statement reordering - original code
+Table 17.4-A. Surprising results caused by statement reordering - original code
 
 Thread 1	Thread 2
 1: r2 = A;	3: r1 = B;
@@ -185,9 +185,9 @@ It may appear that the result r2 == 2 and r1 == 1 is impossible. Intuitively, ei
 
 If some execution exhibited this behavior, then we would know that instruction 4 came before instruction 1, which came before instruction 2, which came before instruction 3, which came before instruction 4. This is, on the face of it, absurd.
 
-However, compilers are allowed to reorder the instructions in either thread, when this does not affect the execution of that thread in isolation. If instruction 1 is reordered with instruction 2, as shown in the trace in Table 17.2, then it is easy to see how the result r2 == 2 and r1 == 1 might occur.
+However, compilers are allowed to reorder the instructions in either thread, when this does not affect the execution of that thread in isolation. If instruction 1 is reordered with instruction 2, as shown in the trace in Table 17.4-B, then it is easy to see how the result r2 == 2 and r1 == 1 might occur.
 
-Table 17.2. Surprising results caused by statement reordering - valid compiler transformation
+Table 17.4-B. Surprising results caused by statement reordering - valid compiler transformation
 
 Thread 1	Thread 2
 B = 1;	r1 = B;
@@ -205,11 +205,11 @@ and the write and read are not ordered by synchronization.
 
 This situation is an example of a data race (§17.4.5). When code contains a data race, counterintuitive results are often possible.
 
-Several mechanisms can produce the reordering in Table 17.2. A Just-In-Time compiler in a Java Virtual Machine implementation may rearrange code, or the processor. In addition, the memory hierarchy of the architecture on which a Java Virtual Machine implementation is run may make it appear as if code is being reordered. In this chapter, we shall refer to anything that can reorder code as a compiler.
+Several mechanisms can produce the reordering in Table 17.4-B. A Just-In-Time compiler in a Java Virtual Machine implementation may rearrange code, or the processor. In addition, the memory hierarchy of the architecture on which a Java Virtual Machine implementation is run may make it appear as if code is being reordered. In this chapter, we shall refer to anything that can reorder code as a compiler.
 
-Another example of surprising results can be seen in Table 17.3. Initially, p == q and p.x == 0. This program is also incorrectly synchronized; it writes to shared memory without enforcing any ordering between those writes.
+Another example of surprising results can be seen in Table 17.4-C. Initially, p == q and p.x == 0. This program is also incorrectly synchronized; it writes to shared memory without enforcing any ordering between those writes.
 
-Table 17.3. Surprising results caused by forward substitution
+Table 17.4-C. Surprising results caused by forward substitution
 
 Thread 1	Thread 2
 r1 = p;	r6 = p;
@@ -220,9 +220,9 @@ r5 = r1.x;	 
 
 
 
-One common compiler optimization involves having the value read for r2 reused for r5: they are both reads of r1.x with no intervening write. This situation is shown in Table 17.4.
+One common compiler optimization involves having the value read for r2 reused for r5: they are both reads of r1.x with no intervening write. This situation is shown in Table 17.4-D.
 
-Table 17.4. Surprising results caused by forward substitution
+Table 17.4-D. Surprising results caused by forward substitution
 
 Thread 1	Thread 2
 r1 = p;	r6 = p;
@@ -284,7 +284,7 @@ Thread divergence actions (§17.4.9). A thread divergence action is only perform
 
 Thread divergence actions are introduced to model how a thread may cause all other threads to stall and fail to make progress.
 
-This specification is only concerned with inter-thread actions. We do not need to concern ourselves with intra-thread actions (e.g., adding two local variables and storing the result in a third local variable). As previously mentioned, all threads need to obey the correct intra-thread semantics for Java programs. We will usually refere to inter-thread actions more succinctly as simply actions.
+This specification is only concerned with inter-thread actions. We do not need to concern ourselves with intra-thread actions (e.g., adding two local variables and storing the result in a third local variable). As previously mentioned, all threads need to obey the correct intra-thread semantics for Java programs. We will usually refer to inter-thread actions more succinctly as simply actions.
 
 An action a is described by a tuple < t, k, v, u >, comprising:
 
@@ -324,7 +324,7 @@ If a program has no data races, then all executions of the program will appear t
 
 Sequential consistency and/or freedom from data races still allows errors arising from groups of operations that need to be perceived atomically and are not.
 
-If we were to use sequential consistency as our memory model, many of the compiler and processor optimizations that we have discussed would be illegal. For example, in the trace in Table 17.3, as soon as the write of 3 to p.x occurred, subsequent reads of that location would be required to see that value.
+If we were to use sequential consistency as our memory model, many of the compiler and processor optimizations that we have discussed would be illegal. For example, in the trace in Table 17.4-C, as soon as the write of 3 to p.x occurred, subsequent reads of that location would be required to see that value.
 
 17.4.4. Synchronization Order
 
@@ -416,9 +416,9 @@ In a happens-before consistent set of actions, each read sees a write that it is
 
 Example 17.4.5-1. Happens-before Consistency
 
-For the trace in Table 17.5, initially A == B == 0. The trace can observe r2 == 0 and r1 == 0 and still be happens-before consistent, since there are execution orders that allow each read to see the appropriate write.
+For the trace in Table 17.4.5-A, initially A == B == 0. The trace can observe r2 == 0 and r1 == 0 and still be happens-before consistent, since there are execution orders that allow each read to see the appropriate write.
 
-Table 17.5. Behavior allowed by happens-before consistency, but not sequential consistency.
+Table 17.4.5-A. Behavior allowed by happens-before consistency, but not sequential consistency.
 
 Thread 1	Thread 2
 B = 1;	A = 2;
@@ -472,7 +472,7 @@ An execution is happens-before consistent if its set of actions is happens-befor
 
 17.4.7. Well-Formed Executions
 
-We only consider well-formed executions. An execution E = < P, A, po, so, W, V, sw, hb > is well formed if the following conditions are true:
+We only consider well-formed executions. An execution E = < P, A, po, so, W, V, sw, hb > is well formed if the following are true:
 
 Each read sees a write to the same variable in the execution.
 
@@ -548,9 +548,9 @@ If y is in Ci, x is an external action and hbi(x, y), then x in Ci.
 
 Example 17.4.8-1. Happens-before Consistency Is Not Sufficient
 
-Happens-before consistency is a necessary, but not sufficient, set of constraints. Merely enforcing happens-before consistency would allow for unacceptable behaviors - those that violate the requirements we have established for programs. For example, happens-before consistency allows values to appear "out of thin air". This can be seen by a detailed examination of the trace in Table 17.6.
+Happens-before consistency is a necessary, but not sufficient, set of constraints. Merely enforcing happens-before consistency would allow for unacceptable behaviors - those that violate the requirements we have established for programs. For example, happens-before consistency allows values to appear "out of thin air". This can be seen by a detailed examination of the trace in Table 17.4.8-A.
 
-Table 17.6. Happens-before consistency is not sufficient
+Table 17.4.8-A. Happens-before consistency is not sufficient
 
 Thread 1	Thread 2
 r1 = x;	r2 = y;
@@ -558,7 +558,7 @@ if (r1 != 0) y = 1;	if (r2 != 0) x = 1;
 
 
 
-The code shown in Table 17.6 is correctly synchronized. This may seem surprising, since it does not perform any synchronization actions. Remember, however, that a program is correctly synchronized if, when it is executed in a sequentially consistent manner, there are no data races. If this code is executed in a sequentially consistent way, each action will occur in program order, and neither of the writes will occur. Since no writes occur, there can be no data races: the program is correctly synchronized.
+The code shown in Table 17.4.8-A is correctly synchronized. This may seem surprising, since it does not perform any synchronization actions. Remember, however, that a program is correctly synchronized if, when it is executed in a sequentially consistent manner, there are no data races. If this code is executed in a sequentially consistent way, each action will occur in program order, and neither of the writes will occur. Since no writes occur, there can be no data races: the program is correctly synchronized.
 
 Since this program is correctly synchronized, the only behaviors we can allow are sequentially consistent behaviors. However, there is an execution of this program that is happens-before consistent, but not sequentially consistent:
 
@@ -570,15 +570,15 @@ x = 1;
 
 This result is happens-before consistent: there is no happens-before relationship that prevents it from occurring. However, it is clearly not acceptable: there is no sequentially consistent execution that would result in this behavior. The fact that we allow a read to see a write that comes later in the execution order can sometimes thus result in unacceptable behaviors.
 
-Although allowing reads to see writes that come later in the execution order is sometimes undesirable, it is also sometimes necessary. As we saw above, the trace in Table 17.5 requires some reads to see writes that occur later in the execution order. Since the reads come first in each thread, the very first action in the execution order must be a read. If that read cannot see a write that occurs later, then it cannot see any value other than the initial value for the variable it reads. This is clearly not reflective of all behaviors.
+Although allowing reads to see writes that come later in the execution order is sometimes undesirable, it is also sometimes necessary. As we saw above, the trace in Table 17.4.5-A requires some reads to see writes that occur later in the execution order. Since the reads come first in each thread, the very first action in the execution order must be a read. If that read cannot see a write that occurs later, then it cannot see any value other than the initial value for the variable it reads. This is clearly not reflective of all behaviors.
 
-We refer to the issue of when reads can see future writes as causality, because of issues that arise in cases like the one found in Table 17.6. In that case, the reads cause the writes to occur, and the writes cause the reads to occur. There is no "first cause" for the actions. Our memory model therefore needs a consistent way of determining which reads can see writes early.
+We refer to the issue of when reads can see future writes as causality, because of issues that arise in cases like the one found in Table 17.4.8-A. In that case, the reads cause the writes to occur, and the writes cause the reads to occur. There is no "first cause" for the actions. Our memory model therefore needs a consistent way of determining which reads can see writes early.
 
-Examples such as the one found in Table 17.6 demonstrate that the specification must be careful when stating whether a read can see a write that occurs later in the execution (bearing in mind that if a read sees a write that occurs later in the execution, it represents the fact that the write is actually performed early).
+Examples such as the one found in Table 17.4.8-A demonstrate that the specification must be careful when stating whether a read can see a write that occurs later in the execution (bearing in mind that if a read sees a write that occurs later in the execution, it represents the fact that the write is actually performed early).
 
 The memory model takes as input a given execution, and a program, and determines whether that execution is a legal execution of the program. It does this by gradually building a set of "committed" actions that reflect which actions were executed by the program. Usually, the next action to be committed will reflect the next action that can be performed by a sequentially consistent execution. However, to reflect reads that need to see later writes, we allow some actions to be committed earlier than other actions that happen-before them.
 
-Obviously, some actions may be committed early and some may not. If, for example, one of the writes in Table 17.6 were committed before the read of that variable, the read could see the write, and the "out-of-thin-air" result could occur. Informally, we allow an action to be committed early if we know that the action can occur without assuming some data race occurs. In Table 17.6, we cannot perform either write early, because the writes cannot occur unless the reads see the result of a data race.
+Obviously, some actions may be committed early and some may not. If, for example, one of the writes in Table 17.4.8-A were committed before the read of that variable, the read could see the write, and the "out-of-thin-air" result could occur. Informally, we allow an action to be committed early if we know that the action can occur without assuming some data race occurs. In Table 17.4.8-A, we cannot perform either write early, because the writes cannot occur unless the reads see the result of a data race.
 
 
 
@@ -711,7 +711,7 @@ A read of a final field of an object within the thread that constructs that obje
 
 In some cases, such as deserialization, the system will need to change the final fields of an object after construction. final fields can be changed via reflection and other implementation-dependent means. The only pattern in which this has reasonable semantics is one in which an object is constructed and then the final fields of the object are updated. The object should not be made visible to other threads, nor should the final fields be read, until all updates to the final fields of the object are complete. Freezes of a final field occur both at the end of the constructor in which the final field is set, and immediately after each modification of a final field via reflection or other special mechanism.
 
-Even then, there are a number of complications. If a final field is initialized to a compile-time constant expression (§15.28) in the field declaration, changes to the final field may not be observed, since uses of that final field are replaced at compile time with the value of the constant expression.
+Even then, there are a number of complications. If a final field is initialized to a constant expression (§15.28) in the field declaration, changes to the final field may not be observed, since uses of that final field are replaced at compile time with the value of the constant expression.
 
 Another problem is that the specification allows aggressive optimization of final fields. Within a thread, it is permissible to reorder reads of a final field with those modifications of a final field that do not take place in the constructor.
 
@@ -753,7 +753,7 @@ In an implementation, a compiler should not move an access to a final field into
 
 One place where use of a final-field-safe context would be appropriate is in an executor or thread pool. By executing each Runnable in a separate final-field-safe context, the executor could guarantee that incorrect access by one Runnable to a object o will not remove final field guarantees for other Runnables handled by the same executor.
 
-17.5.4. Write-protected Fields
+17.5.4. Write-Protected Fields
 
 Normally, a field that is final and static may not be modified. However, System.in, System.out, and System.err are static final fields that, for legacy reasons, must be allowed to be changed by the methods System.setIn, System.setOut, and System.setErr. We refer to these fields as being write-protected to distinguish them from ordinary final fields.
 
@@ -806,7 +806,7 @@ This makes the point that bytes must not be overwritten by writes to adjacent by
 
 
 
-17.7. Non-atomic Treatment of double and long
+17.7. Non-Atomic Treatment of double and long
 
 For the purposes of the Java programming language memory model, a single write to a non-volatile long or double value is treated as two separate writes: one to each 32-bit half. This can result in a situation where a thread sees the first 32 bits of a 64-bit value from one write, and the second 32 bits from another write.
 

@@ -282,7 +282,7 @@ V is definitely assigned after an empty statement iff it is definitely assigned 
 
 V is definitely unassigned after an empty statement iff it is definitely unassigned before the empty statement.
 
-Throughout the rest of this chapter, we will, unless explicitly stated otherwise, write V to represent a local variable or a blank final field (for rules of definite assignment) or a blank final variable (for rules of definite unassignment). Likewise, we will use a, b, c, and e to represent expressions, and S and T to represent statements. We will use the phrase "a is V" to mean that a is either the simple name of the variable V, or V's simple name qualified by this (ignoring parentheses). We will use the phrase "a is not V" to mean the negation of "a is V".
+Throughout the rest of this chapter, we will, unless explicitly stated otherwise, write V to represent a local variable or blank final field which is in scope (§6.3). Likewise, we will use a, b, c, and e to represent expressions, and S and T to represent statements. We will use the phrase "a is V" to mean that a is either the simple name of the variable V, or V's simple name qualified by this (ignoring parentheses). We will use the phrase "a is not V" to mean the negation of "a is V".
 
 The definite unassignment analysis of loop statements raises a special problem. Consider the statement while (e) S. In order to determine whether V is definitely unassigned within some subexpression of e, we need to determine whether V is definitely unassigned before e. One might argue, by analogy with the rule for definite assignment (§16.2.10), that V is definitely unassigned before e iff it is definitely unassigned before the while statement. However, such a rule is inadequate for our purposes. If e evaluates to true, the statement S will be executed. Later, if V is assigned by S, then in the following iteration(s) V will have already been assigned when e is evaluated. Under the rule suggested above, it would be possible to assign V multiple times, which is exactly what we have sought to avoid by introducing these rules.
 
@@ -421,7 +421,7 @@ If the expression has subexpressions, V is [un]assigned after the expression iff
 
 There is a piece of subtle reasoning behind the assertion that a variable V can be known to be definitely unassigned after a method invocation. Taken by itself, at face value and without qualification, such an assertion is not always true, because an invoked method can perform assignments. But it must be remembered that, for the purposes of the Java programming language, the concept of definite unassignment is applied only to blank final variables. If V is a blank final local variable, then only the method to which its declaration belongs can perform assignments to V. If V is a blank final field, then only a constructor or an initializer for the class containing the declaration for V can perform assignments to V; no method can perform assignments to V. Finally, explicit constructor invocations (§8.8.7.1) are handled specially (§16.9); although they are syntactically similar to expression statements containing method invocations, they are not expression statements and therefore the rules of this section do not apply to explicit constructor invocations.
 
-For any immediate subexpression y of an expression x, V is [un]assigned before y iff one of the following situations is true:
+For any immediate subexpression y of an expression x, V is [un]assigned before y iff one of the following is true:
 
 y is the leftmost immediate subexpression of x and V is [un]assigned before x.
 
@@ -468,7 +468,7 @@ V is definitely unassigned before B.
 
 V is definitely assigned after e in every assignment expression V = e, V += e, V -= e, V *= e, V /= e, V %= e, V <<= e, V >>= e, V >>>= e, V &= e, V |= e, or V ^= e that occurs in B.
 
-V is definitely assigned before every expression ++V, --V, V++, or V--. that occurs in B.
+V is definitely assigned before every expression ++V, --V, V++, or V-- that occurs in B.
 
 These conditions are counterintuitive and require some explanation. Consider a simple assignment V = e. If V is definitely assigned after e, then either:
 
@@ -510,7 +510,7 @@ V is [un]assigned before e iff it is [un]assigned before e;.
 
 16.2.7. if Statements
 
-The following rules apply to a statement if (e) S (§14.9.1) :
+The following rules apply to a statement if (e) S (§14.9.1):
 
 V is [un]assigned after if (e) S iff V is [un]assigned after S and V is [un]assigned after e when false.
 
@@ -518,7 +518,7 @@ V is [un]assigned before e iff V is [un]assigned before if (e) S.
 
 V is [un]assigned before S iff V is [un]assigned after e when true.
 
-The following rules apply to a statement if (e) S else T (§14.9.2) :
+The following rules apply to a statement if (e) S else T (§14.9.2):
 
 V is [un]assigned after if (e) S else T iff V is [un]assigned after S and V is [un]assigned after T.
 
@@ -530,7 +530,7 @@ V is [un]assigned before T iff V is [un]assigned after e when false.
 
 16.2.8. assert Statements
 
-The following rules apply both to a statement assert e1 and to a statement assert e1 : e2 (§14.10) :
+The following rules apply both to a statement assert e1 and to a statement assert e1 : e2 (§14.10):
 
 V is [un]assigned before e1 iff V is [un]assigned before the assert statement.
 
@@ -568,7 +568,7 @@ V is [un]assigned after while (e) S (§14.12) iff V is [un]assigned after e when
 
 V is definitely assigned before e iff V is definitely assigned before the while statement.
 
-V is definitely unassigned before e iff all of the following conditions hold:
+V is definitely unassigned before e iff all of the following are true:
 
 V is definitely unassigned before the while statement.
 
@@ -584,7 +584,7 @@ V is [un]assigned after do S while (e); (§14.13) iff V is [un]assigned after e 
 
 V is definitely assigned before S iff V is definitely assigned before the do statement.
 
-V is definitely unassigned before S iff all of the following conditions hold:
+V is definitely unassigned before S iff all of the following are true:
 
 V is definitely unassigned before the do statement.
 
@@ -594,7 +594,7 @@ V is [un]assigned before e iff V is [un]assigned after S and V is [un]assigned b
 
 16.2.12. for Statements
 
-The rules herein cover the basic for statement (§14.14.1). Since the enhanced for (§14.14.2) statement is defined by translation to a basic for statement, no special rules need to be provided for it.
+The rules herein cover the basic for statement (§14.14.1). Since the enhanced for statement (§14.14.2) is defined by translation to a basic for statement, no special rules need to be provided for it.
 
 V is [un]assigned after a for statement iff both of the following are true:
 
@@ -606,7 +606,7 @@ V is [un]assigned before the initialization part of the for statement iff V is [
 
 V is definitely assigned before the condition part of the for statement iff V is definitely assigned after the initialization part of the for statement.
 
-V is definitely unassigned before the condition part of the for statement iff all of the following conditions hold:
+V is definitely unassigned before the condition part of the for statement iff all of the following are true:
 
 V is definitely unassigned after the initialization part of the for statement.
 
@@ -672,7 +672,7 @@ V is [un]assigned before the try block iff V is [un]assigned before the try stat
 
 V is definitely assigned before a catch block iff V is definitely assigned before the try block.
 
-V is definitely unassigned before a catch block iff all of the following conditions hold:
+V is definitely unassigned before a catch block iff all of the following are true:
 
 V is definitely unassigned after the try block.
 
@@ -702,7 +702,7 @@ V is definitely unassigned after a try statement iff V is definitely unassigned 
 
 V is definitely assigned before the finally block iff V is definitely assigned before the try statement.
 
-V is definitely unassigned before the finally block iff all of the following conditions hold:
+V is definitely unassigned before the finally block iff all of the following are true:
 
 V is definitely unassigned after the try block.
 
@@ -770,7 +770,7 @@ V is definitely assigned before a member type declaration of C iff V is definite
 
 Let C be a class declared within the scope of V. Then:
 
-V is definitely assigned before an enum constant (§8.9.1) or static variable initializer (§8.3.2.1) of C iff V is definitely assigned before the declaration of C.
+V is definitely assigned before an enum constant (§8.9.1) or static variable initializer (§8.3.2) of C iff V is definitely assigned before the declaration of C.
 
 Note that there are no rules that would allow us to conclude that V is definitely unassigned before a static variable initializer or enum constant. We can informally conclude that V is not definitely unassigned before any static variable initializer of C, but there is no need for such a rule to be stated explicitly.
 
@@ -792,7 +792,7 @@ V is definitely assigned (and moreover is not definitely unassigned) before ever
 
 Let C be a class declared within the scope of V. Then:
 
-V is definitely assigned before an instance variable initializer (§8.3.2.2) of C iff V is definitely assigned before the declaration of C.
+V is definitely assigned before an instance variable initializer (§8.3.2) of C iff V is definitely assigned before the declaration of C.
 
 Note that there are no rules that would allow us to conclude that V is definitely unassigned before an instance variable initializer. We can informally conclude that V is not definitely unassigned before any instance variable initializer of C, but there is no need for such a rule to be stated explicitly.
 

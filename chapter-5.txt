@@ -1,4 +1,4 @@
-Chapter 5. Conversions and Promotions
+Chapter 5. Conversions and Contexts
 
 Table of Contents
 
@@ -16,20 +16,28 @@ Table of Contents
 5.1.11. String Conversion
 5.1.12. Forbidden Conversions
 5.1.13. Value Set Conversion
-5.2. Assignment Conversion
-5.3. Method Invocation Conversion
-5.4. String Conversion
-5.5. Casting Conversion
+5.2. Assignment Contexts
+5.3. Invocation Contexts
+5.4. String Contexts
+5.5. Casting Contexts
 5.5.1. Reference Type Casting
 5.5.2. Checked Casts and Unchecked Casts
 5.5.3. Checked Casts at Run Time
-5.6. Numeric Promotions
+5.6. Numeric Contexts
 5.6.1. Unary Numeric Promotion
 5.6.2. Binary Numeric Promotion
 
-Every expression written in the Java programming language has a type that can be deduced from the structure of the expression and the types of the literals, variables, and methods mentioned in the expression. It is possible, however, to write an expression in a context where the type of the expression is not appropriate. In some cases, this leads to an error at compile time. In other cases, the context may be able to accept a type that is related to the type of the expression; as a convenience, rather than requiring the programmer to indicate a type conversion explicitly, the Java programming language performs an implicit conversion from the type of the expression to a type acceptable for its surrounding context.
+Every expression written in the Java programming language either produces no result (§15.1) or has a type that can be deduced at compile time (§15.3). When an expression appears in most contexts, it must be compatible with a type expected in that context; this type is called the target type. For convenience, compatibility of an expression with its surrounding context is facilitated in two ways:
 
-A specific conversion from type S to type T allows an expression of type S to be treated at compile time as if it had type T instead. In some cases this will require a corresponding action at run time to check the validity of the conversion or to translate the run-time value of the expression into a form appropriate for the new type T.
+First, for some expressions, termed poly expressions (§15.2), the deduced type can be influenced by the target type. The same expression can have different types in different contexts.
+
+Second, after the type of the expression has been deduced, an implicit conversion from the type of the expression to the target type can sometimes be performed.
+
+If neither strategy is able to produce the appropriate type, a compile-time error occurs.
+
+The rules determining whether an expression is a poly expression, and if so, its type and compatibility in a particular context, vary depending on the kind of context and the form of the expression. In addition to influencing the type of the expression, the target type may in some cases influence the run time behavior of the expression in order to produce a value of the appropriate type.
+
+Similarly, the rules determining whether a target type allows an implicit conversion vary depending on the kind of context, the type of the expression, and, in one special case, the value of a constant expression (§15.28). A conversion from type S to type T allows an expression of type S to be treated at compile time as if it had type T instead. In some cases this will require a corresponding action at run time to check the validity of the conversion or to translate the run-time value of the expression into a form appropriate for the new type T.
 
 Example 5.0-1. Conversions at Compile Time and Run Time
 
@@ -39,12 +47,12 @@ A conversion from type Thread to type Object requires no run-time action; Thread
 
 A conversion from type int to type long requires run-time sign-extension of a 32-bit integer value to the 64-bit long representation. No information is lost.
 
-A conversion from type double to type long requires a nontrivial translation from a 64-bit floating-point value to the 64-bit integer representation. Depending on the actual run-time value, information may be lost.
+A conversion from type double to type long requires a non-trivial translation from a 64-bit floating-point value to the 64-bit integer representation. Depending on the actual run-time value, information may be lost.
 
 
 
 
-In every conversion context, only certain specific conversions are permitted. For convenience of description, the specific conversions that are possible in the Java programming language are grouped into several broad categories:
+The conversions possible in the Java programming language are grouped into several broad categories:
 
 Identity conversions
 
@@ -68,31 +76,23 @@ String conversions
 
 Value set conversions
 
-There are five conversion contexts in which conversion of expressions may occur. Each context allows conversions in some of the categories named above but not others. The term "conversion" is also used to describe the process of choosing a specific conversion for such a context. For example, we say that an expression that is an actual argument in a method invocation is subject to "method invocation conversion," meaning that a specific conversion will be implicitly chosen for that expression according to the rules for the method invocation argument context.
+There are six kinds of conversion contexts in which poly expressions may be influenced by context or implicit conversions may occur. Each kind of context has different rules for poly expression typing and allows conversions in some of the categories above but not others. The contexts are:
 
-One conversion context is the operand of a numeric operator such as + or *. The conversion process for such operands is called numeric promotion. Promotion is special in that, in the case of binary operators, the conversion chosen for one operand may depend in part on the type of the other operand expression.
+Assignment contexts (§5.2, §15.26), in which an expression's value is bound to a named variable. Primitive and reference types are subject to widening, values may be boxed or unboxed, and some primitive constant expressions may be subject to narrowing. An unchecked conversion may also occur.
 
-This chapter first describes the eleven categories of conversions (§5.1), including the special conversions to String allowed for the string concatenation operator + (§15.18.1). Then the five conversion contexts are described:
+Strict invocation contexts (§5.3, §15.9, §15.12), in which an argument is bound to a formal parameter of a constructor or method. Widening primitive, widening reference, and unchecked conversions may occur.
 
-Assignment conversion (§5.2, §15.26) converts the type of an expression to the type of a specified variable.
+Loose invocation contexts (§5.3, §15.9, §15.12), in which, like strict invocation contexts, an argument is bound to a formal parameter. Method or constructor invocations may provide this context if no applicable declaration can be found using only strict invocation contexts. In addition to widening and unchecked conversions, this context allows boxing and unboxing conversions to occur.
 
-Assignment conversion may cause an OutOfMemoryError (as a result of boxing conversion (§5.1.7)), a NullPointerException (as a result of unboxing conversion (§5.1.8)), or a ClassCastException (as a result of an unchecked conversion (§5.1.9)) to be thrown at run time.
+String contexts (§5.4, §15.18.1), in which a value of any type is converted to an object of type String.
 
-Method invocation conversion (§5.3, §15.9, §15.12) is applied to each argument in a method or constructor invocation and, except in one case, performs the same conversions that assignment conversion does.
+Casting contexts (§5.5), in which an expression's value is converted to a type explicitly specified by a cast operator (§15.16). Casting contexts are more inclusive than assignment or loose invocation contexts, allowing any specific conversion other than a string conversion, but certain casts to a reference type are checked for correctness at run time.
 
-Method invocation conversion may cause an OutOfMemoryError (as a result of boxing conversion (§5.1.7)), a NullPointerException (as a result of unboxing conversion (§5.1.8)), or a ClassCastException (as a result of an unchecked conversion (§5.1.9)) to be thrown at run time.
+Numeric contexts (§5.6), in which the operands of a numeric operator may be widened to a common type so that an operation can be performed.
 
-Casting conversion (§5.5) converts the type of an expression to a type explicitly specified by a cast operator (§15.16).
+The term "conversion" is also used to describe, without being specific, any conversions allowed in a particular context. For example, we say that an expression that is the initializer of a local variable is subject to "assignment conversion", meaning that a specific conversion will be implicitly chosen for that expression according to the rules for the assignment context.
 
-It is more inclusive than assignment or method invocation conversion, allowing any specific conversion other than a string conversion, but certain casts to a reference type may cause an exception at run time.
-
-String conversion (§5.4) applies only to an operand of the binary + operator which is not a String when the other operand is a String.
-
-String conversion may cause an OutOfMemoryError (as a result of class instance creation (§12.5)) to be thrown at run time.
-
-Numeric promotion (§5.6) brings the operands of a numeric operator to a common type so that an operation can be performed.
-
-Example 5.0-2. Conversion Contexts
+Example 5.0-2. Conversions In Various Contexts
 
 class Test {			
     public static void main(String[] args) {
@@ -101,24 +101,31 @@ class Test {
         // be a compile-time error, because this is a
         // narrowing conversion (5.1.3):
         int i = (int)12.5f;
+
         // String conversion (5.4) of i's int value:
         System.out.println("(int)12.5f==" + i);
+
         // Assignment conversion (5.2) of i's value to type
         // float. This is a widening conversion (5.1.2):
         float f = i;
+
         // String conversion of f's float value:
         System.out.println("after float widening: " + f);
+
         // Numeric promotion (5.6) of i's value to type
         // float. This is a binary numeric promotion.
         // After promotion, the operation is float*float:
         System.out.print(f);
         f = f * i;
+
         // Two string conversions of i and f:
         System.out.println("*" + i + "==" + f);
-        // Method invocation conversion (5.3) of f's value
+
+        // Invocation conversion (5.3) of f's value
         // to type double, needed because the method Math.sin
         // accepts only a double argument:
         double d = Math.sin(f);
+
         // Two string conversions of f and d:
         System.out.println("Math.sin(" + f + ")==" + d);
     }
@@ -160,13 +167,19 @@ long to float or double
 
 float to double
 
-A widening primitive conversion does not lose information about the overall magnitude of a numeric value.
+A widening primitive conversion does not lose information about the overall magnitude of a numeric value in the following cases, where the numeric value is preserved exactly:
 
-A widening primitive conversion from an integral type to another integral type, or from float to double in a strictfp expression (§15.4), does not lose any information at all; the numeric value is preserved exactly.
+from an integral type to another integral type
+
+from byte, short, or char to a floating point type
+
+from int to double
+
+from float to double in a strictfp expression (§15.4)
 
 A widening primitive conversion from float to double that is not strictfp may lose information about the overall magnitude of the converted value.
 
-A widening conversion of an int or a long value to float, or of a long value to double, may result in loss of precision - that is, the result may lose some of the least significant bits of the value. In this case, the resulting floating-point value will be a correctly rounded version of the integer value, using IEEE 754 round-to-nearest mode (§4.2.4).
+A widening primitive conversion from int to float, or from long to float, or from long to double, may result in loss of precision - that is, the result may lose some of the least significant bits of the value. In this case, the resulting floating-point value will be a correctly rounded version of the integer value, using IEEE 754 round-to-nearest mode (§4.2.4).
 
 A widening conversion of a signed integer value to an integral type T simply sign-extends the two's-complement representation of the integer value to fill the wider format.
 
@@ -242,6 +255,8 @@ If T is int or long, the result of the conversion is the result of the first ste
 
 If T is byte, char, or short, the result of the conversion is the result of a narrowing conversion to type T (§5.1.3) of the result of the first step.
 
+Despite the fact that overflow, underflow, or other loss of information may occur, a narrowing primitive conversion never results in a run-time exception (§11.1.1).
+
 Example 5.1.3-1. Narrowing Primitive Conversion
 
 class Test {
@@ -277,8 +292,6 @@ The results for byte and short lose information about the sign and magnitude of 
 
 
 
-
-Despite the fact that overflow, underflow, or other loss of information may occur, a narrowing primitive conversion never results in a run-time exception (§11.1.1).
 
 Example 5.1.3-2. Narrowing Primitive Conversions that lose information
 
@@ -398,9 +411,9 @@ Otherwise, boxing conversion converts p into a reference r of class and type Dou
 
 If p is a value of any other type, boxing conversion is equivalent to an identity conversion (§5.1.1).
 
-If the value p being boxed is true, false, a byte, or a char in the range \u0000 to \u007f, or an int or short number between -128 and 127 (inclusive), then let r1 and r2 be the results of any two boxing conversions of p. It is always the case that r1 == r2.
+If the value p being boxed is an integer literal of type int between -128 and 127 inclusive (§3.10.1), or the boolean literal true or false (§3.10.3), or a character literal between '\u0000' and '\u007f' inclusive (§3.10.4), then let a and b be the results of any two boxing conversions of p. It is always the case that a == b.
 
-Ideally, boxing a given primitive value p, would always yield an identical reference. In practice, this may not be feasible using existing implementation techniques. The rules above are a pragmatic compromise. The final clause above requires that certain common values always be boxed into indistinguishable objects. The implementation may cache these, lazily or eagerly. For other values, this formulation disallows any assumptions about the identity of the boxed values on the programmer's part. This would allow (but not require) sharing of some or all of these references.
+Ideally, boxing a primitive value would always yield an identical reference. In practice, this may not be feasible using existing implementation techniques. The rule above is a pragmatic compromise, requiring that certain common values always be boxed into indistinguishable objects. The implementation may cache these, lazily or eagerly. For other values, the rule disallows any assumptions about the identity of the boxed values on the programmer's part. This allows (but does not require) sharing of some or all of these references. Notice that integer literals of type long are allowed, but not required, to be shared.
 
 This ensures that in most common cases, the behavior will be the desired one, without imposing an undue performance penalty, especially on small devices. Less memory-limited implementations might, for example, cache all char and short values, as well as int and long values in the range of -32K to +32K.
 
@@ -456,9 +469,9 @@ Let G name a generic type declaration with n type parameters.
 
 There is an unchecked conversion from the raw class or interface type (§4.8) G to any parameterized type of the form G<T1,...,Tn>.
 
-There is an unchecked conversion from the raw array type G[] to any array type type of the form G<T1,...,Tn>[].
+There is an unchecked conversion from the raw array type G[]k to any array type of the form G<T1,...,Tn>[]k. (The notation []k indicates an array type of k dimensions.)
 
-Use of an unchecked conversion causes a compile-time unchecked warning unless G<...> is a parameterized type in which all type arguments are unbounded wildcards (§4.5.1), or the unchecked warning is suppressed by the SuppressWarnings annotation (§9.6.3.5).
+Use of an unchecked conversion causes a compile-time unchecked warning unless all type arguments Ti (1 ≤ i ≤ n) are unbounded wildcards (§4.5.1), or the unchecked warning is suppressed by the SuppressWarnings annotation (§9.6.4.5).
 
 Unchecked conversion is used to enable a smooth interoperation of legacy code, written before the introduction of generic types, with libraries that have undergone a conversion to use genericity (a process we call generification). In such circumstances (most notably, clients of the Collections Framework in java.util), legacy code uses raw types (e.g. Collection instead of Collection<String>). Expressions of raw types are passed as arguments to library methods that use parameterized versions of those same types as the types of their corresponding formal parameters.
 
@@ -573,7 +586,7 @@ Otherwise, the conversion is performed as if by an invocation of the toString me
 
 The toString method is defined by the primordial class Object (§4.3.2). Many classes override it, notably Boolean, Character, Integer, Long, Float, Double, and String.
 
-See §5.4 for details of the string conversion context.
+See §5.4 for details of the string context.
 
 5.1.12. Forbidden Conversions
 
@@ -599,9 +612,9 @@ Within an FP-strict expression, mapping values from the float-extended-exponent 
 
 Whether in FP-strict code or code that is not FP-strict, value set conversion always leaves unchanged any value whose type is neither float nor double.
 
-5.2. Assignment Conversion
+5.2. Assignment Contexts
 
-Assignment conversion occurs when the value of an expression is assigned (§15.26) to a variable: the type of the expression must be converted to the type of the variable.
+Assignment contexts allow the value of an expression to be assigned (§15.26) to a variable; the type of the expression must be converted to the type of the variable.
 
 Assignment contexts allow the use of one of the following:
 
@@ -615,16 +628,7 @@ a boxing conversion (§5.1.7) optionally followed by a widening reference conver
 
 an unboxing conversion (§5.1.8) optionally followed by a widening primitive conversion.
 
-If, after the conversions listed above have been applied, the resulting type is a raw type (§4.8), unchecked conversion (§5.1.9) may then be applied.
-
-It is a compile-time error if the chain of conversions contains two parameterized types that are not in the subtype relation.
-
-An example of such an illegal chain would be:
-
-Integer, Comparable<Integer>, Comparable, Comparable<String>
-
-
-The first three elements of the chain are related by widening reference conversion, while the last entry is derived from its predecessor by unchecked conversion. However, this is not a valid assignment conversion, because the chain contains two parameterized types, Comparable<Integer> and Comparable<String>, that are not subtypes.
+If, after the conversions listed above have been applied, the resulting type is a raw type (§4.8), an unchecked conversion (§5.1.9) may then be applied.
 
 In addition, if the expression is a constant expression (§15.28) of type byte, short, char, or int:
 
@@ -638,7 +642,7 @@ Short and the value of the constant expression is representable in the type shor
 
 Character and the value of the constant expression is representable in the type char.
 
-The compile-time narrowing of constants means that code such as:
+The compile-time narrowing of constant expressions means that code such as:
 
 byte theAnswer = 42;
 
@@ -648,23 +652,32 @@ is allowed. Without the narrowing, the fact that the integer literal 42 has type
 byte theAnswer = (byte)42;  // cast is permitted but not required
 
 
-A value of the null type (the null reference is the only such value) may be assigned to any reference type, resulting in a null reference of that type.
+Finally, a value of the null type (the null reference is the only such value) may be assigned to any reference type, resulting in a null reference of that type.
+
+It is a compile-time error if the chain of conversions contains two parameterized types that are not in the subtype relation (§4.10).
+
+An example of such an illegal chain would be:
+
+Integer, Comparable<Integer>, Comparable, Comparable<String>
+
+
+The first three elements of the chain are related by widening reference conversion, while the last entry is derived from its predecessor by unchecked conversion. However, this is not a valid assignment conversion, because the chain contains two parameterized types, Comparable<Integer> and Comparable<String>, that are not subtypes.
 
 If the type of the expression cannot be converted to the type of the variable by a conversion permitted in an assignment context, then a compile-time error occurs.
 
 If the type of an expression can be converted to the type of a variable by assignment conversion, we say the expression (or its value) is assignable to the variable or, equivalently, that the type of the expression is assignment compatible with the type of the variable.
 
-If the type of the variable is float or double, then value set conversion (§5.1.13) is applied to the value v that is the result of the type conversion:
+If the type of the variable is float or double, then value set conversion (§5.1.13) is applied to the value v that is the result of the conversion(s):
 
 If v is of type float and is an element of the float-extended-exponent value set, then the implementation must map v to the nearest element of the float value set. This conversion may result in overflow or underflow.
 
 If v is of type double and is an element of the double-extended-exponent value set, then the implementation must map v to the nearest element of the double value set. This conversion may result in overflow or underflow.
 
-The only exceptions that an assignment conversion may cause are:
+The only exceptions that may arise from conversions in an assignment context are:
 
-A ClassCastException if, after the type conversions above have been applied, the resulting value is an object which is not an instance of a subclass or subinterface of the erasure (§4.6) of the type of the variable.
+A ClassCastException if, after the conversions above have been applied, the resulting value is an object which is not an instance of a subclass or subinterface of the erasure (§4.6) of the type of the variable.
 
-This circumstance can only arise as a result of heap pollution (§4.12.2). In practice, implementations need only perform casts when accessing a field or method of an object of parametized type, when the erased type of the field, or the erased result type of the method differ from their unerased type.
+This circumstance can only arise as a result of heap pollution (§4.12.2). In practice, implementations need only perform casts when accessing a field or method of an object of parameterized type when the erased type of the field, or the erased return type of the method, differ from its unerased type.
 
 An OutOfMemoryError as a result of a boxing conversion.
 
@@ -826,11 +839,19 @@ The value of pvec cannot be assigned to cpvec, because not every reference that 
     
 
 
-5.3. Method Invocation Conversion
+5.3. Invocation Contexts
 
-Method invocation conversion is applied to each argument value in a method or constructor invocation (§8.8.7.1, §15.9, §15.12): the type of the argument expression must be converted to the type of the corresponding parameter.
+Invocation contexts allow an argument value in a method or constructor invocation (§8.8.7.1, §15.9, §15.12) to be assigned to a corresponding formal parameter.
 
-Method invocation contexts allow the use of one of the following:
+Strict invocation contexts allow the use of one of the following:
+
+an identity conversion (§5.1.1)
+
+a widening primitive conversion (§5.1.2)
+
+a widening reference conversion (§5.1.5)
+
+Loose invocation contexts allow a more permissive set of conversions, because they are only used for a particular invocation if no applicable declaration can be found using strict invocation contexts. Loose invocation contexts allow the use of one of the following:
 
 an identity conversion (§5.1.1)
 
@@ -840,33 +861,31 @@ a widening reference conversion (§5.1.5)
 
 a boxing conversion (§5.1.7) optionally followed by widening reference conversion
 
-an unboxing conversion (§5.1.8) optionally followed by a widening primitive conversion.
+an unboxing conversion (§5.1.8) optionally followed by a widening primitive conversion
 
-If, after the conversions listed above have been applied, the resulting type is a raw type (§4.8), an unchecked conversion (§5.1.9) may then be applied.
+If, after the conversions listed for an invocation context have been applied, the resulting type is a raw type (§4.8), an unchecked conversion (§5.1.9) may then be applied.
 
-It is a compile-time error if the chain of conversions contains two parameterized types that are not in the subtype relation.
+A value of the null type (the null reference is the only such value) may be assigned to any reference type.
 
-A value of the null type (the null reference is the only such value) may be converted to any reference type.
+It is a compile-time error if the chain of conversions contains two parameterized types that are not in the subtype relation (§4.10).
 
-If the type of the expression cannot be converted to the type of the parameter by a conversion permitted in a method invocation context, then a compile-time error occurs.
+If the type of the expression cannot be converted to the type of the parameter by a conversion permitted in a loose invocation context, then a compile-time error occurs.
 
-If the type of an argument expression is either float or double, then value set conversion (§5.1.13) is applied after the type conversion:
+If the type of an argument expression is either float or double, then value set conversion (§5.1.13) is applied after the conversion(s):
 
 If an argument value of type float is an element of the float-extended-exponent value set, then the implementation must map the value to the nearest element of the float value set. This conversion may result in overflow or underflow.
 
 If an argument value of type double is an element of the double-extended-exponent value set, then the implementation must map the value to the nearest element of the double value set. This conversion may result in overflow or underflow.
 
-The only exceptions that an method invocation conversion may cause are:
+The only exceptions that may arise in an invocation context are:
 
 A ClassCastException if, after the type conversions above have been applied, the resulting value is an object which is not an instance of a subclass or subinterface of the erasure (§4.6) of the corresponding formal parameter type.
-
-This circumstance can only arise as a result of heap pollution (§4.12.2).
 
 An OutOfMemoryError as a result of a boxing conversion.
 
 A NullPointerException as a result of an unboxing conversion on a null reference.
 
-Method invocation conversions specifically do not include the implicit narrowing of integer constants which is part of assignment conversion (§5.2). The designers of the Java programming language felt that including these implicit narrowing conversions would add additional complexity to the overloaded method matching resolution process (§15.12.2).
+Neither strict nor loose invocation contexts include the implicit narrowing of integer constant expressions which is allowed in assignment contexts. The designers of the Java programming language felt that including these implicit narrowing conversions would add additional complexity to the rules of overload resolution (§15.12.2).
 
 Thus, the program:
 
@@ -879,17 +898,17 @@ class Test {
 }
 
 
-causes a compile-time error because the integer literals 12 and 2 have type int, so neither method m matches under the rules of (§15.12.2). A language that included implicit narrowing of integer constants would need additional rules to resolve cases like this example.
+causes a compile-time error because the integer literals 12 and 2 have type int, so neither method m matches under the rules of overload resolution. A language that included implicit narrowing of integer constant expressions would need additional rules to resolve cases like this example.
 
-5.4. String Conversion
+5.4. String Contexts
 
-String conversion applies only to an operand of the binary + operator which is not a String when the other operand is a String.
+String contexts apply only to an operand of the binary + operator which is not a String when the other operand is a String.
 
-In this single special case, the non-String operand to the + is converted to a String (§5.1.11) and evaluation of the + operator proceeds as specified in §15.18.1.
+The target type in these contexts is always String, and a string conversion (§5.1.11) of the non-String operand always occurs. Evaluation of the + operator then proceeds as specified in §15.18.1.
 
-5.5. Casting Conversion
+5.5. Casting Contexts
 
-Casting conversion is applied to the operand of a cast operator (§15.16): the type of the operand expression must be converted to the type explicitly named by the cast operator.
+Casting contexts allow the operand of a cast operator (§15.16) to be converted to the type explicitly named by the cast operator.
 
 Casting contexts allow the use of one of:
 
@@ -937,13 +956,13 @@ The following tables enumerate which conversions are used in certain casting con
 
 ⇓ signifies narrowing reference conversion (§5.1.6)
 
-⊡ signifies boxing conversion (§5.1.7)
+⊕ signifies boxing conversion (§5.1.7)
 
-⊔ signifies unboxing conversion (§5.1.8)
+⊗ signifies unboxing conversion (§5.1.8)
 
 In the tables, a comma between symbols indicates that a casting conversion uses one conversion followed by another. The type Object means any reference type other than the eight wrapper classes Boolean, Byte, Short, Character, Integer, Long, Float, Double.
 
-Table 5.1. Casting conversions to primitive types
+Table 5.5-A. Casting conversions to primitive types
 
 To →	byte	short	char	int	long	float	double	boolean
 From ↓	 	 	 	 	 	 	 	 
@@ -955,30 +974,30 @@ long	η	η	η	η	≈	ω	ω	-
 float	η	η	η	η	η	≈	ω	-
 double	η	η	η	η	η	η	≈	-
 boolean	-	-	-	-	-	-	-	≈
-Byte	⊔	⊔,ω	-	⊔,ω	⊔,ω	⊔,ω	⊔,ω	-
-Short	-	⊔	-	⊔,ω	⊔,ω	⊔,ω	⊔,ω	-
-Character	-	-	⊔	⊔,ω	⊔,ω	⊔,ω	⊔,ω	-
-Integer	-	-	-	⊔	⊔,ω	⊔,ω	⊔,ω	-
-Long	-	-	-	-	⊔	⊔,ω	⊔,ω	-
-Float	-	-	-	-	-	⊔	⊔,ω	-
-Double	-	-	-	-	-	-	⊔	-
-Boolean	-	-	-	-	-	-	-	⊔
-Object	⇓,⊔	⇓,⊔	⇓,⊔	⇓,⊔	⇓,⊔	⇓,⊔	⇓,⊔	⇓,⊔
+Byte	⊗	⊗,ω	-	⊗,ω	⊗,ω	⊗,ω	⊗,ω	-
+Short	-	⊗	-	⊗,ω	⊗,ω	⊗,ω	⊗,ω	-
+Character	-	-	⊗	⊗,ω	⊗,ω	⊗,ω	⊗,ω	-
+Integer	-	-	-	⊗	⊗,ω	⊗,ω	⊗,ω	-
+Long	-	-	-	-	⊗	⊗,ω	⊗,ω	-
+Float	-	-	-	-	-	⊗	⊗,ω	-
+Double	-	-	-	-	-	-	⊗	-
+Boolean	-	-	-	-	-	-	-	⊗
+Object	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗
 
 
 
-Table 5.2. Casting conversions to reference types
+Table 5.5-B. Casting conversions to reference types
 
 To →	Byte	Short	Character	Integer	Long	Float	Double	Boolean	Object
 From ↓	 	 	 	 	 	 	 	 	 
-byte	⊡	-	-	-	-	-	-	-	⊡,⇑
-short	-	⊡	-	-	-	-	-	-	⊡,⇑
-char	-	-	⊡	-	-	-	-	-	⊡,⇑
-int	-	-	-	⊡	-	-	-	-	⊡,⇑
-long	-	-	-	-	⊡	-	-	-	⊡,⇑
-float	-	-	-	-	-	⊡	-	-	⊡,⇑
-double	-	-	-	-	-	-	⊡	-	⊡,⇑
-boolean	-	-	-	-	-	-	-	⊡	⊡,⇑
+byte	⊕	-	-	-	-	-	-	-	⊕,⇑
+short	-	⊕	-	-	-	-	-	-	⊕,⇑
+char	-	-	⊕	-	-	-	-	-	⊕,⇑
+int	-	-	-	⊕	-	-	-	-	⊕,⇑
+long	-	-	-	-	⊕	-	-	-	⊕,⇑
+float	-	-	-	-	-	⊕	-	-	⊕,⇑
+double	-	-	-	-	-	-	⊕	-	⊕,⇑
+boolean	-	-	-	-	-	-	-	⊕	⊕,⇑
 Byte	≈	-	-	-	-	-	-	-	⇑
 Short	-	≈	-	-	-	-	-	-	⇑
 Character	-	-	≈	-	-	-	-	-	⇑
@@ -1012,15 +1031,17 @@ If T is a type variable, then this algorithm is applied recursively, using the u
 
 If T is an array type, then S must be the class Object, or a compile-time error occurs.
 
+If T is an intersection type, T1 & ... & Tn, then it is a compile-time error if there exists a Ti (1 ≤ i ≤ n) such that S cannot be cast to Ti by this algorithm. That is, the success of the cast is determined by the most restrictive component of the intersection type.
+
 If S is an interface type:
 
 If T is an array type, then S must be the type java.io.Serializable or Cloneable (the only interfaces implemented by arrays), or a compile-time error occurs.
 
-If T is a type that is not final (§8.1.1), then if there exists a supertype X of T, and a supertype Y of S, such that both X and Y are provably distinct parameterized types, and that the erasures of X and Y are the same, a compile-time error occurs.
+If T is a class or interface type that is not final (§8.1.1), then if there exists a supertype X of T, and a supertype Y of S, such that both X and Y are provably distinct parameterized types, and that the erasures of X and Y are the same, a compile-time error occurs.
 
 Otherwise, the cast is always legal at compile time (because even if T does not implement S, a subclass of T might).
 
-If T is a type that is final, then:
+If T is a class type that is final, then:
 
 If S is not a parameterized type or a raw type, then T must implement S, or a compile-time error occurs.
 
@@ -1028,9 +1049,13 @@ Otherwise, S is either a parameterized type that is an invocation of some generi
 
 Furthermore, if S and X are provably distinct parameterized types then a compile-time error occurs.
 
+If T is a type variable, then this algorithm is applied recursively, using the upper bound of T in place of T.
+
+If T is an intersection type, T1 & ... & Tn, then it is a compile-time error if there exists a Ti (1 ≤ i ≤ n) such that S cannot be cast to Ti by this algorithm.
+
 If S is a type variable, then this algorithm is applied recursively, using the upper bound of S in place of S.
 
-If S is an intersection type A1 & ... & An, then it is a compile-time error if there exists an Ai (1 ≤ i ≤ n) such that S cannot be cast to Ai by this algorithm. That is, the success of the cast is determined by the most restrictive component of the intersection type.
+If S is an intersection type A1 & ... & An, then it is a compile-time error if there exists an Ai (1 ≤ i ≤ n) such that Ai cannot be cast to T by this algorithm. That is, the success of the cast is determined by the most restrictive component of the intersection type.
 
 If S is an array type SC[], that is, an array of components of type SC:
 
@@ -1038,19 +1063,15 @@ If T is a class type, then if T is not Object, then a compile-time error occurs 
 
 If T is an interface type, then a compile-time error occurs unless T is the type java.io.Serializable or the type Cloneable (the only interfaces implemented by arrays).
 
-If T is a type variable, then:
-
-If the upper bound of T is Object or java.io.Serializable or Cloneable, or a type variable that S could undergo casting conversion to, then the cast is legal (though unchecked).
-
-If the upper bound of T is an array type TC[], then a compile-time error occurs unless the type SC[] can undergo casting conversion to TC[].
-
-Otherwise, a compile-time error occurs.
+If T is a type variable, then this algorithm is applied recursively, using the upper bound of T in place of T.
 
 If T is an array type TC[], that is, an array of components of type TC, then a compile-time error occurs unless one of the following is true:
 
 TC and SC are the same primitive type.
 
 TC and SC are reference types and type SC can undergo casting conversion to TC.
+
+If T is an intersection type, T1 & ... & Tn, then it is a compile-time error if there exists a Ti (1 ≤ i ≤ n) such that S cannot be cast to Ti by this algorithm.
 
 Example 5.5.1-1. Casting Conversion for Reference Types
 
@@ -1133,7 +1154,7 @@ cpa: { (2,2)@12, (4,5)@24, null, null }
 
 A cast from a type S to a type T is statically known to be correct if and only if S <: T (§4.10).
 
-A cast from a type S to a parameterized type (§4.5) T is unchecked unless at least one of the following conditions holds:
+A cast from a type S to a parameterized type (§4.5) T is unchecked unless at least one of the following is true:
 
 S <: T
 
@@ -1143,9 +1164,13 @@ T <: S and S has no subtype X other than T where the type arguments of X are not
 
 A cast from a type S to a type variable T is unchecked unless S <: T.
 
-An unchecked cast from S to T is completely unchecked if the cast from |S| to |T| is statically known to be correct. Otherwise, it is partially unchecked.
+A cast from a type S to an intersection type T1 & ... & Tn is unchecked if there exists a Ti (1 ≤ i ≤ n) such that a cast from S to Ti is unchecked.
 
-An unchecked cast causes a compile-time unchecked warning, unless suppressed by the SuppressWarnings annotation (§9.6.3.5).
+An unchecked cast from S to a non-intersection type T is completely unchecked if the cast from |S| to |T| is statically known to be correct. Otherwise, it is partially unchecked.
+
+An unchecked cast from S to an intersection type T1 & ... & Tn is completely unchecked if, for all i (1 ≤ i ≤ n), a cast from S to Ti is either statically known to be correct or completely unchecked. Otherwise, it is partially unchecked.
+
+An unchecked cast causes a compile-time unchecked warning, unless suppressed by the SuppressWarnings annotation (§9.6.4.5).
 
 A cast is checked if it is not statically known to be correct and it is not unchecked.
 
@@ -1159,11 +1184,15 @@ The cast is a completely unchecked cast.
 
 No run-time action is performed for such a cast.
 
-The cast is a partially unchecked cast.
+The cast is a partially unchecked or checked cast to an intersection type.
+
+Where the intersection type is T1 & ... & Tn, then for all i (1 ≤ i ≤ n), any run-time check required for a cast from S to Ti is also required for the cast to the intersection type.
+
+The cast is a partially unchecked cast to a non-intersection type.
 
 Such a cast requires a run-time validity check. The check is performed as if the cast had been a checked cast between |S| and |T|, as described below.
 
-The cast is a checked cast.
+The cast is a checked cast to a non-intersection type.
 
 Such a cast requires a run-time validity check. If the value at run time is null, then the cast is allowed. Otherwise, let R be the class of the object referred to by the run-time reference value, and let T be the erasure (§4.6) of the type named in the cast operator. A cast conversion must check, at run time, that the class R is assignment compatible with the type T, via the algorithm in §5.5.3.
 
@@ -1233,19 +1262,21 @@ This program uses casts to compile, but it throws exceptions at run time, becaus
 
 
 
-5.6. Numeric Promotions
+5.6. Numeric Contexts
 
-Numeric promotion is applied to the operands of an arithmetic operator.
+Numeric contexts apply to the operands of an arithmetic operator.
 
-Numeric promotion contexts allow the use of:
+Numeric contexts allow the use of:
 
 an identity conversion (§5.1.1)
 
 a widening primitive conversion (§5.1.2)
 
-an unboxing conversion (§5.1.8)
+an unboxing conversion (§5.1.8) optionally followed by a widening primitive conversion
 
-Numeric promotions are used to convert the operands of a numeric operator to a common type so that an operation can be performed. The two kinds of numeric promotion are unary numeric promotion (§5.6.1) and binary numeric promotion (§5.6.2).
+A numeric promotion is a process by which, given an arithmetic operator and its argument expressions, the arguments are converted to an inferred target type T. T is chosen during promotion such that each argument expression can be converted to T and the arithmetic operation is defined for values of type T.
+
+The two kinds of numeric promotion are unary numeric promotion (§5.6.1) and binary numeric promotion (§5.6.2).
 
 5.6.1. Unary Numeric Promotion
 
@@ -1259,13 +1290,13 @@ Otherwise, if the operand is of compile-time type byte, short, or char, it is pr
 
 Otherwise, a unary numeric operand remains as is and is not converted.
 
-In any case, value set conversion (§5.1.13) is then applied.
+After the conversion(s), if any, value set conversion (§5.1.13) is then applied.
 
 Unary numeric promotion is performed on expressions in the following situations:
 
-Each dimension expression in an array creation expression (§15.10)
+Each dimension expression in an array creation expression (§15.10.1)
 
-The index expression in an array access expression (§15.13)
+The index expression in an array access expression (§15.10.3)
 
 The operand of a unary plus operator + (§15.15.3)
 
@@ -1273,7 +1304,7 @@ The operand of a unary minus operator - (§15.15.4)
 
 The operand of a bitwise complement operator ~ (§15.15.5)
 
-Each operand, separately, of a shift operator >>, >>>, or << (§15.19).
+Each operand, separately, of a shift operator <<, >>, or >>> (§15.19).
 
 A long shift distance (right operand) does not promote the value being shifted (left operand) to long.
 
@@ -1322,11 +1353,11 @@ Otherwise, if either operand is of type long, the other is converted to long.
 
 Otherwise, both operands are converted to type int.
 
-After the type conversion, if any, value set conversion (§5.1.13) is applied to each operand.
+After the conversion(s), if any, value set conversion (§5.1.13) is then applied to each operand.
 
 Binary numeric promotion is performed on the operands of certain operators:
 
-The multiplicative operators *, / and % (§15.17)
+The multiplicative operators *, /, and % (§15.17)
 
 The addition and subtraction operators for numeric types + and - (§15.18.2)
 

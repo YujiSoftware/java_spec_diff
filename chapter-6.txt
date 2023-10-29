@@ -25,7 +25,6 @@ Table of Contents
 6.5.6.2. Qualified Expression Names
 6.5.7. Meaning of Method Names
 6.5.7.1. Simple Method Names
-6.5.7.2. Qualified Method Names
 6.6. Access Control
 6.6.1. Determining Accessibility
 6.6.2. Details on protected Access
@@ -45,7 +44,7 @@ A qualified name N.x may be used to refer to a member of a package or reference 
 
 In determining the meaning of a name (§6.5), the context of the occurrence is used to disambiguate among packages, types, variables, and methods with the same name.
 
-Access control (§6.6) can be specified in a class, interface, method, or field declaration to control when access to a member is allowed. Access is a different concept from scope. Access specifies the part of the program text within which the declared entity can be referred to by a qualified name, a field access expression (§15.11), or a method invocation expression (§15.12) in which the method is not specified by a simple name. The default access is that a member can be accessed anywhere within the package that contains its declaration; other possibilities are public, protected, and private.
+Access control (§6.6) can be specified in a class, interface, method, or field declaration to control when access to a member is allowed. Access is a different concept from scope. Access specifies the part of the program text within which the declared entity can be referred to by a qualified name. Access to a declared entity is also relevant in a field access expression (§15.11), a method invocation expression in which the method is not specified by a simple name (§15.12), a method reference expression (§15.13), or a qualified class instance creation expression (§15.9). In the absence of an access modifier, most declarations have package access, allowing access anywhere within the package that contains its declaration; other possibilities are public, protected, and private.
 
 Fully qualified and canonical names (§6.7) are also discussed in this chapter.
 
@@ -57,15 +56,17 @@ A declared entity is one of the following:
 
 A package, declared in a package declaration (§7.4)
 
-An imported type, declared in a single-type-import declaration (§7.5.1) or a type-import-on-demand declaration (§7.5.2)
+An imported type, declared in a single-type-import declaration or a type-import-on-demand declaration (§7.5.1, §7.5.2)
+
+An imported static member, declared in a single-static-import declaration or a static-import-on-demand declaration (§7.5.3, §7.5.4)
 
 A class, declared in a class type declaration (§8.1)
 
 An interface, declared in an interface type declaration (§9.1)
 
-A type variable (§4.4), declared as a type parameter of a generic class (§8.1.2), interface (§9.1.2), method (§8.4.4), or constructor (§8.8.1).
+A type parameter, declared as part of the declaration of a generic class, interface, method, or constructor (§8.1.2, §9.1.2, §8.4.4, §8.8.4)
 
-A member of a reference type (§8.2, §9.2, §10.7), one of the following:
+A member of a reference type (§8.2, §9.2, §8.9.3, §9.6, §10.7), one of the following:
 
 A member class (§8.5, §9.5)
 
@@ -75,25 +76,25 @@ An enum constant (§8.9)
 
 A field, one of the following:
 
-A field declared in a class type (§8.3)
+A field declared in a class type or enum type (§8.3, §8.9.2)
 
-A field declared in an interface type (§9.3)
+A field declared in an interface type or annotation type (§9.3, §9.6.1)
 
 The field length, which is implicitly a member of every array type (§10.7)
 
 A method, one of the following:
 
-A method (abstract or otherwise) declared in a class type (§8.4)
+A method (abstract or otherwise) declared in a class type or enum type (§8.4, §8.9.2)
 
-A method (always abstract) declared in an interface type (§9.4)
+A method (always abstract) declared in an interface type or annotation type (§9.4, §9.6.1)
 
 A parameter, one of the following:
 
-A parameter of a method or constructor of a class (§8.4.1, §8.8.1)
+A formal parameter of a method or constructor of a class type or enum type (§8.4.1, §8.8.1, §8.9.2), or of a lambda expression (§15.27.1)
 
-A parameter of an abstract method of an interface (§9.4)
+A formal parameter of an abstract method of an interface type or annotation type (§9.4, §9.6.1)
 
-A parameter of an exception handler declared in a catch clause of a try statement (§14.20)
+An exception parameter of an exception handler declared in a catch clause of a try statement (§14.20)
 
 A local variable, one of the following:
 
@@ -102,6 +103,50 @@ A local variable declared in a block (§14.4)
 A local variable declared in a for statement (§14.14)
 
 Constructors (§8.8) are also introduced by declarations, but use the name of the class in which they are declared rather than introducing a new name.
+
+The declaration of a type which is not generic (class C ...) declares one entity: a non-generic type (C). A non-generic type is not a raw type, despite the syntactic similarity. In contrast, the declaration of a generic type (class C<T> ... or interface C<T> ...) declares two entities: a generic type (C<T>) and a corresponding non-generic type (C). In this case, the meaning of the term C depends on the context where it appears:
+
+If genericity is unimportant, as in the non-generic contexts identified below, the identifier C denotes the non-generic type C.
+
+If genericity is important, as in all contexts from §6.5 except the non-generic contexts, the identifier C denotes either:
+
+The raw type C which is the erasure (§4.6) of the generic type C<T>; or
+
+A parameterized type which is a particular parameterization (§4.5) of the generic type C<T>.
+
+The 13 non-generic contexts are as follows:
+
+In a single-type-import declaration (§7.5.1)
+
+To the left of the . in a single-static-import declaration (§7.5.3)
+
+To the left of the . in a static-import-on-demand declaration (§7.5.4)
+
+To the left of the ( in a constructor declaration (§8.8)
+
+After the @ sign in an annotation (§9.7)
+
+To the left of .class in a class literal (§15.8.2)
+
+To the left of .this in a qualified this expression (§15.8.4)
+
+To the left of .super in a qualified superclass field access expression (§15.11.2)
+
+To the left of .Identifier or .super.Identifier in a qualified method invocation expression (§15.12)
+
+To the left of .super:: in a method reference expression (§15.13)
+
+In a qualified expression name in a postfix expression (§15.14.1)
+
+In a throws clause of a method or constructor (§8.4.6, §8.8.5, §9.4)
+
+In an exception parameter declaration (§14.20)
+
+The first ten non-generic contexts correspond to the first ten syntactic contexts for a TypeName in §6.5.1. The eleventh non-generic context is a postfix expression, where a qualified ExpressionName such as C.x may include a TypeName C to denote static member access. The common use of TypeName is significant: it indicates that these contexts involve a less-than-first-class use of a type. In contrast, the twelfth and thirteenth non-generic contexts employ ClassType, indicating that throws and catch clauses use types in a first-class way, in line with, say, field declarations. The characterization of these two contexts as non-generic is due to the fact that an exception type cannot be parameterized.
+
+Note that the ClassType production allows annotations, so it is possible to annotate the use of a type in a throws or catch clause, whereas the TypeName production disallows annotations, so it is not possible to annotate the name of a type in, say, a single-type-import declaration.
+
+Naming Conventions
 
 The class libraries of the Java SE platform attempt to use, whenever possible, names chosen according to the conventions presented below. These conventions help to make code more readable and avoid certain kinds of name conflicts.
 
@@ -140,7 +185,7 @@ If any of the resulting package name components are keywords (§3.9), append an 
 
 If any of the resulting package name components start with a digit, or any other character that is not allowed as an initial character of an identifier, have an underscore prefixed to the component.
 
-Names of packages intended only for local use should have a first identifier that begins with a lowercase letter, but that first identifier specifically should not be the identifier java; package names that start with the identifier java are reserved for package of the Java SE platform.
+Names of packages intended only for local use should have a first identifier that begins with a lowercase letter, but that first identifier specifically should not be the identifier java; package names that start with the identifier java are reserved for packages of the Java SE platform.
 
 Class and Interface Type Names
 
@@ -281,11 +326,17 @@ In declarations (§6.1), where an identifier may occur to specify the name by wh
 
 As labels in labeled statements (§14.7) and in break and continue statements (§14.15, §14.16) that refer to statement labels.
 
-In field access expressions (§15.11), where an identifier occurs after a "." token to indicate a member of an object that is the value of an expression or the keyword super that appears before the "." token
+The identifiers used in labeled statements and their associated break and continue statements are completely separate from those used in declarations.
 
-In some method invocation expressions (§15.12), where an identifier may occur after a "." token and before a "(" token to indicate a method to be invoked for an object that is the value of an expression or the keyword super that appears before the "." token
+In field access expressions (§15.11), where an identifier occurs after a "." token to indicate a member of the object denoted by the expression before the "." token, or the object denoted by the super or TypeName.super before the "." token.
 
-In qualified class instance creation expressions (§15.9), where an identifier occurs immediately to the right of the leftmost new token to indicate a type that must be a member of the compile-time type of the primary expression preceding the "." preceding the leftmost new token.
+In some method invocation expressions (§15.12), wherever an identifier occurs after a "." token and before a "(" token to indicate a method to be invoked for the object denoted by the expression before the "." token, or the type denoted by the TypeName before the "." token, or the object denoted by the super or TypeName.super before the "." token.
+
+In some method reference expressions (§15.13), wherever an identifier occurs after a "::" token to indicate a method of the object denoted by the expression before the "::" token, or the type denoted by the TypeName before the "::" token, or the object denoted by the super or TypeName.super before the "::" token.
+
+In qualified class instance creation expressions (§15.9), where an identifier occurs to the right of the new token to indicate a type that is a member of the compile-time type of the expression preceding the new token.
+
+In element-value pairs of annotations (§9.7.1), to denote an element of the corresponding annotation type.
 
 In this program:
 
@@ -298,42 +349,13 @@ class Test {
 }
 
 
-the identifiers Test, main, and the first occurrences of args and c are not names. Rather, they are used in declarations to specify the names of the declared entities. The names String, Class, System.out.getClass, System.out.println, c.toString, args, and args.length appear in the example. The occurrence of length in args[0].length() is not a name, but rather an identifier appearing in a method invocation expression (§15.12). The occurrence of length in args.length is a name because args.length is a qualified name (§6.5.6.2) and not a field access expression (§15.11). (A field access expression, like a method invocation expression, uses an identifier rather than a name to denote the member of interest.)
+the identifiers Test, main, and the first occurrences of args and c are not names. Rather, they are identifiers used in declarations to specify the names of the declared entities. The names String, Class, System.out.getClass, System.out.println, c.toString, args, and args.length appear in the example.
 
-One might wonder why these kinds of expression use an identifier rather than a simple name, which is after all just an identifier. The reason is that a simple expression name is defined in terms of the lexical environment; that is, a simple expression name must be in the scope of a variable declaration. But field access, and method invocation qualified by a Primary, and qualified class instance creation all denote members whose names are not in the lexical environment. By definition, such names are bound only in the context provided by the Primary of the field access expression, method invocation expression, or class instance creation expression. Therefore, we denote such members with identifiers rather than simple names.
+The occurrence of length in args.length is a name because args.length is a qualified name (§6.5.6.2) and not a field access expression (§15.11). A field access expression, as well as a method invocation expression, a method reference expression, and a qualified class instance creation expression, uses an identifier rather than a name to denote the member of interest. Thus, the occurrence of length in args[0].length() is not a name, but rather an identifier appearing in a method invocation expression.
 
-To complicate things further, a field access expression is not the only way to denote a field of an object. For parsing reasons, a qualified name is used to denote a field of an in-scope variable. (The variable itself is denoted with a simple name, alluded to above.) It is necessary for access control (§6.6) to capture both mechanisms for denoting a field.
+One might wonder why these kinds of expression use an identifier rather than a simple name, which is after all just an identifier. The reason is that a simple expression name is defined in terms of the lexical environment; that is, a simple expression name must be in the scope of a variable declaration (§6.5.6.1). On the other hand, field access, qualified method invocation, method references, and qualified class instance creation all refer to members whose names are not in the lexical environment. By definition, such names are bound only in the context provided by the Primary of the field access expression, method invocation expression, method reference expression, or class instance creation expression; or by the super of the field access expression, method invocation expression, or method reference expression; and so on. Thus, we denote such members with identifiers rather than simple names.
 
-The identifiers used in labeled statements (§14.7) and their associated break and continue statements (§14.15, §14.16) are completely separate from those used in declarations.
-
-Example 6.2-1. Identifiers and Obscuring
-
-The following code was taken from a version of the class String and its method indexOf, where the label was originally called test. Changing the label to have the same name as the local variable i does not obscure (§6.4.2) the label in the scope of the declaration of i. Thus, the code is valid.
-
-class Test {
-    char[] value;
-    int offset, count;
-    int indexOf(TestString str, int fromIndex) {
-        char[] v1 = value, v2 = str.value;
-        int max = offset + (count - str.count);
-        int start = offset + ((fromIndex < 0) ? 0 : fromIndex);
-    i:
-        for (int i = start; i <= max; i++) {
-            int n = str.count, j = i, k = str.offset;
-            while (n-- != 0) {
-                if (v1[j++] != v2[k++])
-                    continue i;
-            } 
-            return i - offset;
-        }
-        return -1;
-    }
-}
-
-
-The identifier max could also have been used as the statement label; the label would not obscure the local variable max within the labeled statement.
-
-
+To complicate things further, a field access expression is not the only way to denote a field of an object. For parsing reasons, a qualified name is used to denote a field of an in-scope variable. (The variable itself is denoted with a simple name, alluded to above.) It is necessary for access control (§6.6) to apply to both denotations of a field.
 
 6.3. Scope of a Declaration
 
@@ -359,9 +381,9 @@ The scope of a declaration of a member m declared in or inherited by a class typ
 
 The scope of a declaration of a member m declared in or inherited by an interface type I (§9.1.4) is the entire body of I, including any nested type declarations.
 
-The scope of an enum constant C declared in an enum type T is the body of T, and any case label of a switch statement whose expression is of enum type T.
+The scope of an enum constant C declared in an enum type T is the body of T, and any case label of a switch statement whose expression is of enum type T (§14.11).
 
-The scope of a formal parameter of a method (§8.4.1) or constructor (§8.8.1) is the entire body of the method or constructor.
+The scope of a formal parameter of a method (§8.4.1), constructor (§8.8.1), or lambda expression (§15.27) is the entire body of the method, constructor, or lambda expression.
 
 The scope of a class's type parameter (§8.1.2) is the type parameter section of the class declaration, the type parameter section of any superclass or superinterface of the class declaration, and the class body.
 
@@ -395,7 +417,7 @@ The scope of a variable declared in the ResourceSpecification of a try-with-reso
 
 The translation of a try-with-resources statement implies the rule above.
 
-Example 6.3-1. Scope and Type Declarations
+Example 6.3-1. Scope of Type Declarations
 
 These rules imply that declarations of class and interface types need not appear before uses of the types. In the following program, the use of PointList in class Point is valid, because the scope of the class declaration PointList includes both class Point and class PointList, as well as any other type declarations in other compilation units of package points.
 
@@ -415,6 +437,8 @@ class PointList {
 
 Example 6.3-2. Scope of Local Variable Declarations
 
+The following program causes a compile-time error because the initialization of local variable x is within the scope of the declaration of local variable x, but the local variable x does not yet have a value and cannot be used. The field x has a value of 0 (assigned when Test1 was initialized) but is a red herring since it is shadowed (§6.4.1) by the local variable x.
+
 class Test1 {
     static int x;
     public static void main(String[] args) {
@@ -422,8 +446,6 @@ class Test1 {
     }
 }
 
-
-This program causes a compile-time error because the initialization of x is within the scope of the declaration of x as a local variable, and the local variable x does not yet have a value and cannot be used.
 
 The following program does compile:
 
@@ -436,7 +458,7 @@ class Test2 {
 }
 
 
-because the local variable x is definitely assigned (§16) before it is used. It prints:
+because the local variable x is definitely assigned (§16 (Definite Assignment)) before it is used. It prints:
 
 4
 
@@ -460,35 +482,25 @@ This program produces the output:
 
 6.4. Shadowing and Obscuring
 
-A local variable (§14.4), formal parameter (§8.4.1), exception parameter (§14.20), and local class (§14.3) can only be referred to using a simple name (§6.2), not a qualified name (§6.6).
+A local variable (§14.4), formal parameter (§8.4.1, §15.27.1), exception parameter (§14.20), and local class (§14.3) can only be referred to using a simple name, not a qualified name (§6.2).
 
 Some declarations are not permitted within the scope of a local variable, formal parameter, exception parameter, or local class declaration because it would be impossible to distinguish between the declared entities using only simple names.
 
 For example, if the name of a formal parameter of a method could be redeclared as the name of a local variable in the method body, then the local variable would shadow the formal parameter and the formal parameter would no longer be visible - an undesirable outcome.
 
-It is a compile-time error if the name of a formal parameter is redeclared as a local variable of the method or constructor; or as an exception parameter of a catch clause in a try statement in the body of the method or constructor; or as a resource in a try-with-resources statement in the body of the method or constructor.
+It is a compile-time error if the name of a formal parameter is used to declare a new variable within the body of the method, constructor, or lambda expression, unless the new variable is declared within a class declaration contained by the method, constructor, or lambda expression.
 
-It is a compile-time error if the name of a local variable v is redeclared as a local variable of the directly enclosing method, constructor, or initializer block within the scope of v; or as an exception parameter of a catch clause in a try statement of the directly enclosing method, constructor or initializer block within the scope of v; or as a resource in a try-with-resources statement of the directly enclosing method, constructor or initializer block within the scope of v.
+It is a compile-time error if the name of a local variable v is used to declare a new variable within the scope of v, unless the new variable is declared within a class whose declaration is within the scope of v.
 
-It is a compile-time error if the name of a local class C is redeclared as a local class of the directly enclosing method, constructor, or initializer block within the scope of C.
+It is a compile-time error if the name of an exception parameter is used to declare a new variable within the Block of the catch clause, unless the new variable is declared within a class declaration contained by the Block of the catch clause.
 
-It is a compile-time error if the name of an exception parameter is redeclared within the Block of the catch clause as a local variable of the directly enclosing method, constructor, or initializer block; or as an exception parameter of a catch clause in a try statement of the directly enclosing method, constructor or initializer block; or as a resource in a try-with-resources statement of the directly enclosing method, constructor or initializer block.
+It is a compile-time error if the name of a local class C is used to declare a new local class within the scope of C, unless the new local class is declared within another class whose declaration is within the scope of C.
 
-It is a compile-time error if the name of a variable declared in a ResourceSpecification of a try-with-resources statement (§14.20.3) is redeclared within the try Block as a local variable of the directly enclosing method, constructor, or initializer block, or as an exception parameter of a catch clause in a try statement of the directly enclosing method or initializer block.
+These rules allow redeclaration of a variable or local class in nested class declarations (local classes (§14.3) and anonymous classes (§15.9)) that occur in the scope of the variable or local class. Thus, the declaration of a formal parameter, local variable, or local class may be shadowed in a class declaration nested within a method, constructor, or lambda expression; and the declaration of an exception parameter may be shadowed inside a class declaration nested within the Block of the catch clause.
 
-The translation of a try-with-resources statement implies the rule above.
+There are two design alternatives for handling name clashes created by lambda parameters and other variables declared in lambda expressions. One is to mimic class declarations: like local classes, lambda expressions introduce a new "level" for names, and all variable names outside the expression can be redeclared. Another is a "local" strategy: like catch clauses, for loops, and blocks, lambda expressions operate at the same "level" as the enclosing context, and local variables outside the expression cannot be shadowed. The above rules use the local strategy; there is no special dispensation that allows a variable declared in a lambda expression to shadow a variable declared in an enclosing method.
 
-Despite the above rules against redeclaration of variables, the rules of shadowing (§6.4.1) allow redeclaration in certain nested class declarations (i.e. local classes (§14.3) and anonymous classes (§15.9)) as follows:
-
-A formal parameter of a method or constructor may be shadowed anywhere inside a class declaration nested within that method or constructor.
-
-A local variable of a method, constructor, or initializer may be shadowed anywhere inside a class declaration nested within the scope of the local variable.
-
-A local class declaration may be shadowed anywhere inside a class declaration nested within the local class declaration's scope.
-
-An exception parameter may be shadowed anywhere inside a class declaration nested within the Block of the catch clause.
-
-A variable declared in a ResourceSpecification may be shadowed anywhere inside a class declaration nested within the try Block.
+Note that the rule for local classes does not make an exception for a class of the same name declared within the local class itself. However, this case is prohibited by a separate rule: a class cannot have the same name as a class that encloses it (§8.1).
 
 Example 6.4-1. Attempted Shadowing Of A Local Variable
 
@@ -709,101 +721,92 @@ Second, a name that is initially classified by its context as an AmbiguousName o
 
 Third, the resulting category then dictates the final determination of the meaning of the name (or a compile-time error if the name has no meaning).
 
-
 PackageName:
-    Identifier
-    PackageName . Identifier
-
+Identifier
+PackageName . Identifier
 TypeName:
-    Identifier
-    PackageOrTypeName . Identifier
-
-ExpressionName:
-    Identifier
-    AmbiguousName . Identifier
-
-MethodName:
-    Identifier
-    AmbiguousName . Identifier
-
+Identifier
+PackageOrTypeName . Identifier
 PackageOrTypeName:
-    Identifier
-    PackageOrTypeName . Identifier
+Identifier
+PackageOrTypeName . Identifier
+ExpressionName:
+Identifier
+AmbiguousName . Identifier
+MethodName:
+Identifier
 
 AmbiguousName:
-    Identifier
-    AmbiguousName . Identifier
-
+Identifier
+AmbiguousName . Identifier
 
 The use of context helps to minimize name conflicts between entities of different kinds. Such conflicts will be rare if the naming conventions described in §6.1 are followed. Nevertheless, conflicts may arise unintentionally as types developed by different programmers or different organizations evolve. For example, types, methods, and fields may have the same name. It is always possible to distinguish between a method and a field with the same name, since the context of a use always tells whether a method is intended.
 
 6.5.1. Syntactic Classification of a Name According to Context
 
-A name is syntactically classified as a PackageName in these contexts:
-
-In a package declaration (§7.4)
-
-To the left of the "." in a qualified PackageName
-
 A name is syntactically classified as a TypeName in these contexts:
+
+The first ten non-generic contexts (§6.1):
 
 In a single-type-import declaration (§7.5.1)
 
-To the left of the "." in a single-static-import declaration (§7.5.3)
+To the left of the . in a single-static-import declaration (§7.5.3)
 
-To the left of the "." in a static-import-on-demand declaration (§7.5.4)
+To the left of the . in a static-import-on-demand declaration (§7.5.4)
 
-To the left of the "<" in a parameterized type (§4.5)
+To the left of the ( in a constructor declaration (§8.8)
 
-In a type argument list (§4.5.1) of a parameterized type
+After the @ sign in an annotation (§9.7)
 
-In an explicit type argument list in a method or constructor invocation
+To the left of .class in a class literal (§15.8.2)
 
-In an extends clause in a type variable declaration (§8.1.2)
+To the left of .this in a qualified this expression (§15.8.4)
 
-In an extends clause of a wildcard type argument (§4.5.1)
+To the left of .super in a qualified superclass field access expression (§15.11.2)
 
-In a super clause of a wildcard type argument (§4.5.1)
+To the left of .Identifier or .super.Identifier in a qualified method invocation expression (§15.12)
 
-In an extends clause in a class declaration (§8.1.4)
+To the left of .super:: in a method reference expression (§15.13)
 
-In an implements clause in a class declaration (§8.1.5)
+As the Identifier or dotted Identifier sequence that constitutes any ReferenceType (including a ReferenceType to the left of the brackets in an array type, or to the left of the < in a parameterized type, or in a non-wildcard type argument of a parameterized type, or in an extends or super clause of a wildcard type argument of a parameterized type) in the 16 contexts where types are used (§4.11):
 
-In an extends clause in an interface declaration (§9.1.3)
+In an extends or implements clause of a class declaration (§8.1.4, §8.1.5, §8.5, §9.5)
 
-After the "@" sign in an annotation (§9.7)
+In an extends clause of an interface declaration (§9.1.3)
 
-As a Type (or the part of a Type that remains after all brackets are deleted) in any of the following contexts:
+The return type of a method (§8.4, §9.4) (including the type of an element of an annotation type (§9.6.1))
 
-In a field declaration (§8.3, §9.3)
+In the throws clause of a method or constructor (§8.4.6, §8.8.5, §9.4)
 
-As the result type of a method (§8.4, §9.4)
+In an extends clause of a type parameter declaration of a generic class, interface, method, or constructor (§8.1.2, §9.1.2, §8.4.4, §8.8.4)
 
-As the type of a formal parameter of a method or constructor (§8.4.1, §8.8.1, §9.4)
+The type in a field declaration of a class or interface (§8.3, §9.3)
 
-As the type of an exception that can be thrown by a method or constructor (§8.4.6, §8.8.5, §9.4)
+The type in a formal parameter declaration of a method, constructor, or lambda expression (§8.4.1, §8.8.1, §9.4, §15.27.1)
 
-As the type of a local variable (§14.4)
+The type of the receiver parameter of a method (§8.4.1)
 
-As the type of an exception parameter in a catch clause of a try statement (§14.20)
+The type in a local variable declaration (§14.4, §14.14.1, §14.14.2, §14.20.3)
 
-As the type in a class literal (§15.8.2)
+A type in an exception parameter declaration (§14.20)
 
-As the qualifying type of a qualified this expression (§15.8.4).
+In an explicit type argument list to an explicit constructor invocation statement or class instance creation expression or method invocation expression (§8.8.7.1, §15.9, §15.12)
 
-As the class type which is to be instantiated in an unqualified class instance creation expression (§15.9)
+In an unqualified class instance creation expression, either as the class type to be instantiated (§15.9) or as the direct superclass or direct superinterface of an anonymous class to be instantiated (§15.9.5)
 
-As the direct superclass or direct superinterface of an anonymous class (§15.9.5) which is to be instantiated in an unqualified class instance creation expression (§15.9)
+The element type in an array creation expression (§15.10.1)
 
-As the element type of an array to be created in an array creation expression (§15.10)
+The type in the cast operator of a cast expression (§15.16)
 
-As the qualifying type of field access using the keyword super (§15.11.2)
+The type that follows the instanceof relational operator (§15.20.2)
 
-As the qualifying type of a method invocation using the keyword super (§15.12)
+In a method reference expression (§15.13), as the reference type to search for a member method or as the class type or array type to construct.
 
-As the type mentioned in the cast operator of a cast expression (§15.16)
+The extraction of a TypeName from the identifiers of a ReferenceType in the 16 contexts above is intended to apply recursively to all sub-terms of the ReferenceType, such as its element type and any type arguments.
 
-As the type that follows the instanceof relational operator (§15.20.2)
+For example, suppose a field declaration uses the type p.q.Foo[]. The brackets of the array type are ignored, and the term p.q.Foo is extracted as a dotted sequence of Identifiers to the left of the brackets in an array type, and classified as a TypeName. A later step determines which of p, q, and Foo is a type name or a package name.
+
+As another example, suppose a cast operator uses the type p.q.Foo<? extends String>. The term p.q.Foo is again extracted as a dotted sequence of Identifier terms, this time to the left of the < in a parameterized type, and classified as a TypeName. The term String is extracted as an Identifier in an extends clause of a wildcard type argument of a parameterized type, and classified as a TypeName.
 
 A name is syntactically classified as an ExpressionName in these contexts:
 
@@ -811,17 +814,15 @@ As the qualifying expression in a qualified superclass constructor invocation (�
 
 As the qualifying expression in a qualified class instance creation expression (§15.9)
 
-As the array reference expression in an array access expression (§15.13)
+As the array reference expression in an array access expression (§15.10.3)
 
 As a PostfixExpression (§15.14)
 
 As the left-hand operand of an assignment operator (§15.26)
 
-A name is syntactically classified as a MethodName in these contexts:
+A name is syntactically classified as a MethodName in this context:
 
 Before the "(" in a method invocation expression (§15.12)
-
-To the left of the "=" sign in an annotation's element value pair (§9.7)
 
 A name is syntactically classified as a PackageOrTypeName in these contexts:
 
@@ -833,13 +834,15 @@ A name is syntactically classified as an AmbiguousName in these contexts:
 
 To the left of the "." in a qualified ExpressionName
 
-To the left of the "." in a qualified MethodName
+To the left of the rightmost . that occurs before the "(" in a method invocation expression
 
 To the left of the "." in a qualified AmbiguousName
 
-In the default value clause of an annotation type element declaration (§9.6)
+In the default value clause of an annotation type element declaration (§9.6.2)
 
-To the right of an "=" in an an element value pair (§9.7)
+To the right of an "=" in an an element-value pair (§9.7.1)
+
+To the left of :: in a method reference expression (§15.13)
 
 The effect of syntactic classification is to restrict certain kinds of entities to certain parts of expressions:
 
@@ -847,7 +850,7 @@ The name of a field, parameter, or local variable may be used as an expression (
 
 The name of a method may appear in an expression only as part of a method invocation expression (§15.12).
 
-The name of a class or interface type may appear in an expression only as part of a class literal (§15.8.2), a qualified this expression (§15.8.4), a class instance creation expression (§15.9), an array creation expression (§15.10), a cast expression (§15.16), an instanceof expression (§15.20.2), an enum constant (§8.9), or as part of a qualified name for a field or method.
+The name of a class or interface type may appear in an expression only as part of a class literal (§15.8.2), a qualified this expression (§15.8.4), a class instance creation expression (§15.9), an array creation expression (§15.10.1), a cast expression (§15.16), an instanceof expression (§15.20.2), an enum constant (§8.9), or as part of a qualified name for a field or method.
 
 The name of a package may appear in an expression only as part of a qualified name for a class or interface type.
 
@@ -861,7 +864,7 @@ If the Identifier appears within the scope (§6.3) of a local variable declarati
 
 Otherwise, if a field of that name is declared in the compilation unit (§7.3) containing the Identifier by a single-static-import declaration (§7.5.3), or by a static-import-on-demand declaration (§7.5.4) then the AmbiguousName is reclassified as an ExpressionName.
 
-Otherwise, if the Identifier appears within the scope (§6.3) of a top level class (§8) or interface type declaration (§9), a local class declaration (§14.3) or member type declaration (§8.5, §9.5) with that name, then the AmbiguousName is reclassified as a TypeName.
+Otherwise, if the Identifier appears within the scope (§6.3) of a top level class (§8 (Classes)) or interface type declaration (§9 (Interfaces)), a local class declaration (§14.3) or member type declaration (§8.5, §9.5) with that name, then the AmbiguousName is reclassified as a TypeName.
 
 Otherwise, if a type of that name is declared in the compilation unit (§7.3) containing the Identifier, either by a single-type-import declaration (§7.5.1), or by a type-import-on-demand declaration (§7.5.2), or by a single-static-import declaration (§7.5.3), or by a static-import-on-demand declaration (§7.5.4), then the AmbiguousName is reclassified as a TypeName.
 
@@ -971,7 +974,7 @@ If a type name is of the form Q.Id, then Q must be either a type name or a packa
 
 If Id names exactly one accessible type (§6.6) that is a member of the type or package denoted by Q, then the qualified type name denotes that type.
 
-If Id does not name a member type (§8.5, §9.5) within Q, or there is not exactly one accessible (§6.6) member type named Id within Q, or Id names a static member type (§8.5.1) within Q and Q is parameterized, then a compile-time error occurs.
+If Id does not name a member type within Q (§8.5, §9.5), or the member type named Id within Q is not accessible (§6.6), or Id names more than one member type within Q, then a compile-time error occurs.
 
 Example 6.5.5.2-1. Qualified Type Names
 
@@ -1001,11 +1004,11 @@ The meaning of a name classified as an ExpressionName is determined as follows.
 
 If an expression name consists of a single Identifier, then there must be exactly one declaration denoting either a local variable, parameter, or field visible (§6.4.1) at the point at which the Identifier occurs. Otherwise, a compile-time error occurs.
 
-If the declaration denotes an instance variable (§8.3), the expression name must appear within the declaration of an instance method (§8.4), constructor (§8.8), instance initializer (§8.6), or instance variable initializer (§8.3.2.2). If the expression name appears within a static method (§8.4.3.2), static initializer (§8.7), or initializer for a static variable (§8.3.2.1, §12.4.2), then a compile-time error occurs.
+If the declaration denotes an instance variable (§8.3), the expression name must appear within the declaration of an instance method (§8.4), constructor (§8.8), instance initializer (§8.6), or instance variable initializer (§8.3.2). If the expression name appears within a static method (§8.4.3.2), static initializer (§8.7), or initializer for a static variable (§8.3.2, §12.4.2), then a compile-time error occurs.
 
 If the declaration declares a final variable which is definitely assigned before the simple expression, the meaning of the name is the value of that variable. Otherwise, the meaning of the expression name is the variable declared by the declaration.
 
-If the expression name appears in a context where it is subject to assignment conversion or method invocation conversion or casting conversion, then the type of the expression name is the declared type of the field, local variable, or parameter after capture conversion (§5.1.10).
+If the expression name appears in an assignment context, invocation context, or casting context, then the type of the expression name is the declared type of the field, local variable, or parameter after capture conversion (§5.1.10).
 
 Otherwise, the type of the expression name is the declared type of the field, local variable or parameter.
 
@@ -1038,7 +1041,7 @@ If an expression name is of the form Q.Id, then Q has already been classified as
 
 If Q is a package name, then a compile-time error occurs.
 
-If Q is a type name that names a class type (§8), then:
+If Q is a type name that names a class type (§8 (Classes)), then:
 
 If there is not exactly one accessible (§6.6) member of the class type that is a field named Id, then a compile-time error occurs.
 
@@ -1056,7 +1059,7 @@ The type of the expression Q.Id is the declared type of the class variable after
 
 Note that this clause covers the use of enum constants (§8.9), since these always have a corresponding final class variable.
 
-If Q is a type name that names an interface type (§9), then:
+If Q is a type name that names an interface type (§9 (Interfaces)), then:
 
 If there is not exactly one accessible (§6.6) member of the interface type that is a field named Id, then a compile-time error occurs.
 
@@ -1078,7 +1081,7 @@ A field of an interface type
 
 A final field of a class type (which may be either a class variable or an instance variable)
 
-The final field length of an array type
+The final field length of an array type (§10.7)
 
 then Q.Id denotes the value of the field, unless it appears in a context that requires a variable and the field is a definitely unassigned blank final field, in which case it yields a variable.
 
@@ -1114,9 +1117,7 @@ This program encounters two compile-time errors, because the int variable i has 
 
 Example 6.5.6.2-2. Qualifying an Expression with a Type Name
 
-Note that expression names may be qualified by type names, but not by types in general. A consequence is that it is not possible to access a class variable through a parameterized type.
-
-For example, given the code:
+Note that expression names may be qualified by type names, but not by types in general. A consequence is that it is not possible to access a class variable through a parameterized type. For example, given the code:
 
 
 class Foo<T> {
@@ -1132,14 +1133,14 @@ Foo<String>.classVar = 91; // illegal
 
 
 
-Instead, one writes
+Instead, one writes:
 
 
 Foo.classVar = 91;
 
 
 
-This does not restrict the Java programming language in any meaningful way. Type parameters may not be used in the types of static variables, and so the type arguments of a parameterized type can never influence the type of a static variable. Therefore, no expressive power is lost. Technically, the type name Foo above is a raw type, but this use of raw types is harmless, and does not give rise to warnings
+This does not restrict the Java programming language in any meaningful way. Type parameters may not be used in the types of static variables, and so the type arguments of a parameterized type can never influence the type of a static variable. Therefore, no expressive power is lost. The type name Foo appears to be a raw type, but it is not; rather, it is the name of the non-generic type Foo whose static member is to be accessed (§6.1). Since there is no use of a raw type, there are no unchecked warnings.
 
 
 
@@ -1149,15 +1150,7 @@ The meaning of a name classified as a MethodName is determined as follows.
 
 6.5.7.1. Simple Method Names
 
-A simple method name may appear as the element name in an element-value pair.
-
-In that case, the Identifier in an ElementValuePair must be the simple name of one of the elements of the annotation type identified by TypeName in the containing annotation, or a compile-time error occurs.
-
-In other words, the identifier in an element-value pair must also be a method name in the interface identified by TypeName.
-
-Otherwise, a simple method name necessarily appears in the context of a method invocation expression. In that case, if a method name consists of a single Identifier, then Identifier is the method name to be used for method invocation.
-
-The Identifier must name at least one method that is visible at the point where the Identifier appears (§6.4.1), or a method imported by a single-static-import declaration (§7.5.3) or static-import-on-demand declaration (§7.5.4) within the compilation unit within which the Identifier appears, or else a compile-time error occurs by the rules of §15.12.
+A simple method name appears in the context of a method invocation expression (§15.12). The simple method name consists of a single Identifier which specifies the name of the method to be invoked. The rules of method invocation require that the Identifier either denotes a method that is visible at the point of the method invocation, or denotes a method imported by a single-static-import declaration or static-import-on-demand declaration (§7.5.3, §7.5.4).
 
 Example 6.5.7.1-1. Simple Method Names and Visibility
 
@@ -1192,27 +1185,9 @@ For the invocation f2(0), two methods named f2 are visible. First, the declarati
 
 For the invocation f3(0), three methods named f3 are visible. First and second, the declarations of the methods Super.f3(String) and Super.f3(int,int) are in scope throughout the anonymous class declaration. Third, the declaration of the method Test.f3(int) is in scope throughout the body of Test including the anonymous class declaration. §15.12.1 chooses to search in class Super because it has a member named f3. However, Super.f3(String) and Super.f3(int,int) are not applicable to f3(0), so a compile-time error occurs. Note that class Test is not searched.
 
-Choosing to search a nested class's superclass hierarchy before than the lexically enclosing scope is called the "comb rule" (§15.12.1).
+Choosing to search a nested class's superclass hierarchy before the lexically enclosing scope is called the "comb rule" (§15.12.1).
 
 
-
-6.5.7.2. Qualified Method Names
-
-A qualified method name can only appear in the context of a method invocation expression.
-
-If a method name is of the form Q.Id, then Q has already been classified as a package name, a type name, or an expression name:
-
-If Q is a package name, then a compile-time error occurs.
-
-Otherwise, Q is a type name or an expression name.
-
-Id is the method name to be used for method invocation.
-
-If Q is a type name, then Id must name at least one static method of the type Q, or a compile-time error occurs by the rules of §15.12.
-
-If Q is an expression name, then let T be the type of the expression Q. Id must name at least one method of the type T, or a compile-time error occurs by the rules of §15.12.
-
-Like expression names, method names may be qualified by type names, but not by types in general. The implications are similar to those for expression names as discussed in §6.5.6.2.
 
 6.6. Access Control
 
@@ -1222,15 +1197,13 @@ Note that accessibility is a static property that can be determined at compile t
 
 Qualified names are a means of access to members of packages and reference types. When the name of such a member is classified from its context (§6.5.1) as a qualified type name (denoting a member of a package or reference type, §6.5.5.2) or a qualified expression name (denoting a member of a reference type, §6.5.6.2), access control is applied.
 
-For example, a single-type-import statement (§7.5.1) must use a qualified type name, so the type name being imported must be accessible from the compilation unit containing the import statement. As another example, a class declaration may use a qualified type name for a superclass (§8.1.5), and again the qualified type name must be accessible.
+For example, a single-type-import statement (§7.5.1) uses a qualified type name, so the named type must be accessible from the compilation unit containing the import statement. As another example, a class declaration may use a qualified type name for a superclass (§8.1.5), and again the named type must be accessible.
 
-Some obvious expressions are "missing" from context classification in §6.5.1: field access on a Primary (§15.11.1), method invocation on a Primary (§15.12), and the instantiated class in a qualified class instance creation (§15.9). Each of these expressions uses identifiers, rather than names, for the reason given in §6.2. Consequently, access control to members (whether fields, methods, types) is applied explicitly by field access expressions, method invocation expressions, and qualified class instance creation expressions. (Note that access to a field may also be denoted by a qualified name occuring as a postfix expression.)
+Some obvious expressions are "missing" from context classification in §6.5.1: field access on a Primary (§15.11.1), method invocation on a Primary (§15.12), method reference via a Primary (§15.13), and the instantiated class in a qualified class instance creation (§15.9). Each of these expressions uses identifiers, rather than names, for the reason given in §6.2. Consequently, access control to members (whether fields, methods, or types) is applied explicitly by field access expressions, method invocation expressions, method reference expressions, and qualified class instance creation expressions. (Note that access to a field may also be denoted by a qualified name occuring as a postfix expression.)
 
-Note that qualified names, field access expressions, method invocation expressions, and qualified class instance creation expressions are syntactically similar in that a "." token appears, preceded by some indication of a package, type, or expression having a type, and followed by an Identifier that names a member of the package or type. (A new token intercedes between the . and the Identifier in a qualified class instance creation expression.)
+In addition, many statements and expressions allow the use of types rather than type names. For example, a class declaration may use a parameterized type (§4.5) to denote a superclass. Because a parameterized type is not a qualified type name, it is necessary for the class declaration to explicitly perform access control for the denoted superclass. Consequently, most of the statements and expressions that provide contexts in §6.5.1 to classify a TypeName also perform their own access control checks.
 
-Many statements and expressions allow the use of types rather than type names. For example, a class declaration may use a parameterized type (§4.5) to denote a superclass. Because a parameterized type is not a qualified type name, it is necessary for the class declaration to explicitly perform access control for the denoted superclass. Consequently, most of the statements and expressions that provide contexts in §6.5.1 to classify a TypeName must also perform their own access control checks.
-
-Beyond access to members of a package or reference type, there is the matter of access to constructors of a reference type. Access control must be checked when a constructor is invoked explicitly or implicitly. Consequently, access control is checked by an explicit constructor invocation statement (§8.8.7.1) and by a class instance creation expression (§15.9.3). These "manual" checks are necessary because §6.5.1 ignores explicit constructor invocation statements (because they reference constructor names indirectly) and is unaware of the distinction between the class type denoted by an unqualified class instance creation expression and a constructor of that class type. Also, constructors do not have qualified names, so we cannot rely on access control being checked during classification of qualified type names.
+Beyond access to members of a package or reference type, there is the matter of access to constructors of a reference type. Access control must be checked when a constructor is invoked explicitly or implicitly. Consequently, access control is checked by an explicit constructor invocation statement (§8.8.7.1) and by a class instance creation expression (§15.9.3). Such checks are necessary because §6.5.1 has no mention of explicit constructor invocation statements (because they reference constructor names indirectly) and is unaware of the distinction between the class type denoted by an unqualified class instance creation expression and a constructor of that class type. Also, constructors do not have qualified names, so we cannot rely on access control being checked during classification of qualified type names.
 
 Accessibility affects inheritance of class members (§8.2), including hiding and method overriding (§8.4.8.1).
 
@@ -1240,15 +1213,17 @@ A package is always accessible.
 
 If a class or interface type is declared public, then it may be accessed by any code, provided that the compilation unit (§7.3) in which it is declared is observable.
 
-If a top level class or interface type is not declared public, then it may be accessed only from within the package in which it is declared.
+If a class or interface type is declared with package access, then it may be accessed only from within the package in which it is declared.
+
+A class or interface type declared without an access modifier implicitly has package access.
 
 An array type is accessible if and only if its element type is accessible.
 
-A member (class, interface, field, or method) of a reference (class, interface, or array) type or a constructor of a class type is accessible only if the type is accessible and the member or constructor is declared to permit access:
+A member (class, interface, field, or method) of a reference type, or a constructor of a class type, is accessible only if the type is accessible and the member or constructor is declared to permit access:
 
 If the member or constructor is declared public, then access is permitted.
 
-All members of interfaces are implicitly public.
+All members of interfaces lacking access modifiers are implicitly public.
 
 Otherwise, if the member or constructor is declared protected, then access is permitted only when one of the following is true:
 
@@ -1256,9 +1231,11 @@ Access to the member or constructor occurs from within the package containing th
 
 Access is correct as described in §6.6.2.
 
-Otherwise, if the member or constructor is declared private, then access is permitted if and only if it occurs within the body of the top level class (§7.6) that encloses the declaration of the member or constructor.
+Otherwise, if the member or constructor is declared with package access, then access is permitted only when the access occurs from within the package in which the type is declared.
 
-Otherwise, we say there is default access, which is permitted only when the access occurs from within the package in which the type is declared.
+A class member or constructor declared without an access modifier implicitly has package access.
+
+Otherwise, the member or constructor is declared private, and access is permitted if and only if it occurs within the body of the top level class (§7.6) that encloses the declaration of the member or constructor.
 
 Example 6.6-1. Access Control
 
@@ -1356,11 +1333,11 @@ However, this compilation unit cannot use or import points.PointList, which is n
 
 
 
-Example 6.6-4. Access to Default-Access Fields, Methods, and Constructors
+Example 6.6-4. Access to Package-Access Fields, Methods, and Constructors
 
-If none of the access modifiers public, protected, or private are specified, a class member or constructor is accessible throughout the package that contains the declaration of the class in which the class member is declared, but the class member or constructor is not accessible in any other package.
+If none of the access modifiers public, protected, or private are specified, a class member or constructor has package access: it is accessible throughout the package that contains the declaration of the class in which the class member is declared, but the class member or constructor is not accessible in any other package.
 
-If a public class has a method or constructor with default access, then this method or constructor is not accessible to or inherited by a subclass declared outside this package.
+If a public class has a method or constructor with package access, then this method or constructor is not accessible to or inherited by a subclass declared outside this package.
 
 For example, if we have:
 
@@ -1429,9 +1406,11 @@ Let C be the class in which a protected member is declared. Access is permitted 
 
 In addition, if Id denotes an instance field or instance method, then:
 
-If the access is by a qualified name Q.Id, where Q is an ExpressionName, then the access is permitted if and only if the type of the expression Q is S or a subclass of S.
+If the access is by a qualified name Q.Id or a method reference expression Q :: Id (§15.13), where Q is an ExpressionName, then the access is permitted if and only if the type of the expression Q is S or a subclass of S.
 
-If the access is by a field access expression E.Id, where E is a Primary expression, or by a method invocation expression E.Id(. . .), where E is a Primary expression, then the access is permitted if and only if the type of E is S or a subclass of S.
+If the access is by a field access expression E.Id, or a method invocation expression E.Id(...), or a method reference expression E :: Id, where E is a Primary expression (§15.8), then the access is permitted if and only if the type of E is S or a subclass of S.
+
+If the access is by a method reference expression T :: Id, where T is a ReferenceType, then the access is permitted if and only if the type T is S or a subclass of S.
 
 More information about access to protected members can be found in Checking Access to Protected Members in the Java Virtual Machine by Alessandro Coglio, in the Journal of Object Technology, October 2005.
 
@@ -1439,13 +1418,11 @@ More information about access to protected members can be found in Checking Acce
 
 Let C be the class in which a protected constructor is declared and let S be the innermost class in whose declaration the use of the protected constructor occurs. Then:
 
-If the access is by a superclass constructor invocation super(. . .) or by a qualified superclass constructor invocation of the form E.super(. . .), where E is a Primary expression, then the access is permitted.
+If the access is by a superclass constructor invocation super(...), or a qualified superclass constructor invocation E.super(...), where E is a Primary expression, then the access is permitted.
 
-If the access is by an anonymous class instance creation expression of the form new C(. . .){...} or by a qualified class instance creation expression of the form E.new C(. . .){...}, where E is a Primary expression, then the access is permitted.
+If the access is by an anonymous class instance creation expression new C(...){...}, or a qualified anonymous class instance creation expression E.new C(...){...}, where E is a Primary expression, then the access is permitted.
 
-Otherwise, if the access is by a simple class instance creation expression of the form new C(. . .) or by a qualified class instance creation expression of the form E.new C(. . .), where E is a Primary expression, then the access is not permitted.
-
-A protected constructor can be accessed by a class instance creation expression (that does not declare an anonymous class) only from within the package in which it is defined.
+If the access is by a simple class instance creation expression new C(...), or a qualified class instance creation expression E.new C(...), where E is a Primary expression, or a method reference expression C :: new, where C is a ClassType, then the access is not permitted. A protected constructor can be accessed by a class instance creation expression (that does not declare an anonymous class) or a method reference expression only from within the package in which it is defined.
 
 Example 6.6.2-1. Access to protected Fields, Methods, and Constructors
 
@@ -1513,6 +1490,22 @@ In that case, the fully qualified name of an array type consists of the fully qu
 
 A local class does not have a fully qualified name.
 
+Every primitive type, named package, top level class, and top level interface has a canonical name:
+
+For every primitive type, named package, top level class, and top level interface, the canonical name is the same as the fully qualified name.
+
+Each member class, member interface, and array type may have a canonical name:
+
+A member class or member interface M declared in another class or interface C has a canonical name if and only if C has a canonical name.
+
+In that case, the canonical name of M consists of the canonical name of C, followed by ".", followed by the simple name of M.
+
+An array type has a canonical name if and only if its component type has a canonical name.
+
+In that case, the canonical name of the array type consists of the canonical name of the component type of the array type followed by "[]".
+
+A local class does not have a canonical name.
+
 Example 6.7-1. Fully Qualified Names
 
 The fully qualified name of the type long is "long".
@@ -1538,22 +1531,6 @@ the fully qualified name of the type Point is "points.Point"; the fully qualifie
 
 
 
-
-Every primitive type, named package, top level class, and top level interface has a canonical name:
-
-For every primitive type, named package, top level class, and top level interface, the canonical name is the same as the fully qualified name.
-
-Each member class, member interface, and array type may have a canonical name:
-
-A member class or member interface M declared in another class C has a canonical name if and only if C has a canonical name.
-
-In that case, the canonical name of M consists of the canonical name of C, followed by ".", followed by the simple name of M.
-
-An array type has a canonical name if and only if its component type has a canonical name.
-
-In that case, the canonical name of the array type consists of the canonical name of the component type of the array type followed by "[]".
-
-A local class does not have a canonical name.
 
 Example 6.7-2. Fully Qualified Names v. Canonical Name
 
