@@ -484,9 +484,15 @@ SwitchBlockStatementGroup:
 SwitchLabel : {SwitchLabel :} BlockStatements
 SwitchLabel:
 case CaseConstant {, CaseConstant}
+case null [, default]
+case CasePattern [Guard]
 default
 CaseConstant:
 ConditionalExpression
+CasePattern:
+Pattern
+Guard:
+when Expression
 WhileStatement:
 while ( Expression ) Statement
 WhileStatementNoShortIf:
@@ -551,8 +557,13 @@ LocalVariableDeclaration
 VariableAccess
 Pattern:
 TypePattern
+RecordPattern
 TypePattern:
 LocalVariableDeclaration
+RecordPattern:
+ReferenceType ( [PatternList] )
+PatternList:
+Pattern {, Pattern }
 
 Productions from §15 (Expressions)
 

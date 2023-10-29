@@ -18,6 +18,8 @@ Table of Contents
 14.10. The assert Statement
 14.11. The switch Statement
 14.11.1. Switch Blocks
+14.11.1.1. Exhaustive Switch Blocks
+14.11.1.2. Determining which Switch Label Applies at Run Time
 14.11.2. The Switch Block of a switch Statement
 14.11.3. Execution of a switch Statement
 14.12. The while Statement
@@ -46,6 +48,7 @@ Table of Contents
 14.30. Patterns
 14.30.1. Kinds of Patterns
 14.30.2. Pattern Matching
+14.30.3. Properties of Patterns
 
 The sequence of execution of a program is controlled by statements, which are executed for their effect and do not have values.
 
@@ -627,7 +630,7 @@ The switch statement transfers control to one of several statements or expressio
 SwitchStatement:
 switch ( Expression ) SwitchBlock
 
-The Expression is called the selector expression. The type of the selector expression must be char, byte, short, int, Character, Byte, Short, Integer, String, or an enum type (§8.9), or a compile-time error occurs.
+The Expression is called the selector expression. The type of the selector expression must be char, byte, short, int, or a reference type, or a compile-time error occurs.
 
 14.11.1. Switch Blocks
 
@@ -644,9 +647,15 @@ SwitchBlockStatementGroup:
 SwitchLabel : {SwitchLabel :} BlockStatements
 SwitchLabel:
 case CaseConstant {, CaseConstant}
+case null [, default]
+case CasePattern [Guard]
 default
 CaseConstant:
 ConditionalExpression
+CasePattern:
+Pattern
+Guard:
+when Expression
 
 A switch block can consist of either:
 
@@ -656,27 +665,404 @@ Switch labeled statement groups, which use : to introduce switch labeled block s
 
 Every switch rule and switch labeled statement group starts with a switch label, which is either a case label or a default label. Multiple switch labels are permitted for a switch labeled statement group.
 
-A case label has one or more case constants. Every case constant must be either a constant expression (§15.29) or the name of an enum constant (§8.9.1), or a compile-time error occurs.
+A case label consists of either a list of case constants, a null literal, or a case pattern.
 
-Switch labels and their case constants are said to be associated with the switch block. No two of the case constants associated with a switch block may have the same value, or a compile-time error occurs.
+Every case constant must be either a constant expression (§15.29), or the name of an enum constant (§8.9.1), otherwise a compile-time error occurs.
 
-The switch block of a switch statement or a switch expression is compatible with the type of the selector expression, T, if both of the following are true:
+A case label with a null literal may have an optional default.
 
-If T is not an enum type, then every case constant associated with the switch block is assignment compatible with T (§5.2).
+A case label with a case pattern may have an optional when expression, known as a guard, which represents a further test on values that match the pattern. A case label is said to be unguarded if either (i) it has no guard, or (ii) it has a guard that is a constant expression (§15.29) with value true; and guarded otherwise.
 
-If T is an enum type, then every case constant associated with the switch block is an enum constant of type T.
+Switch labels and their case constants, null literals, and case patterns are said to be associated with the switch block.
 
-The switch block of a switch statement or a switch expression must be compatible with the type of the selector expression, or a compile-time error occurs.
+For a given switch block both of the following must be true, otherwise a compile-time error occurs:
 
-Both the execution of a switch statement (§14.11.3) and the evaluation of a switch expression (§15.28.2) need to determine if a switch label matches the value of the selector expression. To determine whether a switch label in a switch block matches a given value, the value is compared with the case constants associated with the switch block. Then:
+No two of the case constants associated with a switch block may have the same value.
 
-If one of the case constants is equal to the value, then we say that the case label which contains the case constant matches.
+No more than one null literal may be associated with a switch block.
 
-Equality is defined in terms of the == operator (§15.21) unless the value is a String, in which case equality is defined in terms of the equals method of class String.
+No more than one default label may be associated with a switch block.
 
-If no case label matches but there is a default label, then we say that the default label matches.
+A guard associated with a case label must satisfy all of the following conditions, otherwise a compile-time error occurs:
 
-A case label can contain several case constants. The label matches the value of the selector expression if any one of its constants matches the value of the selector expression. For example, in the following code, the case label matches if the enum variable day is either one of the enum constants shown:
+A guard must have type boolean or Boolean.
+
+Any local variable, formal parameter, or exception parameter used but not declared in a guard must either be final or effectively final (§4.12.4).
+
+Any blank final variable used but not declared in a guard must be definitely assigned (§16 (Definite Assignment)) before the guard.
+
+A guard cannot be a constant expression (§15.29) with the value false.
+
+The switch block of a switch statement or a switch expression is switch compatible with the type of the selector expression, T, if all of the following are true:
+
+If a null literal is associated with the switch block, then T is a reference type.
+
+For every case constant associated with the switch block that names an enum constant, the type of the case constant is assignment compatible with T (§5.2).
+
+For each case constant associated with the switch block that is a constant expression, the constant is assignment compatible with T, and T is one of char, byte, short, int, Character, Byte, Short, Integer, or String.
+
+Every pattern p associated with the switch block is applicable at type T (§14.30.3).
+
+Switch blocks are not designed to work with the types boolean, long, float, and double. The selector expression of a switch statement or switch expression can not have one of these types.
+
+The switch block of a switch statement or a switch expression must be switch compatible with the type of the selector expression, or a compile-time error occurs.
+
+A switch label in a switch block is said to be dominated if for every value that it applies to, it can be determined that one of the preceding switch labels would also apply. It is a compile-time error if any switch label in a switch block is dominated. The rules for determining whether a switch label is dominated are as follows:
+
+A case label with a case pattern q is dominated if there is a preceding unguarded case label in the switch block with a case pattern p, and p dominates q (§14.30.3).
+
+The definition of one pattern dominating another pattern is based on types. For example, the type pattern Object o dominates the type pattern String s, and so the following results in a compile-time error:
+
+
+Object obj = ...
+switch (obj) {
+    case Object o ->
+        System.out.println("An object");
+    case String s ->                 // Error!
+        System.out.println("A string");
+}
+    
+
+A guarded case label with a case pattern is dominated by a case label with the same pattern but without the guard. For example, the following results in a compile-time error:
+
+
+String str = ...;
+switch (str) {
+    case String s ->
+        System.out.println("A string");
+    case String s when s.length() == 2 ->  // Error!
+        System.out.println("Two character string");
+    ...
+}
+    
+
+On the other hand, a guarded case label with a case pattern is not considered to dominate an unguarded case label with the same case pattern. This allows the following common pattern programming style:
+
+
+Integer j = ...;
+switch (j) {
+    case Integer i when i <= 0 ->
+        System.out.println("Less than or equal to zero");
+    case Integer i ->
+        System.out.println("An integer");
+}
+    
+
+The only exception is where the guard is a constant expression that has the value true, for example:
+
+
+Integer j = ...;
+switch (j) {
+    case Integer i when true ->            // Ok
+        System.out.println("An integer");
+    case Integer i ->                      // Error!
+        System.out.println("An integer");
+}
+    
+
+A case label with a case constant c is dominated if one of the following holds:
+
+c is a constant expression of a primitive type S, and there is a preceding case label in the switch block with an unguarded case pattern p, where p is unconditional for the wrapper class of S.
+
+c is a constant expression of a reference type T, and there is a preceding case label in the switch block with an unguarded case pattern p, where p is unconditional for the type T.
+
+c names an enum constant of enum class E, and there is a preceding case label in the switch block with an unguarded case pattern p, where p is unconditional for the type E.
+
+For example, a case label with an Integer type pattern dominates a case label with an integer literal:
+
+
+Integer j = ...;
+switch (j) {
+    case Integer i ->
+        System.out.println("An integer");
+    case 42 ->                              // Error - dominated!
+        System.out.println("42!");
+}
+    
+
+A default label or a case null, default label is dominated if there is a preceding unguarded case label in the switch block with a case pattern p where p is unconditional for the type of the selector expression (§14.30.3).
+
+A case label with a case pattern that is unconditional for the type of the selector expression will, as the name suggests, match every value and so behave like a default label. A switch block can not have more than one switch label that acts like a default.
+
+It is a compile-time error if any of the following holds:
+
+There is a default label in the switch block that precedes a case label with a case pattern.
+
+There is a default label in the switch block that precedes a case label with a null literal.
+
+There is a case null, default label in the switch block followed by any other switch label.
+
+If used, a default label should come last in a switch block.
+
+For compatibility reasons, a default label may appear before case labels that do not have a null literal or a case pattern.
+
+
+int i = ...;
+switch(i) {
+    default ->
+        System.out.println("Some other integer");
+    case 42 -> // allowed
+        System.out.println("42");
+}
+
+
+If used, a case null, default label should come last in a switch block.
+
+It is a compile-time error if, in a switch block that consists of switch labeled statement groups, a statement is labeled with a case pattern that declares one or more pattern variables, and either:
+
+An immediately preceding statement in the switch block can complete normally (§14.22), or
+
+The statement is labeled with more than one switch label.
+
+The first condition prevents a statement group from "falling through" to another statement group without initializing pattern variables. For example, were the statement labeled by case Integer i reachable from the preceding statement group, the pattern variable i would not have been initialized:
+
+
+Object o = "Hello";
+switch (o) {
+    case String s:
+        System.out.println("String: " + s );  // No break!
+    case Integer i:
+        System.out.println(i + 1);            // Error! Can be reached
+                                              // without matching the
+                                              // pattern `Integer i`
+    default:
+}
+
+
+Switch blocks consisting of switch label statement groups allow multiple labels to apply to a statement group. The second condition prevents a statement group from being executed based on one label without initializing the pattern variables of another label. For example:
+
+
+Object o = "Hello World";
+switch (o) {
+    case String s:
+    case Integer i:
+        System.out.println(i + 1);  // Error! Can be reached
+                                    // without matching the
+                                    // pattern `Integer i`
+    default:
+}
+Object obj = null;
+switch (obj) {
+    case null:
+    case String s:
+        System.out.println(s);      // Error! Can be reached
+                                    // without matching the
+                                    // pattern `String s`
+    default:
+}
+
+
+Both of these conditions apply only when the case pattern declares pattern variables. The following examples, in contrast, are unproblematic:
+
+
+record R() {}
+record S() {}
+Object o = "Hello World";
+switch (o) {
+    case String s:
+        System.out.println(s);      // No break
+    case R():                       // No pattern variables declared
+        System.out.println("It's either an R or a string");
+        break;
+    default:
+}
+Object ob = new R();
+switch (ob) {
+    case R():
+    case S():                       // Multiple case labels
+        System.out.println("Either R or an S");
+        break;
+    default:
+}
+Object obj = null;
+switch (obj) {
+    case null:
+    case R():                       // Multiple case labels
+        System.out.println("Either null or an R");
+        break;
+    default:
+}
+
+14.11.1.1. Exhaustive Switch Blocks
+
+The switch block of a switch expression or switch statement is exhaustive for a selector expression e if one of the following cases applies:
+
+There is a default label associated with the switch block.
+
+There is a case null, default label associated with the switch block.
+
+The set containing all the case constants and case patterns appearing in an unguarded case label (collectively known as case elements) associated with the switch block is non-empty and covers the type of the selector expression e.
+
+A set of case elements, P, covers a type T if one of the following cases applies:
+
+P covers a type U where T and U have the same erasure.
+
+P contains a pattern that is unconditional for T.
+
+T is a type variable with upper bound B and P covers B.
+
+T is an intersection type T1& ... &Tn and P covers Ti, for one of the types Ti (1≤ i ≤ n).
+
+The type T is an enum class type E and P contains all of the names of the enum constants of E.
+
+A default label is permitted, but not required, in the case where the names of all the enum constants appear as case constants. For example:
+
+
+enum E { F, G, H }
+static int testEnumExhaustive(E e) {
+  return switch(e) {
+      case F -> 0;
+      case G -> 1;
+      case H -> 2;    // No default required!
+  };
+}
+    
+    
+
+The type T names an abstract sealed class or sealed interface C and for every permitted direct subclass or subinterface D of C, one of the following two conditions holds:
+
+There is no type that both names D and is a subtype of T, or
+
+There is a type U that both names D and is a subtype of T, and P covers U.
+
+A default label is permitted, but not required, in the case where the switch block exhausts all the permitted direct subclasses and subinterfaces of an abstract sealed class or sealed interface. For example:
+
+ 
+
+sealed interface I permits A, B, C {}
+final class A   implements I {}
+final class B   implements I {}
+record C(int j) implements I {}  // Implicitly final
+
+static int testExhaustive1(I i) {
+    return switch(i) {
+        case A a -> 0;
+        case B b -> 1;
+        case C c -> 2;           // No default required!
+    };
+}
+    
+
+As the switch block contains case patterns that match against all values of types A, B and C, and no other instances of type I are permitted, this switch block is exhaustive.
+
+The fact that a permitted direct subclass or subinterface may only extend a particular parameterization of a generic sealed superclass or superinterface means that it may not always need to be considered when determining whether a switch block is exhaustive. For example:
+
+
+sealed interface J<X> permits D, E {}
+final class D<Y> implements J<String> {}
+final class E<X> implements J<X> {}
+
+static int testExhaustive2(J<Integer> ji) {
+    return switch(ji) {          // Exhaustive!
+        case E<Integer> e -> 42;
+    };
+}
+    
+
+As the selector expression has type J<Integer> the permitted direct subclass D need not be considered as there is no possibility that the value of ji can be an instance of D.
+
+The type T names a record class R, and P contains a record pattern p with a type that names R and for every record component of R of type U, if any, the singleton set containing the corresponding component pattern of p covers U.
+
+A record pattern whose component patterns all cover the type of the corresponding record component is considered to cover the record type. For example:
+
+
+record Test<X>(Object o, X x){}
+    static int testExhaustiveRecordPattern(Test<String> r) {
+    return switch(r) {                           // Exhaustive!
+        case Test<String>(Object o, String s) -> 0;
+    };
+}
+    
+
+P rewrites to a set Q and Q covers T.
+
+A set of case elements, P, rewrites to the set Q, if a subset of P reduces to a pattern p, and Q consists of the remaining elements of P along with the pattern p.
+
+A non-empty set of patterns, RP, reduces to a single pattern rp if one of the following holds:
+
+RP covers some type U, and rp is a type pattern of type U.
+
+RP consists of record patterns whose types all erase to the same record class R with k (k≥1) components and there is a distinguished component cr (1≤r≤k) of R such that for every other component ci (1≤i≤k, i≠r) the set containing the component patterns from the record patterns corresponding to component ci is equivalent to a single pattern qi, the set containing the component patterns from the record patterns corresponding to the component cr reduces to a single pattern q, and rp is the record pattern of type R with a pattern list consisting of the patterns q1, ..., qr-1, q, qr+1, ..., qk.
+
+A non-empty set of patterns EP is equivalent to a single pattern ep if one of the following holds:
+
+EP consists of type patterns whose types all have the same erasure T, and ep is a type pattern of type T.
+
+EP consists of record patterns whose types all erase to the same record class R with k (k≥1) components and for every record component the set containing the corresponding component patterns from the record patterns is equivalent to a single pattern qj (1≤j≤k), and ep is the record pattern of type R with a pattern list consisting of the component patterns q1,...qk.
+
+Ordinarily record patterns match only a subset of the values of the record type. However, a number of record patterns in a switch block can combine to actually match all of the values of the record type. For example:
+
+
+sealed interface I permits A, B, C {}
+final class A   implements I {}
+final class B   implements I {}
+record C(int j) implements I {}  // Implicitly final
+record Box(I i) {}
+
+int testExhaustiveRecordPatterns(Box b) {
+    return switch (b) {     // Exhaustive!
+        case Box(A a) -> 0;
+        case Box(B b) -> 1;
+        case Box(C c) -> 2;
+    };
+}
+
+
+Determining whether this switch block is exhaustive requires the analysis of the combination of the record patterns. The set containing the record pattern Box(I i) covers the type Box, and so the set containing the patterns Box(A a), Box(B b), and Box(C c) can be rewritten to the set containing the pattern Box(I i). This is because the set containing the patterns A a, B b, C c reduces to the pattern I i (because the same set covers the type I), and thus the set containing the patterns Box(A a), Box(B b), Box(C c) reduces to the pattern Box(I i).
+
+However, rewriting a set of record patterns is not always so simple. For example:
+
+
+record IPair(I i, I j){}
+
+int testNonExhaustiveRecordPatterns(IPair p) {
+    return switch (p) {     // Not Exhaustive!
+        case IPair(A a, A a) -> 0;
+        case IPair(B b, B b) -> 1;
+        case IPair(C c, C c) -> 2;
+    };
+}
+
+
+It is tempting to apply the logic from the previous example to rewrite the set containing the patterns IPair(A a, A a), IPair(B b, B b), IPair(C c, C c) to the set containing the pattern IPair(I i, I j), and hence conclude that the switch block exhausts the type IPair. But this is incorrect as, for example, the switch block does not actually have a label that matches an IPair value whose first component is an A value, and second component is a B value. It is only valid to combine record patterns on one component if they match the same values in the other components. For example, the set containing the three record patterns IPair(A a, I i), IPair(B b, I i), and IPair(C c, I i) can be reduced to the pattern IPair(I j, I i).
+
+A switch statement or expression is exhaustive if its switch block is exhaustive for the selector expression.
+
+14.11.1.2. Determining which Switch Label Applies at Run Time
+
+Both the execution of a switch statement (§14.11.3) and the evaluation of a switch expression (§15.28.2) need to determine if a switch label associated with the switch block applies to the value of the selector expression. This proceeds as follows:
+
+If the value is the null reference, then a case label with a null literal applies.
+
+If the value is not the null reference, then we determine the first (if any) case label in the switch block that applies to the value as follows:
+
+A case label with a case constant c applies to a value of type Character, Byte, Short, or Integer, if the value is first subjected to unboxing conversion (§5.1.8) and the constant c is equal to the unboxed value.
+
+Any unboxing conversion will complete normally as the value being unboxed is guaranteed not to be the null reference.
+
+Equality is defined in terms of the == operator (§15.21).
+
+A case label with a case constant c applies to a value that is of type char, byte, short, int, or String or an enum type if the constant c is equal to the value.
+
+Equality is defined in terms of the == operator unless the value is a String, in which case equality is defined in terms of the equals method of class String.
+
+Determining that a case label with a case pattern p applies to a value proceeds first by checking if the value matches the pattern p (§14.30.2).
+
+If pattern matching completes abruptly then the process of determining which switch label applies completes abruptly for the same reason.
+
+If pattern matching succeeds and the case label is unguarded then this case label applies.
+
+If pattern matching succeeds and the case label is guarded, then the guard is evaluated. If the result is of type Boolean, it is subjected to unboxing conversion (§5.1.8).
+
+If evaluation of the guard or the subsequent unboxing conversion (if any) completes abruptly for some reason, the process of determining which switch label applies completes abruptly for the same reason.
+
+Otherwise, if the resulting value is true then the case label applies.
+
+A case null, default label applies to every value.
+
+If the value is not the null reference, and no case label applies according to the rules of step 2, but there is a default label associated with the switch block, then the default label applies.
+
+A single case label can contain several case constants. The label applies to the value of the selector expression if any one of its constants is equal to the value of the selector expression. For example, in the following code, the case label applies if the enum variable day is either one of the enum constants shown:
 
 switch (day) {
     ...
@@ -687,9 +1073,7 @@ switch (day) {
 }
 
 
-null cannot be used as a case constant because it is not a constant expression. Even if case null was allowed, it would be undesirable because the code in that case would never be executed. This is due to the fact that, given a selector expression of a reference type (that is, String or a boxed primitive type or an enum type), an exception will occur if the selector expression evaluates to null at run time. In the judgment of the designers of the Java programming language, propagating the exception is a better outcome than either having no case label match, or having the default label match.
-
-A Java compiler is encouraged (but not required) to provide a warning if a switch statement with an enum-typed selector expression lacks a default label and lacks case labels for one or more of the enum's constants. Such a switch statement will silently do nothing if the expression evaluates to one of the missing constants.
+If a case label with a case pattern applies, then this is because the process of pattern matching the value against the pattern has succeeded (§14.30.2). If a value successfully matches a pattern then the process of pattern matching initializes any pattern variables declared by the pattern.
 
 In C and C++ the body of a switch statement can be a statement and statements with case labels do not have to be immediately contained by that statement. Consider the simple loop:
 
@@ -716,29 +1100,65 @@ Fortunately, this trick does not seem to be widely known or used. Moreover, it i
 
 14.11.2. The Switch Block of a switch Statement
 
-In addition to the general rules for switch blocks (§14.11.1), there are further rules for switch blocks in switch statements. Namely, all of the following must be true for the switch block of a switch statement, or a compile-time error occurs:
+In addition to the general rules for switch blocks (§14.11.1), there are further rules for switch blocks in switch statements.
 
-No more than one default label is associated with the switch block.
+An enhanced switch statement is one where either (i) the type of the selector expression is not char, byte, short, int, Character, Byte, Short, Integer, String, or an enum type, or (ii) there is a case pattern or null literal associated with the switch block.
+
+All of the following must be true for the switch block of a switch statement, or a compile-time error occurs:
 
 Every switch rule expression in the switch block is a statement expression (§14.8).
 
 switch statements differ from switch expressions in terms of which expressions may appear to the right of an arrow (->) in the switch block, that is, which expressions may be used as switch rule expressions. In a switch statement, only a statement expression may be used as a switch rule expression, but in a switch expression, any expression may be used (§15.28.1).
 
+If the switch statement is an enhanced switch statement, then it must be exhaustive (§14.11.1.1).
+
+Prior to Java SE 21, switch statements (and switch expressions) were limited in two ways: (i) the type of the selector expression was restricted to either an integral type (excluding long), an enum type, or String and (ii) no case null labels were supported. Moreover, unlike switch expressions, switch statements did not have to be exhaustive. This is often the cause of difficult-to-detect bugs, where no switch label applies and the switch statement will silently do nothing. For example:
+
+enum E { A, B, C }
+E e = ...;
+switch (e) {
+   case A -> System.out.println("A");
+   case B -> System.out.println("B");
+   // No case for C!
+}
+
+
+In Java SE 21, in addition to supporting case patterns, the two limitations of switch statements (and switch expressions) listed above were relaxed to (i) allow a selector expression of any reference type, and (ii) to allow a case label with a null literal. The designers of the Java programming language also decided that enhanced switch statements should align with switch expressions and be required to be exhaustive. This is often achieved with the addition of a trivial default label. For example, the following enhanced switch statement is not exhaustive:
+
+Object o = ...;
+switch (o) {    // Error - non-exhaustive switch!
+    case String s -> System.out.println("A string!");
+}
+
+
+but it can easily be made exhaustive:
+
+Object o = ...;
+switch (o) {
+    case String s -> System.out.println("A string!");
+    default -> {}
+}
+
+
+For compatibility reasons, switch statements that are not enhanced switch statements are not required to be exhaustive.
+
 14.11.3. Execution of a switch Statement
 
-A switch statement is executed by first evaluating the selector expression. Then:
+A switch statement is executed by first evaluating the selector expression. If evaluation of the selector expression completes abruptly, then the entire switch statement completes abruptly for the same reason.
 
-If evaluation of the selector expression completes abruptly, then the entire switch statement completes abruptly for the same reason.
+If evaluation of the selector expression completes normally, then execution of the switch statement continues by determining if a switch label associated with the switch block applies to the value of the selector expression (§14.11.1.2). Then:
 
-Otherwise, if the result of evaluating the selector expression is null, then a NullPointerException is thrown and the entire switch statement completes abruptly for that reason.
+If the process of determining which switch label applies completes abruptly, then the entire switch statement completes abruptly for the same reason.
 
-Otherwise, if the result of evaluating the selector expression is of type Character, Byte, Short, or Integer, it is subjected to unboxing conversion (§5.1.8). If this conversion completes abruptly, the entire switch statement completes abruptly for the same reason.
+If no switch label applies, then one of the following holds:
 
-If evaluation of the selector expression completes normally and the result is non-null, and the subsequent unboxing conversion (if any) completes normally, then execution of the switch statement continues by determining if a switch label associated with the switch block matches the value of the selector expression (§14.11.1). Then:
+If the value of the selector expression is null, then a NullPointerException is thrown and the entire switch statement completes abruptly for that reason.
 
-If no switch label matches, the entire switch statement completes normally.
+If the switch statement is an enhanced switch statement, then a MatchException is thrown and the entire switch statement completes abruptly for that reason.
 
-If a switch label matches, then one of the following applies:
+If the value of the selector expression is not null, and the switch statement is not an enhanced switch statement, then the entire switch statement completes normally.
+
+If a switch label applies, then one of the following holds:
 
 If it is the switch label for a switch rule expression, then the switch rule expression is necessarily a statement expression (§14.11.2). The statement expression is evaluated. If the evaluation completes normally, then the switch statement completes normally. If the result of evaluation is a value, it is discarded.
 
@@ -748,7 +1168,7 @@ If it is the switch label for a switch rule throw statement, then the throw stat
 
 If it is the switch label for a switch labeled statement group, then all the statements in the switch block that follow the switch label are executed in order. If these statements complete normally, then the switch statement completes normally.
 
-Otherwise, there are no statements that follow the matched switch label in the switch block, and the switch statement completes normally.
+Otherwise, there are no statements in the switch block that follow the switch label that applies, and the switch statement completes normally.
 
 If execution of any statement or expression in the switch block completes abruptly, it is handled as follows:
 
@@ -762,7 +1182,7 @@ Abrupt completion because of a yield statement is handled by the general rule fo
 
 Example 14.11.3-1. Fall-Through in the switch Statement
 
-When a selector expression matches a switch label for a switch rule, the switch rule expression or statement introduced by the switch label is executed, and nothing else. In the case of a switch label for a statement group, all the block statements in the switch block that follow the switch label are executed, including those that appear after subsequent switch labels. The effect is that, as in C and C++, execution of statements can "fall through labels."
+When a switch label applies, and that switch label is for a switch rule, the switch rule expression or statement introduced by the switch label is executed, and nothing else. In the case of a switch label for a statement group, all the block statements in the switch block that follow the switch label are executed, including those that appear after subsequent switch labels. The effect is that, as in C and C++, execution of statements can "fall through labels."
 
 For example, the program:
 
@@ -2030,7 +2450,7 @@ There is at least one switch label after the last switch block statement group.
 
 There is a reachable break statement that exits the switch statement.
 
-The switch block does not contain a default label.
+The switch statement is not enhanced (§14.11.2) and its switch block does not contain a default label.
 
 A switch statement whose switch block consists of switch rules can complete normally iff at least one of the following is true:
 
@@ -2040,7 +2460,7 @@ One of the switch rules introduces a switch rule block that can complete normall
 
 One of the switch rules introduces a switch rule block that contains a reachable break statement which exits the switch statement.
 
-The switch block does not contain a default label.
+The switch statement is not enhanced (§14.11.2) and its switch block does not contain a default label.
 
 A switch block is reachable iff its switch statement is reachable.
 
@@ -2210,20 +2630,25 @@ ensuring that this value is not a constant expression. Similar idioms exist for 
 
 14.30. Patterns
 
-A pattern describes a test that can be performed on a value. Patterns appear as operands of statements and expressions, which provide the values to be tested. Patterns declare local variables, known as pattern variables.
+A pattern describes a test that can be performed on a value. Patterns appear as operands of statements and expressions, which provide the values to be tested. Patterns declare zero or more local variables, also known as pattern variables.
 
-The process of testing a value against a pattern is known as pattern matching. If a value successfully matches a pattern, then the process of pattern matching initializes the pattern variable declared by the pattern.
+The process of testing a value against a pattern is known as pattern matching. If a value successfully matches a pattern, then the process of pattern matching initializes the pattern variables, if any, declared by the pattern.
 
 Pattern variables are only in scope (§6.3) where pattern matching succeeds and thus the pattern variables will have been initialized. It is not possible to use a pattern variable that has not been initialized.
 
 14.30.1. Kinds of Patterns
 
-A type pattern is used to test whether a value is an instance of the type appearing in the pattern.
+A type pattern is used to test whether a value is an instance of the type appearing in the pattern. A record pattern is used to test whether a value is an instance of a record class type and, if it is, to recursively perform pattern matching on the record component values.
 
 Pattern:
 TypePattern
+RecordPattern
 TypePattern:
 LocalVariableDeclaration
+RecordPattern:
+ReferenceType ( [PatternList] )
+PatternList:
+Pattern {, Pattern }
 
 The following productions from §4.3, §8.3, §8.4.1, and §14.4 are shown here for convenience:
 
@@ -2246,11 +2671,13 @@ Dims:
 
 See §8.3 for UnannType.
 
+A pattern is nested in a record pattern if (1) it appears directly in the pattern list of the record pattern, or (2) it is nested in a record pattern that appears directly in the pattern list of the record pattern. A pattern is top level if it is not nested in a record pattern.
+
 A type pattern declares one local variable, known as a pattern variable. The Identifier in the local variable declaration specifies the name of the pattern variable.
 
 The rules for a local variable declared in a type pattern are specified in §14.4. In addition, all of the following must be true, or a compile-time error occurs:
 
-The LocalVariableType denotes a reference type (and furthermore is not var).
+The LocalVariableType in a top level type pattern denotes a reference type (and furthermore is not var).
 
 The VariableDeclaratorList consists of a single VariableDeclarator.
 
@@ -2258,19 +2685,57 @@ The VariableDeclarator has no initializer.
 
 The VariableDeclaratorId has no bracket pairs.
 
-The type of a pattern variable is the reference type denoted by LocalVariableType.
+The type of a pattern variable declared in a top level type pattern is the reference type denoted by LocalVariableType.
 
-The type of a type pattern is the type of its pattern variable.
+The type of a pattern variable declared in a nested type pattern is determined as follows:
 
-An expression e is compatible with a pattern of type T if e is downcast compatible with T (§5.5).
+If the LocalVariableType is UnannType then the type of the pattern variable is denoted by UnannType.
 
-Compatibility of an expression with a pattern is used by the instanceof pattern match operator (§15.20.2).
+If the LocalVariableType is var then the type pattern must appear directly in the pattern list of a record pattern, or a compile-time error occurs.
+
+Let R be the type of the record pattern, and let T be the type of the corresponding component field in R (§8.10.3). The type of the pattern variable is the upward projection of T with respect to all synthetic type variables mentioned by T.
+
+Consider the following declaration of a record class:
+
+
+record R<T>(ArrayList<T> a){}
+    
+
+Given the record pattern R<String>(var b), the type of the pattern variable b is ArrayList<String>.
+
+A type pattern is said to be null matching if it is appears directly in the pattern list of a record pattern with type R, where the corresponding record component of R has type U, and the type pattern is unconditional for the type U (§14.30.3).
+
+Note that this compile-time property of type patterns is used in the run-time process of pattern matching (§14.30.2), so it is associated with the type pattern for use at run time.
+
+A record pattern consists of a ReferenceType and a pattern list. The patterns appearing directly in the pattern list, if any, are called the component patterns of the record pattern. If ReferenceType is not a record class type (§8.10) then a compile-time error occurs.
+
+If the ReferenceType is a raw type, then the type of the record pattern is inferred, as described in §18.5.5. It is a compile-time error if no type can be inferred for the record pattern.
+
+If the ReferenceType (or any part of it) is annotated then a compile-time error occurs.
+
+Future versions of the Java Programming Language may lift this restriction on annotations.
+
+Otherwise, the type of the record pattern is ReferenceType.
+
+The length of the record pattern's pattern list must be the same as the length of the record component list in the declaration of the record class named by ReferenceType otherwise a compile-time error occurs.
+
+A record pattern does not directly declare any pattern variables itself, but may contain declarations of pattern variables in the pattern list.
+
+It is a compile-time error if a record pattern contains more than one declaration of a pattern variable with the same name.
 
 14.30.2. Pattern Matching
 
-Pattern matching is the process of testing a value against a pattern at run time. Pattern matching is distinct from statement execution (§14.1) and expression evaluation (§15.1).
+Pattern matching is the process of testing a value against a pattern at run time. Pattern matching is distinct from statement execution (§14.1) and expression evaluation (§15.1). If a value successfully matches a pattern, then the process of pattern matching will initialize all the pattern variables declared by the pattern, if any.
+
+The process of pattern matching may involve expression evaluation or statement execution. Accordingly, pattern matching is said to complete abruptly if evaluation of an expression or execution of a statement completes abruptly. An abrupt completion always has an associated reason, which is always a throw with a given value. Pattern matching is said to complete normally if it does not complete abruptly.
 
 The rules for determining whether a value matches a pattern, and for initializing pattern variables, are as follows:
+
+The null reference matches a type pattern if the type pattern is null-matching (§14.30.1); and does not match otherwise.
+
+If the null reference matches, then the pattern variable declared by the type pattern is initialized to the null reference.
+
+If the null reference does not match, then the pattern variable declared by the type pattern is not initialized.
 
 A value v that is not the null reference matches a type pattern of type T if v can be cast to T without raising a ClassCastException; and does not match otherwise.
 
@@ -2278,4 +2743,38 @@ If v matches, then the pattern variable declared by the type pattern is initiali
 
 If v does not match, then the pattern variable declared by the type pattern is not initialized.
 
-There is no rule to cover a value that is the null reference. This is because the solitary construct that performs pattern matching, the instanceof pattern match operator (§15.20.2), only does so when a value is not the null reference. It is possible that future versions of the Java programming language will allow pattern matching in other expressions and statements.
+The null reference does not match a record pattern.
+
+In this case, any pattern variables appearing in declarations contained in the record pattern are not initialized.
+
+A value v that is not the null reference matches a record pattern with type R and pattern list L if (i) v can be cast to R without raising a ClassCastException; and (ii) each record component of v matches the corresponding component pattern in L; and does not match otherwise.
+
+Each record component of v is determined by invoking the accessor method of v corresponding to that component. If execution of the invocation of the accessor method completes abruptly for reason S, then pattern matching completes abruptly by throwing a MatchException with cause S.
+
+A pattern variable declared by a pattern appearing in the pattern list of a record pattern is initialized only if all the patterns in the list match.
+
+14.30.3. Properties of Patterns
+
+A pattern p is said to be applicable at a type T if one of the following rules apply:
+
+A type pattern that declares a pattern variable of a reference type U is applicable at a reference type T if T is checked cast convertible to U (§5.5).
+
+A type pattern that declares a pattern variable of a primitive type P is applicable at the type P.
+
+A record pattern with type R and pattern list L is applicable at type T if (i) T is checked cast convertible to R, and (ii) for every component pattern p appearing in L, if any, p is applicable at the type of the corresponding component field in R.
+
+A pattern p is said to be unconditional for a type T if every value of type T will match p, and so the testing aspect of pattern matching could be elided. It is defined as follows:
+
+A type pattern that declares a pattern variable of a reference type S is unconditional for a reference type T if the erasure of T is a subtype of the erasure of S.
+
+A type pattern that declares a pattern variable of a primitive type P is unconditional for the type P.
+
+Note that no record pattern is unconditional because the null reference does not match any record pattern.
+
+A pattern p is said to dominate another pattern q if every value that matches q also matches p, and is defined as follows:
+
+A pattern p dominates a type pattern that declares a pattern variable of type T if p is unconditional for T.
+
+A pattern p dominates a record pattern with type R if p is unconditional for R.
+
+A record pattern with type R and pattern list L dominates another record pattern with type S and pattern list M if (i) R and S name the same record class, and (ii) every component pattern, if any, in L dominates the corresponding component pattern in M.

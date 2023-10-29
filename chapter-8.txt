@@ -601,6 +601,8 @@ For a class other than Object with a normal class declaration, the direct superc
 
 For an enum class E, the direct superclass type is Enum<E>.
 
+For a record class R, the direct superclass type is Record.
+
 For an anonymous class, the direct superclass type is defined in §15.9.5.
 
 The direct superclass of a class is the class named by its direct superclass type. The direct superclass is important because its implementation is used to derive the implementation of the class being declared.
@@ -3379,9 +3381,7 @@ Expression {, Expression}
 
 The rules concerning annotation modifiers for an enum constant declaration are specified in §9.7.4 and §9.7.5.
 
-The Identifier in a EnumConstant may be used in a name to refer to the enum constant.
-
-The scope and shadowing of an enum constant is specified in §6.3 and §6.4.1.
+The Identifier in an EnumConstant provides the name of an implicit field of the enum class (§8.9.3) that can be used to refer to the enum constant.
 
 An enum constant may be followed by arguments, which are passed to the constructor of the enum when the constant is created during class initialization as described later in this section. The constructor to be invoked is chosen using the normal rules of overload resolution (§15.12.2). If the arguments are omitted, an empty argument list is assumed.
 

@@ -1045,7 +1045,9 @@ If the expression has the null type, then the expression may be cast to any refe
 
 If a casting context makes use of a narrowing reference conversion that is checked or partially unchecked (§5.1.6.2, §5.1.6.3), then a run time check will be performed on the class of the expression's value, possibly causing a ClassCastException. Otherwise, no run time check is performed.
 
-If an expression can be converted to a reference type by a casting conversion other than a narrowing reference conversion which is unchecked, we say the expression (or its value) is downcast compatible with the reference type.
+If an expression can be converted to a reference type by a casting conversion other than a narrowing reference conversion which is unchecked, we say the expression (or its value) is checked cast compatible with the reference type.
+
+If an expression of reference type S is checked cast compatible with another reference type T, we say that the type S is checked cast convertible to type T.
 
 The following tables enumerate which conversions are used in certain casting contexts. Each conversion is signified by a symbol:
 

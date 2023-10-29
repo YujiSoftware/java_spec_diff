@@ -258,7 +258,7 @@ Strict evaluation provides predictable results, but caused performance problems 
 
 For compatibility, Java 1.2 allowed the programmer to forbid an implementation from using the extended-exponent value sets. The programmer expressed this by placing the strictfp modifier on the declaration of a class, interface, or method. strictfp constrained the floating-point semantics of any enclosed expressions to use the float value set for float expressions and the double value set for double expressions, ensuring the results of such expressions were fully predictable. Code modified by strictfp thus had the same floating-point semantics as specified in Java 1.0 and 1.1.
 
-In Java SE 17 and later, the Java SE Platform always requires strict evaluation of floating-point expressions. Newer members of the processor families that had performance problems implementing strict evaluation no longer have that difficulty. This specification no longer associates float and double with the four value sets described above, and the strictfp modifier no longer affects the evaluation of floating-point expressions. For compatibility, strictfp remains a keyword in Java SE 20 (§3.8) and continues to have restrictions on its use (§8.4.3, §9.4), although Java compilers are encouraged to warn the programmer about its obsolete status. Future versions of the Java programming language may redefine or remove the strictfp keyword.
+In Java SE 17 and later, the Java SE Platform always requires strict evaluation of floating-point expressions. Newer members of the processor families that had performance problems implementing strict evaluation no longer have that difficulty. This specification no longer associates float and double with the four value sets described above, and the strictfp modifier no longer affects the evaluation of floating-point expressions. For compatibility, strictfp remains a keyword in Java SE 21 (§3.8) and continues to have restrictions on its use (§8.4.3, §9.4), although Java compilers are encouraged to warn the programmer about its obsolete status. Future versions of the Java programming language may redefine or remove the strictfp keyword.
 
 15.5. Expressions and Run-Time Checks
 
@@ -320,7 +320,7 @@ An assignment to an array component of reference type (§15.26.1), a method invo
 
 An assignment to an array component of reference type (§15.26.1) throws an ArrayStoreException when the value to be assigned is not compatible with the component type of the array (§10.5).
 
-A switch expression (§15.28) throws an IncompatibleClassChangeError if no switch label matches the value of the selector expression.
+A switch expression (§15.28) or enhanced switch statement (§14.11.2) throws a MatchException if no switch label applies to the value of the selector expression.
 
 A method invocation expression can also result in an exception being thrown if an exception occurs that causes execution of the method body to complete abruptly.
 
@@ -1785,7 +1785,7 @@ The process of determining applicability begins by determining the potentially a
 
 The first phase performs overload resolution without permitting boxing or unboxing conversion, or the use of variable arity method invocation. If no applicable method is found during this phase then processing continues to the second phase.
 
-This guarantees that any calls that were valid in the Java programming language before Java SE 5.0 are not considered ambiguous as the result of the introduction of variable arity methods, implicit boxing and/or unboxing. However, the declaration of a variable arity method (§8.4.1) can change the method chosen for a given method method invocation expression, because a variable arity method is treated as a fixed arity method in the first phase. For example, declaring m(Object...) in a class which already declares m(Object) causes m(Object) to no longer be chosen for some invocation expressions (such as m(null)), as m(Object[]) is more specific.
+This guarantees that any calls that were valid in the Java programming language before Java SE 5.0 are not considered ambiguous as the result of the introduction of variable arity methods, implicit boxing and/or unboxing. However, the declaration of a variable arity method (§8.4.1) can change the method chosen for a given method invocation expression, because a variable arity method is treated as a fixed arity method in the first phase. For example, declaring m(Object...) in a class which already declares m(Object) causes m(Object) to no longer be chosen for some invocation expressions (such as m(null)), as m(Object[]) is more specific.
 
 The second phase performs overload resolution while allowing boxing and unboxing, but still precludes the use of variable arity method invocation. If no applicable method is found during this phase then processing continues to the third phase.
 
@@ -2521,7 +2521,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 20 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 21 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2551,7 +2551,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 20 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 21 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 
@@ -3751,7 +3751,7 @@ The following rules apply when instanceof is the type comparison operator:
 
 The type of the expression RelationalExpression must be a reference type or the null type, or a compile-time error occurs.
 
-The RelationalExpression must be downcast compatible with the ReferenceType (§5.5), or a compile-time error occurs.
+The RelationalExpression must be checked cast compatible with the ReferenceType (§5.5), or a compile-time error occurs.
 
 At run time, the result of the type comparison operator is determined as follows:
 
@@ -3763,9 +3763,7 @@ The following rules apply when instanceof is the pattern match operator:
 
 The type of the expression RelationalExpression must be a reference type or the null type, or a compile-time error occurs.
 
-The RelationalExpression must be compatible with the Pattern (§14.30.1), or a compile-time error occurs.
-
-If the type of the RelationalExpression is a subtype of the type of the Pattern, then a compile-time error occurs.
+The Pattern must be applicable at the type of the expression RelationalExpression (§14.30.3), or a compile-time error occurs.
 
 At run time, the result of the pattern match operator is determined as follows:
 
@@ -3773,7 +3771,7 @@ If the value of the RelationalExpression is the null reference, then the result 
 
 If the value of the RelationalExpression is not the null reference, then the result is true if the value matches the Pattern (§14.30.2), and false otherwise.
 
-A side effect of a true result is that pattern variables declared in Pattern will be initialized.
+A side effect of a true result is that all the pattern variables declared in Pattern, if any, will be initialized.
 
 Example 15.20.2-1. The Type Comparison Operator
 
@@ -5185,7 +5183,7 @@ A switch expression transfers control to one of several statements or expression
 SwitchExpression:
 switch ( Expression ) SwitchBlock
 
-The Expression is called the selector expression. The type of the selector expression must be char, byte, short, int, Character, Byte, Short, Integer, String, or an enum type (§8.9), or a compile-time error occurs.
+The Expression is called the selector expression. The type of the selector expression must be char, byte, short, int, or a reference type, or a compile-time error occurs.
 
 The body of both a switch expression and a switch statement (§14.11) is called a switch block. General rules which apply to all switch blocks, whether they appear in switch expressions or switch statements, are given in §14.11.1. The following productions from §14.11.1 are shown here for convenience:
 
@@ -5200,24 +5198,26 @@ SwitchBlockStatementGroup:
 SwitchLabel : {SwitchLabel :} BlockStatements
 SwitchLabel:
 case CaseConstant {, CaseConstant}
+case null [, default]
+case CasePattern [Guard]
 default
 CaseConstant:
 ConditionalExpression
+CasePattern:
+Pattern
+Guard:
+when Expression
 15.28.1. The Switch Block of a switch Expression
 
-In addition to the general rules for switch blocks (§14.11.1), there are further rules for switch blocks in switch expressions. Namely, all of the following must be true for the switch block of a switch expression, or a compile-time error occurs:
+In addition to the general rules for switch blocks (§14.11.1), there are further rules for switch blocks in switch expressions.
 
-If the type of the selector expression is not an enum type, then there is exactly one default label associated with the switch block.
+It is a compile-time error if the switch block of a switch expression consists of switch rules, but one or more switch rule blocks can complete normally (§14.22).
 
-If the type of the selector expression is an enum type, then (i) the set of the case constants associated with the switch block includes every enum constant of the enum type, and (ii) at most one default label is associated with the switch block.
+It is a compile-time error if the switch block of a switch expression consists of switch labeled statement groups, but the last statement in the switch block can complete normally, or the switch block has one or more switch labels after the last switch labeled statement group.
 
-A default label is permitted, but not required, when the case labels cover all the enum constants.
+It is a compile-time error if a switch expression is not exhaustive (§14.11.1.1).
 
-If the switch block consists of switch rules, then any switch rule block cannot complete normally (§14.22).
-
-If the switch block consists of switch labeled statement groups, then the last statement in the switch block cannot complete normally, and the switch block does not have any switch labels after the last switch labeled statement group.
-
-switch expressions cannot have empty switch blocks, unlike switch statements. Furthermore, switch expressions differ from switch statements in terms of which expressions may appear to the right of an arrow (->) in the switch block, that is, which expressions may be used as switch rule expressions. In a switch expression, any expression may be used as a switch rule expression, but in a switch statement, only a statement expression may be used (§14.11.1).
+switch expressions differ from switch statements in terms of which expressions may appear to the right of an arrow (->) in the switch block, that is, which expressions may be used as switch rule expressions. In a switch expression, any expression may be used as a switch rule expression, but in a switch statement, only a statement expression may be used (§14.11.1).
 
 The result expressions of a switch expression are determined as follows:
 
@@ -5251,19 +5251,19 @@ Otherwise, boxing conversion (§5.1.7) is applied to each result expression that
 
 15.28.2. Run-Time Evaluation of switch Expressions
 
-A switch expression is evaluated by first evaluating the selector expression. Then:
+A switch expression is evaluated by first evaluating the selector expression. If evaluation of the selector expression completes abruptly, then evaluation of the entire switch expression completes abruptly for the same reason.
 
-If evaluation of the selector expression completes abruptly, then the switch expression completes abruptly for the same reason.
+If evaluation of the selector expression completes normally then evaluation of the switch expression continues by determining if a switch label associated with the switch block applies to the value of the selector expression (§14.11.1.2). Then:
 
-Otherwise, if the result of evaluating the selector expression is null, then a NullPointerException is thrown and the entire switch expression completes abruptly for that reason.
+If the process of determining which switch label applies completes abruptly, then the entire switch expression completes abruptly for the same reason.
 
-Otherwise, if the result of evaluating the selector expression is of type Character, Byte, Short, or Integer, it is subjected to unboxing conversion (§5.1.8). If this conversion completes abruptly, then the entire switch expression completes abruptly for the same reason.
+If no switch label applies, then one of the following holds:
 
-If evaluation of the selector expression completes normally and the result is non-null, and the subsequent unboxing conversion (if any) completes normally, then evaluation of the switch expression continues by determining if a switch label associated with the switch block matches the value of the selector expression (§14.11.1). Then:
+If the value of the selector expression is null, then a NullPointerException is thrown and evaluation of the switch expression completes abruptly for that reason.
 
-If no switch label matches, then an IncompatibleClassChangeError is thrown and the entire switch expression completes abruptly for that reason.
+Otherwise, a MatchException is thrown and evaluation of the switch expression completes abruptly for that reason.
 
-If a switch label matches, then one of the following applies:
+If a switch label applies, then one of the following holds:
 
 If it is the switch label for a switch rule expression, then the expression is evaluated. If the result of evaluation is a value, then the switch expression completes normally with the same value.
 
@@ -5271,15 +5271,15 @@ If it is the switch label for a switch rule block, then the block is executed. I
 
 If it is the switch label for a switch rule throw statement, then the throw statement is executed.
 
-Otherwise, all the statements in the switch block after the matching switch label are executed in order. If these statements complete normally, then the switch expression completes normally.
+Otherwise, all the statements in the switch block after the switch label that applies are executed in order. If these statements complete normally, then the switch expression completes normally.
 
 If execution of any statement or expression in the switch block completes abruptly, it is handled as follows:
 
-If execution of an expression completes abruptly, then the switch expression completes abruptly for the same reason.
+If evaluation of an expression completes abruptly, then evaluation of the switch expression completes abruptly for the same reason.
 
-If execution of a statement completes abruptly because of a yield with value V, then the switch expression completes normally and the value of the switch expression is V.
+If execution of a statement completes abruptly because of a yield with value V, then evaluation of the switch expression completes normally and the value of the switch expression is V.
 
-If execution of a statement completes abruptly for any reason other than a yield with a value, then the switch expression completes abruptly for the same reason.
+If execution of a statement completes abruptly for any reason other than a yield with a value, then evaluation of the switch expression completes abruptly for the same reason.
 
 15.29. Constant Expressions
 ConstantExpression:

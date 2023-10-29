@@ -21,6 +21,7 @@ Table of Contents
 6.3.2.5. for Statements
 6.3.2.6. switch Statements
 6.3.2.7. Labeled Statements
+6.3.3. Scope for Pattern Variables in case Labels
 6.4. Shadowing and Obscuring
 6.4.1. Shadowing
 6.4.2. Obscuring
@@ -550,8 +551,6 @@ The following rules apply to a conditional-and expression a && b (§15.23):
 
 A pattern variable introduced by a when true is definitely matched at b.
 
-It is a compile-time error if any pattern variable introduced by a when true is already in scope at b.
-
 A pattern variable is introduced by a && b when true iff either (i) it is introduced by a when true or (ii) it is introduced by b when true.
 
 It should be noted that there is no rule for introducing a pattern variable by a && b when false. This is because it cannot be determined at compile time which operand will evaluate to false.
@@ -569,8 +568,6 @@ These two error cases exclude the possibility of both operands of the && operato
 The following rules apply to a conditional-or expression a || b (§15.24):
 
 A pattern variable introduced by a when false is definitely matched at b.
-
-It is a compile-time error if any pattern variable introduced by a when false is already in scope at b.
 
 A pattern variable is introduced by a || b when false iff either (i) it is introduced by a when false or (ii) it is introduced by b when false.
 
@@ -598,11 +595,7 @@ The following rules apply to a conditional expression a ? b : c (§15.25):
 
 A pattern variable introduced by a when true is definitely matched at b.
 
-It is a compile-time error if any pattern variable introduced by a when true is already in scope at b.
-
 A pattern variable introduced by a when false is definitely matched at c.
-
-It is a compile-time error if any pattern variable introduced by a when false is already in scope at c.
 
 It should be noted that there are no rules for introducing a pattern variable by a ? b : c when true or false. This is because it cannot be determined at compile time whether the operand a will evaluate to true.
 
@@ -624,11 +617,9 @@ These error cases are analogous to similar error cases for the && and || operato
 
 6.3.1.5. Pattern Match Operator instanceof
 
-The following rules apply to an instanceof expression with a pattern operand, a instanceof p (§15.20.2):
+The following rule applies to an instanceof expression with a pattern operand, a instanceof p (§15.20.2):
 
-A pattern variable is introduced by a instanceof p when true iff it is declared by the pattern p. The rules for determining which pattern variables are declared by a pattern are given in §14.30.1.
-
-It is a compile-time error if any pattern variable introduced by a instanceof p when true is already in scope at the instanceof expression.
+A pattern variable is introduced by a instanceof p when true iff the pattern p contains a declaration of the pattern variable (§14.30.1).
 
 A pattern variable is not permitted to shadow another local variable (§6.4).
 
@@ -636,9 +627,15 @@ It should be noted that there is no rule for introducing a pattern variable by a
 
 6.3.1.6. switch Expressions
 
-The following rule applies to a switch expression (§15.28):
+The following rule applies to a switch expression with a switch block consisting of switch rules (§14.11.1):
 
-A pattern variable introduced by a statement S contained in a switch labeled statement group (§14.11.1) is definitely matched at all the statements following S, if any, in the switch labeled statement group.
+A pattern variable introduced by a switch label is definitely matched in the associated switch rule expression, switch rule block, or switch rule throw statement.
+
+The following rules apply to a switch expression with a switch block consisting of switch labeled statement groups (§14.11.1):
+
+A pattern variable introduced by a switch label is definitely matched in all the statements of the associated switch labeled statement group.
+
+A pattern variable introduced by a statement S contained in a switch labeled statement group is definitely matched at all the statements following S, if any, in the switch labeled statement group.
 
 6.3.1.7. Parenthesized Expressions
 
@@ -692,11 +689,7 @@ The following rules apply to a statement if (e) S (§14.9.1):
 
 A pattern variable introduced by e when true is definitely matched at S.
 
-It is a compile-time error if any pattern variable introduced by e when true is already in scope at S.
-
 A pattern variable is introduced by if (e) S iff (i) it is introduced by e when false and (ii) S cannot complete normally.
-
-It is a compile-time error if any pattern variable introduced by if (e) S is already in scope at the if statement.
 
 The rule about an if-then statement introducing a pattern variable relies on the notion of "cannot complete normally" (§14.22), which in turn relies on the concept of a constant expression (§15.29). This means that calculating the scope of a pattern variable may require determining whether a simple name, or a qualified name of the form TypeName . Identifier, refers to a constant variable. As pattern variables can never refer to a constant variable, there is no circularity.
 
@@ -704,19 +697,13 @@ The following rules apply to a statement if (e) S else T (§14.9.2):
 
 A pattern variable introduced by e when true is definitely matched at S.
 
-It is a compile-time error if any pattern variable introduced by e when true is already in scope at S.
-
 A pattern variable introduced by e when false is definitely matched at T.
-
-It is a compile-time error if any pattern variable introduced by e when false is already in scope at T.
 
 A pattern variable is introduced by if (e) S else T iff either:
 
 It is introduced by e when true, and S can complete normally, and T cannot complete normally; or
 
 It is introduced by e when false, and S cannot complete normally, and T can complete normally.
-
-It is a compile-time error if any pattern variable introduced by if (e) S else T is already in scope at the if statement.
 
 These rules highlight the flow-like nature of scoping for pattern variables. For example, in the following statement:
 
@@ -752,19 +739,13 @@ The following rules apply to a statement while (e) S (§14.12):
 
 A pattern variable introduced by e when true is definitely matched at S.
 
-It is a compile-time error if any pattern variable introduced by e when true is already in scope at S.
-
-A pattern variable is introduced by while (e) S iff (i) it is introduced by e when false and (ii) S does not contain a reachable break statement whose break target contains S (§14.15).
-
-It is a compile-time error if any pattern variable introduced by while (e) S is already in scope at the while statement.
+A pattern variable is introduced by while (e) S iff (i) it is introduced by e when false and (ii) S does not contain a reachable break statement for which the while statement is the break target (§14.15).
 
 6.3.2.4. do Statements
 
-The following rules apply to a statement do S while (e) (§14.13):
+The following rule applies to a statement do S while (e) (§14.13):
 
-A pattern variable is introduced by do S while (e) iff (i) it is introduced by e when false and (ii) S does not contain a reachable break statement whose break target contains S (§14.15).
-
-It is a compile-time error if any pattern variable introduced by do S while (e) is already in scope at the do statement.
+A pattern variable is introduced by do S while (e) iff (i) it is introduced by e when false and (ii) S does not contain a reachable break statement for which the do statement is the break target (§14.15).
 
 6.3.2.5. for Statements
 
@@ -772,25 +753,39 @@ The following rules apply to a basic for statement (§14.14.1):
 
 A pattern variable introduced by the condition expression when true is definitely matched at both the incrementation part and the contained statement.
 
-It is a compile-time error if any pattern variable introduced by the condition expression when true is already in scope at the incrementation part of the contained statement.
-
-A pattern variable is introduced by a basic for statement iff (i) it is introduced by the condition expression when false and (ii) the contained statement, S, does not contain a reachable break statement whose break target contains S (§14.15).
-
-It is a compile-time error if any pattern variable introduced by a basic for statement is already in scope at the for statement.
+A pattern variable is introduced by a basic for statement iff (i) it is introduced by the condition expression when false and (ii) the contained statement, S, does not contain a reachable break for which the basic for statement is the break target (§14.15).
 
 An enhanced for statement (§14.14.2) is defined by translation to a basic for statement, so no special rules need to be provided for it.
 
 6.3.2.6. switch Statements
 
-The following rule applies to a switch statement (§14.11):
+The following rule applies to a switch statement with a switch block consisting of switch rules (§14.11.1):
 
-A pattern variable introduced by a labeled statement S contained in a switch block statement group (§14.11.1) is definitely matched at all the statements following S, if any, in the switch block statement group.
+A pattern variable introduced by a switch label is definitely matched in the associated switch rule expression, switch rule block, or switch rule throw statement.
+
+The following rules apply to a switch statement with a switch block consisting of switch labeled statement groups (§14.11.1):
+
+A pattern variable introduced by a switch label is definitely matched in all the statements of the associated switch labeled statement group.
+
+A pattern variable introduced by a statement S contained in a switch block statement group is definitely matched at all the statements following S, if any, in the switch block statement group.
 
 6.3.2.7. Labeled Statements
 
 The following rule applies to a labeled statement (§14.7):
 
-A pattern variable is introduced by a labeled statement iff it is introduced by the labeled statement's immediately contained Statement.
+A pattern variable is introduced by a labeled statement L: S (where L is a label) iff (i) it is introduced by the statement S, and (ii) S does not contain a reachable break statement for which the labeled statement is the break target (§14.15).
+
+6.3.3. Scope for Pattern Variables in case Labels
+
+Pattern variables can be introduced by case labels with a case pattern, either by the pattern itself or by a guard, and are in scope for the relevant parts of the associated switch expression (§6.3.1.6) or switch statement (§6.3.2.6).
+
+The following rules applies to case labels:
+
+A pattern variable is introduced by a case label with a case pattern p if p contains a declaration of the pattern variable.
+
+If a case pattern in a guarded case label contains a declaration of a pattern variable then the pattern variable is definitely matched in the associated guard.
+
+A pattern variable is introduced by a guarded case label if it is introduced by the associated guard when true (§6.3.1).
 
 6.4. Shadowing and Obscuring
 
@@ -1234,7 +1229,7 @@ To the left of the "." in a qualified AmbiguousName
 
 In the default value clause of an annotation element declaration (§9.6.2)
 
-To the right of an "=" in an an element-value pair (§9.7.1)
+To the right of an "=" in an element-value pair (§9.7.1)
 
 To the left of :: in a method reference expression (§15.13)
 
@@ -1444,7 +1439,13 @@ The meaning of a name classified as an ExpressionName is determined as follows.
 
 6.5.6.1. Simple Expression Names
 
-If an expression name consists of a single Identifier, then there must be exactly one declaration denoting either a local variable, formal parameter, exception parameter, or field in scope at the point at which the identifier occurs. Otherwise, a compile-time error occurs.
+If an expression name consists of a single Identifier, then:
+
+If the expression name appears as a CaseConstant in a switch label (§14.11.1), and the type of the selector expression of the enclosing switch statement or switch expression is an enum class type (§8.9), and the enum class declares an enum constant with name Identifier, then the expression name refers to the corresponding implicit field of the enum class.
+
+Otherwise, if there is exactly one declaration denoting either a local variable, formal parameter, exception parameter, or field in scope at the point at which the identifier occurs, then the expression name refers to the in-scope variable.
+
+Otherwise, a compile-time error occurs.
 
 If the declaration denotes an instance variable of a class C (§8.3.1.1), then both of the following must be true, or a compile-time error occurs:
 

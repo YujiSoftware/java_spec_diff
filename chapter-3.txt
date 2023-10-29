@@ -295,7 +295,7 @@ UnqualifiedMethodIdentifier is used when a method invocation expression refers t
 
 3.9. Keywords
 
-51 character sequences, formed from ASCII characters, are reserved for use as keywords and cannot be used as identifiers (§3.8). Another 16 character sequences, also formed from ASCII characters, may be interpreted as keywords or as other tokens, depending on the context in which they appear.
+51 character sequences, formed from ASCII characters, are reserved for use as keywords and cannot be used as identifiers (§3.8). Another 17 character sequences, also formed from ASCII characters, may be interpreted as keywords or as other tokens, depending on the context in which they appear.
 
 Keyword:
 ReservedKeyword
@@ -317,10 +317,11 @@ _ (underscore)
 ContextualKeyword:
 (one of)
 
-exports      opens      requires     uses
-module       permits    sealed       var
-non-sealed   provides   to           with
-open         record     transitive   yield
+exports      opens      requires     uses   yield
+module       permits    sealed       var         
+non-sealed   provides   to           when        
+open         record     transitive   with        
+
 
 The keywords const and goto are reserved, even though they are not currently used. This may allow a Java compiler to produce better error messages if these C++ keywords incorrectly appear in programs.
 
@@ -355,6 +356,8 @@ In other contexts, attempting to use the yield as an identifier will cause an er
 For record, when recognized as a terminal in a RecordDeclaration (§8.10).
 
 For non-sealed, permits, and sealed, when recognized as a terminal in a NormalClassDeclaration (§8.1) or a NormalInterfaceDeclaration (§9.1).
+
+For when, when recognized as a terminal in a Guard (§14.11.1).
 
 The sequence is not immediately preceded or immediately followed by an input character that matches JavaLetterOrDigit.
 

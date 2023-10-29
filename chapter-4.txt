@@ -735,7 +735,7 @@ Two type arguments are provably distinct if one of the following is true:
 
 Neither argument is a type variable or wildcard, and the two arguments are not the same type.
 
-One type argument is a type variable or wildcard, with an upper bound (from capture conversion (§5.1.10), if necessary) of S; and the other type argument T is not a type variable or wildcard; and neither |S| <: |T| nor |T| <: |S| (§4.8, §4.10).
+One type argument is a type variable or wildcard, with a bound (if a type variable) or an upper bound (if a wildcard, using capture conversion (§5.1.10), if necessary) of S; and the other type argument T is not a type variable or wildcard; and neither |S| <: |T| nor |T| <: |S| (§4.8, §4.10).
 
 Each type argument is a type variable or wildcard, with upper bounds (from capture conversion, if necessary) of S and T; and neither |S| <: |T| nor |T| <: |S|.
 
@@ -1601,7 +1601,7 @@ An exception parameter is created each time an exception is caught by a catch cl
 
 The new variable is initialized with the actual object associated with the exception (§11.3, §14.18). The exception parameter effectively ceases to exist when execution of the block associated with the catch clause is complete.
 
-Local variables (§14.4) are declared by statements (§14.4.2, §14.14.1, §14.14.2, §14.20.3) and by patterns (§14.30.1). A local variable declared by a pattern is called a pattern variable.
+Local variables (§14.4) are declared by statements (§14.4.2, §14.14.1, §14.14.2, §14.20.3) and by patterns (§14.30). A local variable declared by a pattern is called a pattern variable.
 
 A local variable declared by a statement is created when the flow of control enters the nearest enclosing block (§14.2), for statement, or try-with-resources statement.
 
@@ -1767,7 +1767,7 @@ The correspondence between compile-time types and run-time types is incomplete f
 
 At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
 
-See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 20 Edition for more details.
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 21 Edition for more details.
 
 Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile time. Specifically, all compile-time parameterizations of a given generic type (§8.1.2, §9.1.2) share a single run-time representation.
 

@@ -43,7 +43,7 @@ Every local variable declared by a statement (§14.4.2, §14.14.1, §14.14.2, §
 
 An access to its value consists of the simple name of the variable (or, for a field, the simple name of the field qualified by this) occurring anywhere in an expression except as the left-hand operand of the simple assignment operator = (§15.26.1).
 
-For every access of a local variable or blank final field x, x must be definitely assigned before the access, or a compile-time error occurs.
+For every access of a local variable declared by a statement x, or blank final field x, x must be definitely assigned before the access, or a compile-time error occurs.
 
 Similarly, every blank final variable must be assigned at most once; it must be definitely unassigned when an assignment to it occurs.
 
@@ -51,9 +51,11 @@ Such an assignment is defined to occur if and only if either the simple name of 
 
 For every assignment to a blank final variable, the variable must be definitely unassigned before the assignment, or a compile-time error occurs.
 
+Note that local variables declared by a pattern (§14.30) are not subject to the rules of definite assignment. Every local variable declared by a pattern is initialized by the process of pattern matching and so always has a value when accessed.
+
 The remainder of this chapter is devoted to a precise explanation of the words "definitely assigned before" and "definitely unassigned before".
 
-The idea behind definite assignment is that an assignment to the local variable or blank final field must occur on every possible execution path to the access. Similarly, the idea behind definite unassignment is that no other assignment to the blank final variable is permitted to occur on any possible execution path to an assignment.
+The idea behind definite assignment is that an assignment to the local variable declared by a statement or blank final field must occur on every possible execution path to the access. Similarly, the idea behind definite unassignment is that no other assignment to the blank final variable is permitted to occur on any possible execution path to an assignment.
 
 The analysis takes into account the structure of statements and expressions; it also provides a special treatment of the expression operators &&, ||, !, and ? :, and of boolean-valued constant expressions.
 
@@ -282,7 +284,7 @@ V is definitely assigned after an empty statement iff it is definitely assigned 
 
 V is definitely unassigned after an empty statement iff it is definitely unassigned before the empty statement.
 
-Throughout the rest of this chapter, we will, unless explicitly stated otherwise, write V to represent a local variable or blank final field which is in scope (§6.3). Likewise, we will use a, b, c, and e to represent expressions, and S and T to represent statements. We will use the phrase "a is V" to mean that a is either the simple name of the variable V, or V's simple name qualified by this (ignoring parentheses). We will use the phrase "a is not V" to mean the negation of "a is V".
+Throughout the rest of this chapter, we will, unless explicitly stated otherwise, write V to represent a local variable declared by a statement or blank final field which is in scope (§6.3). Likewise, we will use a, b, c, and e to represent expressions, and S and T to represent statements. We will use the phrase "a is V" to mean that a is either the simple name of the variable V, or V's simple name qualified by this (ignoring parentheses). We will use the phrase "a is not V" to mean the negation of "a is V".
 
 The definite unassignment analysis of loop statements raises a special problem. Consider the statement while (e) S. In order to determine whether V is definitely unassigned within some subexpression of e, we need to determine whether V is definitely unassigned before e. One might argue, by analogy with the rule for definite assignment (§16.2.10), that V is definitely unassigned before e iff it is definitely unassigned before the while statement. However, such a rule is inadequate for our purposes. If e evaluates to true, the statement S will be executed. Later, if V is assigned by S, then in the following iteration(s) V will have already been assigned when e is evaluated. Under the rule suggested above, it would be possible to assign V multiple times, which is exactly what we have sought to avoid by introducing these rules.
 
@@ -449,6 +451,10 @@ If the switch labeled statement group is not the first in the switch block, V is
 
 V is [un]assigned before a block statement that is not the first of a switch labeled statement group in the switch block iff V is [un]assigned after the preceding block statement.
 
+The following rule applies to all switch expressions:
+
+V is [un]assigned before any guard associated with the switch block of a switch expression iff V is [un]assigned after the selector expression.
+
 16.1.7. Other Expressions of Type boolean
 
 Suppose that e is an expression of type boolean and is not a boolean constant expression, logical complement expression !a, conditional-and expression a && b, conditional-or expression a || b, or conditional expression a ? b : c.
@@ -530,7 +536,7 @@ V is [un]assigned after an empty statement (§14.6) iff it is [un]assigned befor
 
 A blank final member field V is definitely assigned (and moreover is not definitely unassigned) before the block (§14.2) that is the body of any method in the scope of V and before the declaration of any class declared within the scope of V.
 
-A local variable V is definitely unassigned (and moreover is not definitely assigned) before the block that is the body of the constructor, method, instance initializer or static initializer that declares V.
+A local variable V declared by a statement S is definitely unassigned (and moreover is not definitely assigned) before the block that is the body of the constructor, method, instance initializer or static initializer which contains S.
 
 Let C be a class declared within the scope of V. Then V is definitely assigned before the block that is the body of any constructor, method, instance initializer, or static initializer declared in C iff V is definitely assigned before the declaration of C.
 
@@ -634,9 +640,11 @@ For each switch rule (§14.11.1) in the switch block, V is [un]assigned after th
 
 If there is a switch labeled statement group in the switch block, then V is [un]assigned after the last block statement of the last switch labeled statement group.
 
-If there is no default label in the switch block, or if the switch block ends with a switch label followed by the } separator, then V is [un]assigned after the selector expression.
+If the switch statement is not exhaustive (§14.11.1.1), or if the switch block ends with a switch label followed by the } separator, then V is [un]assigned after the selector expression.
 
 V is [un]assigned before the selector expression of a switch statement iff V is [un]assigned before the switch statement.
+
+V is [un]assigned before any guard associated with the switch block of a switch statement iff V is [un]assigned after the selector expression.
 
 V is [un]assigned before the switch rule expression, switch rule block, or switch rule throw statement introduced by a switch rule in the switch block iff V is [un]assigned after the selector expression of the switch statement.
 

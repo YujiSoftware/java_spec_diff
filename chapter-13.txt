@@ -78,7 +78,7 @@ This chapter first specifies some properties that any binary format for the Java
 
 13.1. The Form of a Binary
 
-Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 20 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
+Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 21 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
 
 A class file corresponding to a class or interface declaration must have certain properties. A number of these properties are specifically chosen to support source code transformations that preserve binary compatibility. The required properties are:
 
@@ -290,6 +290,10 @@ If a class that was freely extensible (§8.1.1.2) is changed to be declared seal
 Changing a class that was declared final to be declared sealed does not break compatibility with pre-existing binaries.
 
 Adding a class to the set of permitted direct subclasses of a sealed class will not break compatibility with pre-existing binaries.
+
+Note that evolving a sealed class by adding a permitted direct subclass is considered a binary compatible change because pre-existing binaries that previously linked without error (e.g., a class file that contains an exhaustive switch (§14.11.1)) will continue to link without error. A class file that contains an exhaustive switch will not fail to link if the sealed class that it switches over is expanded by the hierarchy's owner to have a new permitted direct subclass. The JVM is not required to perform exhaustiveness checks when linking a class file that contains an exhaustive switch.
+
+The execution of an exhaustive switch can fail with an error (a MatchException is thrown) if it encounters an instance of a permitted direct subclass that was not known at compile time (§14.11.3, §15.28.2). Strictly speaking, the error is not flagging a binary incompatible change of the sealed class, but more accurately a migration incompatible change of the sealed class.
 
 If a class is removed from the set of permitted direct subclasses of a sealed class, then an IncompatibleClassChangeError is thrown if the pre-existing binary of the removed class is loaded.
 
@@ -893,6 +897,8 @@ Adding, deleting, or changing a static initializer (§8.7) of a class does not i
 
 Adding or reordering enum constants in an enum class will not break compatibility with pre-existing binaries.
 
+As with sealed classes (§13.4.2.1), although adding an enum constant to an enum class is considered a binary compatible change, it may cause the execution of an exhaustive switch (§14.11.1) to fail if the switch encounters the new enum constant that was not known at compile time (§14.11.3, §15.28.2).
+
 Deleting an enum constant from an enum class will delete the public field that corresponds to the enum constant (§8.9.3). The consequences are specified in §13.4.8. Such a change is not recommended for widely distributed enum classes.
 
 In all other respects, the binary compatibility rules for enum classes are identical to those for normal classes.
@@ -920,6 +926,8 @@ If an interface that is declared public is changed to not be declared public, th
 If an interface that was freely extensible (§9.1.1.4) is changed to be declared sealed, then an IncompatibleClassChangeError is thrown if a binary of a pre-existing subclass or subinterface of this interface is loaded and is not a permitted direct subclass or subinterface of this interface (§9.1.4); such a change is not recommended for widely distributed classes.
 
 Adding a class or interface to the set of permitted direct subclasses or subinterfaces, respectively, of a sealed interface will not break compatibility with pre-existing binaries.
+
+As with sealed classes (§13.4.2.1), whilst adding a permitted direct subclass or subinterface of a sealed interface is considered a binary compatible change, it may cause the execution of an exhaustive switch (§14.11.1) to fail with an error (a MatchException may be thrown) if the switch encounters an instance of the new permitted direct subclass or subinterface that was not known at compile time (§14.11.3, §15.28.2).
 
 If a class or interface is removed from the set of permitted direct subclasses or subinterfaces of a sealed interface, then an IncompatibleClassChangeError is thrown if the pre-existing binary of the removed class or interface is loaded.
 

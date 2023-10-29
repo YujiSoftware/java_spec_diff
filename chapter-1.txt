@@ -16,7 +16,7 @@ The Java programming language is strongly and statically typed. This specificati
 
 The Java programming language is a relatively high-level language, in that details of the machine representation are not available through the language. It includes automatic storage management, typically using a garbage collector, to avoid the safety problems of explicit deallocation (as in C's free or C++'s delete). High-performance garbage-collected implementations can have bounded pauses to support systems programming and real-time applications. The language does not include any unsafe constructs, such as array accesses without index checking, since such unsafe constructs would cause a program to behave in an unspecified way.
 
-The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 20 Edition.
+The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 21 Edition.
 
 1.1. Organization of the Specification
 
@@ -111,7 +111,7 @@ Hello, world.
 
 Throughout this specification, we refer to classes and interfaces drawn from the Java SE Platform API. Whenever we refer to a class or interface (other than those declared in an example) using a single identifier N, the intended reference is to the class or interface named N in the package java.lang. We use the canonical name (§6.7) for classes or interfaces from packages other than java.lang.
 
-A cross-reference within this specification is shown as (§x.y). Occasionally, we refer to concepts in the The Java Virtual Machine Specification, Java SE 20 Edition via cross-references of the form (JVMS §x.y).
+A cross-reference within this specification is shown as (§x.y). Occasionally, we refer to concepts in the The Java Virtual Machine Specification, Java SE 21 Edition via cross-references of the form (JVMS §x.y).
 
 Non-normative text, designed to clarify the normative text of this specification, is given in smaller, indented text.
 
@@ -143,7 +143,7 @@ The preview features defined by a given release of the Java SE Platform are enum
 
 Preview language features are specified in standalone documents that indicate changes ("diffs") to The Java® Language Specification for that release. The specifications of preview language features are incorporated into The Java® Language Specification by reference, and made a part thereof, if and only if preview features are enabled at compile time.
 
-Java SE 20 defines two preview language features: Pattern Matching for switch and Record Patterns. The standalone documents which specify these preview features are available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
+Java SE 21 defines three preview language features: String Templates, Unnamed Patterns and Variables and Unnamed Classes and Instance main Methods. The standalone documents which specify these preview features are available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
 
 Preview APIs are specified within the Java SE API Specification for that release.
 
@@ -157,7 +157,7 @@ The reference appears in a declaration that is annotated to suppress preview war
 
 The reference appears in an import declaration (§7.5).
 
-When preview features are enabled, Java compilers are strongly encouraged to give a non-suppressible warning for every source code reference to a preview language feature. Details of this warning are beyond the scope of The Java® Language Specification, but the intent should be to alert programmers to the possibility of code being affected by future changes to preview language features.
+When preview features are enabled, Java compilers are strongly encouraged to give a non-suppressible warning for every source code reference to a preview language feature. Details of this warning are beyond the scope of this specification, but the intent should be to alert programmers to the possibility of code being affected by future changes to preview language features.
 
 Some preview APIs are described as reflective by the Java SE Platform Specification, principally in the java.lang.reflect, java.lang.invoke, and javax.lang.model packages. The rule for use of reflective preview APIs is as follows:
 
