@@ -16,7 +16,7 @@ The Java programming language is strongly and statically typed. This specificati
 
 The Java programming language is a relatively high-level language, in that details of the machine representation are not available through the language. It includes automatic storage management, typically using a garbage collector, to avoid the safety problems of explicit deallocation (as in C's free or C++'s delete). High-performance garbage-collected implementations can have bounded pauses to support systems programming and real-time applications. The language does not include any unsafe constructs, such as array accesses without index checking, since such unsafe constructs would cause a program to behave in an unspecified way.
 
-The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 18 Edition.
+The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 19 Edition.
 
 1.1. Organization of the Specification
 
@@ -141,7 +141,7 @@ The preview features defined by a given release of the Java SE Platform are enum
 
 Preview language features are specified in standalone documents that indicate changes ("diffs") to The Java® Language Specification for that release. The specifications of preview language features are incorporated into The Java® Language Specification by reference, and made a part thereof, if and only if preview features are enabled at compile time.
 
-Java SE 18 defines one preview language feature: Pattern Matching for switch. The standalone document which specifies this preview feature is available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
+Java SE 19 defines two preview language features: Pattern Matching for switch and Record Patterns. The standalone documents which specify these preview features are available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
 
 Preview APIs are specified within the Java SE API Specification for that release.
 

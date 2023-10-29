@@ -246,7 +246,7 @@ The lexical grammar implies that comments do not occur within character literals
 An identifier is an unlimited-length sequence of Java letters and Java digits, the first of which must be a Java letter.
 
 Identifier:
-IdentifierChars but not a Keyword or BooleanLiteral or NullLiteral
+IdentifierChars but not a ReservedKeyword or BooleanLiteral or NullLiteral
 IdentifierChars:
 JavaLetter {JavaLetterOrDigit}
 JavaLetter:

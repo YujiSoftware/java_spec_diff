@@ -422,7 +422,7 @@ The scope of a member imported by a single-static-import declaration (§7.5.3) o
 
 The scope of a top level class or interface (§7.6) is all class and interface declarations in the package in which the top level class or interface is declared.
 
-The scope of a declaration of a member m declared in or inherited by a class or interface C (§8.2, §9.2) is the entire body of C, including any nested class or interface declarations.
+The scope of a declaration of a member m declared in or inherited by a class or interface C (§8.2, §9.2) is the entire body of C, including any nested class or interface declarations. If C is a record class, then the scope of m additionally includes the header of the record declaration of C.
 
 The scope of a formal parameter of a method (§8.4.1), constructor (§8.8.1), or lambda expression (§15.27) is the entire body of the method, constructor, or lambda expression.
 
@@ -1792,7 +1792,13 @@ Otherwise, if the member or constructor is declared with package access, then ac
 
 A class member or constructor declared without an access modifier implicitly has package access.
 
-Otherwise, the member or constructor is declared private. Access is permitted only when the access occurs from within the body of the top level class or interface that encloses the declaration of the member or constructor.
+Otherwise, the member or constructor is declared private. Access is permitted only when one of the following is true:
+
+Access occurs from within the body of the top level class or interface that encloses the declaration of the member or constructor.
+
+Access occurs in the permits clause of the top level class or interface that encloses the declaration of the member.
+
+Access occurs in the record component list of the top level record class that encloses the declaration of the member.
 
 An array type is accessible if and only if its element type is accessible.
 

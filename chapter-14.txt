@@ -1124,7 +1124,6 @@ for (I #i = Expression.iterator(); #i.hasNext(); ) {
     {VariableModifier} T Identifier = (TargetType) #i.next();
     Statement
 }
-    
 
 where:
 
@@ -1146,7 +1145,6 @@ for (int #i = 0; #i < #a.length; #i++) {
     {VariableModifier} T Identifier = #a[#i];
     Statement
 }
-    
 
 where:
 
@@ -1945,7 +1943,6 @@ class Test {
         };
     }
 }
-
 
 
 

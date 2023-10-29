@@ -2729,6 +2729,23 @@ One of the inherited methods must be return-type-substitutable for every other i
 
 There might be several paths by which the same method declaration is inherited from an interface. This fact causes no difficulty and never, of itself, results in a compile-time error.
 
+Example 8.4.8.4-1. Inheritance of override-equivalent methods
+
+The first compile-time error above, regarding a class C that inherits a concrete method, can happen if a superclass of C is generic, and the superclass has two methods that were distinct in the generic declaration but have the same signature in the parameterization (§4.5) used by C. For example:
+
+
+class A<T> {
+    void m(String s) {} // 1
+    void m(T t) {} // 2
+}
+class C extends A<String> {}
+
+
+
+C inherits two methods from its direct superclass type A<String>: the method m(String) marked at 1, and (due to C's parameterization of A) the method m(String) marked at 2. These methods have the same signature, so are override-equivalent with each other.
+
+
+
 8.4.9. Overloading
 
 If two methods of a class (whether both declared in the same class, or both inherited by a class, or one declared and one inherited) have the same name but signatures that are not override-equivalent, then the method name is said to be overloaded.
@@ -3739,15 +3756,15 @@ Annotation
 
 A record component may be a variable arity record component, indicated by an ellipsis following the type. At most one variable arity record component is permitted for a record class. It is a compile-time error if a variable arity record component appears anywhere in the list of record components except the last position.
 
-The rules concerning annotation modifiers for a record component declaration are specified in §9.7.4 and §9.7.5.
+The rules concerning annotation modifiers for a record component are specified in §9.7.4 and §9.7.5.
 
-Annotations on a record component declaration are available via reflection if their annotation interfaces are applicable in the record component context (§9.6.4.1). Independently, annotations on a record component declaration are propagated to the declarations of members and constructors of the record class if their annotation interfaces are applicable in other contexts (§8.10.3, §8.10.4).
+Annotations on a record component are available via reflection if their annotation interfaces are applicable in the record component context (§9.6.4.1). Independently, annotations on a record component are propagated to the declarations of members and constructors of the record class if their annotation interfaces are applicable in other contexts (§8.10.3, §8.10.4).
 
-It is a compile-time error for a record declaration to declare a record component with the name clone, finalize, getClass, hashCode, notify, notifyAll, toString, or wait.
+It is a compile-time error for a record declaration to have a record component with the name clone, finalize, getClass, hashCode, notify, notifyAll, toString, or wait.
 
 These are the names of the no-args public and protected methods in Object. Disallowing them as the names of record components avoids confusion in a number of ways. First, every record class provides implementations of hashCode and toString that return representations of a record object as a whole; they cannot serve as accessor methods (§8.10.3) for record components called hashCode or toString, and there would be no way to access such record components from outside the record class. Similarly, some record classes may provide implementations of clone and (regrettably) finalize, so a record component called clone or finalize could not be accessed via an accessor method. Finally, the getClass, notify, notifyAll, and wait methods in Object are final, so record components with the same names could not have accessor methods. (The accessor methods would have the same signatures as the final methods, and would thus attempt, unsuccessfully, to override them.)
 
-It is a compile-time error for a record declaration to declare two record components with the same name.
+It is a compile-time error for a record declaration to have two record components with the same name.
 
 The declared type of a record component depends on whether it is a variable arity record component:
 
@@ -3830,6 +3847,7 @@ Annotations that are propagated to an implicitly declared accessor method must r
 record BadRecord(@SafeVarargs int x) {}  // Error
 
 
+The scope and shadowing of the component field and the accessor method are specified in §6.3 and §6.4.1. (The record component to which they correspond is not a declaration, so has no scope of its own.)
 
 Record classes may explicitly declare instance methods other than accessor methods, but may not explicitly declare instance variables (§8.10.2). Explicit declarations of class methods and class variables are permitted.
 
@@ -3853,7 +3871,6 @@ public class Test {
         p.logAction();
     }
 }
-
 
 
 A record class provides implementations of all the abstract methods declared in class Record. For each of the following methods, if a record class R does not explicitly declare a method with the same modifiers, name, and signature (§8.4.2), then the method is implicitly declared as follows:
@@ -3906,7 +3923,6 @@ record SmallPoint(int x, int y) {
         System.out.println(p1.equals(p3));  // prints false
     }
 }
-
 
 8.10.4. Record Constructor Declarations
 
@@ -3984,7 +4000,6 @@ record Person(@Foo String name) {
     }
 }
 
-
 8.10.4.2. Compact Canonical Constructors
 
 A compact constructor declaration is a succinct form of constructor declaration, only available in a record declaration. It declares the canonical constructor of a record class without requiring the record components of the class to be manually repeated as formal parameters of the constructor.
@@ -4040,10 +4055,9 @@ record Rational(int num, int denom) {
 }
 
 
-
 The compact constructor Rational {...} behaves the same as this normal constructor:
 
-Rational(int num, int demon) {
+Rational(int num, int denom) {
     int gcd = gcd(num, denom);
     num    /= gcd;
     denom  /= gcd;

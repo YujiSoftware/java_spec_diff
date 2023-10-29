@@ -681,7 +681,7 @@ The following production from §4.3 is shown here for convenience:
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 18.
+By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 19.
 
 By convention, the only modifiers that should be present on the declaration of an annotation interface element are annotations.
 
@@ -812,7 +812,6 @@ The following annotation interface declaration contains an element whose type is
 }
 
 
-
 The grammar for annotation interface declarations permits other member declarations besides method declarations. For example, one might choose to declare a nested enum class for use by an element of the annotation interface:
 
 @interface Quality {
@@ -840,6 +839,8 @@ ElementValueArrayInitializer:
 ElementValueList:
 ElementValue {, ElementValue}
 
+Note that an annotation interface element which is specified to have a default value is not a default method (§9.4). The declaration of an annotation interface cannot declare default methods (§9.6.1).
+
 It is a compile-time error if the type of the element is not commensurate (§9.7) with the default value specified.
 
 Default values are not compiled into annotations, but rather applied dynamically at the time annotations are read. Thus, changing a default value affects annotations even in classes that were compiled before the change was made (presuming these annotations lack an explicit value for the defaulted element).
@@ -856,7 +857,6 @@ Here is a refinement of the RequestForEnhancement annotation interface from §9.
     String engineer()  default "[unassigned]";
     String date()      default "[unimplemented]";
 }
-
 
 
 
@@ -993,7 +993,6 @@ import java.lang.annotation.Repeatable;
 // FooContainerContainer: Containing annotation interface
 // of FooContainer
 @interface FooContainerContainer { FooContainer[] value(); }
-
 
 
 Thus, an annotation whose interface is a containing annotation interface may itself be repeated:
@@ -1144,7 +1143,6 @@ record Roo(int x) {
         return Math.abs(x);
     }
 }
-
 
 
 The use of @Override on the accessor method int x() ensures that if the record component x is modified or removed, then the corresponding accessor method must be modified or removed too.

@@ -139,7 +139,7 @@ The right-hand side of a production may specify that certain expansions are not 
 For example:
 
 Identifier:
-IdentifierChars but not a Keyword or BooleanLiteral or NullLiteral
+IdentifierChars but not a ReservedKeyword or BooleanLiteral or NullLiteral
 
 Finally, a few nonterminals are defined by a narrative phrase in roman type where it would be impractical to list all the alternatives.
 
