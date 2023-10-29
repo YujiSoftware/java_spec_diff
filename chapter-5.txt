@@ -141,7 +141,7 @@ Math.sin(144.0)==-0.49102159389846934
 
 5.1. Kinds of Conversion
 
-Specific type conversions in the Java programming language are divided into 13 categories.
+Specific type conversions in the Java programming language are divided into 13 kinds.
 
 5.1.1. Identity Conversion
 
@@ -177,7 +177,7 @@ from float to double in a strictfp expression (§15.4)
 
 A widening primitive conversion from float to double that is not strictfp may lose information about the overall magnitude of the converted value.
 
-A widening primitive conversion from int to float, or from long to float, or from long to double, may result in loss of precision - that is, the result may lose some of the least significant bits of the value. In this case, the resulting floating-point value will be a correctly rounded version of the integer value, using IEEE 754 round-to-nearest mode (§4.2.4).
+A widening primitive conversion from int to float, or from long to float, or from long to double, may result in loss of precision, that is, the result may lose some of the least significant bits of the value. In this case, the resulting floating-point value will be a correctly rounded version of the integer value, using the round to nearest rounding policy (§4.2.4).
 
 A widening conversion of a signed integer value to an integral type T simply sign-extends the two's-complement representation of the integer value to fill the wider format.
 
@@ -223,7 +223,7 @@ double to byte, short, char, int, long, or float
 
 A narrowing primitive conversion may lose information about the overall magnitude of a numeric value and may also lose precision and range.
 
-A narrowing primitive conversion from double to float is governed by the IEEE 754 rounding rules (§4.2.4). This conversion can lose precision, but also lose range, resulting in a float zero from a nonzero double and a float infinity from a finite double. A double NaN is converted to a float NaN and a double infinity is converted to the same-signed float infinity.
+A narrowing primitive conversion from double to float uses the round to nearest rounding policy (§4.2.4). This conversion can lose precision, but also lose range, resulting in a float zero from a nonzero double and a float infinity from a finite double. A double NaN is converted to a float NaN and a double infinity is converted to the same-signed float infinity.
 
 A narrowing conversion of a signed integer to an integral type T simply discards all but the n lowest order bits, where n is the number of bits used to represent type T. In addition to a possible loss of information about the magnitude of the numeric value, this may cause the sign of the resulting value to differ from the sign of the input value.
 
@@ -235,7 +235,7 @@ In the first step, the floating-point number is converted either to a long, if T
 
 If the floating-point number is NaN (§4.2.3), the result of the first step of the conversion is an int or long 0.
 
-Otherwise, if the floating-point number is not an infinity, the floating-point value is rounded to an integer value V, rounding toward zero using IEEE 754 round-toward-zero mode (§4.2.3). Then there are two cases:
+Otherwise, if the floating-point number is not an infinity, the floating-point value is rounded to an integer value V using the round toward zero rounding policy (§4.2.4). Then there are two cases:
 
 If T is long, and this integer value can be represented as a long, then the result of the first step is the long value V.
 
@@ -690,9 +690,9 @@ Value set conversion is the process of mapping a floating-point value from one v
 
 Within an expression that is not FP-strict (§15.4), value set conversion provides choices to an implementation of the Java programming language:
 
-If the value is an element of the float-extended-exponent value set, then the implementation may, at its option, map the value to the nearest element of the float value set. This conversion may result in overflow (in which case the value is replaced by an infinity of the same sign) or underflow (in which case the value may lose precision because it is replaced by a denormalized number or zero of the same sign).
+If the value is an element of the float-extended-exponent value set, then the implementation may, at its option, map the value to the nearest element of the float value set. This conversion may result in overflow (in which case the value is replaced by an infinity of the same sign) or underflow (in which case the value may lose precision because it is replaced by a subnormal number or zero of the same sign).
 
-If the value is an element of the double-extended-exponent value set, then the implementation may, at its option, map the value to the nearest element of the double value set. This conversion may result in overflow (in which case the value is replaced by an infinity of the same sign) or underflow (in which case the value may lose precision because it is replaced by a denormalized number or zero of the same sign).
+If the value is an element of the double-extended-exponent value set, then the implementation may, at its option, map the value to the nearest element of the double value set. This conversion may result in overflow (in which case the value is replaced by an infinity of the same sign) or underflow (in which case the value may lose precision because it is replaced by a subnormal number or zero of the same sign).
 
 Within an FP-strict expression (§15.4), value set conversion does not provide any choices; every implementation must behave in the same way:
 

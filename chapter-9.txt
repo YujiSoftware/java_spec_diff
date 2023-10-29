@@ -576,7 +576,7 @@ By virtue of the AnnotationTypeElementDeclaration production, a method declarati
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 14.
+By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 15.
 
 By convention, the only AnnotationTypeElementModifiers that should be present on an annotation type element are annotations.
 
@@ -1407,19 +1407,17 @@ If the simple name to which the annotation is closest is followed by "." and ano
 
 The intuition behind the second clause is that if Outer.this is legal in a nested class enclosed by Outer, then Outer may be annotated because it represents the type of some object at run time. On the other hand, if Outer.this is not legal - because the class where it appears has no enclosing instance of Outer at run time - then Outer may not be annotated because it is logically just a name, akin to components of a package name in a fully qualified type name.
 
-For example, in the following program, it is not possible to write A.this in the body of B, as B has no lexically enclosing instances (8.5.1). Therefore, it is not possible to apply @Foo to A in the type A.B, because A is logically just a name, not a type.
+For example, in the following program, it is not possible to write A.this in the body of B, as B has no lexically enclosing instances (§8.5.1). Therefore, it is not possible to apply @Foo to A in the type A.B, because A is logically just a name, not a type.
 
 
 @Target(ElementType.TYPE_USE)
 @interface Foo {}
 
-class Test {
-  class A {
+class A {
     static class B {}
-  }
-
-  @Foo A.B x;  // Illegal 
 }
+
+@Foo A.B x;  // Illegal 
 
 
 
@@ -1430,34 +1428,14 @@ On the other hand, in the following program, it is possible to write C.this in t
 @interface Foo {}
 
 class Test {
-  static class C {
-    class D {}
-  }
-
-  @Foo C.D x;  // Legal 
-}
-
-
-
-Finally, note that the second clause looks only one level deeper in a qualified type. This is because a static class may only be nested in a top level class or another static nested class. It is not possible to write a nest like:
-
-
-@Target(ElementType.TYPE_USE)
-@interface Foo {}
-
-class Test {
-  class E {
-    class F {
-      static class G {}
+    static class C {
+        class D {}
     }
-  }
 
-  @Foo E.F.G x;
+    @Foo C.D x;  // Legal 
 }
 
 
-
-Assume for a moment that the nest was legal. In the type of field x, E and F would logically be names qualifying G, as E.F.this would be illegal in the body of G. Then, @Foo should not be legal next to E. Technically, however, @Foo would be admissible next to E because the next deepest term F denotes an inner class; but this is moot as the class nest is illegal in the first place.
 
 It is a compile-time error if an annotation of type T applies to the outermost level of a type in a type context, and T is not applicable in type contexts or the declaration context (if any) which occupies the same syntactic location.
 

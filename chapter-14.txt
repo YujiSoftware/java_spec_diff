@@ -634,7 +634,9 @@ switch (day) {
 }
 
 
-null cannot be used as a case constant because it is not a constant expression. Even if case null was allowed, it would be undesirable because the code in that case can never be executed. Namely, if the selector expression is of a reference type (that is, String or a boxed primitive type or an enum type), then an exception will occur if the selector expression evaluates to null at run time. In the judgment of the designers of the Java programming language, propagating the exception is a better outcome than either having no case label match, or having the default label match.
+null cannot be used as a case constant because it is not a constant expression. Even if case null was allowed, it would be undesirable because the code in that case would never be executed. This is due to the fact that, given a selector expression of a reference type (that is, String or a boxed primitive type or an enum type), an exception will occur if the selector expression evaluates to null at run time. In the judgment of the designers of the Java programming language, propagating the exception is a better outcome than either having no case label match, or having the default label match.
+
+A Java compiler is encouraged (but not required) to provide a warning if a switch statement with an enum-typed selector expression lacks a default label and lacks case labels for one or more of the enum's constants. Such a switch statement will silently do nothing if the expression evaluates to one of the missing constants.
 
 In C and C++ the body of a switch statement can be a statement and statements with case labels do not have to be immediately contained by that statement. Consider the simple loop:
 
@@ -1938,9 +1940,9 @@ The last statement in the switch block can complete normally.
 
 There is at least one switch label after the last switch block statement group.
 
-The switch block does not contain a default label.
-
 There is a reachable break statement that exits the switch statement.
+
+The switch block does not contain a default label.
 
 A switch statement whose switch block consists of switch rules can complete normally iff at least one of the following is true:
 
@@ -1949,6 +1951,8 @@ One of the switch rules introduces a switch rule expression (which is necessaril
 One of the switch rules introduces a switch rule block that can complete normally.
 
 One of the switch rules introduces a switch rule block that contains a reachable break statement which exits the switch statement.
+
+The switch block does not contain a default label.
 
 A switch block is reachable iff its switch statement is reachable.
 

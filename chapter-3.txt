@@ -17,8 +17,9 @@ Table of Contents
 3.10.3. Boolean Literals
 3.10.4. Character Literals
 3.10.5. String Literals
-3.10.6. Escape Sequences for Character and String Literals
-3.10.7. The Null Literal
+3.10.6. Text Blocks
+3.10.7. Escape Sequences
+3.10.8. The Null Literal
 3.11. Separators
 3.12. Operators
 
@@ -30,13 +31,13 @@ The Unicode characters resulting from the lexical translations are reduced to a 
 
 3.1. Unicode
 
-Programs are written using the Unicode character set. Information about this character set and its associated character encodings may be found at https://www.unicode.org/.
+Programs are written using the Unicode character set (§1.7). Information about this character set and its associated character encodings may be found at https://www.unicode.org/.
 
 The Java SE Platform tracks the Unicode Standard as it evolves. The precise version of Unicode used by a given release is specified in the documentation of the class Character.
 
-Versions of the Java programming language prior to JDK 1.1 used Unicode 1.1.5. Upgrades to newer versions of the Unicode Standard occurred in JDK 1.1 (to Unicode 2.0), JDK 1.1.7 (to Unicode 2.1), Java SE 1.4 (to Unicode 3.0), Java SE 5.0 (to Unicode 4.0), Java SE 7 (to Unicode 6.0), Java SE 8 (to Unicode 6.2), Java SE 9 (to Unicode 8.0), Java SE 11 (to Unicode 10.0), Java SE 12 (to Unicode 11.0), and Java SE 13 (to Unicode 12.1).
+Versions of the Java programming language prior to JDK 1.1 used Unicode 1.1.5. Upgrades to newer versions of the Unicode Standard occurred in JDK 1.1 (to Unicode 2.0), JDK 1.1.7 (to Unicode 2.1), Java SE 1.4 (to Unicode 3.0), Java SE 5.0 (to Unicode 4.0), Java SE 7 (to Unicode 6.0), Java SE 8 (to Unicode 6.2), Java SE 9 (to Unicode 8.0), Java SE 11 (to Unicode 10.0), Java SE 12 (to Unicode 11.0), Java SE 13 (to Unicode 12.1), and Java SE 15 (to Unicode 13.0).
 
-The Unicode standard was originally designed as a fixed-width 16-bit character encoding. It has since been changed to allow for characters whose representation requires more than 16 bits. The range of legal code points is now U+0000 to U+10FFFF, using the hexadecimal U+n notation. Characters whose code points are greater than U+FFFF are called supplementary characters. To represent the complete range of characters using only 16-bit units, the Unicode standard defines an encoding called UTF-16. In this encoding, supplementary characters are represented as pairs of 16-bit code units, the first from the high-surrogates range, (U+D800 to U+DBFF), the second from the low-surrogates range (U+DC00 to U+DFFF). For characters in the range U+0000 to U+FFFF, the values of code points and UTF-16 code units are the same.
+The Unicode standard was originally designed as a fixed-width 16-bit character encoding. It has since been changed to allow for characters whose representation requires more than 16 bits. The range of legal code points is now U+0000 to U+10FFFF, using the hexadecimal U+n notation. Characters whose code points are greater than U+FFFF are called supplementary characters. To represent the complete range of characters using only 16-bit units, the Unicode standard defines an encoding called UTF-16. In this encoding, supplementary characters are represented as pairs of 16-bit code units, the first from the high-surrogates range (U+D800 to U+DBFF), and the second from the low-surrogates range (U+DC00 to U+DFFF). For characters in the range U+0000 to U+FFFF, the values of code points and UTF-16 code units are the same.
 
 The Java programming language represents text in sequences of 16-bit code units, using the UTF-16 encoding.
 
@@ -44,7 +45,7 @@ Some APIs of the Java SE Platform, primarily in the Character class, use 32-bit 
 
 This specification uses the terms code point and UTF-16 code unit where the representation is relevant, and the generic term character where the representation is irrelevant to the discussion.
 
-Except for comments (§3.7), identifiers, and the contents of character and string literals (§3.10.4, §3.10.5), all input elements (§3.5) in a program are formed only from ASCII characters (or Unicode escapes (§3.3) which result in ASCII characters).
+Except for comments (§3.7), identifiers (§3.8, and the contents of character literals, string literals, and text blocks (§3.10.4, §3.10.5, §3.10.6), all input elements (§3.5) in a program are formed only from ASCII characters (or Unicode escapes (§3.3) which result in ASCII characters).
 
 ASCII (ANSI X3.4) is the American Standard Code for Information Interchange. The first 128 characters of the Unicode UTF-16 encoding are the ASCII characters.
 
@@ -66,7 +67,7 @@ Without the rule for > characters, two consecutive > brackets in a type such as 
 
 3.3. Unicode Escapes
 
-A compiler for the Java programming language ("Java compiler") first recognizes Unicode escapes in its input, translating the ASCII characters \u followed by four hexadecimal digits to the UTF-16 code unit (§3.1) for the indicated hexadecimal value, and passing all other characters unchanged. Representing supplementary characters requires two consecutive Unicode escapes. This translation step results in a sequence of Unicode input characters.
+A compiler for the Java programming language ("Java compiler") first recognizes Unicode escapes in its input, translating the ASCII characters \u followed by four hexadecimal digits to the UTF-16 code unit (§3.1) for the indicated hexadecimal value, and passing all other characters unchanged. One Unicode escape can represent characters in the range U+0000 to U+FFFF; representing supplementary characters in the range U+010000 to U+10FFFF requires two consecutive Unicode escapes. This translation step results in a sequence of Unicode input characters.
 
 UnicodeInputCharacter:
 UnicodeEscape
@@ -122,7 +123,7 @@ The result is a sequence of line terminators and input characters, which are the
 
 3.5. Input Elements and Tokens
 
-The input characters and line terminators that result from escape processing (§3.3) and then input line recognition (§3.4) are reduced to a sequence of input elements.
+The input characters and line terminators that result from Unicode escape processing (§3.3) and then input line recognition (§3.4) are reduced to a sequence of input elements.
 
 Input:
 {InputElement} [Sub]
@@ -210,7 +211,7 @@ As a result, the following text is a single complete comment:
 /* this comment /* // /** ends here: */
 
 
-The lexical grammar implies that comments do not occur within character literals (§3.10.4) or string literals (§3.10.5).
+The lexical grammar implies that comments do not occur within character literals, string literals, or text blocks (§3.10.4, §3.10.5, §3.10.6).
 
 3.8. Identifiers
 
@@ -235,7 +236,7 @@ The "Java digits" include the ASCII digits 0-9 (\u0030-\u0039).
 
 Letters and digits may be drawn from the entire Unicode character set, which supports most writing scripts in use in the world today, including the large sets for Chinese, Japanese, and Korean. This allows programmers to use identifiers in their programs that are written in their native languages.
 
-An identifier cannot have the same spelling (Unicode character sequence) as a keyword (§3.9), boolean literal (§3.10.3), or the null literal (§3.10.7), or a compile-time error occurs.
+An identifier cannot have the same spelling (Unicode character sequence) as a keyword (§3.9), boolean literal (§3.10.3), or the null literal (§3.10.8), or a compile-time error occurs.
 
 Two identifiers are the same only if, after ignoring characters that are ignorable, the identifiers have the same Unicode character for each letter or digit. An ignorable character is a character for which the method Character.isIdentifierIgnorable(int) returns true. Identifiers that have the same external appearance may yet be different.
 
@@ -296,7 +297,7 @@ A variety of character sequences are sometimes assumed, incorrectly, to be keywo
 
 true and false are not keywords, but rather boolean literals (§3.10.3).
 
-null is not a keyword, but rather the null literal (§3.10.7).
+null is not a keyword, but rather the null literal (§3.10.8).
 
 var and yield are not keywords, but rather restricted identifiers (§3.8). var has special meaning as the type of a local variable declaration (§14.4, §14.14.1, §14.14.2, §14.20.3) and the type of a lambda formal parameter (§15.27.1). yield has special meaning in a yield statement (§14.21). All invocations of a method named yield must be qualified so as to be distinguished from a yield statement.
 
@@ -312,6 +313,7 @@ FloatingPointLiteral
 BooleanLiteral
 CharacterLiteral
 StringLiteral
+TextBlock
 NullLiteral
 3.10.1. Integer Literals
 
@@ -542,19 +544,39 @@ BinaryExponentIndicator:
 (one of)
 p P
 
-A floating-point literal is of type float if it is suffixed with an ASCII letter F or f; otherwise its type is double and it can optionally be suffixed with an ASCII letter D or d (§4.2.3).
+A floating-point literal is of type float if it is suffixed with an ASCII letter F or f; otherwise its type is double and it can optionally be suffixed with an ASCII letter D or d.
 
-The elements of the types float and double are those values that can be represented using the IEEE 754 32-bit single-precision and 64-bit double-precision binary floating-point formats, respectively.
+The elements of the types float and double are those values that can be represented using the IEEE 754 binary32 and IEEE 754 binary64 floating-point formats, respectively (§4.2.3).
 
 The details of proper input conversion from a Unicode string representation of a floating-point number to the internal IEEE 754 binary floating-point representation are described for the methods valueOf of class Float and class Double of the package java.lang.
 
-The largest positive finite literal of type float is 3.4028235e38f.
+The largest and smallest positive literals of type float are as follows:
 
-The smallest positive finite non-zero literal of type float is 1.40e-45f.
+The largest positive finite float value is numerically equal to (2 - 2-23) ⋅ 2127.
 
-The largest positive finite literal of type double is 1.7976931348623157e308.
+The shortest decimal literal which rounds to this value is 3.4028235e38f.
 
-The smallest positive finite non-zero literal of type double is 4.9e-324.
+A hexadecimal literal for this value is 0x1.fffffeP+127f.
+
+The smallest positive finite non-zero float value is numerically equal to 2-149.
+
+The shortest decimal literal which rounds to this value is 1.4e-45f.
+
+Two hexadecimal literals for this value are 0x0.000002P-126f and 0x1.0P-149f.
+
+The largest and smallest positive literals of type double are as follows:
+
+The largest positive finite double value is numerically equal to (2 - 2-52) ⋅ 21023.
+
+The shortest decimal literal which rounds to this value is 1.7976931348623157e308.
+
+A hexadecimal literal for this value is 0x1.f_ffff_ffff_ffffP+1023.
+
+The smallest positive finite non-zero double value is numerically equal to 2-1074.
+
+The shortest decimal literal which rounds to this value is 4.9e-324.
+
+Two hexadecimal literals for this value are 0x0.0_0000_0000_0001P-1022 and 0x1.0P-1074.
 
 It is a compile-time error if a non-zero floating-point literal is too large, so that on rounded conversion to its internal representation, it becomes an IEEE 754 infinity.
 
@@ -562,7 +584,7 @@ A program can represent infinities without producing a compile-time error by usi
 
 It is a compile-time error if a non-zero floating-point literal is too small, so that, on rounded conversion to its internal representation, it becomes a zero.
 
-A compile-time error does not occur if a non-zero floating-point literal has a small value that, on rounded conversion to its internal representation, becomes a non-zero denormalized number.
+A compile-time error does not occur if a non-zero floating-point literal has a small value that, on rounded conversion to its internal representation, becomes a non-zero subnormal number.
 
 Predefined constants representing Not-a-Number values are defined in the classes Float and Double as Float.NaN and Double.NaN.
 
@@ -587,7 +609,7 @@ A boolean literal is always of type boolean (§4.2.5).
 
 3.10.4. Character Literals
 
-A character literal is expressed as a character or an escape sequence (§3.10.6), enclosed in ASCII single quotes. (The single-quote, or apostrophe, character is \u0027.)
+A character literal is expressed as a character or an escape sequence (§3.10.7), enclosed in ASCII single quotes. (The single-quote, or apostrophe, character is \u0027.)
 
 CharacterLiteral:
 ' SingleCharacter '
@@ -595,17 +617,19 @@ CharacterLiteral:
 SingleCharacter:
 InputCharacter but not ' or \
 
-See §3.10.6 for the definition of EscapeSequence.
-
-Character literals can only represent UTF-16 code units (§3.1), i.e., they are limited to values from \u0000 to \uffff. Supplementary characters must be represented either as a surrogate pair within a char sequence, or as an integer, depending on the API they are used with.
-
 A character literal is always of type char (§4.2.1).
 
-It is a compile-time error for the character following the SingleCharacter or EscapeSequence to be other than a '.
+The content of a character literal is the SingleCharacter or the EscapeSequence which follows the opening '.
+
+It is a compile-time error for the character following the content to be other than a '.
 
 It is a compile-time error for a line terminator (§3.4) to appear after the opening ' and before the closing '.
 
-As specified in §3.4, the characters CR and LF are never an InputCharacter; each is recognized as constituting a LineTerminator.
+The characters CR and LF are never an InputCharacter; each is recognized as constituting a LineTerminator, so may not appear in a character literal, even in the escape sequence \ LineTerminator.
+
+The character represented a character literal is the content of the character literal with any escape sequence interpreted, as if by execution of String.translateEscapes on the content.
+
+Character literals can only represent UTF-16 code units (§3.1), i.e., they are limited to values from \u0000 to \uffff. Supplementary characters must be represented either as a surrogate pair within a char sequence, or as an integer, depending on the API they are used with.
 
 The following are examples of char literals:
 
@@ -627,13 +651,13 @@ The following are examples of char literals:
 
 '™'
 
-Because Unicode escapes are processed very early, it is not correct to write '\u000a' for a character literal whose value is linefeed (LF); the Unicode escape \u000a is transformed into an actual linefeed in translation step 1 (§3.3) and the linefeed becomes a LineTerminator in step 2 (§3.4), and so the character literal is not valid in step 3. Instead, one should use the escape sequence '\n' (§3.10.6). Similarly, it is not correct to write '\u000d' for a character literal whose value is carriage return (CR). Instead, use '\r'. Finally, it is not possible to write '\u0027' for a character literal containing an apostrophe (').
+Because Unicode escapes are processed very early, it is not correct to write '\u000a' for a character literal whose value is linefeed (LF); the Unicode escape \u000a is transformed into an actual linefeed in translation step 1 (§3.3) and the linefeed becomes a LineTerminator in step 2 (§3.4), so the character literal is not valid in step 3. Instead, one should use the escape sequence '\n'. Similarly, it is not correct to write '\u000d' for a character literal whose value is carriage return (CR). Instead, use '\r'. Finally, it is not possible to write '\u0027' for a character literal containing an apostrophe (').
 
 In C and C++, a character literal may contain representations of more than one character, but the value of such a character literal is implementation-defined. In the Java programming language, a character literal always represents exactly one character.
 
 3.10.5. String Literals
 
-A string literal consists of zero or more characters enclosed in double quotes. Characters may be represented by escape sequences (§3.10.6) - one escape sequence for characters in the range U+0000 to U+FFFF, two escape sequences for the UTF-16 surrogate code units of characters in the range U+010000 to U+10FFFF.
+A string literal consists of zero or more characters enclosed in double quotes. Characters such as newlines may be represented by escape sequences (§3.10.7).
 
 StringLiteral:
 " {StringCharacter} "
@@ -641,15 +665,15 @@ StringCharacter:
 InputCharacter but not " or \
 EscapeSequence
 
-See §3.10.6 for the definition of EscapeSequence.
-
 A string literal is always of type String (§4.3.3).
 
-It is a compile-time error for a line terminator to appear after the opening " and before the closing matching ".
+The content of a string literal is the sequence of characters that begins immediately after the opening " and ends immediately before the matching closing ".
 
-As specified in §3.4, the characters CR and LF are never an InputCharacter; each is recognized as constituting a LineTerminator.
+It is a compile-time error for a line terminator (§3.4) to appear after the opening " and before the matching closing ".
 
-A long string literal can always be broken up into shorter pieces and written as a (possibly parenthesized) expression using the string concatenation operator + (§15.18.1).
+The characters CR and LF are never an InputCharacter; each is recognized as constituting a LineTerminator, so may not appear in a string literal, even in the escape sequence \ LineTerminator.
+
+The string represented by a string literal is the content of the string literal with every escape sequence interpreted, as if by execution of String.translateEscapes on the content.
 
 The following are examples of string literals:
 
@@ -660,11 +684,13 @@ The following are examples of string literals:
     "two-line string"    // formed from two string literals
 
 
-Because Unicode escapes are processed very early, it is not correct to write "\u000a" for a string literal containing a single linefeed (LF); the Unicode escape \u000a is transformed into an actual linefeed in translation step 1 (§3.3) and the linefeed becomes a LineTerminator in step 2 (§3.4), and so the string literal is not valid in step 3. Instead, one should write "\n" (§3.10.6). Similarly, it is not correct to write "\u000d" for a string literal containing a single carriage return (CR). Instead, use "\r". Finally, it is not possible to write "\u0022" for a string literal containing a double quotation mark (").
+Because Unicode escapes are processed very early, it is not correct to write "\u000a" for a string literal containing a single linefeed (LF); the Unicode escape \u000a is transformed into an actual linefeed in translation step 1 (§3.3) and the linefeed becomes a LineTerminator in step 2 (§3.4), so the string literal is not valid in step 3. Instead, one should use the escape sequence "\n". Similarly, it is not correct to write "\u000d" for a string literal containing a single carriage return (CR). Instead, use "\r". Finally, it is not possible to write "\u0022" for a string literal containing a double quotation mark (").
 
-A string literal is a reference to an instance of class String (§4.3.1, §4.3.3).
+A long string literal can always be broken up into shorter pieces and written as a (possibly parenthesized) expression using the string concatenation operator + (§15.18.1).
 
-Moreover, a string literal always refers to the same instance of class String. This is because string literals - or, more generally, strings that are the values of constant expressions (§15.29) - are "interned" so as to share unique instances, using the method String.intern (§12.5).
+At run time, a string literal is a reference to an instance of class String (§4.3.3) that denotes the string represented by the string literal.
+
+Moreover, a string literal always refers to the same instance of class String. This is because string literals - or, more generally, strings that are the values of constant expressions (§15.29) - are "interned" so as to share unique instances, as if by execution of the method String.intern (§12.5).
 
 Example 3.10.5-1. String Literals
 
@@ -717,16 +743,271 @@ The result of explicitly interning a computed string is the same String object a
 
 
 
-3.10.6. Escape Sequences for Character and String Literals
+3.10.6. Text Blocks
 
-The character and string escape sequences allow for the representation of some nongraphic characters without using Unicode escapes, as well as the single quote, double quote, and backslash characters, in character literals (§3.10.4) and string literals (§3.10.5).
+A text block consists of zero or more characters enclosed by opening and closing delimiters. Characters may be represented by escape sequences (§3.10.7), but the newline and double quote characters that must be represented with escape sequences in a string literal (§3.10.5) may be represented directly in a text block.
+
+TextBlock:
+" " " {TextBlockWhiteSpace} LineTerminator {TextBlockCharacter} " " "
+TextBlockWhiteSpace:
+WhiteSpace but not LineTerminator
+TextBlockCharacter:
+InputCharacter but not \
+EscapeSequence
+LineTerminator
+
+The following productions from §3.3, §3.4, and §3.6 are shown here for convenience:
+
+WhiteSpace:
+the ASCII SP character, also known as "space"
+the ASCII HT character, also known as "horizontal tab"
+the ASCII FF character, also known as "form feed"
+LineTerminator
+LineTerminator:
+the ASCII LF character, also known as "newline"
+the ASCII CR character, also known as "return"
+the ASCII CR character followed by the ASCII LF character
+InputCharacter:
+UnicodeInputCharacter but not CR or LF
+UnicodeInputCharacter:
+UnicodeEscape
+RawInputCharacter
+UnicodeEscape:
+\ UnicodeMarker HexDigit HexDigit HexDigit HexDigit
+RawInputCharacter:
+any Unicode character
+
+A text block is always of type String (§4.3.3).
+
+The opening delimiter is a sequence that starts with three double quote characters ("""), continues with zero or more space, tab, and form feed characters, and concludes with a line terminator.
+
+The closing delimiter is a sequence of three double quote characters.
+
+The content of a text block is the sequence of characters that begins immediately after the line terminator of the opening delimiter, and ends immediately before the first double quote of the closing delimiter.
+
+Unlike in a string literal (§3.10.5), it is not a compile-time error for a line terminator to appear in the content of a text block.
+
+Example 3.10.6-1. Text Blocks
+
+When multi-line strings are desired, a text block is usually more readable than a concatenation of string literals. For example, compare these alternative representations of a snippet of HTML:
+
+
+String html = "<html>\n" +
+              "    <body>\n" +
+              "        <p>Hello, world</p>\n" +
+              "    </body>\n" +
+              "</html>\n";
+
+String html = """
+              <html>
+                  <body>
+                      <p>Hello, world</p>
+                  </body>
+              </html>
+              """;
+
+
+
+The following are examples of text blocks:
+
+class Test {
+    public static void main(String[] args) {
+        // The six characters w i n t e r
+        String season = """
+                        winter""";
+
+        // The seven characters w i n t e r LF
+        String period = """
+                        winter
+                        """;
+
+        // The ten characters H i , SP " B o b " LF
+        String greeting = """
+                          Hi, "Bob"
+                          """;
+
+        // The eleven characters H i , LF SP " B o b " LF
+        String salutation = """
+                            Hi,
+                             "Bob"
+                            """;        
+
+        // The empty string (zero length)
+        String empty = """
+                       """;      
+
+        // The two characters " LF
+        String quote = """
+                       "
+                       """; 
+
+        // The two characters \ LF
+        String backslash = """
+                           \\
+                           """;  
+    }
+}
+
+
+
+
+
+Using the escape sequences \n and \" to represent a newline character and a double quote character, respectively, is permitted in a text block, though not usually necessary. The exception is where three consecutive double quote characters appear that are not intended to be the closing delimiter """ - in this case, it is necessary to escape at least one of the double quote characters in order to avoid mimicking the closing delimiter.
+
+Example 3.10.6-2. Escape sequences in text blocks
+
+In the following program, the value of the story variable would be less readable if individual double quote characters were escaped:
+
+class Story1 {
+    public static void main(String[] args) {
+        String story = """
+            "When I use a word," Humpty Dumpty said,
+            in rather a scornful tone, "it means just what I
+            choose it to mean - neither more nor less."
+            "The question is," said Alice, "whether you
+            can make words mean so many different things."
+            "The question is," said Humpty Dumpty,
+            "which is to be master - that's all."
+        """;
+    }
+}
+
+
+If the program is modified to place the closing delimiter on the last line of the content, then an error occurs because the first three consecutive double quote characters on the last line are translated (§3.2) into the closing delimiter """ and thus a stray double quote character remains:
+
+class Story2 {
+    public static void main(String[] args) {
+        String story = """
+            "When I use a word," Humpty Dumpty said,
+            in rather a scornful tone, "it means just what I
+            choose it to mean - neither more nor less."
+            "The question is," said Alice, "whether you
+            can make words mean so many different things."
+            "The question is," said Humpty Dumpty,
+            "which is to be master - that's all."""";  // error
+    }
+}
+
+
+The error can be avoided by escaping the final double quote character in the content:
+
+class Story3 {
+    public static void main(String[] args) {
+        String story = """
+            "When I use a word," Humpty Dumpty said,
+            in rather a scornful tone, "it means just what I
+            choose it to mean - neither more nor less."
+            "The question is," said Alice, "whether you
+            can make words mean so many different things."
+            "The question is," said Humpty Dumpty,
+            "which is to be master - that's all.\"""";  // OK
+    }
+}
+
+
+If a text block is intended to denote another text block, then it is recommended to escape the first double quote character of the embedded opening and closing delimiters:
+
+class Code {
+    public static void main(String[] args) {
+        String text = """
+            The quick brown fox jumps over the lazy dog
+        """;
+
+        String code =
+            """
+            String text = \"""
+                The quick brown fox jumps over the lazy dog
+            \""";
+            """;
+    }
+}
+
+
+
+
+The string represented by a text block is not the literal sequence of characters in the content. Instead, the string represented by a text block is the result of applying the following transformations to the content, in order:
+
+Line terminators are normalized to the ASCII LF character, as follows:
+
+An ASCII CR character followed by an ASCII LF character is translated to an ASCII LF character.
+
+An ASCII CR character is translated to an ASCII LF character.
+
+Incidental white space is removed, as if by execution of String.stripIndent on the characters resulting from step 1.
+
+Escape sequences are interpreted, as if by execution of String.translateEscapes on the characters resulting from step 2.
+
+When this specification says that a text block contains a particular character or sequence of characters, or that a particular character or sequence of characters is in a text block, it means that the string represented by the text block (as opposed to the literal sequence of characters in the content) contains the character or sequence of characters.
+
+Example 3.10.6-3. Order of transformations on text block content
+
+Interpreting escape sequences last allows developers to use \n, \f, and \r for vertical formatting of a string without affecting the normalization of line terminators, and to use \b and \t for horizontal formatting of a string without affecting the removal of incidental white space. For example, consider this text block that mentions the escape sequence \r (CR):
+
+
+String html = """
+              <html>\r
+                  <body>\r
+                      <p>Hello, world</p>\r
+                  </body>\r
+              </html>\r
+              """;
+
+
+
+The \r escape sequences are not interpreted until after the line terminators have been normalized to LF. Using Unicode escapes to visualize LF (\u000A) and CR (\u000D), and using | to visualize the left margin, the string represented by the text block is:
+
+
+|<html>\u000D\u000A
+|    <body>\u000D\u000A
+|        <p>Hello, world</p>\u000D\u000A
+|    </body>\u000D\u000A
+|</html>\u000D\u000A
+
+
+
+
+
+At run time, a text block is a reference to an instance of class String that denotes the string represented by the text block.
+
+Moreover, a text block always refers to the same instance of class String. This is because the strings represented by text blocks - or, more generally, strings that are the values of constant expressions (§15.29) - are "interned" so as to share unique instances, as if by execution of the method String.intern (§12.5).
+
+Example 3.10.6-4. Text blocks evaluate to String
+
+Text blocks can be used wherever an expression of type String is allowed, such as in string concatenation (§15.18.1), in the invocation of methods on instances of String, and in annotations with String elements:
+
+
+System.out.println("ab" + """
+                          cde
+                          """);
+
+String cde = """
+             abcde""".substring(2);
+
+String math = """
+              1+1 equals \
+              """ + String.valueOf(2);
+
+@Preconditions("""
+    rate > 0 &&
+    rate <= MAX_REFRESH_RATE
+""")
+public void setRefreshRate(int rate) { ... }
+
+
+
+
+3.10.7. Escape Sequences
+
+In character literals, string literals, and text blocks (§3.10.4, §3.10.5, §3.10.6), the escape sequences allow for the representation of some nongraphic characters without using Unicode escapes (§3.3), as well as the single quote, double quote, and backslash characters.
 
 EscapeSequence:
 \ b (backspace BS, Unicode \u0008)
+\ s (space SP, Unicode \u0020)
 \ t (horizontal tab HT, Unicode \u0009)
 \ n (linefeed LF, Unicode \u000a)
 \ f (form feed FF, Unicode \u000c)
 \ r (carriage return CR, Unicode \u000d)
+\ LineTerminator (line continuation, no Unicode representation)
 \ " (double quote ", Unicode \u0022)
 \ ' (single quote ', Unicode \u0027)
 \ \ (backslash \, Unicode \u005c)
@@ -743,13 +1024,15 @@ ZeroToThree:
 (one of)
 0 1 2 3
 
-The OctalDigit production above comes from §3.10.1.
+The OctalDigit production above comes from §3.10.1. Octal escapes are provided for compatibility with C, but can express only Unicode values \u0000 through \u00FF, so Unicode escapes are usually preferred.
 
-It is a compile-time error if the character following a backslash in an escape sequence is not an ASCII b, t, n, f, r, ", ', \, 0, 1, 2, 3, 4, 5, 6, or 7. The Unicode escape \u is processed earlier (§3.3).
+It is a compile-time error if the character following a backslash in an escape sequence is not a LineTerminator or an ASCII b, s, t, n, f, r, ", ', \, 0, 1, 2, 3, 4, 5, 6, or 7.
 
-Octal escapes are provided for compatibility with C, but can express only Unicode values \u0000 through \u00FF, so Unicode escapes are usually preferred.
+An escape sequence in the content of a character literal, string literal, or text block is interpreted by replacing its \ and trailing character(s) with the single character denoted by the Unicode escape in the EscapeSequence grammar. The line continuation escape sequence has no corresponding Unicode escape, so is interpreted by replacing it with nothing.
 
-3.10.7. The Null Literal
+The line continuation escape sequence can appear in a text block, but cannot appear in a character literal or a string literal because each disallows a LineTerminator.
+
+3.10.8. The Null Literal
 
 The null type has one value, the null reference, represented by the null literal null, which is formed from ASCII characters.
 

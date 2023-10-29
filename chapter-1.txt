@@ -16,7 +16,7 @@ The Java programming language is strongly and statically typed. This specificati
 
 The Java programming language is a relatively high-level language, in that details of the machine representation are not available through the language. It includes automatic storage management, typically using a garbage collector, to avoid the safety problems of explicit deallocation (as in C's free or C++'s delete). High-performance garbage-collected implementations can have bounded pauses to support systems programming and real-time applications. The language does not include any unsafe constructs, such as array accesses without index checking, since such unsafe constructs would cause a program to behave in an unspecified way.
 
-The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 14 Edition.
+The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 15 Edition.
 
 1.1. Organization of the Specification
 
@@ -26,7 +26,7 @@ Chapter 3 describes the lexical structure of the Java programming language, whic
 
 Chapter 4 describes types, values, and variables. Types are subdivided into primitive types and reference types.
 
-The primitive types are defined to be the same on all machines and in all implementations, and are various sizes of two's-complement integers, single- and double-precision IEEE 754 standard floating-point numbers, a boolean type, and a Unicode character char type. Values of the primitive types do not share state.
+The primitive types are defined to be the same on all machines and in all implementations, and are various sizes of two's-complement integers, IEEE 754 floating-point numbers, a boolean type, and a Unicode character char type. Values of the primitive types do not share state.
 
 Reference types are the class types, the interface types, and the array types. The reference types are implemented by dynamically created objects that are either instances of classes or arrays. Many references to each object can exist. All objects (including arrays) support the methods of the class Object, which is the (single) root of the class hierarchy. A predefined String class supports Unicode character strings. Classes exist for wrapping primitive values inside of objects. In many cases, wrapping and unwrapping is performed automatically by the compiler (in which case, wrapping is called boxing, and unwrapping is called unboxing). Class and interface declarations may be generic, that is, they may be parameterized by other reference types. Such declarations may then be invoked with specific type arguments.
 
@@ -129,7 +129,7 @@ Implementations must disable, at both compile time and run time, the preview fea
 
 The preview features defined by a given release of the Java SE Platform are specified in standalone documents that indicate changes ("diffs") to The Java® Language Specification for that release. The specifications of preview features are incorporated into The Java® Language Specification by reference, and made a part thereof, if and only if preview features are enabled at compile time.
 
-Java SE 14 defines three preview features in the Java programming language: Pattern Matching for instanceof; Records; and Text Blocks. The standalone documents which specify these preview features are available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
+Java SE 15 defines three preview features in the Java programming language: Pattern Matching for instanceof; Records; and Sealed Classes. The standalone documents which specify these preview features are available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
 
 A preview feature may be associated with elements of the Java SE Platform API. Namely, an API element is essential if it exists in the package java.lang or java.lang.annotation, and programs cannot use the preview feature without referring (directly or indirectly) to the API element.
 
@@ -145,11 +145,9 @@ The declaration where the use appears and the declaration of the essential API e
 
 The use is within an import declaration that imports the essential API element.
 
-Java SE 14 contain the following essential API elements:
+Java SE 15 contain the following essential API elements:
 
 For the preview feature Records: The class Record; and in enum java.lang.annotation.ElementType, the enum constant RECORD_COMPONENT.
-
-For the preview feature Text Blocks: In class String, the methods stripIndent and translateEscapes.
 
 1.6. Feedback
 
@@ -172,7 +170,7 @@ Harbison, Samuel. Modula-3. Prentice Hall, Englewood Cliffs, New Jersey, 1992, I
 
 Hoare, C. A. R. Hints on Programming Language Design. Stanford University Computer Science Department Technical Report No. CS-73-403, December 1973. Reprinted in SIGACT/SIGPLAN Symposium on Principles of Programming Languages. Association for Computing Machinery, New York, October 1973.
 
-IEEE Standard for Binary Floating-Point Arithmetic. ANSI/IEEE Std. 754-1985. Available from Global Engineering Documents, 15 Inverness Way East, Englewood, Colorado 80112-5704 USA; 800-854-7179.
+IEEE. IEEE Standard for Floating-Point Arithmetic. IEEE Std 754-2019 (Revision of IEEE 754-2008). July 2019, ISBN 978-1-5044-5924-2.
 
 Kernighan, Brian W., and Dennis M. Ritchie. The C Programming Language, 2nd ed. Prentice Hall, Englewood Cliffs, New Jersey, 1988, ISBN 0-13-110362-8.
 
@@ -182,4 +180,4 @@ Mitchell, James G., William Maybury, and Richard Sweet. The Mesa Programming Lan
 
 Stroustrup, Bjarne. The C++ Progamming Language, 2nd ed. Addison-Wesley, Reading, Massachusetts, 1991, reprinted with corrections January 1994, ISBN 0-201-53992-6.
 
-Unicode Consortium, The. The Unicode Standard, Version 12.1.0. Mountain View, California, 2019, ISBN 978-1-936213-25-2.
+Unicode Consortium, The. The Unicode Standard, Version 13.0. Mountain View, California, 2020, ISBN 978-1-936213-26-9.

@@ -22,6 +22,7 @@ FloatingPointLiteral
 BooleanLiteral
 CharacterLiteral
 StringLiteral
+TextBlock
 NullLiteral
 
 Productions from §4 (Types, Values, and Variables)

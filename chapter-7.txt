@@ -321,9 +321,9 @@ It is a compile-time error if the named type is not accessible (§6.6).
 
 If two single-type-import declarations in the same compilation unit attempt to import types with the same simple name, then a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
 
-If the type imported by the single-type-import declaration is declared in the compilation unit that contains the import declaration, the import declaration is ignored.
+If the type imported by the single-type-import declaration is declared as a top level type (§7.6) in the compilation unit that contains the import declaration, then the import declaration is ignored.
 
-If a single-type-import declaration imports a type whose simple name is n, and the compilation unit also declares a top level type (§7.6) whose simple name is n, a compile-time error occurs.
+If a single-type-import declaration imports a type whose simple name is n, and the compilation unit also declares a top level type whose simple name is n, a compile-time error occurs.
 
 If a compilation unit contains both a single-type-import declaration that imports a type whose simple name is n, and a single-static-import declaration (§7.5.3) that imports a type whose simple name is n, a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
 

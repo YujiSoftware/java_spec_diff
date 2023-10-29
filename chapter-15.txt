@@ -204,7 +204,7 @@ Note that an annotation's element value (§9.7) is always FP-strict, because it 
 
 It follows that an expression is not FP-strict if and only if it is not a constant expression and it does not appear within any declaration that has the strictfp modifier.
 
-Within an FP-strict expression, all intermediate values must be elements of the float value set or the double value set, implying that the results of all FP-strict expressions must be those predicted by IEEE 754 arithmetic on operands represented using single and double formats.
+Within an FP-strict expression, all intermediate values must be elements of the float value set or the double value set, implying that the results of all FP-strict expressions must be those predicted by IEEE 754 arithmetic on operands represented using binary32 and binary64 floating-point formats.
 
 Within an expression that is not FP-strict, some leeway is granted for an implementation to use an extended exponent range to represent intermediate results; the net effect, roughly speaking, is that a calculation might produce "the correct answer" in situations where exclusive use of the float value set or double value set might result in overflow or underflow.
 
@@ -565,11 +565,12 @@ FloatingPointLiteral
 BooleanLiteral
 CharacterLiteral
 StringLiteral
+TextBlock
 NullLiteral
 
 The type of a literal is determined as follows:
 
-The type of an integer literal (§3.10.1) that ends with L or l is long (§4.2.1).
+The type of an integer literal (§3.10.1) that ends with L or l (ell) is long (§4.2.1).
 
 The type of any other integer literal is int (§4.2.1).
 
@@ -581,9 +582,9 @@ The type of a boolean literal (§3.10.3) is boolean (§4.2.5).
 
 The type of a character literal (§3.10.4) is char (§4.2.1).
 
-The type of a string literal (§3.10.5) is String (§4.3.3).
+The type of a string literal (§3.10.5) or a text block (§3.10.6) is String (§4.3.3).
 
-The type of the null literal null (§3.10.7) is the null type (§4.1); its value is the null reference.
+The type of the null literal null (§3.10.8) is the null type (§4.1); its value is the null reference.
 
 Evaluation of a lexical literal always completes normally.
 
@@ -2240,7 +2241,7 @@ The compile-time result is the result of the invocation type of the compile-time
 
 If the compile-time declaration for the method invocation is a signature polymorphic method, then:
 
-The compile-time parameter types are the types of the actual argument expressions. An argument expression which is the null literal null (§3.10.7) is treated as having the type Void.
+The compile-time parameter types are the types of the actual argument expressions. An argument expression which is the null literal null (§3.10.8) is treated as having the type Void.
 
 The compile-time result is determined as follows:
 
@@ -2433,7 +2434,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 14 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 15 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2463,7 +2464,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 14 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 15 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 
@@ -3238,7 +3239,7 @@ Next, a value must be chosen from the chosen value set to represent the product.
 
 If the magnitude of the product is too large to represent, we say the operation overflows; the result is then an infinity of appropriate sign.
 
-Otherwise, the product is rounded to the nearest value in the chosen value set using IEEE 754 round-to-nearest mode. The Java programming language requires support of gradual underflow as defined by IEEE 754 (§4.2.4).
+Otherwise, the product is rounded to the nearest value in the chosen value set using the round to nearest rounding policy (§4.2.4). The Java programming language requires support of gradual underflow as defined by IEEE 754.
 
 Despite the fact that overflow, underflow, or loss of information may occur, evaluation of a multiplication operator * never throws a run-time exception.
 
@@ -3284,7 +3285,7 @@ Next, a value must be chosen from the chosen value set to represent the quotient
 
 If the magnitude of the quotient is too large to represent, we say the operation overflows; the result is then an infinity of appropriate sign.
 
-Otherwise, the quotient is rounded to the nearest value in the chosen value set using IEEE 754 round-to-nearest mode. The Java programming language requires support of gradual underflow as defined by IEEE 754 (§4.2.4).
+Otherwise, the quotient is rounded to the nearest value in the chosen value set using the round to nearest rounding policy (§4.2.4). The Java programming language requires support of gradual underflow as defined by IEEE 754.
 
 Despite the fact that overflow, underflow, division by zero, or loss of information may occur, evaluation of a floating-point division operator / never throws a run-time exception.
 
@@ -3339,9 +3340,9 @@ This program produces the output:
 
 
 
-The result of a floating-point remainder operation as computed by the % operator is not the same as that produced by the remainder operation defined by IEEE 754. The IEEE 754 remainder operation computes the remainder from a rounding division, not a truncating division, and so its behavior is not analogous to that of the usual integer remainder operator. Instead, the Java programming language defines % on floating-point operations to behave in a manner analogous to that of the integer remainder operator; this may be compared with the C library function fmod. The IEEE 754 remainder operation may be computed by the library routine Math.IEEEremainder.
+The result of a floating-point remainder operation as computed by the % operator is not the same as that computed by the remainder operation in IEEE 754, due to the choice of rounding policy in the Java programming language (§4.2.4). The IEEE 754 remainder operation computes the remainder from a rounding division, not a truncating division, and so its behavior is not analogous to that of the usual integer remainder operator. Instead, the Java programming language defines % on floating-point operands to behave in a manner analogous to that of the integer remainder operator, with an implied division using the round toward zero rounding policy; this may be compared with the C library function fmod. The IEEE 754 remainder operation may be computed by the library routine Math.IEEEremainder or StrictMath.IEEEremainder.
 
-The result of a floating-point remainder operation is determined by the rules of IEEE 754 arithmetic:
+The result of a floating-point remainder operation is determined by the following rules, which match IEEE 754 arithmetic except for how the implied division is computed:
 
 If either operand is NaN, the result is NaN.
 
@@ -3541,7 +3542,7 @@ Floating-point addition is not associative.
 
 If an integer addition overflows, then the result is the low-order bits of the mathematical sum as represented in some sufficiently large two's-complement format. If overflow occurs, then the sign of the result is not the same as the sign of the mathematical sum of the two operand values.
 
-The result of a floating-point addition is determined using the following rules of IEEE 754 arithmetic:
+The result of a floating-point addition is determined by the rules of IEEE 754 arithmetic:
 
 If either operand is NaN, the result is NaN.
 
@@ -3577,7 +3578,7 @@ Next, a value must be chosen from the chosen value set to represent the sum.
 
 If the magnitude of the sum is too large to represent, we say the operation overflows; the result is then an infinity of appropriate sign.
 
-Otherwise, the sum is rounded to the nearest value in the chosen value set using IEEE 754 round-to-nearest mode. The Java programming language requires support of gradual underflow as defined by IEEE 754 (§4.2.4).
+Otherwise, the sum is rounded to the nearest value in the chosen value set using the round to nearest rounding policy (§4.2.4). The Java programming language requires support of gradual underflow.
 
 The binary - operator performs subtraction when applied to two operands of numeric type, producing the difference of its operands; the left-hand operand is the minuend and the right-hand operand is the subtrahend.
 
@@ -3799,7 +3800,7 @@ At run time, the result of == is true if the operand values are both null or bot
 
 The result of != is false if the operand values are both null or both refer to the same object or array; otherwise, the result is true.
 
-While == may be used to compare references of type String, such an equality test determines whether or not the two operands refer to the same String object. The result is false if the operands are distinct String objects, even if they contain the same sequence of characters (§3.10.5). The contents of two strings s and t can be tested for equality by the method invocation s.equals(t).
+While == may be used to compare references of type String, such an equality test determines whether or not the two operands refer to the same String object. The result is false if the operands are distinct String objects, even if they contain the same sequence of characters (§3.10.5, §3.10.6). The contents of two strings s and t can be tested for equality by the method invocation s.equals(t).
 
 15.22. Bitwise and Logical Operators
 
@@ -5180,7 +5181,7 @@ Expression
 
 A constant expression is an expression denoting a value of primitive type or a String that does not complete abruptly and is composed using only the following:
 
-Literals of primitive type and literals of type String (§3.10.1, §3.10.2, §3.10.3, §3.10.4, §3.10.5)
+Literals of primitive type (§3.10.1, §3.10.2, §3.10.3, §3.10.4), string literals (§3.10.5), and text blocks (§3.10.6)
 
 Casts to primitive types and casts to type String (§15.16)
 

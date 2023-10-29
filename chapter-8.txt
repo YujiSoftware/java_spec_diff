@@ -668,7 +668,7 @@ Each default method (§9.4.3) of a superinterface of the class may optionally be
 
 It is permitted for a single method declaration in a class to implement methods of more than one superinterface.
 
-Example 8.1.5-3. Implementing Methods of a Superinterface
+Example 8.1.5-4. Implementing Methods of a Superinterface
 
 interface Colorable {
     void setColor(int color);
@@ -1701,7 +1701,7 @@ B's constructor and instance method show that the type of the receiver parameter
 
 8.4.2. Method Signature
 
-Two methods or constructors, M and N, have the same signature if they have the same name, the same type parameters (if any) (§8.4.4), and, after adapting the formal parameter types of N to the the type parameters of M, the same formal parameter types.
+Two methods or constructors, M and N, have the same signature if they have the same name, the same type parameters (if any) (§8.4.4), and, after adapting the formal parameter types of N to the type parameters of M, the same formal parameter types.
 
 The signature of a method m1 is a subsignature of the signature of a method m2 if either:
 
@@ -2305,7 +2305,13 @@ Documentation for a class such as BufferOutput, which is designed to be extended
 
 8.4.8.2. Hiding (by Class Methods)
 
-If a class C declares or inherits a static method m, then m is said to hide any method m', where the signature of m is a subsignature (§8.4.2) of the signature of m', in the superclasses and superinterfaces of C that would otherwise be accessible (§6.6) to code in C.
+If a class C declares or inherits a static method m, then m is said to hide any method m' for which all of the following are true:
+
+m' is either a static or instance method declared in a superclass of C, or an instance method declared in a superinterface of C.
+
+m' is accessible to C (§6.6).
+
+The signature of m is a subsignature of the signature of m' (§8.4.2).
 
 It is a compile-time error if a static method hides an instance method.
 
