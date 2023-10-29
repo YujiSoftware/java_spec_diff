@@ -258,7 +258,7 @@ Strict evaluation provides predictable results, but caused performance problems 
 
 For compatibility, Java 1.2 allowed the programmer to forbid an implementation from using the extended-exponent value sets. The programmer expressed this by placing the strictfp modifier on the declaration of a class, interface, or method. strictfp constrained the floating-point semantics of any enclosed expressions to use the float value set for float expressions and the double value set for double expressions, ensuring the results of such expressions were fully predictable. Code modified by strictfp thus had the same floating-point semantics as specified in Java 1.0 and 1.1.
 
-In Java SE 17 and later, the Java SE Platform always requires strict evaluation of floating-point expressions. Newer members of the processor families that had performance problems implementing strict evaluation no longer have that difficulty. This specification no longer associates float and double with the four value sets described above, and the strictfp modifier no longer affects the evaluation of floating-point expressions. For compatibility, strictfp remains a keyword in Java SE 17 (§3.8) and continues to have restrictions on its use (§8.4.3, §9.4), although Java compilers are encouraged to warn the programmer about its obsolete status. Future versions of the Java programming language may redefine or remove the strictfp keyword.
+In Java SE 17 and later, the Java SE Platform always requires strict evaluation of floating-point expressions. Newer members of the processor families that had performance problems implementing strict evaluation no longer have that difficulty. This specification no longer associates float and double with the four value sets described above, and the strictfp modifier no longer affects the evaluation of floating-point expressions. For compatibility, strictfp remains a keyword in Java SE 18 (§3.8) and continues to have restrictions on its use (§8.4.3, §9.4), although Java compilers are encouraged to warn the programmer about its obsolete status. Future versions of the Java programming language may redefine or remove the strictfp keyword.
 
 15.5. Expressions and Run-Time Checks
 
@@ -947,19 +947,19 @@ If the class instance creation expression uses <>, then:
 
 If C is not an anonymous class, let D be the same as C. If C is an anonymous class, let D be the superclass or superinterface of C named by the class instance creation expression.
 
-If D is a class, let c1...cn be the constructors of class D. If D is an interface, let c1...cn be a singleton list (n = 1) containing the zero-argument constructor of the class Object.
+If D is a class, let c1, ..., cn be the constructors of class D. If D is an interface, let c1, ..., cn be a singleton list (n = 1) containing the zero-argument constructor of the class Object.
 
-A list of methods m1...mn is defined for the purpose of overload resolution and type argument inference. For all j (1 ≤ j ≤ n), mj is defined in terms of cj as follows:
+A list of methods m1, ..., mn is defined for the purpose of overload resolution and type argument inference. For all j (1 ≤ j ≤ n), mj is defined in terms of cj as follows:
 
 A substitution θj is first defined to instantiate the types in cj.
 
-Let F1...Fp be the type parameters of D, and let G1...Gq be the type parameters (if any) of cj. Let X1...Xp and Y1...Yq be type variables with distinct names that are not in scope in the body of D.
+Let F1, ..., Fp be the type parameters of D, and let G1, ..., Gq be the type parameters (if any) of cj. Let X1, ..., Xp and Y1, ..., Yq be type variables with distinct names that are not in scope in the body of D.
 
 θj is [F1:=X1, ..., Fp:=Xp, G1:=Y1, ..., Gq:=Yq].
 
-The type parameters of mj are X1...Xp,Y1...Yq. The bound of each type parameter, if any, is θj applied to the corresponding type parameter bound in D or cj.
+The type parameters of mj are X1, ..., Xp, Y1, ..., Yq. The bound of each type parameter, if any, is θj applied to the corresponding type parameter bound in D or cj.
 
-The return type of mj is θj applied to D<F1,...,Fp>.
+The return type of mj is θj applied to D<F1, ..., Fp>.
 
 The (possibly empty) list of argument types of mj is θj applied to the argument types of cj.
 
@@ -967,11 +967,11 @@ The (possibly empty) list of thrown types of mj is θj applied to the thrown typ
 
 The modifiers of mj are those of cj.
 
-The name of mj is #m, an automatically generated name that is distinct from all constructor and method names in D and is shared by m1...mn.
+The name of mj is #m, an automatically generated name that is distinct from all constructor and method names in D and is shared by m1, ..., mn.
 
 The body of mj is irrelevant.
 
-To choose a constructor, we temporarily consider m1...mn to be members of D. One of m1...mn is chosen, as determined by the class instance creation expression's argument expressions, using the process specified in §15.12.2.
+To choose a constructor, we temporarily consider m1, ..., mn to be members of D. One of m1, ..., mn is chosen, as determined by the class instance creation expression's argument expressions, using the process specified in §15.12.2.
 
 If there is no unique most specific method that is both applicable and accessible, then a compile-time error occurs.
 
@@ -1120,8 +1120,12 @@ Note that it is possible for the signature of the anonymous constructor to refer
 An array creation expression is used to create new arrays (§10 (Arrays)).
 
 ArrayCreationExpression:
+ArrayCreationExpressionWithoutInitializer
+ArrayCreationExpressionWithInitializer
+ArrayCreationExpressionWithoutInitializer:
 new PrimitiveType DimExprs [Dims]
 new ClassOrInterfaceType DimExprs [Dims]
+ArrayCreationExpressionWithInitializer:
 new PrimitiveType Dims ArrayInitializer
 new ClassOrInterfaceType Dims ArrayInitializer
 DimExprs:
@@ -1181,12 +1185,13 @@ In an array creation expression with one or more dimension expressions, each dim
 
 class Test1 {
     public static void main(String[] args) {
-        int i = 4;
-        int ia[][] = new int[i][i=3];
+        int     i  = 4;
+        int[][] ia = new int[i][i=3];
         System.out.println(
             "[" + ia.length + "," + ia[0].length + "]");
     }
 }
+
 
 
 prints:
@@ -1265,7 +1270,7 @@ Aquarius[1][9][6][9] = Hair;
 
 A triangular matrix may be created by:
 
-float triang[][] = new float[100][];
+float[][] triang = new float[100][];
 for (int i = 0; i < triang.length; i++)
     triang[i] = new float[i+1];
 
@@ -1312,10 +1317,11 @@ An array access expression refers to a variable that is a component of an array.
 ArrayAccess:
 ExpressionName [ Expression ]
 PrimaryNoNewArray [ Expression ]
+ArrayCreationExpressionWithInitializer [ Expression ]
 
 An array access expression contains two subexpressions, the array reference expression (before the left bracket) and the index expression (within the brackets).
 
-Note that the array reference expression may be a name or any primary expression that is not an array creation expression (§15.10).
+Note that the array reference expression may be a name or any primary expression that is not an array creation expression, unless the array creation expression has an array initializer (§15.10.1).
 
 The type of the array reference expression must be an array type (call it T[], an array whose components are of type T), or a compile-time error occurs.
 
@@ -2088,11 +2094,11 @@ A parenthesized expression (§15.8.5) whose contained expression is not pertinen
 
 A conditional expression (§15.25) whose second or third operand is not pertinent to applicability.
 
-Let m be a potentially applicable method (§15.12.2.1) with arity n and formal parameter types F1 ... Fn, and let e1, ..., en be the actual argument expressions of the method invocation. Then:
+Let m be a potentially applicable method (§15.12.2.1) with arity n and formal parameter types F1, ..., Fn, and let e1, ..., en be the actual argument expressions of the method invocation. Then:
 
 If m is a generic method and the method invocation does not provide explicit type arguments, then the applicability of the method is inferred as specified in §18.5.1.
 
-If m is a generic method and the method invocation provides explicit type arguments, then let R1 ... Rp (p ≥ 1) be the type parameters of m, let Bl be the declared bound of Rl (1 ≤ l ≤ p), and let U1, ..., Up be the explicit type arguments given in the method invocation. Then m is applicable by strict invocation if both of the following are true:
+If m is a generic method and the method invocation provides explicit type arguments, then let R1, ..., Rp (p ≥ 1) be the type parameters of m, let Bl be the declared bound of Rl (1 ≤ l ≤ p), and let U1, ..., Up be the explicit type arguments given in the method invocation. Then m is applicable by strict invocation if both of the following are true:
 
 For 1 ≤ i ≤ n, if ei is pertinent to applicability then ei is compatible in a strict invocation context with Fi[R1:=U1, ..., Rp:=Up] (§5.3).
 
@@ -2112,7 +2118,7 @@ Let m be a potentially applicable method (§15.12.2.1) with arity n and formal p
 
 If m is a generic method and the method invocation does not provide explicit type arguments, then the applicability of the method is inferred as specified in §18.5.1.
 
-If m is a generic method and the method invocation provides explicit type arguments, then let R1 ... Rp (p ≥ 1) be the type parameters of m, let Bl be the declared bound of Rl (1 ≤ l ≤ p), and let U1 ... Up be the explicit type arguments given in the method invocation. Then m is applicable by loose invocation if both of the following are true:
+If m is a generic method and the method invocation provides explicit type arguments, then let R1, ..., Rp (p ≥ 1) be the type parameters of m, let Bl be the declared bound of Rl (1 ≤ l ≤ p), and let U1, ..., Up be the explicit type arguments given in the method invocation. Then m is applicable by loose invocation if both of the following are true:
 
 For 1 ≤ i ≤ n, if ei is pertinent to applicability (§15.12.2.2) then ei is compatible in a loose invocation context with Fi[R1:=U1, ..., Rp:=Up] (§5.3).
 
@@ -2136,7 +2142,7 @@ Let m be a potentially applicable method (§15.12.2.1) with variable arity, let 
 
 If m is a generic method and the method invocation does not provide explicit type arguments, then the applicability of the method is inferred as specified in §18.5.1.
 
-If m is a generic method and the method invocation provides explicit type arguments, then let R1 ... Rp (p ≥ 1) be the type parameters of m, let Bl be the declared bound of Rl (1 ≤ l ≤ p), and let U1 ... Up be the explicit type arguments given in the method invocation. Then m is applicable by variable arity invocation if:
+If m is a generic method and the method invocation provides explicit type arguments, then let R1, ..., Rp (p ≥ 1) be the type parameters of m, let Bl be the declared bound of Rl (1 ≤ l ≤ p), and let U1, ..., Up be the explicit type arguments given in the method invocation. Then m is applicable by variable arity invocation if:
 
 For 1 ≤ i ≤ k, if ei is pertinent to applicability (§15.12.2.2) then ei is compatible in a loose invocation context with Ti[R1:=U1, ..., Rp:=Up] (§5.3).
 
@@ -2517,7 +2523,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 17 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 18 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2547,7 +2553,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 17 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 18 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 

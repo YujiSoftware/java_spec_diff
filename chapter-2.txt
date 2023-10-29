@@ -17,7 +17,7 @@ Starting from a sentence consisting of a single distinguished nonterminal, calle
 
 2.2. The Lexical Grammar
 
-A lexical grammar for the Java programming language is given in §3 (Lexical Structure). This grammar has as its terminal symbols the characters of the Unicode character set. It defines a set of productions, starting from the goal symbol Input (§3.5), that describe how sequences of Unicode characters (§3.1) are translated into a sequence of input elements (§3.5).
+A lexical grammar for the Java programming language is given in §3 (Lexical Structure). This grammar has as its terminal symbols the characters of the Unicode character set. It defines a set of productions, starting from the goal symbol Input (§3.5), that describe how sequences of Unicode characters (§3.1) are translated into a sequence of input elements (§3.2).
 
 These input elements, with white space (§3.6) and comments (§3.7) discarded, form the terminal symbols for the syntactic grammar for the Java programming language and are called tokens (§3.5). These tokens are the identifiers (§3.8), keywords (§3.9), literals (§3.10), separators (§3.11), and operators (§3.12) of the Java programming language.
 

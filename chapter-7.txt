@@ -156,7 +156,7 @@ might be mapped to the directory name:
 children/activities/crafts/papierM@00e2ch@00e9
 
 
-If the @ character is not a valid character in a file name for some given host file system, then some other character that is not valid in a identifier could be used instead.
+If the @ character is not a valid character in a file name for some given host file system, then some other character that is not valid in an identifier could be used instead.
 
 7.3. Compilation Units
 

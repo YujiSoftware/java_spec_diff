@@ -1020,8 +1020,9 @@ Here, the constructor takes parameters having the same names as the fields to be
 Example 6.4.1-2. Shadowing of a Type Declaration by Another Type Declaration
 
 import java.util.*;
+
 class Vector {
-    int val[] = { 1 , 2 };
+    int[] val = { 1 , 2 };
 }
 
 class Test {
@@ -1030,6 +1031,7 @@ class Test {
         System.out.println(v.val[0]);
     }
 }
+
 
 
 The program compiles and prints:
@@ -1192,7 +1194,7 @@ The type that follows the instanceof relational operator (§15.20.2)
 
 In a method reference expression (§15.13), as the reference type to search for a member method or as the class type or array type to construct.
 
-The extraction of a TypeName from the identifiers of a ReferenceType in the 16 contexts above is intended to apply recursively to all sub-terms of the ReferenceType, such as its element type and any type arguments.
+The extraction of a TypeName from the identifiers of a ReferenceType in the 17 contexts above is intended to apply recursively to all sub-terms of the ReferenceType, such as its element type and any type arguments.
 
 For example, suppose a field declaration uses the type p.q.Foo[]. The brackets of the array type are ignored, and the term p.q.Foo is extracted as a dotted sequence of Identifiers to the left of the brackets in an array type, and classified as a TypeName. A later step determines which of p, q, and Foo is a type name or a package name.
 
@@ -1890,7 +1892,7 @@ However, this compilation unit cannot use or import points.PointList, which is n
 
 
 
-Example 6.6-4. Access to Package-Access Fields, Methods, and Constructors
+Example 6.6-4. Access to Fields, Methods, and Constructors with Package Access
 
 If none of the access modifiers public, protected, or private are specified, a class member or constructor has package access: it is accessible throughout the package that contains the declaration of the class in which the class member is declared, but the class member or constructor is not accessible in any other package.
 

@@ -2235,6 +2235,7 @@ The relationship between the throws clause of a method and the throws clauses of
 Example 8.4.6-1. Type Variables as Thrown Exception Types
 
 import java.io.FileNotFoundException;
+
 interface PrivilegedExceptionAction<E extends Exception> { 
     void run() throws E;
 } 
@@ -2257,6 +2258,7 @@ class Test {
         } catch (FileNotFoundException f) { /* Do something */ }
     }
 }
+
 
 
 
@@ -2414,8 +2416,8 @@ Example 8.4.8.1-2. Overriding
 
 Overriding makes it easy for subclasses to extend the behavior of an existing class, as shown in this example:
 
-import java.io.OutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 class BufferOutput {
     private OutputStream o;
@@ -2450,6 +2452,7 @@ class Test {
         lbo.putstr("\n");
     }
 }
+
 
 
 This program produces the output:
@@ -3432,8 +3435,8 @@ Example 8.9.2-2. Restriction On Enum Constant Self-Reference
 
 Without the rule on static field access, apparently reasonable code would fail at run time due to the initialization circularity inherent in enum classes. (A circularity exists in any class with a "self-typed" static field.) Here is an example of the sort of code that would fail:
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 enum Color {
     RED, GREEN, BLUE;
@@ -3444,10 +3447,11 @@ enum Color {
 }
 
 
+
 Static initialization of this enum would throw a NullPointerException because the static variable colorMap is uninitialized when the constructors for the enum constants run. The restriction above ensures that such code cannot be compiled. However, the code can easily be refactored to work properly:
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 enum Color {
     RED, GREEN, BLUE;
@@ -3459,6 +3463,7 @@ enum Color {
             colorMap.put(c.toString(), c);
     }
 }
+
 
 
 The refactored version is clearly correct, as static initialization occurs top to bottom.
@@ -3566,7 +3571,7 @@ enum Operation {
     // Each constant supports an arithmetic operation
     abstract double eval(double x, double y);
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         double x = Double.parseDouble(args[0]);
         double y = Double.parseDouble(args[1]);
         for (Operation op : Operation.values())
@@ -3574,6 +3579,7 @@ enum Operation {
                                " = " + op.eval(x, y));
     }
 }
+
 
 
 The program produces the output:
@@ -3594,8 +3600,9 @@ Example 8.9.3-4. Multiple Enum Classes
 
 In the following program, a playing card class is built atop two simple enums.
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
 class Card implements Comparable<Card>,
                       java.io.Serializable {
     public enum Rank { DEUCE, THREE, FOUR, FIVE, SIX, SEVEN,
@@ -3641,13 +3648,15 @@ class Card implements Comparable<Card>,
 }
 
 
+
 The following program exercises the Card class. It takes two integer parameters on the command line, representing the number of hands to deal and the number of cards in each hand:
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+
 class Deal {
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         int numHands     = Integer.parseInt(args[0]);
         int cardsPerHand = Integer.parseInt(args[1]);
         List<Card> deck  = Card.newDeck();
@@ -3664,14 +3673,15 @@ class Deal {
      */
     public static <E extends Comparable<E>>
     ArrayList<E> dealHand(List<E> deck, int n) {
-        int deckSize = deck.size();
-        List<E> handView = deck.subList(deckSize - n, deckSize);
+        int          deckSize = deck.size();
+        List<E>      handView = deck.subList(deckSize - n, deckSize);
         ArrayList<E> hand = new ArrayList<E>(handView);
         handView.clear();
         Collections.sort(hand);
         return hand;
     }
 }
+
 
 
 The program produces the output:

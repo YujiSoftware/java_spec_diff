@@ -269,7 +269,7 @@ Example 10.6-1. Array Initializers
 
 class Test {
     public static void main(String[] args) {
-        int ia[][] = { {1, 2}, null };
+        int[][] ia = { { 1, 2 }, null };
         for (int[] ea : ia) {
             for (int e: ea) {
                 System.out.println(e);
@@ -277,6 +277,7 @@ class Test {
         }
     }
 }
+
 
 
 This program produces the output:
@@ -325,13 +326,14 @@ Example 10.7-1. Arrays Are Cloneable
 
 class Test1 {
     public static void main(String[] args) {
-        int ia1[] = { 1, 2 };
-        int ia2[] = ia1.clone();
+        int[] ia1 = { 1, 2 };
+        int[] ia2 = ia1.clone();
         System.out.print((ia1 == ia2) + " ");
         ia1[1]++;
         System.out.println(ia2[1]);
     }
 }
+
 
 
 This program produces the output:
@@ -350,12 +352,13 @@ The fact that subarrays are shared when a multidimensional array is cloned is sh
 
 class Test2 {
     public static void main(String[] args) throws Throwable {
-        int ia[][] = { {1,2}, null };
-        int ja[][] = ia.clone();
+        int[][] ia = { { 1, 2 }, null };
+        int[][] ja = ia.clone();
         System.out.print((ia == ja) + " ");
         System.out.println(ia[0] == ja[0] && ia[1] == ja[1]);
     }
 }
+
 
 
 This program produces the output:

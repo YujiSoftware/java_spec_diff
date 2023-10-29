@@ -1295,9 +1295,9 @@ Example 5.6-1. Unary Numeric Promotion
 
 class Test {
     public static void main(String[] args) {
-        byte b = 2;
-        int a[] = new int[b];  // dimension expression promotion
-        char c = '\u0001';
+        byte  b = 2;
+        int[] a = new int[b];  // dimension expression promotion
+        char  c = '\u0001';
         a[c] = 1;              // index expression promotion
         a[0] = -c;             // unary - promotion
         System.out.println("a: " + a[0] + "," + a[1]);
@@ -1310,6 +1310,7 @@ class Test {
                            + "<<4L==0x" + Integer.toHexString(i));
     }
 }
+
 
 
 This program produces the output:

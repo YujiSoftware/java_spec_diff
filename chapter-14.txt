@@ -1240,7 +1240,7 @@ Nodes are represented by integers, and there is an edge from node i to node edge
 The task of the method loseEdges, given integers i and j, is to construct a new graph by copying a given graph but omitting the edge from node i to node j, if any, and the edge from node j to node i, if any:
 
 class Graph {
-    int edges[][];
+    int[][] edges;
     public Graph(int[][] edges) { this.edges = edges; }
 
     public Graph loseEdges(int i, int j) {
@@ -1268,8 +1268,8 @@ search:
 } //search
 
             // Copy the list, omitting the edge at position z.
-            int m = edges[k].length - 1;
-            int ne[] = new int[m];
+            int   m  = edges[k].length - 1;
+            int[] ne = new int[m];
             System.arraycopy(edges[k], 0, ne, 0, z);
             System.arraycopy(edges[k], z+1, ne, z, m-z);
             newedges[k] = ne;
@@ -1278,6 +1278,7 @@ search:
         return new Graph(newedges);
     }
 }
+
 
 
 Note the use of two statement labels, edgelist and search, and the use of break statements. This allows the code that copies a list, omitting one edge, to be shared between two separate tests, the test for an edge from node i to node j, and the test for an edge from node j to node i.
@@ -1320,7 +1321,7 @@ Example 14.16-1. The continue Statement
 In the Graph class in §14.15, one of the break statements is used to finish execution of the entire body of the outermost for loop. This break can be replaced by a continue if the for loop itself is labeled:
 
 class Graph {
-    int edges[][];
+    int[][] edges;
     public Graph(int[][] edges) { this.edges = edges; }
 
     public Graph loseEdges(int i, int j) {
@@ -1347,8 +1348,8 @@ search:
 } //search
 
             // Copy the list, omitting the edge at position z.
-            int m = edges[k].length - 1;
-            int ne[] = new int[m];
+            int   m  = edges[k].length - 1;
+            int[] ne = new int[m];
             System.arraycopy(edges[k], 0, ne, 0, z);
             System.arraycopy(edges[k], z+1, ne, z, m-z);
             newedges[k] = ne;
@@ -1356,6 +1357,7 @@ search:
         return new Graph(newedges);
     }
 }
+
 
 
 Which to use, if either, is largely a matter of programming style.
@@ -1788,7 +1790,7 @@ A try-with-resources statement whose resource specification indicates multiple r
 
 A try-with-resources statement with no catch clauses or finally clause is called a basic try-with-resources statement.
 
-If a basic try-with-resource statement is of the form:
+If a basic try-with-resources statement is of the form:
 
 try (VariableAccess ...)
     Block
@@ -1854,7 +1856,7 @@ If the initialization of the resource completes normally, and the try block comp
 
 If the automatic closing of the resource completes normally, then the try-with-resources statement completes abruptly because of a throw of the value V.
 
-If the automatic closing of the resource completes abruptly because of a throw of a value V2, then the try-with-resources statement completes abruptly because of a throw of value V with V2 added to the suppressed exception list of V.
+If the automatic closing of the resource completes abruptly because of a throw of a value V2, then the try-with-resources statement completes abruptly because of a throw of the value V, with V2 added to the suppressed exception list of V.
 
 If the initialization of the resource completes normally, and the try block completes normally, and the automatic closing of the resource completes abruptly because of a throw of a value V, then the try-with-resources statement completes abruptly because of a throw of the value V.
 
@@ -1864,19 +1866,19 @@ If the initialization of a resource completes abruptly because of a throw of a v
 
 If the automatic closings of all successfully initialized resources (possibly zero) complete normally, then the try-with-resources statement completes abruptly because of a throw of the value V.
 
-If the automatic closings of all successfully initialized resources (possibly zero) complete abruptly because of throws of values V1...Vn, then the try-with-resources statement completes abruptly because of a throw of the value V with any remaining values V1...Vn added to the suppressed exception list of V.
+If the automatic closings of all successfully initialized resources (possibly zero) complete abruptly because of throws of values V1...Vn, then the try-with-resources statement completes abruptly because of a throw of the value V, with any remaining values V1...Vn added to the suppressed exception list of V.
 
 If the initialization of all resources completes normally, and the try block completes abruptly because of a throw of a value V, then:
 
 If the automatic closings of all initialized resources complete normally, then the try-with-resources statement completes abruptly because of a throw of the value V.
 
-If the automatic closings of one or more initialized resources complete abruptly because of throws of values V1...Vn, then the try-with-resources statement completes abruptly because of a throw of the value V with any remaining values V1...Vn added to the suppressed exception list of V.
+If the automatic closings of one or more initialized resources complete abruptly because of throws of values V1...Vn, then the try-with-resources statement completes abruptly because of a throw of the value V, with any remaining values V1...Vn added to the suppressed exception list of V.
 
 If the initialization of every resource completes normally, and the try block completes normally, then:
 
 If one automatic closing of an initialized resource completes abruptly because of a throw of value V, and all other automatic closings of initialized resources complete normally, then the try-with-resources statement completes abruptly because of a throw of the value V.
 
-If more than one automatic closing of an initialized resource completes abruptly because of throws of values V1...Vn, then the try-with-resources statement completes abruptly because of a throw of the value V1 with any remaining values V2...Vn added to the suppressed exception list of V1 (where V1 is the exception from the rightmost resource failing to close and Vn is the exception from the leftmost resource failing to close).
+If more than one automatic closing of an initialized resource completes abruptly because of throws of values V1...Vn (where V1 is the exception from the rightmost resource failing to close and Vn is the exception from the leftmost resource failing to close), then the try-with-resources statement completes abruptly because of a throw of the value V1, with any remaining values V2...Vn added to the suppressed exception list of V1.
 
 14.20.3.2. Extended try-with-resources
 
@@ -1925,17 +1927,17 @@ It can be seen, then, that a yield statement always completes abruptly.
 
 Example 14.21-1. The yield Statement
 
-In the following example, a yield statement is used to produce a value for the enclosing switch expressions.
+In the following example, a yield statement is used to produce a value for the enclosing switch expression.
 
- class Test {
+class Test {
     enum Day {
         MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY,
-	SATURDAY, SUNDAY
+        SATURDAY, SUNDAY
     }
 
     public int calculate(Day d) {
         return switch (d) {
-	    case SATURDAY, SUNDAY -> d.ordinal();
+            case SATURDAY, SUNDAY -> d.ordinal();
             default -> {
                 int len = d.toString().length();
                 yield len*len;

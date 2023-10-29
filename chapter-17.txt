@@ -133,7 +133,7 @@ If a thread is both notified and interrupted while waiting, it may either:
 
 return normally from wait, while still having a pending interrupt (in other words, a call to Thread.interrupted would return true)
 
-return from wait by throwing an InterruptedException
+return from wait by throwing an InterruptedException.
 
 The thread may not reset its interrupt status and return normally from the call to wait.
 

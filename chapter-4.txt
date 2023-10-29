@@ -459,7 +459,7 @@ class Test {
 
         /* An array is implicitly created 
            by an array initializer: */
-        Point a[] = { new Point(0,0), new Point(1,1) };
+        Point[] a = { new Point(0,0), new Point(1,1) };
 
         /* Strings are implicitly created 
            by + operators: */
@@ -468,11 +468,12 @@ class Test {
     
         /* An array is explicitly created
            by an array creation expression: */
-        String sa[] = new String[2];
+        String[] sa = new String[2];
         sa[0] = "he"; sa[1] = "llo";
         System.out.println(sa[0] + sa[1]);
     }
 }
+
 
 
 This program produces the output:
@@ -611,7 +612,7 @@ a single type variable T, or
 
 a class or interface type T possibly followed by interface types I1 & ... & In.
 
-It is a compile-time error if any of the types I1 ... In is a class type or type variable.
+It is a compile-time error if any of the types I1, ..., In is a class type or type variable.
 
 The erasures (§4.6) of all constituent types of a bound must be pairwise different, or a compile-time error occurs.
 
@@ -764,8 +765,8 @@ Wildcards differ in certain details from the constructs described in the aforeme
 
 Example 4.5.1-1. Unbounded Wildcards
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 
 class Test {
     static void printCollection(Collection<?> c) {
@@ -782,6 +783,7 @@ class Test {
         printCollection(cs);
     }
 }
+
 
 
 Note that using Collection<Object> as the type of the incoming parameter, c, would not be nearly as useful; the method could only be used with an argument expression that had type Collection<Object>, which would be quite rare. In contrast, the use of an unbounded wildcard allows any kind of collection to be passed as an argument.
@@ -995,7 +997,10 @@ class Cell<E> {
 
 Example 4.8-2. Raw Types and Inheritance
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+
 class NonGeneric {
     Collection<Number> myNumbers() { return null; }
 }
@@ -1007,14 +1012,18 @@ abstract class RawMembers<T> extends NonGeneric
 
     public static void main(String[] args) {
         RawMembers rw = null;
+        
         Collection<Number> cn = rw.myNumbers();
-                              // OK
-        Iterator<String> is = rw.iterator();
-                            // Unchecked warning
+                                 // OK
+        
+        Iterator<String> is   = rw.iterator();
+                                 // Unchecked warning
+        
         Collection<NonGeneric> cnn = rw.cng;
-                                   // OK, static member
+                                      // OK, static member
     }
 }
+
 
 
 In this program (which is not meant to be run), RawMembers<T> inherits the method:
@@ -1169,9 +1178,9 @@ For example, given List<String> and List<Object>, simply intersecting the sets S
 
 In contrast, intersecting EST(List<String>) = { List, Collection, Object } and EST(List<Object>) = { List, Collection, Object } yields { List, Collection, Object }, which will eventually enable us to produce List<?>.
 
-Let EC, the erased candidate set for U1 ... Uk, be the intersection of all the sets EST(Ui) (1 ≤ i ≤ k).
+Let EC, the erased candidate set for U1, ..., Uk, be the intersection of all the sets EST(Ui) (1 ≤ i ≤ k).
 
-Let MEC, the minimal erased candidate set for U1 ... Uk, be:
+Let MEC, the minimal erased candidate set for U1, ..., Uk, be:
 
 MEC = { V | V in EC, and for all W ≠ V in EC, it is not the case that W <: V }
 
@@ -1219,17 +1228,17 @@ lcta(U) = ? if U's upper bound is Object, otherwise ? extends lub(U,Object)
 
 and where glb() is as defined in §5.1.10.
 
-Let lub(U1 ... Uk) be:
+Let lub(U1, ..., Uk) be:
 
 Best(W1) & ... & Best(Wr)
 
-where Wi (1 ≤ i ≤ r) are the elements of MEC, the minimal erased candidate set of U1 ... Uk;
+where Wi (1 ≤ i ≤ r) are the elements of MEC, the minimal erased candidate set of U1, ..., Uk;
 
 and where, if any of these elements are generic, we use the candidate parameterization (so as to recover type arguments):
 
 Best(X) = Candidate(X) if X is generic; X otherwise.
 
-Strictly speaking, this lub() function only approximates a least upper bound. Formally, there may exist some other type T such that all of U1 ... Uk are subtypes of T and T is a subtype of lub(U1, ..., Uk). However, a compiler for the Java programming language must implement lub() as specified above.
+Strictly speaking, this lub() function only approximates a least upper bound. Formally, there may exist some other type T such that all of U1, ..., Uk are subtypes of T and T is a subtype of lub(U1, ..., Uk). However, a compiler for the Java programming language must implement lub() as specified above.
 
 It is possible that the lub() function yields an infinite type. This is permissible, and a compiler for the Java programming language must recognize such situations and represent them appropriately using cyclic data structures.
 
@@ -1419,9 +1428,9 @@ The fact that the same syntactic location in a program can be both a type contex
 
 Example 4.11-1. Usage of a Type
 
-import java.util.Random;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Random;
 
 class MiscMath<T extends Number> {
     int divisor;
@@ -1451,6 +1460,7 @@ class MiscMath<T extends Number> {
     }
     <S> void loop(S s) { this.<S>loop(s); }  
 }
+
 
 
 In this example, types are used in declarations of the following:
@@ -1757,7 +1767,7 @@ The correspondence between compile-time types and run-time types is incomplete f
 
 At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
 
-See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 17 Edition for more details.
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 18 Edition for more details.
 
 Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile time. Specifically, all compile-time parameterizations of a given generic type (§8.1.2, §9.1.2) share a single run-time representation.
 

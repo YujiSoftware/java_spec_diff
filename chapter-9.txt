@@ -313,7 +313,7 @@ ArrayInitializer
 
 The rules concerning annotation modifiers for an interface field declaration are specified in §9.7.4 and §9.7.5.
 
-Every field declaration in the body of an interface delaration is implicitly public, static, and final. It is permitted to redundantly specify any or all of these modifiers for such fields.
+Every field declaration in the body of an interface declaration is implicitly public, static, and final. It is permitted to redundantly specify any or all of these modifiers for such fields.
 
 It is a compile-time error if the same keyword appears more than once as a modifier for a field declaration.
 
@@ -681,7 +681,7 @@ The following production from §4.3 is shown here for convenience:
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 17.
+By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 18.
 
 By convention, the only modifiers that should be present on the declaration of an annotation interface element are annotations.
 
@@ -933,9 +933,9 @@ Example 9.6.3-2. Restricting Where Annotations May Repeat
 
 An annotation whose interface declaration indicates a target of java.lang.annotation.ElementType.TYPE can appear in at least as many locations as an annotation whose interface declaration indicates a target of java.lang.annotation.ElementType.ANNOTATION_TYPE. For example, given the following declarations of repeatable and containing annotation interfaces:
 
-import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
+import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Repeatable(FooContainer.class)
@@ -945,6 +945,7 @@ import java.lang.annotation.Repeatable;
 @interface FooContainer {
     Foo[] value();
 }
+
 
 
 @Foo can appear on any class or interface declaration while @FooContainer can appear on only annotation interface declarations. Therefore, the following annotation interface declaration is legal:

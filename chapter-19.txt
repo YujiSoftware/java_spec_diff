@@ -586,13 +586,27 @@ ClassOrInterfaceTypeToInstantiate:
 TypeArgumentsOrDiamond:
 TypeArguments
 <>
+ArrayCreationExpression:
+ArrayCreationExpressionWithoutInitializer
+ArrayCreationExpressionWithInitializer
+ArrayCreationExpressionWithoutInitializer:
+new PrimitiveType DimExprs [Dims]
+new ClassOrInterfaceType DimExprs [Dims]
+ArrayCreationExpressionWithInitializer:
+new PrimitiveType Dims ArrayInitializer
+new ClassOrInterfaceType Dims ArrayInitializer
+DimExprs:
+DimExpr {DimExpr}
+DimExpr:
+{Annotation} [ Expression ]
+ArrayAccess:
+ExpressionName [ Expression ]
+PrimaryNoNewArray [ Expression ]
+ArrayCreationExpressionWithInitializer [ Expression ]
 FieldAccess:
 Primary . Identifier
 super . Identifier
 TypeName . super . Identifier
-ArrayAccess:
-ExpressionName [ Expression ]
-PrimaryNoNewArray [ Expression ]
 MethodInvocation:
 MethodName ( [ArgumentList] )
 TypeName . [TypeArguments] Identifier ( [ArgumentList] )
@@ -610,15 +624,6 @@ super :: [TypeArguments] Identifier
 TypeName . super :: [TypeArguments] Identifier
 ClassType :: [TypeArguments] new
 ArrayType :: new
-ArrayCreationExpression:
-new PrimitiveType DimExprs [Dims]
-new ClassOrInterfaceType DimExprs [Dims]
-new PrimitiveType Dims ArrayInitializer
-new ClassOrInterfaceType Dims ArrayInitializer
-DimExprs:
-DimExpr {DimExpr}
-DimExpr:
-{Annotation} [ Expression ]
 Expression:
 LambdaExpression
 AssignmentExpression

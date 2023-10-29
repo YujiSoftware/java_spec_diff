@@ -207,7 +207,8 @@ A Java compiler is encouraged to issue a warning if a catch clause can catch che
 
 Example 11.2.3-1. Catching Checked Exceptions
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 class StaticallyThrownExceptionsIncludeSubtypes {
     public static void main(String[] args) {
@@ -253,6 +254,7 @@ class StaticallyThrownExceptionsIncludeSubtypes {
         throw new FileNotFoundException();
     }
 }
+
 
 
 
