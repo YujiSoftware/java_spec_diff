@@ -61,9 +61,11 @@ Note that a subclass of Throwable cannot be generic (§8.1.2).
 
 11.1.2. The Causes of Exceptions
 
-An exception is thrown for one of three reasons:
+An exception is thrown for one of four reasons:
 
 A throw statement (§14.18) was executed.
+
+An enabled assert statement was executed, and evaluation of its boolean expression evaluated to false (§14.10).
 
 An abnormal execution condition was synchronously detected by the Java Virtual Machine, namely:
 
@@ -81,13 +83,7 @@ An asynchronous exception occurred (§11.1.3).
 
 Most exceptions occur synchronously as a result of an action by the thread in which they occur, and at a point in the program that is specified to possibly result in such an exception. An asynchronous exception is, by contrast, an exception that can potentially occur at any point in the execution of a program.
 
-Asynchronous exceptions occur only as a result of:
-
-An invocation of the (deprecated) stop method of class Thread or ThreadGroup.
-
-The (deprecated) stop methods may be invoked by one thread to affect another thread or all the threads in a specified thread group. They are asynchronous because they may occur at any point in the execution of the other thread or threads.
-
-An internal error or resource limitation in the Java Virtual Machine that prevents it from implementing the semantics of the Java programming language. In this case, the asynchronous exception that is thrown is an instance of a subclass of VirtualMachineError.
+Asynchronous exceptions occur only as a result of an internal error or resource limitation in the Java Virtual Machine that prevents it from implementing the semantics of the Java programming language. The asynchronous exception that is thrown is an instance of a subclass of VirtualMachineError.
 
 Note that StackOverflowError, a subclass of VirtualMachineError, may be thrown synchronously by method invocation (§15.12.4.5) as well as asynchronously due to native method execution or Java Virtual Machine resource limitations. Similarly, OutOfMemoryError, another subclass of VirtualMachineError, may be thrown synchronously during class instance creation (§15.9.4, §12.5), array creation (§15.10.2, §10.6), class initialization (§12.4.2), and boxing conversion (§5.1.7), as well as asynchronously.
 

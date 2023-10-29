@@ -34,7 +34,7 @@ The chapter continues with a specification of the procedures for creation of new
 
 The Java Virtual Machine starts execution by invoking the method main of some specified class or interface, passing it a single argument which is an array of strings. In the examples in this specification, this first class is typically called Test.
 
-The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 19 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 20 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 The manner in which the initial class or interface is specified to the Java Virtual Machine is beyond the scope of this specification, but it is typical, in host environments that use command lines, for the fully qualified name of the class or interface to be specified as a command line argument and for following command line arguments to be used as strings to be provided as the argument to the method main.
 
@@ -99,9 +99,9 @@ public static void main(String... args)
 
 Loading refers to the process of finding the binary form of a class or interface with a particular name, perhaps by computing it on the fly, but more typically by retrieving a binary representation previously computed from source code by a Java compiler, and constructing, from that binary form, a Class object to represent the class or interface (§1.4).
 
-The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 19 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 20 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
-The binary representation of a class or interface is normally the class file format described in Chapter 4 of The Java Virtual Machine Specification, Java SE 19 Edition, but other representations are possible, provided they meet the requirements specified in §13.1.
+The binary representation of a class or interface is normally the class file format described in Chapter 4 of The Java Virtual Machine Specification, Java SE 20 Edition, but other representations are possible, provided they meet the requirements specified in §13.1.
 
 12.2.1. The Loading Process
 
@@ -129,13 +129,13 @@ If a class loader L1 delegates loading of a class or interface C to another load
 
 A malicious class loader could violate these properties. However, it could not undermine the security of the type system, because the Java Virtual Machine guards against this.
 
-For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 19 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
+For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 20 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
 
 12.3. Linking of Classes and Interfaces
 
 Linking is the process of taking a binary form of a class or interface and combining it into the run-time state of the Java Virtual Machine, so that it can be executed. A class or interface is always loaded before it is linked.
 
-The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 19 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 20 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 Three different activities are involved in linking: verification, preparation, and resolution of symbolic references.
 
@@ -469,7 +469,7 @@ This shows that the invocation of printThree in the constructor for class Super 
 
 12.6. Finalization of Class Instances
 
-As of Java SE 19, the Java SE Platform Specification allows finalization of class instances to be disabled in an implementation of the Java SE Platform, in anticipation of the removal of finalization from a future release of the Java SE Platform.
+As of Java SE 20, the Java SE Platform Specification allows finalization of class instances to be disabled in an implementation of the Java SE Platform, in anticipation of the removal of finalization from a future release of the Java SE Platform.
 
 The class Object has a protected method called finalize; this method can be overridden by other classes. The particular definition of finalize that can be invoked for an object is called the finalizer of that object. Before the storage for an object is reclaimed by the garbage collector, the Java Virtual Machine will invoke the finalizer of that object.
 
@@ -625,8 +625,32 @@ Strictly speaking, it is not essential that the issue of class unloading be disc
 
 12.8. Program Exit
 
-A program terminates all its activity and exits when one of two things happens:
+A program consists of one or more threads of execution. A thread is either a non-daemon thread, a daemon thread, or a shutdown hook.
 
-All the threads that are not daemon threads terminate.
+Readers are referred to the API specifications of Thread and Runtime for details of how threads obtain daemon status, and how shutdown hooks are registered.
 
-Some thread invokes the exit method of class Runtime or class System, and the exit operation is not forbidden by the security manager.
+A thread terminates if either (i) its run method completes normally, or (ii) its run method completes abruptly and the relevant uncaught exception handler (§11.3) completes normally or abruptly. With no code left to run, the thread has completed execution and therefore has no current method (JVMS §2.5.1).
+
+A program exits when one of the following situations has occurred:
+
+All of its non-daemon threads have terminated, and all of the shutdown hooks which consequently were started by the Java Virtual Machine, if any, have terminated.
+
+A thread invoked System.exit or Runtime.exit, and all of the shutdown hooks which consequently were started by the Java Virtual Machine, if any, have terminated.
+
+A thread invoked Runtime.halt. (No shutdown hooks are started in this situation.)
+
+The Java Virtual Machine implementation recognized an external event as requesting termination of the Java Virtual Machine, and all of the shutdown hooks which consequently were started by the Java Virtual Machine, if any, have terminated.
+
+The nature of the event is outside the scope of this specification, but is necessarily something that a Java Virtual Machine implementation can handle reliably. An example is receiving a signal from the operating system.
+
+An external event occurred that the Java Virtual Machine implementation cannot handle. (No shutdown hooks are started in this situation.)
+
+The nature of the event is outside the scope of this specification, but is necessarily something that a Java Virtual Machine implementation cannot recognize or recover from in any way. Examples include a fatal error occurring in the process running the implementation, or power being removed from the computer running the implementation.
+
+Upon program exit, any daemon or non-daemon thread that has not yet terminated will execute no further Java code. The current method of the thread does not complete normally or abruptly. No finally clause of any method in the thread is executed, nor any uncaught exception handler.
+
+If program exit occurs because a thread invoked Runtime.halt while shutdown hooks were running, then, in addition to daemon and non-daemon threads, any shutdown hook that has not yet terminated will execute no further Java code.
+
+Except for this unusual situation involving Runtime.halt, program exit depends on the termination of any shutdown hooks which were started. The rationale is as follows. When the number of non-daemon threads drops to zero or a thread invokes System.exit or Runtime.exit, it is likely that the program has no more work to do and is transitioning toward exit; however, the program may still have other threads that are performing ancillary tasks, and it would be undesirable to stop them in their tracks. Shutdown hooks let the program gracefully interrupt and bring down such threads in an application-specific manner; accordingly, the program has not yet exited if shutdown hooks are still running.
+
+Native applications can use the JNI Invocation API to create and destroy the Java Virtual Machine in such a way that a Java program, having started execution in the main method of an initial class (§12.1), exits as described in the first situation above.

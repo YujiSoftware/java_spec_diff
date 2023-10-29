@@ -921,15 +921,15 @@ We use the phrase the type of a member to denote:
 
 For a field, its type.
 
-For a method, an ordered 4-tuple consisting of:
+For a method, an ordered 4-tuple (known as a method type) consisting of:
 
-type parameters: the declarations of any type parameters of the method member.
+type parameters: the declarations of any type parameters of the method member (§8.4.4).
 
-argument types: a list of the types of the arguments to the method member.
+parameter types: a list of the types of the formal parameters of the method member (§8.4.1).
 
-return type: the return type of the method member.
+return type: the return type of the method member (§8.4.5).
 
-throws clause: exception types declared in the throws clause of the method member.
+throws clause: exception types declared in the throws clause of the method member (§8.4.6).
 
 Fields, methods, member classes, and member interfaces of a class may have the same name, since they are used in different contexts and are disambiguated by different lookup procedures (§6.5). However, this is discouraged as a matter of style.
 

@@ -681,7 +681,7 @@ The following production from §4.3 is shown here for convenience:
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 19.
+By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 20.
 
 By convention, the only modifiers that should be present on the declaration of an annotation interface element are annotations.
 
@@ -1508,7 +1508,7 @@ If the annotation's interface is applicable in the declaration context correspon
 
 In the second and third cases above, the type which is closest to the annotation is determined as follows:
 
-If the annotation appears before a void method declaration or a local variable declaration that uses var (§14.4), then there is no closest type. If the annotation's interface is deemed to apply only to the type which is closest to the annotation, a compile-time error occurs.
+If the annotation appears before a void method declaration or a variable declaration that uses var (§14.4, §15.27.1), then there is no closest type. If the annotation's interface is deemed to apply only to the type which is closest to the annotation, a compile-time error occurs.
 
 If the annotation appears before a constructor declaration, then the closest type is the type of the newly constructed object. The type of the newly constructed object is the fully qualified name of the type immediately enclosing the constructor declaration. Within that fully qualified name, the annotation applies to the simple type name indicated by the constructor declaration.
 
