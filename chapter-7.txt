@@ -1,0 +1,572 @@
+Chapter 7. Packages
+
+Table of Contents
+
+7.1. Package Members
+7.2. Host Support for Packages
+7.3. Compilation Units
+7.4. Package Declarations
+7.4.1. Named Packages
+7.4.2. Unnamed Packages
+7.4.3. Observability of a Package
+7.5. Import Declarations
+7.5.1. Single-Type-Import Declarations
+7.5.2. Type-Import-on-Demand Declarations
+7.5.3. Single-Static-Import Declarations
+7.5.4. Static-Import-on-Demand Declarations
+7.6. Top Level Type Declarations
+
+Programs are organized as sets of packages. Each package has its own set of names for types, which helps to prevent name conflicts.
+
+A top level type is accessible (§6.6) outside the package that declares it only if the type is declared public.
+
+The naming structure for packages is hierarchical (§7.1). The members of a package are class and interface types (§7.6), which are declared in compilation units of the package, and subpackages, which may contain compilation units and subpackages of their own.
+
+A package can be stored in a file system or in a database (§7.2). Packages that are stored in a file system may have certain constraints on the organization of their compilation units to allow a simple implementation to find classes easily.
+
+A package consists of a number of compilation units (§7.3). A compilation unit automatically has access to all types declared in its package and also automatically imports all of the public types declared in the predefined package java.lang.
+
+For small programs and casual development, a package can be unnamed (§7.4.2) or have a simple name, but if code is to be widely distributed, unique package names should be chosen using qualified names. This can prevent the conflicts that would otherwise occur if two development groups happened to pick the same package name and these packages were later to be used in a single program.
+
+7.1. Package Members
+
+The members of a package are its subpackages and all the top level class types (§7.6, §8) and top level interface types (§9) declared in all the compilation units (§7.3) of the package.
+
+For example, in the Java SE platform API:
+
+The package java has subpackages awt, applet, io, lang, net, and util, but no compilation units.
+
+The package java.awt has a subpackage named image, as well as a number of compilation units containing declarations of class and interface types.
+
+If the fully qualified name (§6.7) of a package is P, and Q is a subpackage of P, then P.Q is the fully qualified name of the subpackage, and furthermore denotes a package.
+
+A package may not contain two members of the same name, or a compile-time error results.
+
+Here are some examples:
+
+Because the package java.awt has a subpackage image, it cannot (and does not) contain a declaration of a class or interface type named image.
+
+If there is a package named mouse and a member type Button in that package (which then might be referred to as mouse.Button), then there cannot be any package with the fully qualified name mouse.Button or mouse.Button.Click.
+
+If com.nighthacks.java.jag is the fully qualified name of a type, then there cannot be any package whose fully qualified name is either com.nighthacks.java.jag or com.nighthacks.java.jag.scrabble.
+
+It is however possible for members of different packages to have the same simple name. For example, it is possible to declare a package:
+
+
+package vector;
+public class Vector { Object[] vec; }
+
+
+
+that has as a member a public class named Vector, even though the package java.util also declares a class named Vector. These two class types are different, reflected by the fact that they have different fully qualified names (§6.7). The fully qualified name of this example Vector is vector.Vector, whereas java.util.Vector is the fully qualified name of the Vector class included in the Java SE platform. Because the package vector contains a class named Vector, it cannot also have a subpackage named Vector.
+
+The hierarchical naming structure for packages is intended to be convenient for organizing related packages in a conventional manner, but has no significance in itself other than the prohibition against a package having a subpackage with the same simple name as a top level type (§7.6) declared in that package.
+
+For example, there is no special access relationship between a package named oliver and another package named oliver.twist, or between packages named evelyn.wood and evelyn.waugh. That is, the code in a package named oliver.twist has no better access to the types declared within package oliver than code in any other package.
+
+7.2. Host Support for Packages
+
+Each host system determines how packages and compilation units are created and stored.
+
+Each host system also determines which compilation units are observable (§7.3) in a particular compilation. The observability of compilation units in turn determines which packages are observable, and which packages are in scope.
+
+In simple implementations of the Java SE platform, packages and compilation units may be stored in a local file system. Other implementations may store them using a distributed file system or some form of database.
+
+If a host system stores packages and compilation units in a database, then the database must not impose the optional restrictions (§7.6) on compilation units permissible in file-based implementations.
+
+For example, a system that uses a database to store packages may not enforce a maximum of one public class or interface per compilation unit.
+
+Systems that use a database must, however, provide an option to convert a program to a form that obeys the restrictions, for purposes of export to file-based implementations.
+
+As an extremely simple example of storing packages in a file system, all the packages and source and binary code in a project might be stored in a single directory and its subdirectories. Each immediate subdirectory of this directory would represent a top level package, that is, one whose fully qualified name consists of a single simple name. Each further level of subdirectory would represent a subpackage of the package represented by the containing directory, and so on.
+
+The directory might contain the following immediate subdirectories:
+
+com
+gls
+jag
+java
+wnj
+
+
+where directory java would contain the Java SE platform packages; the directories jag, gls, and wnj might contain packages that three of the authors of this specification created for their personal use and to share with each other within this small group; and the directory com would contain packages procured from companies that used the conventions described in §6.1 to generate unique names for their packages.
+
+Continuing the example, the directory java would contain, among others, the following subdirectories:
+
+applet
+awt
+io
+lang
+net
+util
+
+
+corresponding to the packages java.applet, java.awt, java.io, java.lang, java.net, and java.util that are defined as part of the Java SE platform API.
+
+Still continuing the example, if we were to look inside the directory util, we might see the following files:
+
+BitSet.java        Observable.java
+BitSet.class       Observable.class
+Date.java          Observer.java
+Date.class         Observer.class
+...
+
+
+where each of the .java files contains the source for a compilation unit (§7.3) that contains the definition of a class or interface whose binary compiled form is contained in the corresponding .class file.
+
+Under this simple organization of packages, an implementation of the Java SE platform would transform a package name into a pathname by concatenating the components of the package name, placing a file name separator (directory indicator) between adjacent components.
+
+For example, if this simple organization were used on an operating system where the file name separator is /, the package name:
+
+jag.scrabble.board
+
+
+would be transformed into the directory name:
+
+jag/scrabble/board
+
+
+A package name component or class name might contain a character that cannot correctly appear in a host file system's ordinary directory name, such as a Unicode character on a system that allows only ASCII characters in file names. As a convention, the character can be escaped by using, say, the @ character followed by four hexadecimal digits giving the numeric value of the character, as in the \uxxxx escape (§3.3).
+
+Under this convention, the package name:
+
+children.activities.crafts.papierM\u00e2ch\u00e9
+
+
+which can also be written using full Unicode as:
+
+children.activities.crafts.papierMâché
+
+
+might be mapped to the directory name:
+
+children/activities/crafts/papierM@00e2ch@00e9
+
+
+If the @ character is not a valid character in a file name for some given host file system, then some other character that is not valid in a identifier could be used instead.
+
+7.3. Compilation Units
+
+CompilationUnit is the goal symbol (§2.1) for the syntactic grammar (§2.3) of Java programs. It is defined by the following productions:
+
+
+CompilationUnit:
+    PackageDeclarationopt ImportDeclarationsopt TypeDeclarationsopt
+
+ImportDeclarations:
+    ImportDeclaration
+    ImportDeclarations ImportDeclaration
+
+TypeDeclarations:
+    TypeDeclaration
+    TypeDeclarations TypeDeclaration
+
+
+A compilation unit consists of three parts, each of which is optional:
+
+A package declaration (§7.4), giving the fully qualified name (§6.7) of the package to which the compilation unit belongs.
+
+A compilation unit that has no package declaration is part of an unnamed package (§7.4.2).
+
+import declarations (§7.5) that allow types from other packages and static members of types to be referred to using their simple names.
+
+Top level type declarations (§7.6) of class and interface types.
+
+Every compilation unit implicitly imports every public type name declared in the predefined package java.lang, as if the declaration import java.lang.*; appeared at the beginning of each compilation unit immediately after any package statement. As a result, the names of all those types are available as simple names in every compilation unit.
+
+All the compilation units of the predefined package java and its subpackages lang and io are always observable.
+
+For all other packages, the host system determines which compilation units are observable.
+
+The observability of a compilation unit influences the observability of its package (§7.4.3).
+
+Types declared in different compilation units can depend on each other, circularly. A Java compiler must arrange to compile all such types at the same time.
+
+7.4. Package Declarations
+
+A package declaration appears within a compilation unit to indicate the package to which the compilation unit belongs.
+
+7.4.1. Named Packages
+
+A package declaration in a compilation unit specifies the name (§6.2) of the package to which the compilation unit belongs.
+
+
+PackageDeclaration:
+    Annotationsopt package PackageName ;
+
+
+The package name mentioned in a package declaration must be the fully qualified name (§6.7) of the package.
+
+The PackageName in a package declaration ensures there is an observable package with the supplied canonical name, and that it is not subject to the rules in §6.5.3 for determining the meaning of a package name.
+
+The scope and shadowing of a package declaration is specified in §6.3 and §6.4.
+
+The keyword package may optionally be preceded by annotation modifiers. If an annotation a (§9.7) on a package declaration corresponds to an annotation type T (§9.6), and T has a (meta-)annotation m that corresponds to java.lang.annotation.Target, then m must have an element whose value is java.lang.annotation.ElementType.PACKAGE, or a compile-time error occurs.
+
+At most one annotated package declaration is permitted for a given package.
+
+The manner in which this restriction is enforced must, of necessity, vary from implementation to implementation. The following scheme is strongly recommended for file-system-based implementations: The sole annotated package declaration, if it exists, is placed in a source file called package-info.java in the directory containing the source files for the package. This file does not contain the source for a class called package-info.java; indeed it would be illegal for it to do so, as package-info is not a legal identifier. Typically package-info.java contains only a package declaration, preceded immediately by the annotations on the package. While the file could technically contain the source code for one or more package-private (default-access) classes, it would be very bad form.
+
+It is recommended that package-info.java, if it is present, take the place of package.html for javadoc and other similar documentation generation systems. If this file is present, the documentation generation tool should look for the package documentation comment immediately preceding the (possibly annotated) package declaration in package-info.java. In this way, package-info.java becomes the sole repository for package-level annotations and documentation. If, in future, it becomes desirable to add any other package-level information, this file should prove a convenient home for this information.
+
+7.4.2. Unnamed Packages
+
+A compilation unit that has no package declaration is part of an unnamed package.
+
+Unnamed packages are provided by the Java SE platform principally for convenience when developing small or temporary applications or when just beginning development.
+
+Note that an unnamed package cannot have subpackages, since the syntax of a package declaration always includes a reference to a named top level package.
+
+As an example, the compilation unit:
+
+class FirstCall {
+    public static void main(String[] args) {
+        System.out.println("Mr. Watson, come here. "
+                           + "I want you.");
+    }
+}
+
+
+defines a very simple compilation unit as part of an unnamed package.
+
+An implementation of the Java SE platform must support at least one unnamed package; it may support more than one unnamed package but is not required to do so. Which compilation units are in each unnamed package is determined by the host system.
+
+In implementations of the Java SE platform that use a hierarchical file system for storing packages, one typical strategy is to associate an unnamed package with each directory; only one unnamed package is observable at a time, namely the one that is associated with the "current working directory". The precise meaning of "current working directory" depends on the host system.
+
+7.4.3. Observability of a Package
+
+A package is observable if and only if either:
+
+A compilation unit containing a declaration of the package is observable (§7.3).
+
+A subpackage of the package is observable.
+
+The packages java, java.lang, and java.io are always observable.
+
+One can conclude this from the rule above and from the rules of observable compilation units, as follows. The predefined package java.lang declares the class Object, so the compilation unit for Object is always observable (§7.3). Hence, the java.lang package is observable (§7.4.3), and the java package also. Furthermore, since Object is observable, the array type Object[] implicitly exists. Its superinterface java.io.Serializable (§10.1) also exists, hence the java.io package is observable.
+
+7.5. Import Declarations
+
+An import declaration allows a named type or a static member to be referred to by a simple name (§6.2) that consists of a single identifier.
+
+Without the use of an appropriate import declaration, the only way to refer to a type declared in another package, or a static member of another type, is to use a fully qualified name (§6.7).
+
+
+ImportDeclaration:
+    SingleTypeImportDeclaration
+    TypeImportOnDemandDeclaration
+    SingleStaticImportDeclaration
+    StaticImportOnDemandDeclaration
+
+
+A single-type-import declaration (§7.5.1) imports a single named type, by mentioning its canonical name (§6.7).
+
+A type-import-on-demand declaration (§7.5.2) imports all the accessible types (§6.6) of a named type or named package as needed, by mentioning the canonical name of a type or package.
+
+A single-static-import declaration (§7.5.3) imports all accessible static members with a given name from a type, by giving its canonical name.
+
+A static-import-on-demand declaration (§7.5.4) imports all accessible static members of a named type as needed, by mentioning the canonical name of a type.
+
+The scope and shadowing of a type or member imported by these declarations is specified in §6.3 and §6.4.
+
+An import declaration makes types or members available by their simple names only within the compilation unit that actually contains the import declaration. The scope of the type(s) or member(s) introduced by an import declaration specifically does not include the PackageName of a package declaration, other import declarations in the current compilation unit, or other compilation units in the same package.
+
+A type in an unnamed package (§7.4.2) has no canonical name, so the requirement for a canonical name in every kind of import declaration implies that (a) types in an unnamed package cannot be imported, and (b) static members of types in an unnamed package cannot be imported. As such, §7.5.1, §7.5.2, §7.5.3, and §7.5.4 all require a compile-time error on any attempt to import a type (or static member thereof) in an unnamed package.
+
+7.5.1. Single-Type-Import Declarations
+
+A single-type-import declaration imports a single type by giving its canonical name, making it available under a simple name in the class and interface declarations of the compilation unit in which the single-type-import declaration appears.
+
+
+SingleTypeImportDeclaration:
+    import TypeName ;
+
+
+The TypeName must be the canonical name (§6.7) of a class type, interface type, enum type, or annotation type.
+
+It is a compile-time error if the named type is not accessible (§6.6).
+
+Example 7.5.1-1. Single-Type-Import
+
+
+import java.util.Vector;
+
+
+
+causes the simple name Vector to be available within the class and interface declarations in a compilation unit. Thus, the simple name Vector refers to the type declaration Vector in the package java.util in all places where it is not shadowed (§6.4.1) or obscured (§6.4.2) by a declaration of a field, parameter, local variable, or nested type declaration with the same name.
+
+Note that java.util.Vector is declared as a generic type (§8.1.2). Once imported, the name Vector can be used without qualification in a parameterized type such as Vector<String>, or as the raw type Vector. This highlights a limitation of the import declaration: a type nested inside a generic type declaration can be imported, but its outer type is always erased.
+
+
+
+
+If two single-type-import declarations in the same compilation unit attempt to import types with the same simple name, then a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
+
+If the type imported by the single-type-import declaration is declared in the compilation unit that contains the import declaration, the import declaration is ignored.
+
+If a single-type-import declaration imports a type whose simple name is n, and the compilation unit also declares a top level type (§7.6) whose simple name is n, a compile-time error occurs.
+
+If a compilation unit contains both a single-type-import declaration that imports a type whose simple name is n, and a single-static-import declaration (§7.5.3) that imports a type whose simple name is n, a compile-time error occurs.
+
+Example 7.5.1-2. Duplicate Type Declarations
+
+This program:
+
+
+import java.util.Vector;
+class Vector { Object[] vec; }
+
+
+
+causes a compile-time error because of the duplicate declaration of Vector, as does:
+
+
+import java.util.Vector;
+import myVector.Vector;
+
+
+
+where myVector is a package containing the compilation unit:
+
+
+package myVector;
+public class Vector { Object[] vec; }
+
+
+
+
+
+Example 7.5.1-3. No Import of a Subpackage
+
+Note that an import statement cannot import a subpackage, only a type.
+
+For example, it does not work to try to import java.util and then use the name util.Random to refer to the type java.util.Random:
+
+
+import java.util;
+class Test { util.Random generator; }
+  // incorrect: compile-time error
+
+
+
+
+
+Example 7.5.1-4. Importing a Type Name that is also a Package Name
+
+Package names and type names are usually different under the naming conventions described in §6.1. Nevertheless, in a contrived example where there is an unconventionally-named package Vector, which declares a public class whose name is Mosquito:
+
+package Vector;
+public class Mosquito { int capacity; }
+
+
+and then the compilation unit:
+
+package strange;
+import java.util.Vector;
+import Vector.Mosquito;
+class Test {
+    public static void main(String[] args) {
+        System.out.println(new Vector().getClass());
+        System.out.println(new Mosquito().getClass());
+    }
+}
+
+
+the single-type-import declaration importing class Vector from package java.util does not prevent the package name Vector from appearing and being correctly recognized in subsequent import declarations. The example compiles and produces the output:
+
+class java.util.Vector
+class Vector.Mosquito
+
+
+
+7.5.2. Type-Import-on-Demand Declarations
+
+A type-import-on-demand declaration allows all accessible types of a named package or type to be imported as needed.
+
+
+TypeImportOnDemandDeclaration:
+    import PackageOrTypeName . * ;
+
+
+The PackageOrTypeName must be the canonical name (§6.7) of a package, a class type, an interface type, an enum type, or an annotation type.
+
+It is a compile-time error if the named package or type is not accessible (§6.6).
+
+It is not a compile-time error to name the current package or java.lang in a type-import-on-demand declaration. The type-import-on-demand declaration is ignored in such cases.
+
+Example 7.5.2-1. Type-Import-on-Demand
+
+
+import java.util.*;
+
+
+
+causes the simple names of all public types declared in the package java.util to be available within the class and interface declarations of the compilation unit. Thus, the simple name Vector refers to the type Vector in the package java.util in all places in the compilation unit where that type declaration is not shadowed (§6.4.1) or obscured (§6.4.2).
+
+The declaration might be shadowed by a single-type-import declaration of a type whose simple name is Vector; by a type named Vector and declared in the package to which the compilation unit belongs; or any nested classes or interfaces.
+
+The declaration might be obscured by a declaration of a field, parameter, or local variable named Vector.
+
+(It would be unusual for any of these conditions to occur.)
+
+
+
+
+Two or more type-import-on-demand declarations in the same compilation unit may name the same type or package. All but one of these declarations are considered redundant; the effect is as if that type was imported only once.
+
+If a compilation unit contains both a type-import-on-demand declaration and a static-import-on-demand declaration (§7.5.4) that name the same type, the effect is as if the static member types of that type (§8.5, §9.5) were imported only once.
+
+7.5.3. Single-Static-Import Declarations
+
+A single-static-import declaration imports all accessible static members with a given simple name from a type. This makes these static members available under their simple name in the class and interface declarations of the compilation unit in which the single-static-import declaration appears.
+
+
+SingleStaticImportDeclaration:
+    import static TypeName . Identifier ;
+
+
+The TypeName must be the canonical name (§6.7) of a class type, interface type, enum type, or annotation type.
+
+It is a compile-time error if the named type is not accessible (§6.6).
+
+The Identifier must name at least one static member of the named type. It is a compile-time error if there is no static member of that name, or if all of the named members are not accessible.
+
+It is permissible for one single-static-import declaration to import several fields or types with the same name, or several methods with the same name and signature.
+
+If a single-static-import declaration imports a type whose simple name is n, and the compilation unit also declares a top level type (§7.6) whose simple name is n, a compile-time error occurs.
+
+If a compilation unit contains both a single-static-import declaration that imports a type whose simple name is n, and a single-type-import declaration (§7.5.1) that imports a type whose simple name is n, a compile-time error occurs.
+
+7.5.4. Static-Import-on-Demand Declarations
+
+A static-import-on-demand declaration allows all accessible static members of a named type to be imported as needed.
+
+
+StaticImportOnDemandDeclaration:
+    import static TypeName . * ;
+
+
+The TypeName must be the canonical name (§6.7) of a class type, interface type, enum type, or annotation type.
+
+It is a compile-time error if the named type is not accessible (§6.6).
+
+Two or more static-import-on-demand declarations in the same compilation unit may name the same type; the effect is as if there was exactly one such declaration.
+
+Two or more static-import-on-demand declarations in the same compilation unit may name the same member; the effect is as if the member was imported exactly once.
+
+It is permissible for one static-import-on-demand declaration to import several fields or types with the same name, or several methods with the same name and signature.
+
+If a compilation unit contains both a static-import-on-demand declaration and a type-import-on-demand declaration (§7.5.2) that name the same type, the effect is as if the static member types of that type (§8.5, §9.5) were imported only once.
+
+7.6. Top Level Type Declarations
+
+A top level type declaration declares a top level class type (§8) or a top level interface type (§9).
+
+
+TypeDeclaration:
+    ClassDeclaration
+    InterfaceDeclaration
+    ;
+
+
+By default, the top level types declared in a package are accessible only within the compilation units of that package, but a type may be declared to be public to grant access to the type from code in other packages (§6.6, §8.1.1, §9.1.1).
+
+It is a compile-time error if a top level type declaration contains any one of the following access modifiers: protected, private, or static.
+
+It is a compile-time error if the name of a top level type appears as the name of any other top level class or interface type declared in the same package.
+
+It is a compile-time error if the name of a top level type is also declared as a type by a single-type-import declaration (§7.5.1) in the compilation unit containing the type declaration.
+
+Example 7.6-1. Conflicting Top Level Type Declarations
+
+package test;
+import java.util.Vector;
+class Point {
+    int x, y;
+}
+interface Point {  // compile-time error #1
+    int getR();
+    int getTheta();
+}
+class Vector { Point[] pts; }  // compile-time error #2
+
+
+Here, the first compile-time error is caused by the duplicate declaration of the name Point as both a class and an interface in the same package. A second compile-time error is the attempt to declare the name Vector both by a class type declaration and by a single-type-import declaration.
+
+Note, however, that it is not an error for the name of a class to also name a type that otherwise might be imported by a type-import-on-demand declaration (§7.5.2) in the compilation unit (§7.3) containing the class declaration. Thus, in this program:
+
+package test;
+import java.util.*;
+class Vector {}  // not a compile-time error
+
+
+the declaration of the class Vector is permitted even though there is also a class java.util.Vector. Within this compilation unit, the simple name Vector refers to the class test.Vector, not to java.util.Vector (which can still be referred to by code within the compilation unit, but only by its fully qualified name).
+
+
+
+
+Example 7.6-2. Scope of Top Level Types
+
+package points;
+class Point {
+    int x, y;           // coordinates
+    PointColor color;   // color of this point
+    Point next;         // next point with this color
+    static int nPoints;
+}
+class PointColor {
+    Point first;        // first point with this color
+    PointColor(int color) { this.color = color; }
+    private int color;  // color components
+}
+
+
+This program defines two classes that use each other in the declarations of their class members. Because the class types Point and PointColor have all the type declarations in package points, including all those in the current compilation unit, as their scope, this program compiles correctly. That is, forward reference is not a problem.
+
+
+
+
+The scope and shadowing of a top level type is specified in §6.3 and §6.4.
+
+The fully qualified name of a top level type is specified in §6.7.
+
+Example 7.6-3. Fully Qualified Names
+
+
+class Point { int x, y; }
+
+
+
+In this code, the class Point is declared in a compilation unit with no package statement, and thus Point is its fully qualified name, whereas in the code:
+
+
+package vista;
+class Point { int x, y; }
+
+
+
+the fully qualified name of the class Point is vista.Point. (The package name vista is suitable for local or personal use; if the package were intended to be widely distributed, it would be better to give it a unique package name (§6.1).)
+
+
+
+
+An implementation of the Java SE platform must keep track of types within packages by their binary names (§13.1). Multiple ways of naming a type must be expanded to binary names to make sure that such names are understood as referring to the same type.
+
+For example, if a compilation unit contains the single-type-import declaration (§7.5.1):
+
+
+import java.util.Vector;
+
+
+
+then within that compilation unit the simple name Vector and the fully qualified name java.util.Vector refer to the same type.
+
+If and only if packages are stored in a file system (§7.2), the host system may choose to enforce the restriction that it is a compile-time error if a type is not found in a file under a name composed of the type name plus an extension (such as .java or .jav) if either of the following is true:
+
+The type is referred to by code in other compilation units of the package in which the type is declared.
+
+The type is declared public (and therefore is potentially accessible from code in other packages).
+
+This restriction implies that there must be at most one such type per compilation unit. This restriction makes it easy for a Java compiler to find a named class within a package. In practice, many programmers choose to put each class or interface type in its own compilation unit, whether or not it is public or is referred to by code in other compilation units.
+
+For example, the source code for a public type wet.sprocket.Toad would be found in a file Toad.java in the directory wet/sprocket, and the corresponding object code would be found in the file Toad.class in the same directory.

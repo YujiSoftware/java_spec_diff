@@ -1,0 +1,1551 @@
+Chapter 4. Types, Values, and Variables
+
+Table of Contents
+
+4.1. The Kinds of Types and Values
+4.2. Primitive Types and Values
+4.2.1. Integral Types and Values
+4.2.2. Integer Operations
+4.2.3. Floating-Point Types, Formats, and Values
+4.2.4. Floating-Point Operations
+4.2.5. The boolean Type and boolean Values
+4.3. Reference Types and Values
+4.3.1. Objects
+4.3.2. The Class Object
+4.3.3. The Class String
+4.3.4. When Reference Types Are the Same
+4.4. Type Variables
+4.5. Parameterized Types
+4.5.1. Type Arguments and Wildcards
+4.5.2. Members and Constructors of Parameterized Types
+4.6. Type Erasure
+4.7. Reifiable Types
+4.8. Raw Types
+4.9. Intersection Types
+4.10. Subtyping
+4.10.1. Subtyping among Primitive Types
+4.10.2. Subtyping among Class and Interface Types
+4.10.3. Subtyping among Array Types
+4.11. Where Types Are Used
+4.12. Variables
+4.12.1. Variables of Primitive Type
+4.12.2. Variables of Reference Type
+4.12.3. Kinds of Variables
+4.12.4. final Variables
+4.12.5. Initial Values of Variables
+4.12.6. Types, Classes, and Interfaces
+
+The Java programming language is a statically typed language, which means that every variable and every expression has a type that is known at compile time.
+
+The Java programming language is also a strongly typed language, because types limit the values that a variable (§4.12) can hold or that an expression can produce, limit the operations supported on those values, and determine the meaning of the operations. Strong static typing helps detect errors at compile time.
+
+The types of the Java programming language are divided into two categories: primitive types and reference types. The primitive types (§4.2) are the boolean type and the numeric types. The numeric types are the integral types byte, short, int, long, and char, and the floating-point types float and double. The reference types (§4.3) are class types, interface types, and array types. There is also a special null type. An object (§4.3.1) is a dynamically created instance of a class type or a dynamically created array. The values of a reference type are references to objects. All objects, including arrays, support the methods of class Object (§4.3.2). String literals are represented by String objects (§4.3.3).
+
+4.1. The Kinds of Types and Values
+
+There are two kinds of types in the Java programming language: primitive types (§4.2) and reference types (§4.3). There are, correspondingly, two kinds of data values that can be stored in variables, passed as arguments, returned by methods, and operated on: primitive values (§4.2) and reference values (§4.3).
+
+
+Type:
+    PrimitiveType
+    ReferenceType
+
+
+There is also a special null type, the type of the expression null (§3.10.7, §15.8.1), which has no name.
+
+Because the null type has no name, it is impossible to declare a variable of the null type or to cast to the null type.
+
+The null reference is the only possible value of an expression of null type.
+
+The null reference can always undergo a widening reference conversion to any reference type.
+
+In practice, the programmer can ignore the null type and just pretend that null is merely a special literal that can be of any reference type.
+
+4.2. Primitive Types and Values
+
+A primitive type is predefined by the Java programming language and named by its reserved keyword (§3.9):
+
+
+PrimitiveType:
+    NumericType
+    boolean
+
+NumericType:
+    IntegralType
+    FloatingPointType
+
+IntegralType: one of
+    byte short int long char
+
+FloatingPointType: one of
+    float double
+
+
+Primitive values do not share state with other primitive values.
+
+The numeric types are the integral types and the floating-point types.
+
+The integral types are byte, short, int, and long, whose values are 8-bit, 16-bit, 32-bit and 64-bit signed two's-complement integers, respectively, and char, whose values are 16-bit unsigned integers representing UTF-16 code units (§3.1).
+
+The floating-point types are float, whose values include the 32-bit IEEE 754 floating-point numbers, and double, whose values include the 64-bit IEEE 754 floating-point numbers.
+
+The boolean type has exactly two values: true and false.
+
+4.2.1. Integral Types and Values
+
+The values of the integral types are integers in the following ranges:
+
+For byte, from -128 to 127, inclusive
+
+For short, from -32768 to 32767, inclusive
+
+For int, from -2147483648 to 2147483647, inclusive
+
+For long, from -9223372036854775808 to 9223372036854775807, inclusive
+
+For char, from '\u0000' to '\uffff' inclusive, that is, from 0 to 65535
+
+4.2.2. Integer Operations
+
+The Java programming language provides a number of operators that act on integral values:
+
+The comparison operators, which result in a value of type boolean:
+
+The numerical comparison operators <, <=, >, and >= (§15.20.1)
+
+The numerical equality operators == and != (§15.21.1)
+
+The numerical operators, which result in a value of type int or long:
+
+The unary plus and minus operators + and - (§15.15.3, §15.15.4)
+
+The multiplicative operators *, /, and % (§15.17)
+
+The additive operators + and - (§15.18)
+
+The increment operator ++, both prefix (§15.15.1) and postfix (§15.14.2)
+
+The decrement operator --, both prefix (§15.15.2) and postfix (§15.14.3)
+
+The signed and unsigned shift operators <<, >>, and >>> (§15.19)
+
+The bitwise complement operator ~ (§15.15.5)
+
+The integer bitwise operators &, ^, and | (§15.22.1)
+
+The conditional operator ? : (§15.25)
+
+The cast operator (§15.16), which can convert from an integral value to a value of any specified numeric type
+
+The string concatenation operator + (§15.18.1), which, when given a String operand and an integral operand, will convert the integral operand to a String representing its value in decimal form, and then produce a newly created String that is the concatenation of the two strings
+
+Other useful constructors, methods, and constants are predefined in the classes Byte, Short, Integer, Long, and Character.
+
+If an integer operator other than a shift operator has at least one operand of type long, then the operation is carried out using 64-bit precision, and the result of the numerical operator is of type long. If the other operand is not long, it is first widened (§5.1.5) to type long by numeric promotion (§5.6).
+
+Otherwise, the operation is carried out using 32-bit precision, and the result of the numerical operator is of type int. If either operand is not an int, it is first widened to type int by numeric promotion.
+
+Any value of any integral type may be cast to or from any numeric type. There are no casts between integral types and the type boolean.
+
+See §4.2.5 for an idiom to convert integer expressions to boolean.
+
+The integer operators do not indicate overflow or underflow in any way.
+
+An integer operator can throw an exception (§11) for the following reasons:
+
+Any integer operator can throw a NullPointerException if unboxing conversion (§5.1.8) of a null reference is required.
+
+The integer divide operator / (§15.17.2) and the integer remainder operator % (§15.17.3) can throw an ArithmeticException if the right-hand operand is zero.
+
+The increment and decrement operators ++ (§15.14.2, §15.15.1) and -- (§15.14.3, §15.15.2) can throw an OutOfMemoryError if boxing conversion (§5.1.7) is required and there is not sufficient memory available to perform the conversion.
+
+Example 4.2.2-1. Integer Operations
+
+class Test {
+    public static void main(String[] args) {
+        int i = 1000000;
+        System.out.println(i * i);
+        long l = i;
+        System.out.println(l * l);
+        System.out.println(20296 / (l - i));
+    }
+}
+
+
+This program produces the output:
+
+-727379968
+1000000000000
+
+
+and then encounters an ArithmeticException in the division by l - i, because l - i is zero. The first multiplication is performed in 32-bit precision, whereas the second multiplication is a long multiplication. The value -727379968 is the decimal value of the low 32 bits of the mathematical result, 1000000000000, which is a value too large for type int.
+
+
+
+4.2.3. Floating-Point Types, Formats, and Values
+
+The floating-point types are float and double, which are conceptually associated with the single-precision 32-bit and double-precision 64-bit format IEEE 754 values and operations as specified in IEEE Standard for Binary Floating-Point Arithmetic, ANSI/IEEE Standard 754-1985 (IEEE, New York).
+
+The IEEE 754 standard includes not only positive and negative numbers that consist of a sign and magnitude, but also positive and negative zeros, positive and negative infinities, and special Not-a-Number values (hereafter abbreviated NaN). A NaN value is used to represent the result of certain invalid operations such as dividing zero by zero. NaN constants of both float and double type are predefined as Float.NaN and Double.NaN.
+
+Every implementation of the Java programming language is required to support two standard sets of floating-point values, called the float value set and the double value set. In addition, an implementation of the Java programming language may support either or both of two extended-exponent floating-point value sets, called the float-extended-exponent value set and the double-extended-exponent value set. These extended-exponent value sets may, under certain circumstances, be used instead of the standard value sets to represent the values of expressions of type float or double (§5.1.13, §15.4).
+
+The finite nonzero values of any floating-point value set can all be expressed in the form s · m · 2(e - N + 1), where s is +1 or -1, m is a positive integer less than 2N, and e is an integer between Emin = -(2K-1-2) and Emax = 2K-1-1, inclusive, and where N and K are parameters that depend on the value set. Some values can be represented in this form in more than one way; for example, supposing that a value v in a value set might be represented in this form using certain values for s, m, and e, then if it happened that m were even and e were less than 2K-1, one could halve m and increase e by 1 to produce a second representation for the same value v. A representation in this form is called normalized if m ≥ 2N-1; otherwise the representation is said to be denormalized. If a value in a value set cannot be represented in such a way that m ≥ 2N-1, then the value is said to be a denormalized value, because it has no normalized representation.
+
+The constraints on the parameters N and K (and on the derived parameters Emin and Emax) for the two required and two optional floating-point value sets are summarized in Table 4.1.
+
+Table 4.1. Floating-point value set parameters
+
+Parameter	float	float-extended-exponent	double	double-extended-exponent
+N	24	24	53	53
+K	8	≥ 11	11	≥ 15
+Emax	+127	≥ +1023	+1023	≥ +16383
+Emin	-126	≤ -1022	-1022	≤ -16382
+
+
+
+Where one or both extended-exponent value sets are supported by an implementation, then for each supported extended-exponent value set there is a specific implementation-dependent constant K, whose value is constrained by Table 4.1; this value K in turn dictates the values for Emin and Emax.
+
+Each of the four value sets includes not only the finite nonzero values that are ascribed to it above, but also NaN values and the four values positive zero, negative zero, positive infinity, and negative infinity.
+
+Note that the constraints in Table 4.1 are designed so that every element of the float value set is necessarily also an element of the float-extended-exponent value set, the double value set, and the double-extended-exponent value set. Likewise, each element of the double value set is necessarily also an element of the double-extended-exponent value set. Each extended-exponent value set has a larger range of exponent values than the corresponding standard value set, but does not have more precision.
+
+The elements of the float value set are exactly the values that can be represented using the single floating-point format defined in the IEEE 754 standard. The elements of the double value set are exactly the values that can be represented using the double floating-point format defined in the IEEE 754 standard. Note, however, that the elements of the float-extended-exponent and double-extended-exponent value sets defined here do not correspond to the values that can be represented using IEEE 754 single extended and double extended formats, respectively.
+
+The float, float-extended-exponent, double, and double-extended-exponent value sets are not types. It is always correct for an implementation of the Java programming language to use an element of the float value set to represent a value of type float; however, it may be permissible in certain regions of code for an implementation to use an element of the float-extended-exponent value set instead. Similarly, it is always correct for an implementation to use an element of the double value set to represent a value of type double; however, it may be permissible in certain regions of code for an implementation to use an element of the double-extended-exponent value set instead.
+
+Except for NaN, floating-point values are ordered; arranged from smallest to largest, they are negative infinity, negative finite nonzero values, positive and negative zero, positive finite nonzero values, and positive infinity.
+
+IEEE 754 allows multiple distinct NaN values for each of its single and double floating-point formats. While each hardware architecture returns a particular bit pattern for NaN when a new NaN is generated, a programmer can also create NaNs with different bit patterns to encode, for example, retrospective diagnostic information.
+
+For the most part, the Java SE platform treats NaN values of a given type as though collapsed into a single canonical value, and hence this specification normally refers to an arbitrary NaN as though to a canonical value.
+
+However, version 1.3 of the Java SE platform introduced methods enabling the programmer to distinguish between NaN values: the Float.floatToRawIntBits and Double.doubleToRawLongBits methods. The interested reader is referred to the specifications for the Float and Double classes for more information.
+
+Positive zero and negative zero compare equal; thus the result of the expression 0.0==-0.0 is true and the result of 0.0>-0.0 is false. But other operations can distinguish positive and negative zero; for example, 1.0/0.0 has the value positive infinity, while the value of 1.0/-0.0 is negative infinity.
+
+NaN is unordered, so:
+
+The numerical comparison operators <, <=, >, and >= return false if either or both operands are NaN (§15.20.1).
+
+The equality operator == returns false if either operand is NaN.
+
+In particular, (x<y) == !(x>=y) will be false if x or y is NaN.
+
+The inequality operator != returns true if either operand is NaN (§15.21.1).
+
+In particular, x!=x is true if and only if x is NaN.
+
+4.2.4. Floating-Point Operations
+
+The Java programming language provides a number of operators that act on floating-point values:
+
+The comparison operators, which result in a value of type boolean:
+
+The numerical comparison operators <, <=, >, and >= (§15.20.1)
+
+The numerical equality operators == and != (§15.21.1)
+
+The numerical operators, which result in a value of type float or double:
+
+The unary plus and minus operators + and - (§15.15.3, §15.15.4)
+
+The multiplicative operators *, /, and % (§15.17)
+
+The additive operators + and - (§15.18.2)
+
+The increment operator ++, both prefix (§15.15.1) and postfix (§15.14.2)
+
+The decrement operator --, both prefix (§15.15.2) and postfix (§15.14.3)
+
+The conditional operator ? : (§15.25)
+
+The cast operator (§15.16), which can convert from a floating-point value to a value of any specified numeric type
+
+The string concatenation operator + (§15.18.1), which, when given a String operand and a floating-point operand, will convert the floating-point operand to a String representing its value in decimal form (without information loss), and then produce a newly created String by concatenating the two strings
+
+Other useful constructors, methods, and constants are predefined in the classes Float, Double, and Math.
+
+If at least one of the operands to a binary operator is of floating-point type, then the operation is a floating-point operation, even if the other is integral.
+
+If at least one of the operands to a numerical operator is of type double, then the operation is carried out using 64-bit floating-point arithmetic, and the result of the numerical operator is a value of type double. If the other operand is not a double, it is first widened (§5.1.5) to type double by numeric promotion (§5.6).
+
+Otherwise, the operation is carried out using 32-bit floating-point arithmetic, and the result of the numerical operator is a value of type float. (If the other operand is not a float, it is first widened to type float by numeric promotion.)
+
+Any value of a floating-point type may be cast to or from any numeric type. There are no casts between floating-point types and the type boolean.
+
+See §4.2.5 for an idiom to convert floating-point expressions to boolean.
+
+Operators on floating-point numbers behave as specified by IEEE 754 (with the exception of the remainder operator (§15.17.3)). In particular, the Java programming language requires support of IEEE 754 denormalized floating-point numbers and gradual underflow, which make it easier to prove desirable properties of particular numerical algorithms. Floating-point operations do not "flush to zero" if the calculated result is a denormalized number.
+
+The Java programming language requires that floating-point arithmetic behave as if every floating-point operator rounded its floating-point result to the result precision. Inexact results must be rounded to the representable value nearest to the infinitely precise result; if the two nearest representable values are equally near, the one with its least significant bit zero is chosen. This is the IEEE 754 standard's default rounding mode known as round to nearest.
+
+The Java programming language uses round toward zero when converting a floating value to an integer (§5.1.3), which acts, in this case, as though the number were truncated, discarding the mantissa bits. Rounding toward zero chooses at its result the format's value closest to and no greater in magnitude than the infinitely precise result.
+
+A floating-point operation that overflows produces a signed infinity.
+
+A floating-point operation that underflows produces a denormalized value or a signed zero.
+
+A floating-point operation that has no mathematically definite result produces NaN.
+
+All numeric operations with NaN as an operand produce NaN as a result.
+
+A floating-point operator can throw an exception (§11) for the following reasons:
+
+Any floating-point operator can throw a NullPointerException if unboxing conversion (§5.1.8) of a null reference is required.
+
+The increment and decrement operators ++ (§15.14.2, §15.15.1) and -- (§15.14.3, §15.15.2) can throw an OutOfMemoryError if boxing conversion (§5.1.7) is required and there is not sufficient memory available to perform the conversion.
+
+Example 4.2.4-1. Floating-point Operations
+
+class Test {
+    public static void main(String[] args) {
+        // An example of overflow:
+        double d = 1e308;
+        System.out.print("overflow produces infinity: ");
+        System.out.println(d + "*10==" + d*10);
+        // An example of gradual underflow:
+        d = 1e-305 * Math.PI;
+        System.out.print("gradual underflow: " + d + "\n   ");
+        for (int i = 0; i < 4; i++)
+            System.out.print(" " + (d /= 100000));
+        System.out.println();
+        // An example of NaN:
+        System.out.print("0.0/0.0 is Not-a-Number: ");
+        d = 0.0/0.0;
+        System.out.println(d);
+        // An example of inexact results and rounding:
+        System.out.print("inexact results with float:");
+        for (int i = 0; i < 100; i++) {
+            float z = 1.0f / i;
+            if (z * i != 1.0f)
+                System.out.print(" " + i);
+        }
+        System.out.println();
+        // Another example of inexact results and rounding:
+        System.out.print("inexact results with double:");
+        for (int i = 0; i < 100; i++) {
+            double z = 1.0 / i;
+            if (z * i != 1.0)
+                System.out.print(" " + i);
+        }
+        System.out.println();
+        // An example of cast to integer rounding:
+        System.out.print("cast to int rounds toward 0: ");
+        d = 12345.6;
+        System.out.println((int)d + " " + (int)(-d));
+    }
+}
+
+
+This program produces the output:
+
+overflow produces infinity: 1.0e+308*10==Infinity
+gradual underflow: 3.141592653589793E-305
+3.1415926535898E-310 3.141592653E-315 3.142E-320 0.0
+0.0/0.0 is Not-a-Number: NaN
+inexact results with float: 0 41 47 55 61 82 83 94 97
+inexact results with double: 0 49 98
+cast to int rounds toward 0: 12345 -12345
+
+
+This example demonstrates, among other things, that gradual underflow can result in a gradual loss of precision.
+
+The results when i is 0 involve division by zero, so that z becomes positive infinity, and z * 0 is NaN, which is not equal to 1.0.
+
+
+
+4.2.5. The boolean Type and boolean Values
+
+The boolean type represents a logical quantity with two possible values, indicated by the literals true and false (§3.10.3).
+
+The boolean operators are:
+
+The relational operators == and != (§15.21.2)
+
+The logical complement operator ! (§15.15.6)
+
+The logical operators &, ^, and | (§15.22.2)
+
+The conditional-and and conditional-or operators && (§15.23) and || (§15.24)
+
+The conditional operator ? : (§15.25)
+
+The string concatenation operator + (§15.18.1), which, when given a String operand and a boolean operand, will convert the boolean operand to a String (either "true" or "false"), and then produce a newly created String that is the concatenation of the two strings
+
+Boolean expressions determine the control flow in several kinds of statements:
+
+The if statement (§14.9)
+
+The while statement (§14.12)
+
+The do statement (§14.13)
+
+The for statement (§14.14)
+
+A boolean expression also determines which subexpression is evaluated in the conditional ? : operator (§15.25).
+
+Only boolean and Boolean expressions can be used in control flow statements and as the first operand of the conditional operator ? :.
+
+An integer or floating-point expression x can be converted to a boolean, following the C language convention that any nonzero value is true, by the expression x!=0.
+
+An object reference obj can be converted to a boolean, following the C language convention that any reference other than null is true, by the expression obj!=null.
+
+A boolean can be converted to a String by string conversion (§5.4).
+
+A cast of a boolean value to type boolean or Boolean is allowed (§5.1.1, §5.1.7). No other casts on type boolean are allowed.
+
+4.3. Reference Types and Values
+
+There are four kinds of reference types: class types (§8), interface types (§9), type variables (§4.4), and array types (§10).
+
+
+ReferenceType:
+    ClassOrInterfaceType
+    TypeVariable
+    ArrayType
+
+ClassOrInterfaceType:
+    ClassType
+    InterfaceType
+
+ClassType:
+    TypeDeclSpecifier TypeArgumentsopt
+
+InterfaceType:
+    TypeDeclSpecifier TypeArgumentsopt
+
+TypeDeclSpecifier:
+    TypeName  
+    ClassOrInterfaceType . Identifier
+
+TypeName:
+    Identifier
+    TypeName . Identifier
+
+TypeVariable:
+    Identifier
+
+ArrayType:
+    Type [ ]
+
+
+The sample code:
+
+class Point { int[] metrics; }
+interface Move { void move(int deltax, int deltay); }
+
+
+declares a class type Point, an interface type Move, and uses an array type int[] (an array of int) to declare the field metrics of the class Point.
+
+A class or interface type consists of a type declaration specifier, optionally followed by type arguments (§4.5.1). If type arguments appear anywhere in a class or interface type, it is a parameterized type (§4.5).
+
+A type declaration specifier may be either a type name (§6.5.5), or a class or interface type followed by "." and an identifier. In the latter case, the specifier has the form T.id, where id must be the simple name of an accessible (§6.6) member type (§8.5, §9.5) of T, or a compile-time error occurs. The specifier denotes that member type.
+
+There are contexts in the Java programming language where a generic class or interface name is used without providing type arguments. Such contexts do not involve the use of raw types (§4.8). Rather, they are contexts where type arguments are unnecessary for, or irrelevant to, the meaning of the generic class or interface.
+
+For example, a single-type-import declaration import java.util.List; puts the simple type name List in scope within a compilation unit so that parameterized types of the form List<...> may be used. As another example, invocation of a static method of a generic class needs only to give the (possibly qualified) name of the generic class without any type arguments, because such type arguments are irrelevant to a static method. (The method itself may be generic, and take its own type arguments, but the type parameters of a static method are necessarily unrelated to the type parameters of its enclosing generic class (§6.5.5).)
+
+Because of the occasional need to use a generic class or interface name without type arguments, type names are distinct from type declaration specifiers. A type name is always qualified by means of another type name. In some cases, this is necessary to access an inner class that is a member of a parameterized type.
+
+Here is an example of where a type declaration specifier is distinct from a type name:
+
+class GenericOuter<T extends Number> {
+    public class Inner<S extends Comparable<S>> {
+        T getT() { return null;}
+        S getS() { return null;}
+    }
+}
+
+class Test {
+    public static void main(String[] args) {
+        GenericOuter<Integer>.Inner<Double> x1 = null;
+        Integer i = x1.getT();
+        Double d = x1.getS();
+    }
+}
+
+
+If we accessed Inner by qualifying it with a type name, as in:
+
+GenericOuter.Inner x2 = null;
+
+
+we would force its use as a raw type, losing type information.
+
+4.3.1. Objects
+
+An object is a class instance or an array.
+
+The reference values (often just references) are pointers to these objects, and a special null reference, which refers to no object.
+
+A class instance is explicitly created by a class instance creation expression (§15.9).
+
+An array is explicitly created by an array creation expression (§15.10).
+
+A new class instance is implicitly created when the string concatenation operator + (§15.18.1) is used in a non-constant (§15.28) expression, resulting in a new object of type String (§4.3.3).
+
+A new array object is implicitly created when an array initializer expression (§10.6) is evaluated; this can occur when a class or interface is initialized (§12.4), when a new instance of a class is created (§15.9), or when a local variable declaration statement is executed (§14.4).
+
+New objects of the types Boolean, Byte, Short, Character, Integer, Long, Float, and Double may be implicitly created by boxing conversion (§5.1.7).
+
+Example 4.3.1-1. Object Creation
+
+class Point {
+    int x, y;
+    Point() { System.out.println("default"); }
+    Point(int x, int y) { this.x = x; this.y = y; }
+
+    /* A Point instance is explicitly created at 
+       class initialization time: */
+    static Point origin = new Point(0,0);
+
+    /* A String can be implicitly created 
+       by a + operator: */
+    public String toString() { return "(" + x + "," + y + ")"; }
+}
+
+class Test {
+    public static void main(String[] args) {
+        /* A Point is explicitly created
+           using newInstance: */
+        Point p = null;
+        try {
+            p = (Point)Class.forName("Point").newInstance();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+        /* An array is implicitly created 
+           by an array constructor: */
+        Point a[] = { new Point(0,0), new Point(1,1) };
+
+        /* Strings are implicitly created 
+           by + operators: */
+        System.out.println("p: " + p);
+        System.out.println("a: { " + a[0] + ", " + a[1] + " }");
+    
+        /* An array is explicitly created
+           by an array creation expression: */
+        String sa[] = new String[2];
+        sa[0] = "he"; sa[1] = "llo";
+        System.out.println(sa[0] + sa[1]);
+    }
+}
+
+
+This program produces the output:
+
+default
+p: (0,0)
+a: { (0,0), (1,1) }
+hello
+
+
+
+
+The operators on references to objects are:
+
+Field access, using either a qualified name (§6.6) or a field access expression (§15.11)
+
+Method invocation (§15.12)
+
+The cast operator (§5.5, §15.16)
+
+The string concatenation operator + (§15.18.1), which, when given a String operand and a reference, will convert the reference to a String by invoking the toString method of the referenced object (using "null" if either the reference or the result of toString is a null reference), and then will produce a newly created String that is the concatenation of the two strings
+
+The instanceof operator (§15.20.2)
+
+The reference equality operators == and != (§15.21.3)
+
+The conditional operator ? : (§15.25).
+
+There may be many references to the same object. Most objects have state, stored in the fields of objects that are instances of classes or in the variables that are the components of an array object. If two variables contain references to the same object, the state of the object can be modified using one variable's reference to the object, and then the altered state can be observed through the reference in the other variable.
+
+Example 4.3.1-2. Primitive and Reference Identity
+
+class Value { int val; }
+
+class Test {
+    public static void main(String[] args) {
+        int i1 = 3;
+        int i2 = i1;
+        i2 = 4;
+        System.out.print("i1==" + i1);
+        System.out.println(" but i2==" + i2);
+        Value v1 = new Value();
+        v1.val = 5;
+        Value v2 = v1;
+        v2.val = 6;
+        System.out.print("v1.val==" + v1.val);
+        System.out.println(" and v2.val==" + v2.val);
+    }
+}
+
+
+This program produces the output:
+
+i1==3 but i2==4
+v1.val==6 and v2.val==6
+
+
+because v1.val and v2.val reference the same instance variable (§4.12.3) in the one Value object created by the only new expression, while i1 and i2 are different variables.
+
+
+
+
+Each object is associated with a monitor (§17.1), which is used by synchronized methods (§8.4.3) and the synchronized statement (§14.19) to provide control over concurrent access to state by multiple threads (§17).
+
+4.3.2. The Class Object
+
+The class Object is a superclass (§8.1.4) of all other classes.
+
+All class and array types inherit (§8.4.8) the methods of class Object, which are summarized as follows:
+
+The method clone is used to make a duplicate of an object.
+
+The method equals defines a notion of object equality, which is based on value, not reference, comparison.
+
+The method finalize is run just before an object is destroyed (§12.6).
+
+The method getClass returns the Class object that represents the class of the object.
+
+A Class object exists for each reference type. It can be used, for example, to discover the fully qualified name of a class, its members, its immediate superclass, and any interfaces that it implements.
+
+The type of a method invocation expression of getClass is Class<? extends |T|> where T is the class or interface searched (§15.12.1) for getClass.
+
+A class method that is declared synchronized (§8.4.3.6) synchronizes on the monitor associated with the Class object of the class.
+
+The method hashCode is very useful, together with the method equals, in hashtables such as java.util.Hashmap.
+
+The methods wait, notify, and notifyAll are used in concurrent programming using threads (§17.2).
+
+The method toString returns a String representation of the object.
+
+4.3.3. The Class String
+
+Instances of class String represent sequences of Unicode code points.
+
+A String object has a constant (unchanging) value.
+
+String literals (§3.10.5) are references to instances of class String.
+
+The string concatenation operator + (§15.18.1) implicitly creates a new String object when the result is not a compile-time constant expression (§15.28).
+
+4.3.4. When Reference Types Are the Same
+
+Two reference types are the same compile-time type if they have the same binary name (§13.1) and their type arguments, if any, are the same, applying this definition recursively.
+
+When two reference types are the same, they are sometimes said to be the same class or the same interface.
+
+At run time, several reference types with the same binary name may be loaded simultaneously by different class loaders. These types may or may not represent the same type declaration. Even if two such types do represent the same type declaration, they are considered distinct.
+
+Two reference types are the same run-time type if:
+
+They are both class or both interface types, are defined by the same class loader, and have the same binary name (§13.1), in which case they are sometimes said to be the same run-time class or the same run-time interface.
+
+They are both array types, and their component types are the same run-time type (§10).
+
+4.4. Type Variables
+
+A type variable is an unqualified identifier used as a type in class, interface, method, and constructor bodies.
+
+A type variable is declared as a type parameter of a generic class declaration (§8.1.2), generic interface declaration (§9.1.2), generic method declaration (§8.4.4), or generic constructor declaration (§8.8.4).
+
+
+TypeParameter:
+    TypeVariable TypeBoundopt
+
+TypeBound:
+    extends TypeVariable
+    extends ClassOrInterfaceType AdditionalBoundListopt
+
+AdditionalBoundList:
+    AdditionalBound AdditionalBoundList
+    AdditionalBound
+
+AdditionalBound:
+    & InterfaceType
+
+
+The scope of a type variable declared as a type parameter is specified in §6.3.
+
+Every type variable declared as a type parameter has a bound. If no bound is declared for a type variable, Object is assumed. If a bound is declared, it consists of either:
+
+a single type variable T, or
+
+a class or interface type T possibly followed by interface types I1 & ... & In.
+
+It is a compile-time error if any of the types I1 ... In is a class type or type variable.
+
+The erasures (§4.6) of all constituent types of a bound must be pairwise different, or a compile-time error occurs.
+
+A type variable must not at the same time be a subtype of two interface types which are different parameterizations of the same generic interface, or a compile-time error occurs.
+
+The order of types in a bound is only significant in that the erasure of a type variable is determined by the first type in its bound, and that a class type or type variable may only appear in the first position.
+
+The members of a type variable X with bound T & I1 & ... & In are the members of the intersection type (§4.9) T & I1 & ... & In appearing at the point where the type variable is declared.
+
+Example 4.4-1. Members of a Type Variable
+
+package TypeVarMembers;
+
+class C { 
+    public    void mCPublic()    {}
+    protected void mCProtected() {} 
+              void mCDefault()   {}
+    private   void mCPrivate()   {} 
+} 
+
+interface I {
+    void mI();
+}
+
+class CT extends C implements I {
+    public void mI() {}
+}
+
+class Test {
+    <T extends C & I> void test(T t) { 	
+        t.mI();           // OK
+        t.mCPublic();     // OK 
+        t.mCProtected();  // OK 
+        t.mCDefault();    // OK
+        t.mCPrivate();    // Compile-time error
+    } 
+}
+
+
+The type variable T has the same members as the intersection type C & I, which in turn has the same members as the empty class CT, defined in the same scope with equivalent supertypes. The members of an interface are always public, and therefore always inherited (unless overridden). Hence mI is a member of CT and of T. Among the members of C, all but mCPrivate are inherited by CT, and are therefore members of both CT and T.
+
+If C had been declared in a different package than T, then the call to mCDefault would give rise to a compile-time error, as that member would not be accessible at the point where T is declared.
+
+
+
+4.5. Parameterized Types
+
+A generic class or interface declaration C (§8.1.2, §9.1.2) with one or more type parameters A1,...,An which have corresponding bounds B1,...,Bn defines a set of parameterized types, one for each possible invocation of the type parameter section.
+
+Each parameterized type in the set is of the form C<T1,...,Tn> where each type argument Ti ranges over all types that are subtypes of all types listed in the corresponding bound. That is, for each bound type Si in Bi, Ti is a subtype of Si[F1:=T1,...,Fn:=Tn].
+
+A parameterized type is written as a ClassType or InterfaceType that contains at least one type declaration specifier immediately followed by a type argument list <T1,...,Tn>. The type argument list denotes a particular invocation of the type parameters of the generic type indicated by the type declaration specifier.
+
+Given a type declaration specifier immediately followed by a type argument list, let C be the final Identifier in the specifier.
+
+It is a compile-time error if C is not the name of a generic class or interface, or if the number of type arguments in the type argument list differs from the number of type parameters of C.
+
+Let P = C<T1,...,Tn> be a parameterized type. It must be the case that, after P is subjected to capture conversion (§5.1.10) resulting in the type C<X1,...,Xn>, for each type argument Xi (1 ≤ i ≤ n), Xi <: Bi[A1:=X1,...,An:=Xn] (§4.10), or a compile-time error occurs.
+
+The notation [Ai:=Ti] denotes substitution of the type variable Ai with the type Ti for 1 ≤ i ≤ n, and is used throughout this specification.
+
+In this specification, whenever we speak of a class or interface type, we include the generic version as well, unless explicitly excluded.
+
+Examples of parameterized types:
+
+Vector<String>
+
+Seq<Seq<A>>
+
+Seq<String>.Zipper<Integer>
+
+Collection<Integer>
+
+Pair<String,String>
+
+Examples of incorrect invocations of a generic type:
+
+Vector<int> is illegal, as primitive types cannot be type arguments.
+
+Pair<String> is illegal, as there are not enough type arguments.
+
+Pair<String,String,String> is illegal, as there are too many type arguments.
+
+A parameterized type may be an invocation of a generic class or interface which is nested. For example, if a non-generic class C has a generic member class D<T>, then C.D<Object> is a parameterized type. And if a generic class C<T> has a non-generic member class D, then the member type C<String>.D is a parameterized type, even though the class D is not generic.
+
+Two parameterized types are provably distinct if either of the following conditions hold:
+
+They are invocations of distinct generic type declarations.
+
+Any of their type arguments are provably distinct.
+
+4.5.1. Type Arguments and Wildcards
+
+Type arguments may be either reference types or wildcards. Wildcards are useful in situations where only partial knowledge about the type parameter is required.
+
+
+TypeArguments:
+    < TypeArgumentList >
+
+TypeArgumentList: 
+    TypeArgument
+    TypeArgumentList , TypeArgument
+
+TypeArgument:
+    ReferenceType
+    Wildcard
+
+Wildcard:
+    ? WildcardBoundsopt
+
+WildcardBounds:
+    extends ReferenceType
+    super ReferenceType
+
+
+Example 4.5.1-1. Wildcards
+
+import java.util.Collection;
+import java.util.ArrayList;
+
+class Test {
+    static void printCollection(Collection<?> c) {
+                                // a wildcard collection
+        for (Object o : c) {
+            System.out.println(o);
+        }
+    }
+
+    public static void main(String[] args) {
+        Collection<String> cs = new ArrayList<String>();
+        cs.add("hello");
+        cs.add("world");
+        printCollection(cs);
+    }
+}
+
+
+Note that using Collection<Object> as the type of the incoming parameter, c, would not be nearly as useful; the method could only be used with an argument expression that had type Collection<Object>, which would be quite rare. In contrast, the use of an unbounded wildcard allows any kind of collection to be used as a parameter.
+
+Here is an example where the element type of an array is parameterized by a wildcard:
+
+
+public Method getMethod(Class<?>[] parameterTypes) { ... }
+
+
+
+
+
+Wildcards may be given explicit bounds, just like regular type variable declarations. An upper bound is signified by the following syntax, where B is the bound:
+
+? extends B
+
+Unlike ordinary type variables declared in a method signature, no type inference is required when using a wildcard. Consequently, it is permissible to declare lower bounds on a wildcard, using the following syntax, where B is a lower bound:
+
+? super B
+
+Example 4.5.1-2. Bounded Wildcards
+
+boolean addAll(Collection<? extends E> c)
+
+Here, the method is declared within the interface Collection<E>, and is designed to add all the elements of its incoming argument to the collection upon which it is invoked. A natural tendency would be to use Collection<E> as the type of c, but this is unnecessarily restrictive. An alternative would be to declare the method itself to be generic:
+
+<T> boolean addAll(Collection<T> c)
+
+This version is sufficiently flexible, but note that the type parameter is used only once in the signature. This reflects the fact that the type parameter is not being used to express any kind of interdependency between the type(s) of the argument(s), the return type and/or throws type. In the absence of such interdependency, generic methods are considered bad style, and wildcards are preferred.
+
+Reference(T referent, ReferenceQueue<? super T> queue);
+
+Here, the referent can be inserted into any queue whose element type is a supertype of the type T of the referent; T is the lower bound for the wildcard.
+
+
+
+
+Two type arguments are provably distinct if one of the following is true:
+
+Neither argument is a type variable or wildcard, and the two arguments are not the same type.
+
+One type argument is a type variable or wildcard, with an upper bound (from capture conversion, if necessary) of S; and the other type argument T is not a type variable or wildcard; and neither |S| <: |T| nor |T| <: |S|.
+
+Each type argument is a type variable or wildcard, with upper bounds (from capture conversion, if necessary) of S and T; and neither |S| <: |T| nor |T| <: |S|.
+
+A type argument T1 is said to contain another type argument T2, written T2 <= T1, if the set of types denoted by T2 is provably a subset of the set of types denoted by T1 under the reflexive and transitive closure of the following rules (where <: denotes subtyping (§4.10)):
+
+? extends T <= ? extends S if T <: S
+
+? super T <= ? super S if S <: T
+
+T <= T
+
+T <= ? extends T
+
+T <= ? super T
+
+The relationship of wildcards to established type theory is an interesting one, which we briefly allude to here. Wildcards are a restricted form of existential types. Given a generic type declaration G<T extends B>, G<?> is roughly analogous to Some X <: B. G<X>.
+
+Historically, wildcards are a direct descendant of the work by Atsushi Igarashi and Mirko Viroli. Readers interested in a more comprehensive discussion should refer to On Variance-Based Subtyping for Parametric Types by Atsushi Igarashi and Mirko Viroli, in the Proceedings of the 16th European Conference on Object Oriented Programming (ECOOP 2002). This work itself builds upon earlier work by Kresten Thorup and Mads Torgersen (Unifying Genericity, ECOOP 99), as well as a long tradition of work on declaration based variance that goes back to Pierre America's work on POOL (OOPSLA 89).
+
+Wildcards differ in certain details from the constructs described in the aforementioned paper, in particular in the use of capture conversion (§5.1.10) rather than the close operation described by Igarashi and Viroli. For a formal account of wildcards, see Wild FJ by Mads Torgersen, Erik Ernst and Christian Plesner Hansen, in the 12th workshop on Foundations of Object Oriented Programming (FOOL 2005).
+
+4.5.2. Members and Constructors of Parameterized Types
+
+Let C be a generic class or interface declaration with type parameters A1,...,An, and let C<T1,...,Tn> be an invocation of C, where, for 1 ≤ i ≤ n, Ti are types (rather than wildcards). Then:
+
+Let m be a member or constructor declaration (§8.2, §8.8.6) in C, whose type as declared is T.
+
+The type of m in C<T1,...,Tn> is T[A1:=T1,...,An:=Tn].
+
+Let m be a member or constructor declaration in D, where D is a class extended by C or an interface implemented by C. Let D<U1,...,Uk> be the supertype of C<T1,...,Tn> that corresponds to D.
+
+The type of m in C<T1,...,Tn> is the type of m in D<U1,...,Uk>.
+
+If any of the type arguments in the invocation of C are wildcards, then:
+
+The types of the fields, methods, and constructors in C<T1,...,Tn> are the types of the fields, methods, and constructors in the capture conversion (§5.1.9) of C<T1,...,Tn>.
+
+Let D be a (possibly generic) class or interface declaration in C. Then the type of D in C<T1,...,Tn> is D where, if D is generic, all type arguments are unbounded wildcards.
+
+This is of no consequence, as it is impossible to access a member of a parameterized type without performing capture conversion (§5.1.10), and it is impossible to use a wildcard type after the keyword new in a class instance creation expression.
+
+The sole exception to the previous paragraph is when a nested parameterized type is used as the expression in an instanceof operator (§15.20.2), where capture conversion is not applied.
+
+4.6. Type Erasure
+
+Type erasure is a mapping from types (possibly including parameterized types and type variables) to types (that are never parameterized types or type variables). We write |T| for the erasure of type T. The erasure mapping is defined as follows:
+
+The erasure of a parameterized type (§4.5) G<T1,...,Tn> is |G|.
+
+The erasure of a nested type T.C is |T|.C.
+
+The erasure of an array type T[] is |T|[].
+
+The erasure of a type variable (§4.4) is the erasure of its leftmost bound.
+
+The erasure of every other type is the type itself.
+
+Type erasure also maps the signature (§8.4.2) of a constructor or method to a signature that has no parameterized types or type variables. The erasure of a constructor or method signature s is a signature consisting of the same name as s and the erasures of all the formal parameter types given in s.
+
+The type parameters of a constructor or method (§8.4.4), and the return type (§8.4.5) of a method, also undergo erasure if the constructor or method's signature is erased.
+
+The erasure of the signature of a generic method has no type parameters.
+
+4.7. Reifiable Types
+
+Because some type information is erased during compilation, not all types are available at run time. Types that are completely available at run time are known as reifiable types.
+
+A type is reifiable if and only if one of the following holds:
+
+It refers to a non-generic class or interface type declaration.
+
+It is a parameterized type in which all type arguments are unbounded wildcards (§4.5.1).
+
+It is a raw type (§4.8).
+
+It is a primitive type (§4.2).
+
+It is an array type (§10.1) whose element type is reifiable.
+
+It is a nested type where, for each type T separated by a ".", T itself is reifiable.
+
+For example, if a generic class X<T> has a generic member class Y<U>, then the type X<?>.Y<?> is reifiable because X<?> is reifiable and Y<?> is reifiable. The type X<?>.Y<Object> is not reifiable because Y<Object> is not reifiable.
+
+An intersection type is not reifiable.
+
+The decision not to make all generic types reifiable is one of the most crucial, and controversial design decisions involving the type system of the Java programming language.
+
+Ultimately, the most important motivation for this decision is compatibility with existing code. In a naive sense, the addition of new constructs such as generics has no implications for pre-existing code. The Java programming language, per se, is compatible with earlier versions as long as every program written in the previous versions retains its meaning in the new version. However, this notion, which may be termed language compatibility, is of purely theoretical interest. Real programs (even trivial ones, such as "Hello World") are composed of several compilation units, some of which are provided by the Java SE platform (such as elements of java.lang or java.util). In practice, then, the minimum requirement is platform compatibility - that any program written for the prior version of the Java SE platform continues to function unchanged in the new version.
+
+One way to provide platform compatibility is to leave existing platform functionality unchanged, only adding new functionality. For example, rather than modify the existing Collections hierarchy in java.util, one might introduce a new library utilizing generics.
+
+The disadvantages of such a scheme is that it is extremely difficult for pre-existing clients of the Collection library to migrate to the new library. Collections are used to exchange data between independently developed modules; if a vendor decides to switch to the new, generic, library, that vendor must also distribute two versions of their code, to be compatible with their clients. Libraries that are dependent on other vendors code cannot be modified to use generics until the supplier's library is updated. If two modules are mutually dependent, the changes must be made simultaneously.
+
+Clearly, platform compatibility, as outlined above, does not provide a realistic path for adoption of a pervasive new feature such as generics. Therefore, the design of the generic type system seeks to support migration compatibility. Migration compatibiliy allows the evolution of existing code to take advantage of generics without imposing dependencies between independently developed software modules.
+
+The price of migration compatibility is that a full and sound reification of the generic type system is not possible, at least while the migration is taking place.
+
+4.8. Raw Types
+
+To facilitate interfacing with non-generic legacy code, it is possible to use as a type the erasure (§4.6) of a parameterized type (§4.5) or the erasure of an array type (§10.1) whose element type is a parameterized type. Such a type is called a raw type.
+
+More precisely, a raw type is defined to be one of:
+
+The reference type that is formed by taking the name of a generic type declaration without an accompanying type argument list.
+
+An array type whose element type is a raw type.
+
+A non-static member type of a raw type R that is not inherited from a superclass or superinterface of R.
+
+A non-generic class or interface type is not a raw type.
+
+To see why a non-static type member of a raw type is considered raw, consider the following example:
+
+class Outer<T>{
+    T t;
+    class Inner {
+        T setOuterT(T t1) { t = t1; return t; }
+    }
+}
+
+
+The type of the member(s) of Inner depends on the type parameter of Outer. If Outer is raw, Inner must be treated as raw as well, as there is no valid binding for T.
+
+This rule applies only to type members that are not inherited. Inherited type members that depend on type variables will be inherited as raw types as a consequence of the rule that the supertypes of a raw type are erased, described later in this section.
+
+Another implication of the rules above is that a generic inner class of a raw type can itself only be used as a raw type:
+
+class Outer<T>{
+    class Inner<S> {
+        S s;
+    }
+}
+
+
+It is not possible to access Inner as a partially raw type (a "rare" type):
+
+Outer.Inner<Double> x = null;  // illegal
+Double d = x.s;
+
+
+because Outer itself is raw, hence so are all its inner classes including Inner, and so it is not possible to pass any type arguments to Inner.
+
+The superclasses (respectively, superinterfaces) of a raw type are the erasures of the superclasses (superinterfaces) of any of its parameterized invocations.
+
+The type of a constructor (§8.8), instance method (§8.4, §9.4), or non-static field (§8.3) M of a raw type C that is not inherited from its superclasses or superinterfaces is the raw type that corresponds to the erasure of its type in the generic declaration corresponding to C.
+
+The type of a static method or static field of a raw type C is the same as its type in the generic declaration corresponding to C.
+
+It is a compile-time error to pass type arguments to a non-static type member of a raw type that is not inherited from its superclasses or superinterfaces.
+
+It is a compile-time error to attempt to use a type member of a parameterized type as a raw type.
+
+This means that the ban on "rare" types extends to the case where the qualifying type is parameterized, but we attempt to use the inner class as a raw type:
+
+Outer<Integer>.Inner x = null; // illegal
+
+
+This is the opposite of the case discussed above. There is no practical justification for this half-baked type. In legacy code, no type arguments are used. In non-legacy code, we should use the generic types correctly and pass all the required type arguments.
+
+The supertype of a class may be a raw type. Member accesses for the class are treated as normal, and member accesses for the supertype are treated as for raw types. In the constructor of the class, calls to super are treated as method calls on a raw type.
+
+The use of raw types is allowed only as a concession to compatibility of legacy code. The use of raw types in code written after the introduction of generics into the Java programming language is strongly discouraged. It is possible that future versions of the Java programming language will disallow the use of raw types.
+
+To make sure that potential violations of the typing rules are always flagged, some accesses to members of a raw type will result in compile-time unchecked warnings. The rules for compile-time unchecked warnings when accessing members or constructors of raw types are as follows:
+
+At an assignment to a field: if the type of the left-hand operand is a raw type, then a compile-time unchecked warning occurs if erasure changes the field's type.
+
+At an invocation of a method or constructor: if the type of the class or interface to search (§15.12.1) is a raw type, then a compile-time unchecked warning occurs if erasure changes any of the formal parameter types of the method or constructor.
+
+No compile-time unchecked warning occurs for a method call when the formal parameter types do not change under erasure (even if the result type and/or throws clause changes), for reading from a field, or for a class instance creation of a raw type.
+
+Note that the unchecked warnings above are distinct from the unchecked warnings possible from unchecked conversion (§5.1.9), casts (§5.5.2), method declarations (§8.4.1, §8.4.8.3, §8.4.8.4, §9.4.1.2), and variable arity method invocations (§15.12.4.2).
+
+The warnings here cover the case where a legacy consumer uses a generified library. For example, the library declares a generic class Foo<T extends String> that has a field f of type Vector<T>, but the consumer assigns a vector of integers to e.f where e has the raw type Foo. The legacy consumer receives a warning because it may have caused heap pollution (§4.12.2) for generified consumers of the generified library.
+
+(Note that the legacy consumer can assign a Vector<String> from the library to its own Vector variable without receiving a warning. That is, the subtyping rules (§4.10.2) of the Java programming language make it possible for a variable of a raw type to be assigned a value of any of the type's parameterized instances.)
+
+The warnings from unchecked conversion cover the dual case, where a generified consumer uses a legacy library. For example, a method of the library has the raw return type Vector, but the consumer assigns the result of the method invocation to a variable of type Vector<String>. This is unsafe, since the raw vector might have had a different element type than String, but is still permitted using unchecked conversion in order to enable interfacing with legacy code. The warning from unchecked conversion indicates that the generified consumer may experience problems from heap pollution at other points in the program.
+
+Example 4.8-1. Raw Types
+
+class Cell<E> {
+    E value;
+
+    Cell(E v)     { value = v; }
+    E get()       { return value; }
+    void set(E v) { value = v; }
+
+    public static void main(String[] args) {
+        Cell x = new Cell<String>("abc");
+        System.out.println(x.value);  // OK, has type Object
+        System.out.println(x.get());  // OK, has type Object
+        x.set("def");                 // unchecked warning
+    }
+}
+
+
+
+
+Example 4.8-2. Raw Types and Inheritance
+
+import java.util.*;
+class NonGeneric {
+    Collection<Number> myNumbers() { return null; }
+}
+
+abstract class RawMembers<T> extends NonGeneric
+                             implements Collection<String> {
+    static Collection<NonGeneric> cng =
+        new ArrayList<NonGeneric>();
+
+    public static void main(String[] args) {
+        RawMembers rw = null;
+        Collection<Number> cn = rw.myNumbers();
+                              // OK
+        Iterator<String> is = rw.iterator();
+                            // Unchecked warning
+        Collection<NonGeneric> cnn = rw.cng;
+                                   // OK, static member
+    }
+}
+
+
+In this program, RawMembers<T> inherits the method:
+
+Iterator<String> iterator()
+
+
+from the Collection<String> superinterface. However, the type RawMembers inherits iterator() from the erasure of Collection<String>, which means that the return type of iterator() is the erasure of Iterator<String>, Iterator.
+
+As a result, the attempt to assign to rw.iterator() requires an unchecked conversion (§5.1.9) from Iterator to Iterator<String>, causing an unchecked warning to be issued.
+
+In contrast, the static member cng retains its full parameterized type even when accessed through a object of raw type. (Note that access to a static member through an instance is considered bad style and is to be discouraged.) The member myNumbers is inherited from the NonGeneric class (whose erasure is also NonGeneric) and so retains its full parameterized type.
+
+
+
+
+Raw types are closely related to wildcards. Both are based on existential types. Raw types can be thought of as wildcards whose type rules are deliberately unsound, to accommodate interaction with legacy code. Historically, raw types preceded wildcards; they were first introduced in GJ, and described in the paper Making the future safe for the past: Adding Genericity to the Java Programming Language by Gilad Bracha, Martin Odersky, David Stoutamire, and Philip Wadler, in Proceedings of the ACM Conference on Object-Oriented Programming, Systems, Languages and Applications (OOPSLA 98), October 1998.
+
+4.9. Intersection Types
+
+An intersection type takes the form T1 & ... & Tn (n > 0), where Ti (1 ≤ i ≤ n) are type expressions.
+
+Intersection types arise in the processes of capture conversion (§5.1.10) and type inference (§15.12.2.7). It is not possible to write an intersection type directly as part of a program; no syntax supports this.
+
+The values of an intersection type are those objects that are values of all of the types Ti for 1 ≤ i ≤ n.
+
+The members of an intersection type T1 & ... & Tn are determined as follows:
+
+For each Ti (1 ≤ i ≤ n), let Ci be the most specific class or array type such that Ti <: Ci. Then there must be some Tk <: Ck such that Ck <: Ci for any i (1 ≤ i ≤ n), or a compile-time error occurs.
+
+For 1 ≤ j ≤ n, if Tj is a type variable, then let Tj' be an interface whose members are the same as the public members of Tj; otherwise, if Tj is an interface, then let Tj' be Tj.
+
+Then the intersection type has the same members as a class type (§8) with an empty body, direct superclass Ck and direct superinterfaces T1', ..., Tn', declared in the same package in which the intersection type appears.
+
+It is worth dwelling upon the distinction between intersection types and the bounds of type variables. Every type variable bound induces an intersection type. This intersection type is often trivial (i.e., consists of a single type). The form of a bound is restricted (only the first element may be a class or type variable, and only one type variable may appear in the bound) to preclude certain awkward situations coming into existence. However, capture conversion can lead to the creation of type variables whose bounds are more general (e.g., array types).
+
+4.10. Subtyping
+
+The subtype and supertype relations are binary relations on types.
+
+The supertypes of a type are obtained by reflexive and transitive closure over the direct supertype relation, written S >1 T, which is defined by rules given later in this section. We write S :> T to indicate that the supertype relation holds between S and T.
+
+S is a proper supertype of T, written S > T, if S :> T and S ≠ T.
+
+The subtypes of a type T are all types U such that T is a supertype of U, and the null type. We write T <: S to indicate that that the subtype relation holds between types T and S.
+
+T is a proper subtype of S, written T < S, if T <: S and S ≠ T.
+
+T is a direct subtype of S, written T <1 S, if S >1 T.
+
+Subtyping does not extend through parameterized types: T <: S does not imply that C<T> <: C<S>.
+
+4.10.1. Subtyping among Primitive Types
+
+The following rules define the direct supertype relation among the primitive types:
+
+double >1 float
+
+float >1 long
+
+long >1 int
+
+int >1 char
+
+int >1 short
+
+short >1 byte
+
+4.10.2. Subtyping among Class and Interface Types
+
+Given a generic type declaration C<F1,...,Fn>, the direct supertypes of the parameterized type C<T1,...,Tn> are all of the following:
+
+The direct superclasses of C.
+
+The direct superinterfaces of C.
+
+The type Object, if C is an interface type with no direct superinterfaces.
+
+The raw type C.
+
+The direct supertypes of the parameterized type C<T1,...,Tn>, where Ti (1 ≤ i ≤ n) is a type, are all of the following:
+
+D<U1 θ,...,Uk θ>, where D<U1,...,Uk> is a direct supertype of C<T1,...,Tn> and θ is the substitution [F1:=T1,...,Fn:=Tn].
+
+C<S1,...,Sn>, where Si contains Ti (1 ≤ i ≤ n) (§4.5.1).
+
+The direct supertypes of the parameterized type C<R1,...,Rn>, where at least one of the Ri (1 ≤ i ≤ n) is a wildcard type argument, are the direct supertypes of C<X1,...,Xn> which is the result of applying capture conversion (§5.1.10) to C<R1,...,Rn>.
+
+The direct supertypes of an intersection type T1 & ... & Tn are Ti (1 ≤ i ≤ n).
+
+The direct supertypes of a type variable are the types listed in its bound.
+
+A type variable is a direct supertype of its lower bound.
+
+The direct supertypes of the null type are all reference types other than the null type itself.
+
+4.10.3. Subtyping among Array Types
+
+The following rules define the direct supertype relation among array types:
+
+If S and T are both reference types, then S[] >1 T[] iff S >1 T.
+
+Object >1 Object[]
+
+Cloneable >1 Object[]
+
+java.io.Serializable >1 Object[]
+
+If P is a primitive type, then:
+
+Object >1 P[]
+
+Cloneable >1 P[]
+
+java.io.Serializable >1 P[]
+
+4.11. Where Types Are Used
+
+Types are used when they appear in declarations or in certain expressions.
+
+Example 4.11-1. Usage of a Type
+
+import java.util.Random;
+import java.util.Collection;
+import java.util.ArrayList;
+
+class MiscMath<T extends Number> {
+    int divisor;
+    MiscMath(int divisor) { this.divisor = divisor; }
+    float ratio(long l) {
+        try {
+            l /= divisor;
+        } catch (Exception e) {
+            if (e instanceof ArithmeticException)
+                l = Long.MAX_VALUE;
+            else
+                l = 0;
+        }
+        return (float)l;
+    }
+    double gausser() {
+        Random r = new Random();
+        double[] val = new double[2];
+        val[0] = r.nextGaussian();
+        val[1] = r.nextGaussian();
+        return (val[0] + val[1]) / 2;
+    }
+    Collection<Number> fromArray(Number[] na) {
+        Collection<Number> cn = new ArrayList<Number>();
+        for (Number n : na) cn.add(n);
+        return cn;
+    }
+    <S> void loop(S s) { this.<S>loop(s); }  
+}
+
+
+In this example, types are used in declarations of the following:
+
+Imported types (§7.5); here the type Random, imported from the type java.util.Random of the package java.util, is declared
+
+Fields, which are the class variables and instance variables of classes (§8.3), and constants of interfaces (§9.3); here the field divisor in the class MiscMath is declared to be of type int
+
+Method parameters (§8.4.1); here the parameter l of the method ratio is declared to be of type long
+
+Method results (§8.4); here the result of the method ratio is declared to be of type float, and the result of the method gausser is declared to be of type double
+
+Constructor parameters (§8.8.1); here the parameter of the constructor for MiscMath is declared to be of type int
+
+Local variables (§14.4, §14.14); the local variables r and val of the method gausser are declared to be of types Random and double[] (array of double)
+
+Exception parameters (§14.20); here the exception parameter e of the catch clause is declared to be of type Exception
+
+Type parameters (§4.4); here the type parameter of MiscMath is a type variable T with the type Number as its declared bound
+
+In any declaration that uses a parameterized type; here the type Number is used as a type argument (§4.5.1) in the parameterized type Collection<Number>.
+
+and in expressions of the following kinds:
+
+Class instance creations (§15.9); here a local variable r of method gausser is initialized by a class instance creation expression that uses the type Random
+
+Generic class (§8.1.2) instance creations (§15.9); here Number is used as a type argument in the expression new ArrayList<Number>()
+
+Array creations (§15.10); here the local variable val of method gausser is initialized by an array creation expression that creates an array of double with size 2
+
+Generic method (§8.4.4) or constructor (§8.8.4) invocations (§15.12); here the method loop calls itself with an explicit type argument S
+
+Casts (§15.16); here the return statement of the method ratio uses the float type in a cast
+
+The instanceof operator (§15.20.2); here the instanceof operator tests whether e is assignment-compatible with the type ArithmeticException
+
+
+
+4.12. Variables
+
+A variable is a storage location and has an associated type, sometimes called its compile-time type, that is either a primitive type (§4.2) or a reference type (§4.3).
+
+A variable's value is changed by an assignment (§15.26) or by a prefix or postfix ++ (increment) or -- (decrement) operator (§15.14.2, §15.14.3, §15.15.1, §15.15.2).
+
+Compatibility of the value of a variable with its type is guaranteed by the design of the Java programming language, as long as a program does not give rise to compile-time unchecked warnings (§4.12.2). Default values (§4.12.5) are compatible and all assignments to a variable are checked for assignment compatibility (§5.2), usually at compile time, but, in a single case involving arrays, a run-time check is made (§10.5).
+
+4.12.1. Variables of Primitive Type
+
+A variable of a primitive type always holds a primitive value of that exact primitive type.
+
+4.12.2. Variables of Reference Type
+
+A variable of a class type T can hold a null reference or a reference to an instance of class T or of any class that is a subclass of T.
+
+A variable of an interface type can hold a null reference or a reference to any instance of any class that implements the interface.
+
+Note that a variable is not guaranteed to always refer to a subtype of its declared type, but only to subclasses or subinterfaces of the declared type. This is due to the possibility of heap pollution discussed below.
+
+If T is a primitive type, then a variable of type "array of T" can hold a null reference or a reference to any array of type "array of T".
+
+If T is a reference type, then a variable of type "array of T" can hold a null reference or a reference to any array of type "array of S" such that type S is a subclass or subinterface of type T.
+
+A variable of type Object[] can hold a reference to an array of any reference type.
+
+A variable of type Object can hold a null reference or a reference to any object, whether it is an instance of a class or an array.
+
+It is possible that a variable of a parameterized type will refer to an object that is not of that parameterized type. This situation is known as heap pollution.
+
+Heap pollution can only occur if the program performed some operation involving a raw type that would give rise to a compile-time unchecked warning (§4.8, §5.1.9, §5.5.2, §8.4.1, §8.4.8.3, §8.4.8.4, §9.4.1.2, §15.12.4.2), or if the program aliases an array variable of non-reifiable element type through an array variable of a supertype which is either raw or non-generic.
+
+For example, the code:
+
+List l = new ArrayList<Number>();
+List<String> ls = l;  // Unchecked warning
+
+
+gives rise to a compile-time unchecked warning, because it is not possible to ascertain, either at compile time (within the limits of the compile-time type checking rules) or at run time, whether the variable l does indeed refer to a List<String>.
+
+If the code above is executed, heap pollution arises, as the variable ls, declared to be a List<String>, refers to a value that is not in fact a List<String>.
+
+The problem cannot be identified at run time because type variables are not reified, and thus instances do not carry any information at run time regarding the type arguments used to create them.
+
+In a simple example as given above, it may appear that it should be straightforward to identify the situation at compile time and give an error. However, in the general (and typical) case, the value of the variable l may be the result of an invocation of a separately compiled method, or its value may depend upon arbitrary control flow. The code above is therefore very atypical, and indeed very bad style.
+
+Furthermore, the fact that Object[] is a supertype of all array types means that unsafe aliasing can occur which leads to heap pollution. For example, the following code compiles because it is statically type-correct:
+
+
+static void m(List<String>... stringLists) {
+    Object[] array = stringLists;
+    List<Integer> tmpList = Arrays.asList(42);
+    array[0] = tmpList;                // (1)
+    String s = stringLists[0].get(0);  // (2)
+}
+
+
+
+Heap pollution occurs at (1) because a component in the stringLists array that should refer to a List<String> now refers to a List<Integer>. There is no way to detect this pollution in the presence of both a universal supertype (Object[]) and a non-reifiable type (the declared type of the formal parameter, List<String>[]). No unchecked warning is justified at (1); nevertheless, at run time, a ClassCastException will occur at (2).
+
+A compile-time unchecked warning will be given at any invocation of the method above because an invocation is considered by the Java programming language's static type system to create an array whose element type, List<String>, is non-reifiable (§15.12.4.2). If and only if the body of the method was type-safe with respect to the variable arity parameter, then the programmer could use the SafeVarargs annotation to silence warnings at invocations (§9.6.3.7). Since the body of the method as written above causes heap pollution, it would be completely inappropriate to use the annotation to disable warnings for callers.
+
+Finally, note that the stringLists array could be aliased through variables of types other than Object[], and heap pollution could still occur. For example, the type of the array variable could be java.util.Collection[] - a raw element type - and the body of the method above would compile without warnings or errors and still cause heap pollution. And if the Java SE platform defined, say, Sequence as a non-generic supertype of List<T>, then using Sequence as the type of array would also cause heap pollution.
+
+The variable will always refer to an object that is an instance of a class that represents the parameterized type.
+
+The value of ls in the example above is always an instance of a class that provides a representation of a List.
+
+Assignment from an expression of a raw type to a variable of a parameterized type should only be used when combining legacy code which does not make use of parameterized types with more modern code that does.
+
+If no operation that requires a compile-time unchecked warning to be issued takes place, and no unsafe aliasing occurs of array variables with non-reifiable element types, then heap pollution cannot occur. Note that this does not imply that heap pollution only occurs if a compile-time unchecked warning actually occurred. It is possible to run a program where some of the binaries were produced by a compiler for an older version of the Java programming language, or from sources that explicitly suppressed unchecked warnings. This practice is unhealthy at best.
+
+Conversely, it is possible that despite executing code that could (and perhaps did) give rise to a compile-time unchecked warning, no heap pollution takes place. Indeed, good programming practice requires that the programmer satisfy herself that despite any unchecked warning, the code is correct and heap pollution will not occur.
+
+4.12.3. Kinds of Variables
+
+There are seven kinds of variables:
+
+A class variable is a field declared using the keyword static within a class declaration (§8.3.1.1), or with or without the keyword static within an interface declaration (§9.3).
+
+A class variable is created when its class or interface is prepared (§12.3.2) and is initialized to a default value (§4.12.5). The class variable effectively ceases to exist when its class or interface is unloaded (§12.7).
+
+An instance variable is a field declared within a class declaration without using the keyword static (§8.3.1.1).
+
+If a class T has a field a that is an instance variable, then a new instance variable a is created and initialized to a default value (§4.12.5) as part of each newly created object of class T or of any class that is a subclass of T (§8.1.4). The instance variable effectively ceases to exist when the object of which it is a field is no longer referenced, after any necessary finalization of the object (§12.6) has been completed.
+
+Array components are unnamed variables that are created and initialized to default values (§4.12.5) whenever a new object that is an array is created (§10, §15.10). The array components effectively cease to exist when the array is no longer referenced.
+
+Method parameters (§8.4.1) name argument values passed to a method.
+
+For every parameter declared in a method declaration, a new parameter variable is created each time that method is invoked (§15.12). The new variable is initialized with the corresponding argument value from the method invocation. The method parameter effectively ceases to exist when the execution of the body of the method is complete.
+
+Constructor parameters (§8.8.1) name argument values passed to a constructor.
+
+For every parameter declared in a constructor declaration, a new parameter variable is created each time a class instance creation expression (§15.9) or explicit constructor invocation (§8.8.7) invokes that constructor. The new variable is initialized with the corresponding argument value from the creation expression or constructor invocation. The constructor parameter effectively ceases to exist when the execution of the body of the constructor is complete.
+
+An exception parameter is created each time an exception is caught by a catch clause of a try statement (§14.20).
+
+The new variable is initialized with the actual object associated with the exception (§11.3, §14.18). The exception parameter effectively ceases to exist when execution of the block associated with the catch clause is complete.
+
+Local variables are declared by local variable declaration statements (§14.4).
+
+Whenever the flow of control enters a block (§14.2) or for statement (§14.14), a new variable is created for each local variable declared in a local variable declaration statement immediately contained within that block or for statement.
+
+A local variable declaration statement may contain an expression which initializes the variable. The local variable with an initializing expression is not initialized, however, until the local variable declaration statement that declares it is executed. (The rules of definite assignment (§16) prevent the value of a local variable from being used before it has been initialized or otherwise assigned a value.) The local variable effectively ceases to exist when the execution of the block or for statement is complete.
+
+Were it not for one exceptional situation, a local variable could always be regarded as being created when its local variable declaration statement is executed. The exceptional situation involves the switch statement (§14.11), where it is possible for control to enter a block but bypass execution of a local variable declaration statement. Because of the restrictions imposed by the rules of definite assignment (§16), however, the local variable declared by such a bypassed local variable declaration statement cannot be used before it has been definitely assigned a value by an assignment expression (§15.26).
+
+Example 4.12.3-1. Different Kinds of Variables
+
+class Point {
+    static int numPoints;   // numPoints is a class variable
+    int x, y;               // x and y are instance variables
+    int[] w = new int[10];  // w[0] is an array component
+    int setX(int x) {       // x is a method parameter
+        int oldx = this.x;  // oldx is a local variable
+        this.x = x;
+        return oldx;
+    }
+}
+
+
+
+4.12.4. final Variables
+
+A variable can be declared final. A final variable may only be assigned to once. Declaring a variable final can serve as useful documentation that its value will not change and can help avoid programming errors.
+
+It is a compile-time error if a final variable is assigned to unless it is definitely unassigned (§16) immediately prior to the assignment.
+
+A blank final is a final variable whose declaration lacks an initializer.
+
+Once a final variable has been assigned, it always contains the same value. If a final variable holds a reference to an object, then the state of the object may be changed by operations on the object, but the variable will always refer to the same object.
+
+This applies also to arrays, because arrays are objects; if a final variable holds a reference to an array, then the components of the array may be changed by operations on the array, but the variable will always refer to the same array.
+
+Example 4.12.4-1. Final Variables
+
+class Point {
+    int x, y;
+    int useCount;
+    Point(int x, int y) { this.x = x; this.y = y; }
+    static final Point origin = new Point(0, 0);
+}
+
+
+In this program, the class Point declares a final class variable origin. The origin variable holds a reference to an object that is an instance of class Point whose coordinates are (0, 0). The value of the variable Point.origin can never change, so it always refers to the same Point object, the one created by its initializer. However, an operation on this Point object might change its state - for example, modifying its useCount or even, misleadingly, its x or y coordinate.
+
+
+
+
+A variable of primitive type or type String, that is final and initialized with a compile-time constant expression (§15.28), is called a constant variable.
+
+Whether a variable is a constant variable or not may have implications with respect to class initialization (§12.4.1), binary compatibility (§13.1, §13.4.9) and definite assignment (§16).
+
+A resource of a try-with-resources statement (§14.20.3) and an exception parameter of a multi-catch clause (§14.20) are implicitly declared final.
+
+An exception parameter of a uni-catch clause (§14.20) may be effectively final instead of being explicitly declared final. Such a parameter is never implicitly declared final.
+
+4.12.5. Initial Values of Variables
+
+Every variable in a program must have a value before its value is used:
+
+Each class variable, instance variable, or array component is initialized with a default value when it is created (§15.9, §15.10):
+
+For type byte, the default value is zero, that is, the value of (byte)0.
+
+For type short, the default value is zero, that is, the value of (short)0.
+
+For type int, the default value is zero, that is, 0.
+
+For type long, the default value is zero, that is, 0L.
+
+For type float, the default value is positive zero, that is, 0.0f.
+
+For type double, the default value is positive zero, that is, 0.0d.
+
+For type char, the default value is the null character, that is, '\u0000'.
+
+For type boolean, the default value is false.
+
+For all reference types (§4.3), the default value is null.
+
+Each method parameter (§8.4.1) is initialized to the corresponding argument value provided by the invoker of the method (§15.12).
+
+Each constructor parameter (§8.8.1) is initialized to the corresponding argument value provided by a class instance creation expression (§15.9) or explicit constructor invocation (§8.8.7).
+
+An exception parameter (§14.20) is initialized to the thrown object representing the exception (§11.3, §14.18).
+
+A local variable (§14.4, §14.14) must be explicitly given a value before it is used, by either initialization (§14.4) or assignment (§15.26), in a way that can be verified using the rules for definite assignment (§16).
+
+Example 4.12.5-1. Initial Values of Variables
+
+class Point {
+    static int npoints;
+    int x, y;
+    Point root;
+}
+
+class Test {
+    public static void main(String[] args) {
+        System.out.println("npoints=" + Point.npoints);
+        Point p = new Point();
+        System.out.println("p.x=" + p.x + ", p.y=" + p.y);
+        System.out.println("p.root=" + p.root);
+    }
+}
+
+
+This program prints:
+
+npoints=0
+p.x=0, p.y=0
+p.root=null
+
+
+illustrating the default initialization of npoints, which occurs when the class Point is prepared (§12.3.2), and the default initialization of x, y, and root, which occurs when a new Point is instantiated. See §12 for a full description of all aspects of loading, linking, and initialization of classes and interfaces, plus a description of the instantiation of classes to make new class instances.
+
+
+
+4.12.6. Types, Classes, and Interfaces
+
+In the Java programming language, every variable and every expression has a type that can be determined at compile time. The type may be a primitive type or a reference type. Reference types include class types and interface types. Reference types are introduced by type declarations, which include class declarations (§8.1) and interface declarations (§9.1). We often use the term type to refer to either a class or an interface.
+
+In the Java Virtual Machine, every object belongs to some particular class: the class that was mentioned in the creation expression that produced the object (§15.9), or the class whose Class object was used to invoke a reflective method to produce the object, or the String class for objects implicitly created by the string concatenation operator + (§15.18.1). This class is called the class of the object. An object is said to be an instance of its class and of all superclasses of its class.
+
+Every array also has a class. The method getClass, when invoked for an array object, will return a class object (of class Class) that represents the class of the array (§10.8).
+
+The compile-time type of a variable is always declared, and the compile-time type of an expression can be deduced at compile time. The compile-time type limits the possible values that the variable can hold at run time or the expression can produce at run time. If a run-time value is a reference that is not null, it refers to an object or array that has a class, and that class will necessarily be compatible with the compile-time type.
+
+Even though a variable or expression may have a compile-time type that is an interface type, there are no instances of interfaces. A variable or expression whose type is an interface type can reference any object whose class implements (§8.1.5) that interface.
+
+Sometimes a variable or expression is said to have a "run-time type". This refers to the class of the object referred to by the value of the variable or expression at run time, assuming that the value is not null.
+
+The correspondence between compile-time types and run-time types is incomplete for two reasons:
+
+At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
+
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 7 Edition for more details.
+
+Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile-time. Specifically, all compile-time invocations of a given generic type declaration (§8.1.2, §9.1.2) share a single run-time representation.
+
+Under certain conditions, it is possible that a variable of a parameterized type refers to an object that is not of that parameterized type. This situation is known as heap pollution (§4.12.2). The variable will always refer to an object that is an instance of a class that represents the parameterized type.
+
+Example 4.12.6-1. Type of a Variable versus Class of an Object
+
+interface Colorable {
+    void setColor(byte r, byte g, byte b);
+}
+
+class Point { int x, y; }
+
+class ColoredPoint extends Point implements Colorable {
+    byte r, g, b;
+    public void setColor(byte rv, byte gv, byte bv) {
+        r = rv; g = gv; b = bv;
+    }
+}
+
+class Test {
+    public static void main(String[] args) {
+        Point p = new Point();
+        ColoredPoint cp = new ColoredPoint();
+        p = cp;
+        Colorable c = cp;
+    }
+}
+
+
+In this example:
+
+The local variable p of the method main of class Test has type Point and is initially assigned a reference to a new instance of class Point.
+
+The local variable cp similarly has as its type ColoredPoint, and is initially assigned a reference to a new instance of class ColoredPoint.
+
+The assignment of the value of cp to the variable p causes p to hold a reference to a ColoredPoint object. This is permitted because ColoredPoint is a subclass of Point, so the class ColoredPoint is assignment-compatible (§5.2) with the type Point. A ColoredPoint object includes support for all the methods of a Point. In addition to its particular fields r, g, and b, it has the fields of class Point, namely x and y.
+
+The local variable c has as its type the interface type Colorable, so it can hold a reference to any object whose class implements Colorable; specifically, it can hold a reference to a ColoredPoint.
+
+Note that an expression such as new Colorable() is not valid because it is not possible to create an instance of an interface, only of a class. However, the expression new Colorable() { public void setColor... } is valid because it declares an anonymous class (§15.9.5) that implements the Colorable interface.
+
+
