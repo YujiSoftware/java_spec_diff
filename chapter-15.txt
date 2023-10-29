@@ -99,7 +99,10 @@ Table of Contents
 15.27.2. Lambda Body
 15.27.3. Type of a Lambda Expression
 15.27.4. Run-Time Evaluation of Lambda Expressions
-15.28. Constant Expressions
+15.28. switch Expressions
+15.28.1. The Switch Block of a switch Expression
+15.28.2. Run-Time Evaluation of switch Expressions
+15.29. Constant Expressions
 
 Much of the work in a program is done by evaluating expressions, either for their side effects, such as assignments to variables, or for their values, which can be used as arguments or operands in larger expressions, or to affect the execution sequence in statements, or both.
 
@@ -121,7 +124,7 @@ Value set conversion (§5.1.13) is applied to the result of every expression tha
 
 An expression denotes nothing if and only if it is a method invocation (§15.12) that invokes a method that does not return a value, that is, a method declared void (§8.4). Such an expression can be used only as an expression statement (§14.8) or as the single expression of a lambda body (§15.27.2), because every other context in which an expression can appear requires the expression to denote something. An expression statement or lambda body that is a method invocation may also invoke a method that produces a result; in this case the value returned by the method is quietly discarded.
 
-Evaluation of an expression can produce side effects, because expressions may contain embedded assignments, increment operators, decrement operators, and method invocations.
+Evaluation of an expression can produce side effects, because expressions may contain embedded assignments, increment operators, decrement operators, method invocations, and, in switch expressions, arbitrary statements.
 
 An expression occurs in either:
 
@@ -145,6 +148,8 @@ Ternary operator expressions (§15.25)
 
 Lambda expressions (§15.27)
 
+switch expressions (§15.28)
+
 Precedence among operators is managed by a hierarchy of grammar productions. The lowest precedence operator is the arrow of a lambda expression (->), followed by the assignment operators. Thus, all expressions are syntactically included in the LambdaExpression and AssignmentExpression nonterminals:
 
 Expression:
@@ -165,11 +170,13 @@ Conditional expressions (§15.25)
 
 Lambda expressions (§15.27)
 
+switch expressions (§15.28)
+
 The rules determining whether an expression of one of these forms is a poly expression are given in the individual sections that specify these forms of expressions.
 
 Expressions that are not poly expressions are standalone expressions. Standalone expressions are expressions of the forms above when determined not to be poly expressions, as well as all expressions of all other forms. Expressions of all other forms are said to have a standalone form.
 
-Some expressions have a value that can be determined at compile time. These are constant expressions (§15.28).
+Some expressions have a value that can be determined at compile time. These are constant expressions (§15.29).
 
 15.3. Type of an Expression
 
@@ -187,7 +194,7 @@ Note that an expression whose type is a class type F that is declared final is g
 
 If the type of an expression is float or double, then there is a question as to what value set (§4.2.3) the value of the expression is drawn from. This is governed by the rules of value set conversion (§5.1.13); these rules in turn depend on whether or not the expression is FP-strict.
 
-Every constant expression (§15.28) is FP-strict.
+Every constant expression (§15.29) is FP-strict.
 
 If an expression is not a constant expression, then consider all the class declarations, interface declarations, and method declarations that contain the expression. If any such declaration bears the strictfp modifier (§8.1.1.3, §8.4.3.5, §9.1.1.2), then the expression is FP-strict.
 
@@ -260,6 +267,8 @@ An integer division (§15.17.2) or integer remainder (§15.17.3) operator throws
 An assignment to an array component of reference type (§15.26.1), a method invocation expression (§15.12), or a prefix or postfix increment (§15.14.2, §15.15.1) or decrement operator (§15.14.3, §15.15.2) may all throw an OutOfMemoryError as a result of boxing conversion (§5.1.7).
 
 An assignment to an array component of reference type (§15.26.1) throws an ArrayStoreException when the value to be assigned is not compatible with the component type of the array (§10.5).
+
+A switch expression (§15.28) throws an IncompatibleClassChangeError if no switch label matches the value of the selector expression.
 
 A method invocation expression can also result in an exception being thrown if an exception occurs that causes execution of the method body to complete abruptly.
 
@@ -1057,7 +1066,7 @@ The rules above imply that the element type in an array creation expression cann
 
 The type of each dimension expression within a DimExpr must be a type that is convertible (§5.1.8) to an integral type, or a compile-time error occurs.
 
-Each dimension expression undergoes unary numeric promotion (§5.6.1). The promoted type must be int, or a compile-time error occurs.
+Each dimension expression undergoes unary numeric promotion (§5.6). The promoted type must be int, or a compile-time error occurs.
 
 The type of the array creation expression is an array type that can denoted by a copy of the array creation expression from which the new keyword and every DimExpr expression and array initializer have been deleted.
 
@@ -1234,7 +1243,7 @@ Note that the array reference expression may be a name or any primary expression
 
 The type of the array reference expression must be an array type (call it T[], an array whose components are of type T), or a compile-time error occurs.
 
-The index expression undergoes unary numeric promotion (§5.6.1). The promoted type must be int, or a compile-time error occurs.
+The index expression undergoes unary numeric promotion (§5.6). The promoted type must be int, or a compile-time error occurs.
 
 The type of the array access expression is the result of applying capture conversion (§5.1.10) to T.
 
@@ -1971,6 +1980,8 @@ A parenthesized expression (§15.8.5) is potentially compatible with a type if i
 
 A conditional expression (§15.25) is potentially compatible with a type if each of its second and third operand expressions are potentially compatible with that type.
 
+A switch expression (§15.28) is potentially compatible with a type if all of its result expressions are potentially compatible with that type.
+
 A class instance creation expression, a method invocation expression, or an expression of a standalone form (§15.2) is potentially compatible with any type.
 
 The definition of potential applicability goes beyond a basic arity check to also take into account the presence and "shape" of functional interface target types. In some cases involving type argument inference, a lambda expression appearing as a method invocation argument cannot be properly typed until after overload resolution. These rules allow the form of the lambda expression to still be taken into account, discarding obviously incorrect target types that might otherwise cause ambiguity errors.
@@ -2112,6 +2123,8 @@ RS is a reference type, RT is a primitive type, and the compile-time declaration
 e is a parenthesized expression, and one of these conditions applies recursively to the contained expression.
 
 e is a conditional expression, and, for each of the second and third operands, one of these conditions applies recursively.
+
+e is a switch expression, and, for each of its result expressions, one of these conditions applies recursively.
 
 A method m1 is strictly more specific than another method m2 if and only if m1 is more specific than m2 and m2 is not more specific than m1.
 
@@ -2420,7 +2433,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 13 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 14 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2450,7 +2463,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 13 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 14 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 
@@ -2980,7 +2993,7 @@ The result of the postfix expression must be a variable of a type that is conver
 
 The type of the postfix increment expression is the type of the variable. The result of the postfix increment expression is not a variable, but a value.
 
-At run time, if evaluation of the operand expression completes abruptly, then the postfix increment expression completes abruptly for the same reason and no incrementation occurs. Otherwise, the value 1 is added to the value of the variable and the sum is stored back into the variable. Before the addition, binary numeric promotion (§5.6.2) is performed on the value 1 and the value of the variable. If necessary, the sum is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the postfix increment expression is the value of the variable before the new value is stored.
+At run time, if evaluation of the operand expression completes abruptly, then the postfix increment expression completes abruptly for the same reason and no incrementation occurs. Otherwise, the value 1 is added to the value of the variable and the sum is stored back into the variable. Before the addition, binary numeric promotion (§5.6) is performed on the value 1 and the value of the variable. If necessary, the sum is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the postfix increment expression is the value of the variable before the new value is stored.
 
 Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8) and value set conversion (§5.1.13). If necessary, value set conversion is applied to the sum prior to its being stored in the variable.
 
@@ -2997,7 +3010,7 @@ The result of the postfix expression must be a variable of a type that is conver
 
 The type of the postfix decrement expression is the type of the variable. The result of the postfix decrement expression is not a variable, but a value.
 
-At run time, if evaluation of the operand expression completes abruptly, then the postfix decrement expression completes abruptly for the same reason and no decrementation occurs. Otherwise, the value 1 is subtracted from the value of the variable and the difference is stored back into the variable. Before the subtraction, binary numeric promotion (§5.6.2) is performed on the value 1 and the value of the variable. If necessary, the difference is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the postfix decrement expression is the value of the variable before the new value is stored.
+At run time, if evaluation of the operand expression completes abruptly, then the postfix decrement expression completes abruptly for the same reason and no decrementation occurs. Otherwise, the value 1 is subtracted from the value of the variable and the difference is stored back into the variable. Before the subtraction, binary numeric promotion (§5.6) is performed on the value 1 and the value of the variable. If necessary, the difference is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the postfix decrement expression is the value of the variable before the new value is stored.
 
 Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8) and value set conversion (§5.1.13). If necessary, value set conversion is applied to the difference prior to its being stored in the variable.
 
@@ -3005,7 +3018,7 @@ A variable that is declared final cannot be decremented because when an access o
 
 15.15. Unary Operators
 
-The operators +, -, ++, --, ~, !, and the cast operator (§15.16) are called the unary operators.
+The operators +, -, ++, --, ~, !, and the cast operator (§15.16) are called the unary operators. A unary expression is either a unary operator applied to an operand, or a switch expression (§15.28).
 
 UnaryExpression:
 PreIncrementExpression
@@ -3022,14 +3035,7 @@ PostfixExpression
 ~ UnaryExpression
 ! UnaryExpression
 CastExpression
-
-The following production from §15.16 is shown here for convenience:
-
-CastExpression:
-( PrimitiveType ) UnaryExpression
-( ReferenceType {AdditionalBound} ) UnaryExpressionNotPlusMinus
-( ReferenceType {AdditionalBound} ) LambdaExpression
-
+SwitchExpression
 
 Expressions with unary operators group right-to-left, so that -~x means the same as -(~x).
 
@@ -3037,7 +3043,15 @@ This portion of the grammar contains some tricks to avoid two potential syntacti
 
 The first potential ambiguity would arise in expressions such as (p)+q, which looks, to a C or C++ programmer, as though it could be either a cast to type p of a unary + operating on q, or a binary addition of two quantities p and q. In C and C++, the parser handles this problem by performing a limited amount of semantic analysis as it parses, so that it knows whether p is the name of a type or the name of a variable.
 
-Java takes a different approach. The result of the + operator must be numeric, and all type names involved in casts on numeric values are known keywords. Thus, if p is a keyword naming a primitive type, then (p)+q can make sense only as a cast of a unary expression. However, if p is not a keyword naming a primitive type, then (p)+q can make sense only as a binary arithmetic operation. Similar remarks apply to the - operator. The grammar shown above splits CastExpression into two cases to make this distinction. The nonterminal UnaryExpression includes all unary operators, but the nonterminal UnaryExpressionNotPlusMinus excludes uses of all unary operators that could also be binary operators, which in Java are + and -.
+Java takes a different approach. The result of the + operator must be numeric, and all type names involved in casts on numeric values are known keywords. Thus, if p is a keyword naming a primitive type, then (p)+q can make sense only as a cast of a unary expression. However, if p is not a keyword naming a primitive type, then (p)+q can make sense only as a binary arithmetic operation. Similar remarks apply to the - operator. The grammar splits CastExpression into multiple cases to make this distinction:
+
+CastExpression:
+( PrimitiveType ) UnaryExpression
+( ReferenceType {AdditionalBound} ) UnaryExpressionNotPlusMinus
+( ReferenceType {AdditionalBound} ) LambdaExpression
+
+
+The nonterminal UnaryExpression includes all unary operators, but the nonterminal UnaryExpressionNotPlusMinus excludes uses of all unary operators that could also be binary operators, which in Java are + and -.
 
 The second potential ambiguity is that the expression (p)++ could, to a C or C++ programmer, appear to be either a postfix increment of a parenthesized expression or the beginning of a cast, for example, in (p)++q. As before, parsers for C and C++ know whether p is the name of a type or the name of a variable. But a parser using only one-token lookahead and no semantic analysis during the parse would not be able to tell, when ++ is the lookahead token, whether (p) should be considered a Primary expression or left alone for later consideration as part of a CastExpression.
 
@@ -3051,7 +3065,7 @@ The result of the unary expression must be a variable of a type that is converti
 
 The type of the prefix increment expression is the type of the variable. The result of the prefix increment expression is not a variable, but a value.
 
-At run time, if evaluation of the operand expression completes abruptly, then the prefix increment expression completes abruptly for the same reason and no incrementation occurs. Otherwise, the value 1 is added to the value of the variable and the sum is stored back into the variable. Before the addition, binary numeric promotion (§5.6.2) is performed on the value 1 and the value of the variable. If necessary, the sum is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the prefix increment expression is the value of the variable after the new value is stored.
+At run time, if evaluation of the operand expression completes abruptly, then the prefix increment expression completes abruptly for the same reason and no incrementation occurs. Otherwise, the value 1 is added to the value of the variable and the sum is stored back into the variable. Before the addition, binary numeric promotion (§5.6) is performed on the value 1 and the value of the variable. If necessary, the sum is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the prefix increment expression is the value of the variable after the new value is stored.
 
 Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8) and value set conversion (§5.1.13). If necessary, value set conversion is applied to the sum prior to its being stored in the variable.
 
@@ -3065,7 +3079,7 @@ The result of the unary expression must be a variable of a type that is converti
 
 The type of the prefix decrement expression is the type of the variable. The result of the prefix decrement expression is not a variable, but a value.
 
-At run time, if evaluation of the operand expression completes abruptly, then the prefix decrement expression completes abruptly for the same reason and no decrementation occurs. Otherwise, the value 1 is subtracted from the value of the variable and the difference is stored back into the variable. Before the subtraction, binary numeric promotion (§5.6.2) is performed on the value 1 and the value of the variable. If necessary, the difference is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the prefix decrement expression is the value of the variable after the new value is stored.
+At run time, if evaluation of the operand expression completes abruptly, then the prefix decrement expression completes abruptly for the same reason and no decrementation occurs. Otherwise, the value 1 is subtracted from the value of the variable and the difference is stored back into the variable. Before the subtraction, binary numeric promotion (§5.6) is performed on the value 1 and the value of the variable. If necessary, the difference is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the prefix decrement expression is the value of the variable after the new value is stored.
 
 Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8) and value set conversion (§5.1.13). If necessary, format conversion is applied to the difference prior to its being stored in the variable.
 
@@ -3075,7 +3089,7 @@ A variable that is declared final cannot be decremented because when an access o
 
 The type of the operand expression of the unary + operator must be a type that is convertible (§5.1.8) to a primitive numeric type, or a compile-time error occurs.
 
-Unary numeric promotion (§5.6.1) is performed on the operand. The type of the unary plus expression is the promoted type of the operand. The result of the unary plus expression is not a variable, but a value, even if the result of the operand expression is a variable.
+Unary numeric promotion (§5.6) is performed on the operand. The type of the unary plus expression is the promoted type of the operand. The result of the unary plus expression is not a variable, but a value, even if the result of the operand expression is a variable.
 
 At run time, the value of the unary plus expression is the promoted value of the operand.
 
@@ -3083,7 +3097,7 @@ At run time, the value of the unary plus expression is the promoted value of the
 
 The type of the operand expression of the unary - operator must be a type that is convertible (§5.1.8) to a primitive numeric type, or a compile-time error occurs.
 
-Unary numeric promotion (§5.6.1) is performed on the operand.
+Unary numeric promotion (§5.6) is performed on the operand.
 
 The type of the unary minus expression is the promoted type of the operand.
 
@@ -3105,7 +3119,7 @@ If the operand is a zero, the result is the zero of opposite sign.
 
 The type of the operand expression of the unary ~ operator must be a type that is convertible (§5.1.8) to a primitive integral type, or a compile-time error occurs.
 
-Unary numeric promotion (§5.6.1) is performed on the operand. The type of the unary bitwise complement expression is the promoted type of the operand.
+Unary numeric promotion (§5.6) is performed on the operand. The type of the unary bitwise complement expression is the promoted type of the operand.
 
 At run time, the value of the unary bitwise complement expression is the bitwise complement of the promoted value of the operand. In all cases, ~x equals (-x)-1.
 
@@ -3174,7 +3188,7 @@ The multiplicative operators have the same precedence and are syntactically left
 
 The type of each of the operands of a multiplicative operator must be a type that is convertible (§5.1.8) to a primitive numeric type, or a compile-time error occurs.
 
-Binary numeric promotion is performed on the operands (§5.6.2).
+Binary numeric promotion is performed on the operands (§5.6).
 
 Note that binary numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
 
@@ -3232,7 +3246,7 @@ Despite the fact that overflow, underflow, or loss of information may occur, eva
 
 The binary / operator performs division, producing the quotient of its operands. The left-hand operand is the dividend and the right-hand operand is the divisor.
 
-Integer division rounds toward 0. That is, the quotient produced for operands n and d that are integers after binary numeric promotion (§5.6.2) is an integer value q whose magnitude is as large as possible while satisfying |d ⋅ q| ≤ |n|. Moreover, q is positive when |n| ≥ |d| and n and d have the same sign, but q is negative when |n| ≥ |d| and n and d have opposite signs.
+Integer division rounds toward 0. That is, the quotient produced for operands n and d that are integers after binary numeric promotion (§5.6) is an integer value q whose magnitude is as large as possible while satisfying |d ⋅ q| ≤ |n|. Moreover, q is positive when |n| ≥ |d| and n and d have the same sign, but q is negative when |n| ≥ |d| and n and d have opposite signs.
 
 There is one special case that does not satisfy this rule: if the dividend is the negative integer of largest possible magnitude for its type, and the divisor is -1, then integer overflow occurs and the result is equal to the dividend. Despite the overflow, no exception is thrown in this case. On the other hand, if the value of the divisor in an integer division is 0, then an ArithmeticException is thrown.
 
@@ -3280,7 +3294,7 @@ The binary % operator is said to yield the remainder of its operands from an imp
 
 In C and C++, the remainder operator accepts only integral operands, but in the Java programming language, it also accepts floating-point operands.
 
-The remainder operation for operands that are integers after binary numeric promotion (§5.6.2) produces a result value such that (a/b)*b+(a%b) is equal to a.
+The remainder operation for operands that are integers after binary numeric promotion (§5.6) produces a result value such that (a/b)*b+(a%b) is equal to a.
 
 This identity holds even in the special case that the dividend is the negative integer of largest possible magnitude for its type and the divisor is -1 (the remainder is 0).
 
@@ -3394,7 +3408,7 @@ If only one operand expression is of type String, then string conversion (§5.1.
 
 The result of string concatenation is a reference to a String object that is the concatenation of the two operand strings. The characters of the left-hand operand precede the characters of the right-hand operand in the newly created string.
 
-The String object is newly created (§12.5) unless the expression is a constant expression (§15.28).
+The String object is newly created (§12.5) unless the expression is a constant expression (§15.29).
 
 An implementation may choose to perform conversion and concatenation in one step to avoid creating and then discarding an intermediate String object. To increase the performance of repeated string concatenation, a Java compiler may use the StringBuffer class or a similar technique to reduce the number of intermediate String objects that are created by evaluation of an expression.
 
@@ -3509,7 +3523,7 @@ The binary + operator performs addition when applied to two operands of numeric 
 
 The binary - operator performs subtraction, producing the difference of two numeric operands.
 
-Binary numeric promotion is performed on the operands (§5.6.2).
+Binary numeric promotion is performed on the operands (§5.6).
 
 Note that binary numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
 
@@ -3585,7 +3599,7 @@ ShiftExpression >>> AdditiveExpression
 
 The shift operators are syntactically left-associative (they group left-to-right).
 
-Unary numeric promotion (§5.6.1) is performed on each operand separately. (Binary numeric promotion (§5.6.2) is not performed on the operands.)
+Unary numeric promotion (§5.6) is performed on each operand separately. (Binary numeric promotion is not performed on the operands.)
 
 It is a compile-time error if the type of each of the operands of a shift operator, after unary numeric promotion, is not a primitive integral type.
 
@@ -3635,7 +3649,7 @@ The type of a relational expression is always boolean.
 
 The type of each of the operands of a numerical comparison operator must be a type that is convertible (§5.1.8) to a primitive numeric type, or a compile-time error occurs.
 
-Binary numeric promotion is performed on the operands (§5.6.2).
+Binary numeric promotion is performed on the operands (§5.6).
 
 Note that binary numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
 
@@ -3729,7 +3743,7 @@ In all cases, a!=b produces the same result as !(a==b).
 
 15.21.1. Numerical Equality Operators == and !=
 
-If the operands of an equality operator are both of numeric type, or one is of numeric type and the other is convertible (§5.1.8) to numeric type, binary numeric promotion is performed on the operands (§5.6.2).
+If the operands of an equality operator are both of numeric type, or one is of numeric type and the other is convertible (§5.1.8) to numeric type, binary numeric promotion is performed on the operands (§5.6).
 
 Note that binary numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
 
@@ -3813,7 +3827,7 @@ The bitwise and logical operators may be used to compare two operands of numeric
 
 15.22.1. Integer Bitwise Operators &, ^, and |
 
-When both operands of an operator &, ^, or | are of a type that is convertible (§5.1.8) to a primitive integral type, binary numeric promotion is first performed on the operands (§5.6.2).
+When both operands of an operator &, ^, or | are of a type that is convertible (§5.1.8) to a primitive integral type, binary numeric promotion is first performed on the operands (§5.6).
 
 The type of the bitwise operator expression is the promoted type of the operands.
 
@@ -3942,6 +3956,8 @@ Note that, for a generic method, this is the type before instantiating the metho
 
 A boolean conditional expression.
 
+A switch expression (§15.28) whose result expressions are all boolean expressions.
+
 If both the second and the third operand expressions are numeric expressions, the conditional expression is a numeric conditional expression.
 
 For the purpose of classifying a conditional, the following expressions are numeric expressions:
@@ -3957,6 +3973,8 @@ A method invocation expression (§15.12) for which the chosen most specific meth
 Note that, for a generic method, this is the type before instantiating the method's type arguments.
 
 A numeric conditional expression.
+
+A switch expression (§15.28) whose result expressions are all numeric expressions.
 
 Otherwise, the conditional expression is a reference conditional expression.
 
@@ -4125,13 +4143,13 @@ If one of the second and third operands is of primitive type T, and the type of 
 
 If one of the operands is of type byte or Byte and the other is of type short or Short, then the type of the conditional expression is short.
 
-If one of the operands is of type T where T is byte, short, or char, and the other operand is a constant expression (§15.28) of type int whose value is representable in type T, then the type of the conditional expression is T.
+If one of the operands is of type T where T is byte, short, or char, and the other operand is a constant expression (§15.29) of type int whose value is representable in type T, then the type of the conditional expression is T.
 
 If one of the operands is of type T, where T is Byte, Short, or Character, and the other operand is a constant expression of type int whose value is representable in the type U which is the result of applying unboxing conversion to T, then the type of the conditional expression is U.
 
-Otherwise, binary numeric promotion (§5.6.2) is applied to the operand types, and the type of the conditional expression is the promoted type of the second and third operands.
+Otherwise, general numeric promotion (§5.6) is applied to the second and third operands, and the type of the conditional expression is the promoted type of the second and third operands.
 
-Note that binary numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
+Note that numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
 
 15.25.3. Reference Conditional Expressions
 
@@ -4858,7 +4876,7 @@ Practically speaking, it is unusual for a lambda expression to need to talk abou
 
 A block lambda body is void-compatible if every return statement in the block has the form return;.
 
-A block lambda body is value-compatible if it cannot complete normally (§14.21) and every return statement in the block has the form return Expression;.
+A block lambda body is value-compatible if it cannot complete normally (§14.22) and every return statement in the block has the form return Expression;.
 
 It is a compile-time error if a block lambda body is neither void-compatible nor value-compatible.
 
@@ -5053,7 +5071,110 @@ If an "existing instance" is available, it need not have been created at a previ
 
 If the targeted functional interface type is a subtype of java.io.Serializable, the resulting object will automatically be an instance of a serializable class. Making an object derived from a lambda expression serializable can have extra run time overhead and security implications, so lambda-derived objects are not required to be serializable "by default".
 
-15.28. Constant Expressions
+15.28. switch Expressions
+
+A switch expression transfers control to one of several statements or expressions, depending on the value of an expression; all possible values of that expression must be handled, and all of the several statements and expressions must produce a value for the result of the switch expression.
+
+SwitchExpression:
+switch ( Expression ) SwitchBlock
+
+The Expression is called the selector expression. The type of the selector expression must be char, byte, short, int, Character, Byte, Short, Integer, String, or an enum type (§8.9), or a compile-time error occurs.
+
+The body of both a switch expression and a switch statement (§14.11) is called a switch block. General rules which apply to all switch blocks, whether they appear in switch expressions or switch statements, are given in §14.11.1. The following productions from §14.11.1 are shown here for convenience:
+
+SwitchBlock:
+{ SwitchRule {SwitchRule} }
+{ {SwitchBlockStatementGroup} {SwitchLabel :} }
+SwitchRule:
+SwitchLabel -> Expression ;
+SwitchLabel -> Block
+SwitchLabel -> ThrowStatement
+SwitchBlockStatementGroup:
+SwitchLabel : {SwitchLabel :} BlockStatements
+SwitchLabel:
+case CaseConstant {, CaseConstant}
+default
+CaseConstant:
+ConditionalExpression
+15.28.1. The Switch Block of a switch Expression
+
+In addition to the general rules for switch blocks (§14.11.1), there are further rules for switch blocks in switch expressions. Namely, all of the following must be true for the switch block of a switch expression, or a compile-time error occurs:
+
+If the type of the selector expression is not an enum type, then there is exactly one default label associated with the switch block.
+
+If the type of the selector expression is an enum type, then (i) the set of the case constants associated with the switch block includes every enum constant of the enum type, and (ii) at most one default label is associated with the switch block.
+
+A default label is permitted, but not required, when the case labels cover all the enum constants.
+
+If the switch block consists of switch rules, then any switch rule block cannot complete normally (§14.22).
+
+If the switch block consists of switch labeled statement groups, then the last statement in the switch block cannot complete normally, and the switch block does not have any switch labels after the last switch labeled statement group.
+
+switch expressions cannot have empty switch blocks, unlike switch statements. Furthermore, switch expressions differ from switch statements in terms of which expressions may appear to the right of an arrow (->) in the switch block, that is, which expressions may be used as switch rule expressions. In a switch expression, any expression may be used as a switch rule expression, but in a switch statement, only a statement expression may be used (§14.11.1).
+
+The result expressions of a switch expression are determined as follows:
+
+If the switch block consists of switch rules, then each switch rule is considered in turn:
+
+If the switch rule is of the form ... -> Expression then Expression is a result expression of the switch expression.
+
+If the switch rule is of the form ... -> Block then every expression which is immediately contained in a yield statement in Block whose yield target is the given switch expression, is a result expression of the switch expression.
+
+If the switch block consists of switch labeled statement groups, then every expression immediately contained in a yield statement in the switch block whose yield target is the given switch expression, is a result expression of the switch expression.
+
+It is a compile-time error if a switch expression has no result expressions.
+
+A switch expression is a poly expression if it appears in an assignment context or an invocation context (§5.2, §5.3). Otherwise, it is a standalone expression.
+
+Where a poly switch expression appears in a context of a particular kind with target type T, its result expressions similarly appear in a context of the same kind with target type T.
+
+A poly switch expression is compatible with a target type T if each of its result expressions is compatible with T.
+
+The type of a poly switch expression is the same as its target type.
+
+The type of a standalone switch expression is determined as follows:
+
+If the result expressions all have the same type (which may be the null type (§4.1)), then that is the type of the switch expression.
+
+Otherwise, if the type of each result expression is boolean or Boolean, then an unboxing conversion (§5.1.8) is applied to each result expression of type Boolean, and the switch expression has type boolean.
+
+Otherwise, if the type of each result expression is convertible to a numeric type (§5.1.8), then the type of the switch expression is the result of general numeric promotion (§5.6) applied to the result expressions.
+
+Otherwise, boxing conversion (§5.1.7) is applied to each result expression that has a primitive type, after which the type of the switch expression is the result of applying capture conversion (§5.1.10) to the least upper bound (§4.10.4) of the types of the result expressions.
+
+15.28.2. Run-Time Evaluation of switch Expressions
+
+A switch expression is evaluated by first evaluating the selector expression. Then:
+
+If evaluation of the selector expression completes abruptly, then the switch expression completes abruptly for the same reason.
+
+Otherwise, if the result of evaluating the selector expression is null, then a NullPointerException is thrown and the entire switch expression completes abruptly for that reason.
+
+Otherwise, if the result of evaluating the selector expression is of type Character, Byte, Short, or Integer, it is subjected to unboxing conversion (§5.1.8). If this conversion completes abruptly, then the entire switch expression completes abruptly for the same reason.
+
+If evaluation of the selector expression completes normally and the result is non-null, and the subsequent unboxing conversion (if any) completes normally, then evaluation of the switch expression continues by determining if a switch label associated with the switch block matches the value of the selector expression (§14.11.1). Then:
+
+If no switch label matches, then an IncompatibleClassChangeError is thrown and the entire switch expression completes abruptly for that reason.
+
+If a switch label matches, then one of the following applies:
+
+If it is the switch label for a switch rule expression, then the expression is evaluated. If the result of evaluation is a value, then the switch expression completes normally with the same value.
+
+If it is the switch label for a switch rule block, then the block is executed. If this block completes normally, then the switch expression completes normally.
+
+If it is the switch label for a switch rule throw statement, then the throw statement is executed.
+
+Otherwise, all the statements in the switch block after the matching switch label are executed in order. If these statements complete normally, then the switch expression completes normally.
+
+If execution of any statement or expression in the switch block completes abruptly, it is handled as follows:
+
+If execution of an expression completes abruptly, then the switch expression completes abruptly for the same reason.
+
+If execution of a statement completes abruptly because of a yield with value V, then the switch expression completes normally and the value of the switch expression is V.
+
+If execution of a statement completes abruptly for any reason other than a yield with a value, then the switch expression completes abruptly for the same reason.
+
+15.29. Constant Expressions
 ConstantExpression:
 Expression
 
@@ -5091,9 +5212,9 @@ Constant expressions of type String are always "interned" so as to share unique 
 
 A constant expression is always treated as FP-strict (§15.4), even if it occurs in a context where a non-constant expression would not be considered to be FP-strict.
 
-Constant expressions are used as case labels in switch statements (§14.11) and have a special significance in assignment contexts (§5.2) and the initialization of a class or interface (§12.4.2). They may also govern the ability of a while, do, or for statement to complete normally (§14.21), and the type of a conditional operator ? : with numeric operands.
+Constant expressions are used as case labels in switch statements and switch expressions (§14.11, §15.28) and have a special significance in assignment contexts (§5.2) and the initialization of a class or interface (§12.4.2). They may also govern the ability of a while, do, or for statement to complete normally (§14.22), and the type of a conditional operator ? : with numeric operands.
 
-Example 15.28-1. Constant Expressions
+Example 15.29-1. Constant Expressions
 
 true
 (short)(1*2*3*4*5*6)

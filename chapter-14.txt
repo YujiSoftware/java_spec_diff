@@ -17,6 +17,9 @@ Table of Contents
 14.9.2. The if-then-else Statement
 14.10. The assert Statement
 14.11. The switch Statement
+14.11.1. Switch Blocks
+14.11.2. The Switch Block of a switch Statement
+14.11.3. Execution of a switch Statement
 14.12. The while Statement
 14.12.1. Abrupt Completion of while Statement
 14.13. The do Statement
@@ -38,7 +41,8 @@ Table of Contents
 14.20.3. try-with-resources
 14.20.3.1. Basic try-with-resources
 14.20.3.2. Extended try-with-resources
-14.21. Unreachable Statements
+14.21. The yield Statement
+14.22. Unreachable Statements
 
 The sequence of execution of a program is controlled by statements, which are executed for their effect and do not have values.
 
@@ -50,7 +54,7 @@ Blocks are explained first (§14.2), followed by local class declarations (§14.
 
 Next a grammatical maneuver that sidesteps the familiar "dangling else" problem (§14.5) is explained.
 
-The last section (§14.21) of this chapter addresses the requirement that every statement be reachable in a certain technical sense.
+The last section (§14.22) of this chapter addresses the requirement that every statement be reachable in a certain technical sense.
 
 14.1. Normal and Abrupt Completion of Statements
 
@@ -58,7 +62,7 @@ Every statement has a normal mode of execution in which certain computational st
 
 If all the steps are carried out as described, with no indication of abrupt completion, the statement is said to complete normally. However, certain events may prevent a statement from completing normally:
 
-The break (§14.15), continue (§14.16), and return (§14.17) statements cause a transfer of control that may prevent normal completion of statements that contain them.
+The break, yield, continue, and return statements (§14.15, §14.21, §14.16, §14.17) cause a transfer of control that may prevent normal completion of expressions, statements, and blocks that contain them.
 
 Evaluation of certain expressions may throw exceptions from the Java Virtual Machine (§15.6). An explicit throw (§14.18) statement also results in an exception. An exception causes a transfer of control that may prevent normal completion of statements.
 
@@ -79,6 +83,8 @@ A return with no value
 A return with a given value
 
 A throw with a given value, including exceptions thrown by the Java Virtual Machine
+
+A yield with a given value
 
 The terms "complete normally" and "complete abruptly" also apply to the evaluation of expressions (§15.6). The only reason an expression can complete abruptly is that an exception is thrown, because of either a throw with a given value (§14.18) or a run-time exception or error (§11 (Exceptions), §15.6).
 
@@ -322,6 +328,7 @@ ReturnStatement
 SynchronizedStatement
 ThrowStatement
 TryStatement
+YieldStatement
 
 The following productions from §14.9 are shown here for convenience:
 
@@ -450,7 +457,7 @@ The Expression must have type boolean or Boolean, or a compile-time error occurs
 
 14.9.1. The if-then Statement
 
-An if-then statement is executed by first evaluating the Expression. If the result is of type Boolean, it is subject to unboxing conversion (§5.1.8).
+An if-then statement is executed by first evaluating the Expression. If the result is of type Boolean, it is subjected to unboxing conversion (§5.1.8).
 
 If evaluation of the Expression or the subsequent unboxing conversion (if any) completes abruptly for some reason, the if-then statement completes abruptly for the same reason.
 
@@ -462,7 +469,7 @@ If the value is false, no further action is taken and the if-then statement comp
 
 14.9.2. The if-then-else Statement
 
-An if-then-else statement is executed by first evaluating the Expression. If the result is of type Boolean, it is subject to unboxing conversion (§5.1.8).
+An if-then-else statement is executed by first evaluating the Expression. If the result is of type Boolean, it is subjected to unboxing conversion (§5.1.8).
 
 If evaluation of the Expression or the subsequent unboxing conversion (if any) completes abruptly for some reason, then the if-then-else statement completes abruptly for the same reason.
 
@@ -526,7 +533,7 @@ Asserts disabled
 
 A disabled assert statement does nothing. In particular, neither Expression1 nor Expression2 (if it is present) are evaluated. Execution of a disabled assert statement always completes normally.
 
-An enabled assert statement is executed by first evaluating Expression1. If the result is of type Boolean, it is subject to unboxing conversion (§5.1.8).
+An enabled assert statement is executed by first evaluating Expression1. If the result is of type Boolean, it is subjected to unboxing conversion (§5.1.8).
 
 If evaluation of Expression1 or the subsequent unboxing conversion (if any) completes abruptly for some reason, the assert statement completes abruptly for the same reason.
 
@@ -562,42 +569,72 @@ A secondary problem with using assertions for argument checking is that erroneou
 
 14.11. The switch Statement
 
-The switch statement transfers control to one of several statements depending on the value of an expression.
+The switch statement transfers control to one of several statements or expressions, depending on the value of an expression.
 
 SwitchStatement:
 switch ( Expression ) SwitchBlock
+
+The Expression is called the selector expression. The type of the selector expression must be char, byte, short, int, Character, Byte, Short, Integer, String, or an enum type (§8.9), or a compile-time error occurs.
+
+14.11.1. Switch Blocks
+
+The body of both a switch statement and a switch expression (§15.28) is called a switch block. This subsection presents general rules which apply to all switch blocks, whether they appear in switch statements or switch expressions. Other subsections present additional rules which apply either to switch blocks in switch statements (§14.11.2) or to switch blocks in switch expressions (§15.28.1).
+
 SwitchBlock:
-{ {SwitchBlockStatementGroup} {SwitchLabel} }
+{ SwitchRule {SwitchRule} }
+{ {SwitchBlockStatementGroup} {SwitchLabel :} }
+SwitchRule:
+SwitchLabel -> Expression ;
+SwitchLabel -> Block
+SwitchLabel -> ThrowStatement
 SwitchBlockStatementGroup:
-SwitchLabels BlockStatements
-SwitchLabels:
-SwitchLabel {SwitchLabel}
+SwitchLabel : {SwitchLabel :} BlockStatements
 SwitchLabel:
-case ConstantExpression :
-case EnumConstantName :
-default :
-EnumConstantName:
-Identifier
+case CaseConstant {, CaseConstant}
+default
+CaseConstant:
+ConditionalExpression
 
-The type of the Expression must be char, byte, short, int, Character, Byte, Short, Integer, String, or an enum type (§8.9), or a compile-time error occurs.
+A switch block can consist of either:
 
-The body of a switch statement is known as a switch block. Any statement immediately contained by the switch block may be labeled with one or more switch labels, which are case or default labels. Every case label has a case constant, which is either a constant expression or the name of an enum constant. Switch labels and their case constants are said to be associated with the switch statement.
+Switch rules, which use -> to introduce either a switch rule expression, a switch rule block, or a switch rule throw statement; or
 
-Given a switch statement, all of the following must be true or a compile-time error occurs:
+Switch labeled statement groups, which use : to introduce switch labeled block statements.
 
-Every case constant associated with the switch statement must be assignment compatible with the type of the switch statement's Expression (§5.2).
+Every switch rule and switch labeled statement group starts with a switch label, which is either a case label or a default label. Multiple switch labels are permitted for a switch labeled statement group.
 
-If the type of the switch statement's Expression is an enum type, then every case constant associated with the switch statement must be an enum constant of that type.
+A case label has one or more case constants. Every case constant must be either a constant expression (§15.29) or the name of an enum constant (§8.9.1), or a compile-time error occurs.
 
-No two of the case constants associated with the switch statement have the same value.
+Switch labels and their case constants are said to be associated with the switch block. No two of the case constants associated with a switch block may have the same value, or a compile-time error occurs.
 
-No case constant associated with the switch statement is null.
+The switch block of a switch statement or a switch expression is compatible with the type of the selector expression, T, if both of the following are true:
 
-At most one default label is associated with the switch statement.
+If T is not an enum type, then every case constant associated with the switch block is assignment compatible with T (§5.2).
 
-The prohibition against using null as a case constant prevents code being written that can never be executed. If the switch statement's Expression is of a reference type, that is, String or a boxed primitive type or an enum type, then an exception will be thrown will occur if the Expression evaluates to null at run time. In the judgment of the designers of the Java programming language, this is a better outcome than silently skipping the entire switch statement or choosing to execute the statements (if any) after the default label (if any).
+If T is an enum type, then every case constant associated with the switch block is an enum constant of type T.
 
-A Java compiler is encouraged (but not required) to provide a warning if a switch on an enum-valued expression lacks a default label and lacks case labels for one or more of the enum's constants. Such a switch will silently do nothing if the expression evaluates to one of the missing constants.
+The switch block of a switch statement or a switch expression must be compatible with the type of the selector expression, or a compile-time error occurs.
+
+Both the execution of a switch statement (§14.11.3) and the evaluation of a switch expression (§15.28.2) need to determine if a switch label matches the value of the selector expression. To determine whether a switch label in a switch block matches a given value, the value is compared with the case constants associated with the switch block. Then:
+
+If one of the case constants is equal to the value, then we say that the case label which contains the case constant matches.
+
+Equality is defined in terms of the == operator (§15.21) unless the value is a String, in which case equality is defined in terms of the equals method of class String.
+
+If no case label matches but there is a default label, then we say that the default label matches.
+
+A case label can contain several case constants. The label matches the value of the selector expression if any one of its constants matches the value of the selector expression. For example, in the following code, the case label matches if the enum variable day is either one of the enum constants shown:
+
+switch (day) {
+    ...
+    case SATURDAY, SUNDAY :
+        System.out.println("It's the weekend!");
+        break;
+    ...
+}
+
+
+null cannot be used as a case constant because it is not a constant expression. Even if case null was allowed, it would be undesirable because the code in that case can never be executed. Namely, if the selector expression is of a reference type (that is, String or a boxed primitive type or an enum type), then an exception will occur if the selector expression evaluates to null at run time. In the judgment of the designers of the Java programming language, propagating the exception is a better outcome than either having no case label match, or having the default label match.
 
 In C and C++ the body of a switch statement can be a statement and statements with case labels do not have to be immediately contained by that statement. Consider the simple loop:
 
@@ -622,35 +659,55 @@ switch (n%8) {
 
 Fortunately, this trick does not seem to be widely known or used. Moreover, it is less needed nowadays; this sort of code transformation is properly in the province of state-of-the-art optimizing compilers.
 
-A switch statement is executed by first evaluating the Expression. If the Expression evaluates to null, a NullPointerException is thrown and the entire switch statement completes abruptly for that reason. Otherwise, if the result is of type Character, Byte, Short, or Integer, it is subject to unboxing conversion (§5.1.8).
+14.11.2. The Switch Block of a switch Statement
 
-If evaluation of the Expression or the subsequent unboxing conversion (if any) completes abruptly for some reason, the switch statement completes abruptly for the same reason.
+In addition to the general rules for switch blocks (§14.11.1), there are further rules for switch blocks in switch statements. Namely, all of the following must be true for the switch block of a switch statement, or a compile-time error occurs:
 
-Otherwise, execution continues by comparing the value of the Expression with each case constant, and there is a choice:
+No more than one default label is associated with the switch block.
 
-If one of the case constants is equal to the value of the expression, then we say that the case label matches. Equality is defined in terms of the == operator (§15.21) unless the value of the expression is a String, in which case equality is defined in terms of the equals method of class String.
+Every switch rule expression in the switch block is a statement expression (§14.8).
 
-All statements after the matching case label in the switch block, if any, are executed in sequence.
+switch statements differ from switch expressions in terms of which expressions may appear to the right of an arrow (->) in the switch block, that is, which expressions may be used as switch rule expressions. In a switch statement, only a statement expression may be used as a switch rule expression, but in a switch expression, any expression may be used (§15.28.1).
 
-If all these statements complete normally, or if there are no statements after the matching case label, then the entire switch statement completes normally.
+14.11.3. Execution of a switch Statement
 
-If no case label matches but there is a default label, then all statements after the default label in the switch block, if any, are executed in sequence.
+A switch statement is executed by first evaluating the selector expression. Then:
 
-If all these statements complete normally, or if there are no statements after the default label, then the entire switch statement completes normally.
+If evaluation of the selector expression completes abruptly, then the entire switch statement completes abruptly for the same reason.
 
-If no case label matches and there is no default label, then no further action is taken and the switch statement completes normally.
+Otherwise, if the result of evaluating the selector expression is null, then a NullPointerException is thrown and the entire switch statement completes abruptly for that reason.
 
-If any statement immediately contained by the Block body of the switch statement completes abruptly, it is handled as follows:
+Otherwise, if the result of evaluating the selector expression is of type Character, Byte, Short, or Integer, it is subjected to unboxing conversion (§5.1.8). If this conversion completes abruptly, the entire switch statement completes abruptly for the same reason.
 
-If execution of the Statement completes abruptly because of a break with no label, no further action is taken and the switch statement completes normally.
+If evaluation of the selector expression completes normally and the result is non-null, and the subsequent unboxing conversion (if any) completes normally, then execution of the switch statement continues by determining if a switch label associated with the switch block matches the value of the selector expression (§14.11.1). Then:
 
-If execution of the Statement completes abruptly for any other reason, the switch statement completes abruptly for the same reason.
+If no switch label matches, the entire switch statement completes normally.
 
-The case of abrupt completion because of a break with a label is handled by the general rule for labeled statements (§14.7).
+If a switch label matches, then one of the following applies:
 
-Example 14.11-1. Fall-Through in the switch Statement
+If it is the switch label for a switch rule expression, then the switch rule expression is necessarily a statement expression (§14.11.2). The statement expression is evaluated. If the evaluation completes normally, then the switch statement completes normally. If the result of evaluation is a value, it is discarded.
 
-As in C and C++, execution of statements in a switch block "falls through labels."
+If it is the switch label for a switch rule block, then the block is executed. If this block completes normally, then the switch statement completes normally.
+
+If it is the switch label for a switch rule throw statement, then the throw statement is executed.
+
+If it is the switch label for a switch labeled statement group, then all the statements in the switch block that follow the switch label are executed in order. If these statements complete normally, then the switch statement completes normally.
+
+Otherwise, there are no statements that follow the matched switch label in the switch block, and the switch statement completes normally.
+
+If execution of any statement or expression in the switch block completes abruptly, it is handled as follows:
+
+If execution of a statement completes abruptly because of a break with no label, then no further action is taken and the switch statement completes normally.
+
+Abrupt completion because of a break with a label is handled by the general rule for labeled statements (§14.7).
+
+If execution of a statement or expression completes abruptly for any other reason, then the switch statement completes abruptly for the same reason.
+
+Abrupt completion because of a yield statement is handled by the general rule for switch expressions (§15.28.2).
+
+Example 14.11.3-1. Fall-Through in the switch Statement
+
+When a selector expression matches a switch label for a switch rule, the switch rule expression or statement introduced by the switch label is executed, and nothing else. In the case of a switch label for a statement group, all the block statements in the switch block that follow the switch label are executed, including those that appear after subsequent switch labels. The effect is that, as in C and C++, execution of statements can "fall through labels."
 
 For example, the program:
 
@@ -677,7 +734,7 @@ too many
 one too many
 
 
-If code is not to fall through case to case in this manner, then break statements should be used, as in this example:
+Fall through can be the cause of subtle bugs. If code is not to fall through case to case in this manner, then break statements can be used to indicate when control should be transferred, or switch rules can be used, as in the program:
 
 class TwoMany {
     static void howMany(int k) {
@@ -690,16 +747,30 @@ class TwoMany {
                     break;  // not needed, but good style
         }
     }
+    static void howManyAgain(int k) {
+        switch (k) {
+            case 1 -> System.out.println("one");
+            case 2 -> System.out.println("two");
+            case 3 -> System.out.println("many");
+        }
+    }
     public static void main(String[] args) {
         howMany(1);
         howMany(2);
         howMany(3);
+        howManyAgain(1);
+        howManyAgain(2);
+        howManyAgain(3);	
     }
 }
 
 
+
 This program prints:
 
+one
+two
+many
 one
 two
 many
@@ -717,7 +788,7 @@ while ( Expression ) StatementNoShortIf
 
 The Expression must have type boolean or Boolean, or a compile-time error occurs.
 
-A while statement is executed by first evaluating the Expression. If the result is of type Boolean, it is subject to unboxing conversion (§5.1.8).
+A while statement is executed by first evaluating the Expression. If the result is of type Boolean, it is subjected to unboxing conversion (§5.1.8).
 
 If evaluation of the Expression or the subsequent unboxing conversion (if any) completes abruptly for some reason, the while statement completes abruptly for the same reason.
 
@@ -762,7 +833,7 @@ The Expression must have type boolean or Boolean, or a compile-time error occurs
 
 A do statement is executed by first executing the Statement. Then there is a choice:
 
-If execution of the Statement completes normally, then the Expression is evaluated. If the result is of type Boolean, it is subject to unboxing conversion (§5.1.8).
+If execution of the Statement completes normally, then the Expression is evaluated. If the result is of type Boolean, it is subjected to unboxing conversion (§5.1.8).
 
 If evaluation of the Expression or the subsequent unboxing conversion (if any) completes abruptly for some reason, the do statement completes abruptly for the same reason.
 
@@ -874,7 +945,7 @@ If the ForInit part is not present, no action is taken.
 
 Next, a for iteration step is performed, as follows:
 
-If the Expression is present, it is evaluated. If the result is of type Boolean, it is subject to unboxing conversion (§5.1.8).
+If the Expression is present, it is evaluated. If the result is of type Boolean, it is subjected to unboxing conversion (§5.1.8).
 
 If evaluation of the Expression or the subsequent unboxing conversion (if any) completes abruptly, the for statement completes abruptly for the same reason.
 
@@ -1064,17 +1135,23 @@ A break statement transfers control out of an enclosing statement.
 BreakStatement:
 break [Identifier] ;
 
-A break statement with no label attempts to transfer control to the innermost enclosing switch, while, do, or for statement of the immediately enclosing method or initializer; this statement, which is called the break target, then immediately completes normally.
+There are two kinds of break statement:
 
-To be precise, a break statement with no label always completes abruptly, the reason being a break with no label.
+A break statement with no label.
 
-If no switch, while, do, or for statement in the immediately enclosing method, constructor, or initializer contains the break statement, a compile-time error occurs.
+A break statement with the label Identifier.
 
-A break statement with label Identifier attempts to transfer control to the enclosing labeled statement (§14.7) that has the same Identifier as its label; this statement, which is called the break target, then immediately completes normally. In this case, the break target need not be a switch, while, do, or for statement.
+A break statement with no label attempts to transfer control to the innermost enclosing switch, while, do, or for statement; this enclosing statement, which is called the break target, then immediately completes normally.
 
-To be precise, a break statement with label Identifier always completes abruptly, the reason being a break with label Identifier.
+A break statement with label Identifier attempts to transfer control to the enclosing labeled statement (§14.7) that has the same Identifier as its label; this enclosing statement, which is called the break target, then immediately completes normally. In this case, the break target need not be a switch, while, do, or for statement.
 
-A break statement must refer to a label within the immediately enclosing method, constructor, initializer, or lambda body. There are no non-local jumps. If no labeled statement with Identifier as its label in the immediately enclosing method, constructor, initializer, or lambda body contains the break statement, a compile-time error occurs.
+It is a compile-time error if a break statement has no break target.
+
+It is a compile-time error if the break target contains any method, constructor, instance initializer, static initializer, lambda expression, or switch expression that encloses the break statement. That is, there are no non-local jumps.
+
+Execution of a break statement with no label always completes abruptly, the reason being a break with no label.
+
+Execution of a break statement with label Identifier always completes abruptly, the reason being a break with label Identifier.
 
 It can be seen, then, that a break statement always completes abruptly.
 
@@ -1140,19 +1217,23 @@ A continue statement may occur only in a while, do, or for statement; statements
 ContinueStatement:
 continue [Identifier] ;
 
-A continue statement with no label attempts to transfer control to the innermost enclosing while, do, or for statement of the immediately enclosing method, constructor, or initializer; this statement, which is called the continue target, then immediately ends the current iteration and begins a new one.
+There are two kinds of continue statement:
 
-To be precise, such a continue statement always completes abruptly, the reason being a continue with no label.
+A continue statement with no label.
 
-If no while, do, or for statement of the immediately enclosing method, constructor, or initializer contains the continue statement, a compile-time error occurs.
+A continue statement with the label Identifier.
 
-A continue statement with label Identifier attempts to transfer control to the enclosing labeled statement (§14.7) that has the same Identifier as its label; that statement, which is called the continue target, then immediately ends the current iteration and begins a new one.
+A continue statement with no label attempts to transfer control to the innermost enclosing while, do, or for statement; this enclosing statement, which is called the continue target, then immediately ends the current iteration and begins a new one.
 
-To be precise, a continue statement with label Identifier always completes abruptly, the reason being a continue with label Identifier.
+A continue statement with label Identifier attempts to transfer control to the enclosing labeled statement (§14.7) that has the same Identifier as its label; this enclosing statement, which is called the continue target, then immediately ends the current iteration and begins a new one. In this case, the continue target must be a while, do, or for statement, or a compile-time error occurs.
 
-The continue target must be a while, do, or for statement, or a compile-time error occurs.
+It is a compile-time error if a continue statement has no continue target.
 
-A continue statement must refer to a label within the immediately enclosing method, constructor, initializer, or lambda body. There are no non-local jumps. If no labeled statement with Identifier as its label in the immediately enclosing method, constructor, initializer, or lambda body contains the continue statement, a compile-time error occurs.
+It is a compile-time error if the continue target contains any method, constructor, instance initializer, static initializer, lambda expression, or switch expression that encloses the continue statement. That is, there are no non-local jumps.
+
+Execution of a continue statement with no label always completes abruptly, the reason being a continue with no label.
+
+Execution of a continue statement with label Identifier always completes abruptly, the reason being a continue with label Identifier.
 
 It can be seen, then, that a continue statement always completes abruptly.
 
@@ -1214,31 +1295,27 @@ A return statement returns control to the invoker of a method (§8.4, §15.12) o
 ReturnStatement:
 return [Expression] ;
 
-A return statement is contained in the innermost constructor, method, initializer, or lambda expression whose body encloses the return statement.
+There are two kinds of return statement:
 
-It is a compile-time error if a return statement is contained in an instance initializer or a static initializer (§8.6, §8.7).
+A return statement with no value.
 
-A return statement with no Expression must be contained in one of the following, or a compile-time error occurs:
+A return statement with value Expression.
 
-A method that is declared, using the keyword void, not to return a value (§8.4.5)
+A return statement attempts to transfer control to the invoker of the innermost enclosing constructor, method, or lambda expression; this enclosing declaration or expression is called the return target. In the case of a return statement with value Expression, the value of the Expression becomes the value of the invocation.
 
-A constructor (§8.8.7)
+It is a compile-time error if a return statement has no return target.
 
-A lambda expression (§15.27)
+It is a compile-time error if the return target contains either (i) an instance or static initializer that encloses the return statement, or (ii) a switch expression that encloses the return statement.
 
-A return statement with no Expression attempts to transfer control to the invoker of the method, constructor, or lambda body that contains it. To be precise, a return statement with no Expression always completes abruptly, the reason being a return with no value.
+It is a compile-time error if the return target of a return statement with no value is a method, and that method is not declared void.
 
-A return statement with an Expression must be contained in one of the following, or a compile-time error occurs:
+It is a compile-time error if the return target of a return statement with value Expression is either a constructor, or a method that is declared void.
 
-A method that is declared to return a value
+It is a compile-time error if the return target of a return statement with value Expression is a method with declared return type T, and the type of Expression is not assignable compatible (§5.2) with T.
 
-A lambda expression
+Execution of a return statement with no value always completes abruptly, the reason being a return with no value.
 
-The Expression must denote a variable or a value, or a compile-time error occurs.
-
-When a return statement with an Expression appears in a method declaration, the Expression must be assignable (§5.2) to the declared return type of the method, or a compile-time error occurs.
-
-A return statement with an Expression attempts to transfer control to the invoker of the method or lambda body that contains it; the value of the Expression becomes the value of the method invocation. More precisely, execution of such a return statement first evaluates the Expression. If the evaluation of the Expression completes abruptly for some reason, then the return statement completes abruptly for that reason. If evaluation of the Expression completes normally, producing a value V, then the return statement completes abruptly, the reason being a return with value V.
+Execution of a return statement with value Expression first evaluates the Expression. If the evaluation of the Expression completes abruptly for some reason, then the return statement completes abruptly for that reason. If evaluation of the Expression completes normally, producing a value V, then the return statement completes abruptly, the reason being a return with value V.
 
 If the expression is of type float and is not FP-strict (§15.4), then the value may be an element of either the float value set or the float-extended-exponent value set (§4.2.3). If the expression is of type double and is not FP-strict, then the value may be an element of either the double value set or the double-extended-exponent value set.
 
@@ -1736,7 +1813,50 @@ The effect of the translation is to put the resource specification "inside" the 
 
 Furthermore, all resources will have been closed (or attempted to be closed) by the time the finally block is executed, in keeping with the intent of the finally keyword.
 
-14.21. Unreachable Statements
+14.21. The yield Statement
+
+A yield statement transfers control by causing an enclosing switch expression (§15.28) to produce a specified value.
+
+YieldStatement:
+yield Expression ;
+
+A yield statement attempts to transfer control to the innermost enclosing switch expression; this enclosing expression, which is called the yield target, then immediately completes normally and the value of the Expression becomes the value of the switch expression.
+
+It is a compile-time error if a yield statement has no yield target.
+
+It is a compile-time error if the yield target contains any method, constructor, instance initializer, static initializer, or lambda expression that encloses the yield statement. That is, there are no non-local jumps.
+
+It is a compile-time error if the Expression of a yield statement is void (§15.1).
+
+Execution of a yield statement first evaluates the Expression. If the evaluation of the Expression completes abruptly for some reason, then the yield statement completes abruptly for that reason. If evaluation of the Expression completes normally, producing a value V, then the yield statement completes abruptly, the reason being a yield with value V.
+
+It can be seen, then, that a yield statement always completes abruptly.
+
+Example 14.21-1. The yield Statement
+
+In the following example, a yield statement is used to produce a value for the enclosing switch expressions.
+
+ class Test {
+    enum Day {
+        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY,
+	SATURDAY, SUNDAY
+    }
+
+    public int calculate(Day d) {
+        return switch (d) {
+	    case SATURDAY, SUNDAY -> d.ordinal();
+            default -> {
+                int len = d.toString().length();
+                yield len*len;
+            }
+        };
+    }
+}
+
+
+
+
+14.22. Unreachable Statements
 
 It is a compile-time error if a statement cannot be executed because it is unreachable.
 
@@ -1770,7 +1890,7 @@ A continue statement continues a do statement if, within the do statement, eithe
 
 The rules are as follows:
 
-The block that is the body of a constructor, method, instance initializer, or static initializer is reachable.
+The block that is the body of a constructor, method, instance initializer, static initializer, lambda expression, or switch expression is reachable.
 
 An empty block that is not a switch block can complete normally iff it is reachable.
 
@@ -1810,9 +1930,9 @@ This handling of an if statement, whether or not it has an else part, is rather 
 
 An assert statement can complete normally iff it is reachable.
 
-A switch statement can complete normally iff at least one of the following is true:
+A switch statement whose switch block is empty, or contains only switch labels, can complete normally.
 
-The switch block is empty or contains only switch labels.
+A switch statement whose switch block consists of switch labeled statement groups can complete normally iff at least one of the following is true:
 
 The last statement in the switch block can complete normally.
 
@@ -1822,17 +1942,29 @@ The switch block does not contain a default label.
 
 There is a reachable break statement that exits the switch statement.
 
+A switch statement whose switch block consists of switch rules can complete normally iff at least one of the following is true:
+
+One of the switch rules introduces a switch rule expression (which is necessarily a statement expression).
+
+One of the switch rules introduces a switch rule block that can complete normally.
+
+One of the switch rules introduces a switch rule block that contains a reachable break statement which exits the switch statement.
+
 A switch block is reachable iff its switch statement is reachable.
 
-A statement in a switch block is reachable iff its switch statement is reachable and at least one of the following is true:
+A statement in a switch block that consists of switch labeled statement groups is reachable iff the switch block is reachable and at least one of the following is true:
 
 It bears a case or default label.
 
 There is a statement preceding it in the switch block and that preceding statement can complete normally.
 
+A switch rule block in a switch block is reachable iff the switch block is reachable.
+
+A switch rule throw statement in a switch block is reachable iff the switch block is reachable.
+
 A while statement can complete normally iff at least one of the following is true:
 
-The while statement is reachable and the condition expression is not a constant expression (§15.28) with value true.
+The while statement is reachable and the condition expression is not a constant expression (§15.29) with value true.
 
 There is a reachable break statement that exits the while statement.
 
@@ -1840,11 +1972,11 @@ The contained statement is reachable iff the while statement is reachable and th
 
 A do statement can complete normally iff at least one of the following is true:
 
-The contained statement can complete normally and the condition expression is not a constant expression (§15.28) with value true.
+The contained statement can complete normally and the condition expression is not a constant expression (§15.29) with value true.
 
 The do statement contains a reachable continue statement with no label, and the do statement is the innermost while, do, or for statement that contains that continue statement, and the continue statement continues that do statement, and the condition expression is not a constant expression with value true.
 
-The do statement contains a reachable continue statement with a label L, and the do statement has label L, and the continue statement continues that do statement, and the condition expression is not a constant expression with value true.
+The do statement contains a reachable continue statement with label L, and the do statement has label L, and the continue statement continues that do statement, and the condition expression is not a constant expression with value true.
 
 There is a reachable break statement that exits the do statement.
 
@@ -1852,7 +1984,7 @@ The contained statement is reachable iff the do statement is reachable.
 
 A basic for statement can complete normally iff at least one of the following is true:
 
-The for statement is reachable, there is a condition expression, and the condition expression is not a constant expression (§15.28) with value true.
+The for statement is reachable, there is a condition expression, and the condition expression is not a constant expression (§15.29) with value true.
 
 There is a reachable break statement that exits the for statement.
 
@@ -1860,7 +1992,7 @@ The contained statement is reachable iff the for statement is reachable and the 
 
 An enhanced for statement can complete normally iff it is reachable.
 
-A break, continue, return, or throw statement cannot complete normally.
+A break, continue, return, throw, or yield statement cannot complete normally.
 
 A synchronized statement can complete normally iff the contained statement can complete normally.
 
@@ -1876,11 +2008,11 @@ The try block is reachable iff the try statement is reachable.
 
 A catch block C is reachable iff both of the following are true:
 
-Either the type of C's parameter is an unchecked exception type or Exception or a superclass of Exception, or some expression or throw statement in the try block is reachable and can throw a checked exception whose type is assignable to the type of C's parameter. (An expression is reachable iff the innermost statement containing it is reachable.)
+Either the type of C's parameter is an unchecked exception type or Exception or a superclass of Exception, or some expression or throw statement in the try block is reachable and can throw a checked exception whose type is assignment compatible (§5.2) with the type of C's parameter. (An expression is reachable iff the innermost statement containing it is reachable.)
 
 See §15.6 for normal and abrupt completion of expressions.
 
-There is no earlier catch block A in the try statement such that the type of C's parameter is the same as or a subclass of the type of A's parameter.
+There is no earlier catch block A in the try statement such that the type of C's parameter is the same as, or a subclass of, the type of A's parameter.
 
 The Block of a catch block is reachable iff the catch block is reachable.
 
@@ -1932,7 +2064,7 @@ Conditional compilation comes with a caveat. If a set of classes that use a "fla
 
 Another reason for "inlining" values of static constant variables is because of switch statements. They are the only kind of statement that relies on constant expressions, namely that each case label of a switch statement must be a constant expression whose value is different than every other case label. case labels are often references to static constant variables so it may not be immediately obvious that all the labels have different values. If it is proven that there are no duplicate labels at compile time, then inlining the values into the class file ensures there are no duplicate labels at run time either - a very desirable property.
 
-Example 14.21-1. Conditional Compilation
+Example 14.22-1. Conditional Compilation
 
 If the example:
 

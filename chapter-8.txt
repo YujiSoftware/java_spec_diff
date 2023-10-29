@@ -2711,7 +2711,7 @@ An instance initializer declared in a class is executed when an instance of the 
 InstanceInitializer:
 Block
 
-It is a compile-time error if an instance initializer cannot complete normally (§14.21).
+It is a compile-time error if an instance initializer cannot complete normally (§14.22).
 
 It is a compile-time error if a return statement (§14.17) appears anywhere within an instance initializer.
 
@@ -2728,7 +2728,7 @@ A static initializer declared in a class is executed when the class is initializ
 StaticInitializer:
 static Block
 
-It is a compile-time error if a static initializer cannot complete normally (§14.21).
+It is a compile-time error if a static initializer cannot complete normally (§14.22).
 
 It is a compile-time error if a return statement (§14.17) appears anywhere within a static initializer.
 

@@ -583,7 +583,7 @@ A String object has a constant (unchanging) value.
 
 String literals (§3.10.5) are references to instances of class String.
 
-The string concatenation operator + (§15.18.1) implicitly creates a new String object when the result is not a constant expression (§15.28).
+The string concatenation operator + (§15.18.1) implicitly creates a new String object when the result is not a constant expression (§15.29).
 
 4.3.4. When Reference Types Are the Same
 
@@ -1640,7 +1640,7 @@ Once a final variable has been assigned, it always contains the same value. If a
 
 A blank final is a final variable whose declaration lacks an initializer.
 
-A constant variable is a final variable of primitive type or type String that is initialized with a constant expression (§15.28). Whether a variable is a constant variable or not may have implications with respect to class initialization (§12.4.1), binary compatibility (§13.1), reachability (§14.21), and definite assignment (§16.1.1).
+A constant variable is a final variable of primitive type or type String that is initialized with a constant expression (§15.29). Whether a variable is a constant variable or not may have implications with respect to class initialization (§12.4.1), binary compatibility (§13.1), reachability (§14.22), and definite assignment (§16.1.1).
 
 Three kinds of variable are implicitly declared final: a field of an interface (§9.3), a local variable declared as a resource of a try-with-resources statement (§14.20.3), and an exception parameter of a multi-catch clause (§14.20). An exception parameter of a uni-catch clause is never implicitly declared final, but may be effectively final.
 
@@ -1762,7 +1762,7 @@ The correspondence between compile-time types and run-time types is incomplete f
 
 At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
 
-See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 13 Edition for more details.
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 14 Edition for more details.
 
 Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile time. Specifically, all compile-time parameterizations of a given generic type (§8.1.2, §9.1.2) share a single run-time representation.
 

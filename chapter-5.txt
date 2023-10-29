@@ -24,8 +24,6 @@ Table of Contents
 5.4. String Contexts
 5.5. Casting Contexts
 5.6. Numeric Contexts
-5.6.1. Unary Numeric Promotion
-5.6.2. Binary Numeric Promotion
 
 Every expression written in the Java programming language either produces no result (§15.1) or has a type that can be deduced at compile time (§15.3). When an expression appears in most contexts, it must be compatible with a type expected in that context; this type is called the target type. For convenience, compatibility of an expression with its surrounding context is facilitated in two ways:
 
@@ -37,7 +35,7 @@ If neither strategy is able to produce the appropriate type, a compile-time erro
 
 The rules determining whether an expression is a poly expression, and if so, its type and compatibility in a particular context, vary depending on the kind of context and the form of the expression. In addition to influencing the type of the expression, the target type may in some cases influence the run time behavior of the expression in order to produce a value of the appropriate type.
 
-Similarly, the rules determining whether a target type allows an implicit conversion vary depending on the kind of context, the type of the expression, and, in one special case, the value of a constant expression (§15.28). A conversion from type S to type T allows an expression of type S to be treated at compile time as if it had type T instead. In some cases this will require a corresponding action at run time to check the validity of the conversion or to translate the run-time value of the expression into a form appropriate for the new type T.
+Similarly, the rules determining whether a target type allows an implicit conversion vary depending on the kind of context, the type of the expression, and, in one special case, the value of a constant expression (§15.29). A conversion from type S to type T allows an expression of type S to be treated at compile time as if it had type T instead. In some cases this will require a corresponding action at run time to check the validity of the conversion or to translate the run-time value of the expression into a form appropriate for the new type T.
 
 Example 5.0-1. Conversions at Compile Time and Run Time
 
@@ -88,7 +86,7 @@ String contexts (§5.4, §15.18.1), in which a value of any type is converted to
 
 Casting contexts (§5.5), in which an expression's value is converted to a type explicitly specified by a cast operator (§15.16). Casting contexts are more inclusive than assignment or loose invocation contexts, allowing any specific conversion other than a string conversion, but certain casts to a reference type are checked for correctness at run time.
 
-Numeric contexts (§5.6), in which the operands of a numeric operator may be widened to a common type so that an operation can be performed.
+Numeric contexts (§5.6), in which the operands of a numeric operator or some other expressions that operate on numbers may be widened to a common type.
 
 The term "conversion" is also used to describe, without being specific, any conversions allowed in a particular context. For example, we say that an expression that is the initializer of a local variable is subject to "assignment conversion", meaning that a specific conversion will be implicitly chosen for that expression according to the rules for the assignment context.
 
@@ -507,7 +505,7 @@ Otherwise, boxing conversion converts p into a reference r of class and type Dou
 
 If p is a value of any other type, boxing conversion is equivalent to an identity conversion (§5.1.1).
 
-If the value p being boxed is the result of evaluating a constant expression (§15.28) of type boolean, char, short, int, or long, and the result is true, false, a character in the range '\u0000' to '\u007f' inclusive, or an integer in the range -128 to 127 inclusive, then let a and b be the results of any two boxing conversions of p. It is always the case that a == b.
+If the value p being boxed is the result of evaluating a constant expression (§15.29) of type boolean, byte, char, short, int, or long, and the result is true, false, a character in the range '\u0000' to '\u007f' inclusive, or an integer in the range -128 to 127 inclusive, then let a and b be the results of any two boxing conversions of p. It is always the case that a == b.
 
 Ideally, boxing a primitive value would always yield an identical reference. In practice, this may not be feasible using existing implementation techniques. The rule above is a pragmatic compromise, requiring that certain common values always be boxed into indistinguishable objects. The implementation may cache these, lazily or eagerly. For other values, the rule disallows any assumptions about the identity of the boxed values on the programmer's part. This allows (but does not require) sharing of some or all of these references.
 
@@ -732,7 +730,7 @@ an unboxing conversion followed by a widening primitive conversion
 
 If, after the conversions listed above have been applied, the resulting type is a raw type (§4.8), an unchecked conversion (§5.1.9) may then be applied.
 
-In addition, if the expression is a constant expression (§15.28) of type byte, short, char, or int:
+In addition, if the expression is a constant expression (§15.29) of type byte, short, char, or int:
 
 A narrowing primitive conversion may be used if the variable is of type byte, short, or char, and the value of the constant expression is representable in the type of the variable.
 
@@ -1228,57 +1226,73 @@ This program uses casts to compile, but it throws exceptions at run time, becaus
 
 5.6. Numeric Contexts
 
-Numeric contexts apply to the operands of an arithmetic operator.
+Numeric contexts apply to the operands of arithmetic operators, array creation and access expressions, conditional expressions, and the result expressions of switch expressions.
 
-Numeric contexts allow the use of:
+An expression appears in a numeric arithmetic context if the expression is one of the following:
 
-an identity conversion (§5.1.1)
+The operand of a unary plus operator +, unary minus operator -, or bitwise complement operator ~ (§15.15.3, §15.15.4, §15.15.5)
 
-a widening primitive conversion (§5.1.2)
+An operand of a multiplicative operator *, /, or % (§15.17)
 
-a widening reference conversion (§5.1.5) followed by an unboxing conversion
+An operand of an addition or subtraction operator for numeric types + or - (§15.18.2)
 
-a widening reference conversion followed by an unboxing conversion, then followed by a widening primitive conversion
+An operand of a shift operator <<, >>, or >>> (§15.19). Operands of these shift operators are treated separately rather than as a group. A long shift distance (right operand) does not promote the value being shifted (left operand) to long.
 
-an unboxing conversion (§5.1.8)
+An operand of a numerical comparison operator <, <=, >, or >= (§15.20.1)
 
-an unboxing conversion followed by a widening primitive conversion
+An operand of a numerical equality operator == or != (§15.21.1)
 
-A numeric promotion is a process by which, given an arithmetic operator and its argument expressions, the arguments are converted to an inferred target type T. T is chosen during promotion such that each argument expression can be converted to T and the arithmetic operation is defined for values of type T.
+An operand of an integer bitwise operator &, ^, or | (§15.22.1)
 
-The two kinds of numeric promotion are unary numeric promotion (§5.6.1) and binary numeric promotion (§5.6.2).
+An expression appears in a numeric array context if the expression is one of the following:
 
-5.6.1. Unary Numeric Promotion
-
-Some operators apply unary numeric promotion to a single operand, which must produce a value of a numeric type:
-
-If the operand is of compile-time type Byte, Short, Character, or Integer, it is subjected to unboxing conversion (§5.1.8). The result is then promoted to a value of type int by a widening primitive conversion (§5.1.2) or an identity conversion (§5.1.1).
-
-Otherwise, if the operand is of compile-time type Long, Float, or Double, it is subjected to unboxing conversion (§5.1.8).
-
-Otherwise, if the operand is of compile-time type byte, short, or char, it is promoted to a value of type int by a widening primitive conversion (§5.1.2).
-
-Otherwise, a unary numeric operand remains as is and is not converted.
-
-After the conversion(s), if any, value set conversion (§5.1.13) is then applied.
-
-Unary numeric promotion is performed on expressions in the following situations:
-
-Each dimension expression in an array creation expression (§15.10.1)
+A dimension expression in an array creation expression (§15.10.1)
 
 The index expression in an array access expression (§15.10.3)
 
-The operand of a unary plus operator + (§15.15.3)
+An expression appears in a numeric choice context if the expression is one of the following:
 
-The operand of a unary minus operator - (§15.15.4)
+The second or third operand of a numeric conditional expression (§15.25.2)
 
-The operand of a bitwise complement operator ~ (§15.15.5)
+A result expression of a standalone switch expression (§15.28.1) where all the result expressions are convertible to a numeric type
 
-Each operand, separately, of a shift operator <<, >>, or >>> (§15.19).
+Numeric promotion determines the promoted type of all the expressions in a numeric context. The promoted type is chosen such that each expression can be converted to the promoted type, and, in the case of an arithmetic operation, the operation is defined for values of the promoted type. The order of expressions in a numeric context is not significant for numeric promotion. The rules are as follows:
 
-A long shift distance (right operand) does not promote the value being shifted (left operand) to long.
+If any expression is of a reference type, it is subjected to unboxing conversion (§5.1.8).
 
-Example 5.6.1-1. Unary Numeric Promotion
+Next, widening primitive conversion (§5.1.2) and narrowing primitive conversion (§5.1.3) are applied to some expressions, according to the following rules:
+
+If any expression is of type double, then the promoted type is double, and other expressions that are not of type double undergo widening primitive conversion to double.
+
+Otherwise, if any expression is of type float, then the promoted type is float, and other expressions that are not of type float undergo widening primitive conversion to float.
+
+Otherwise, if any expression is of type long, then the promoted type is long, and other expressions that are not of type long undergo widening primitive conversion to long.
+
+Otherwise, none of the expressions are of type double, float, or long. In this case, the kind of context determines how the promoted type is chosen.
+
+In a numeric arithmetic context or a numeric array context, the promoted type is int, and any expressions that are not of type int undergo widening primitive conversion to int.
+
+In a numeric choice context, the following rules apply:
+
+If any expression is of type int and is not a constant expression (§15.29), then the promoted type is int, and other expressions that are not of type int undergo widening primitive conversion to int.
+
+Otherwise, if any expression is of type short, and every other expression is either of type short or of type byte or a constant expression of type int with a value that is representable in the type short, then the promoted type is short, and the byte expressions undergo widening primitive conversion to short, and the int expressions undergo narrowing primitive conversion to short.
+
+Otherwise, if any expression is of type byte, and every other expression is either of type byte or a constant expression of type int with a value that is representable in the type byte, then the promoted type is byte, and the int expressions undergo narrowing primitive conversion to byte.
+
+Otherwise, if any expression is of type char, and every other expression is either of type char or a constant expression of type int with a value that is representable in the type char, then the promoted type is char, and the int expressions undergo narrowing primitive conversion to char.
+
+Otherwise, the promoted type is int, and all the expressions that are not of type int undergo widening primitive conversion to int.
+
+After the conversion(s), if any, value set conversion (§5.1.13) is applied to each expression.
+
+Unary numeric promotion consists of applying numeric promotion to a single expression that occurs in a numeric arithmetic context or a numeric array context.
+
+Binary numeric promotion consists of applying numeric promotion to a pair of expressions that occur in a numeric arithmetic context.
+
+General numeric promotion consists of applying numeric promotion to all the expressions that occur in a numeric choice context.
+
+Example 5.6-1. Unary Numeric Promotion
 
 class Test {
     public static void main(String[] args) {
@@ -1307,39 +1321,8 @@ a: -1,1
 
 
 
-5.6.2. Binary Numeric Promotion
 
-When an operator applies binary numeric promotion to a pair of operands, each of which must denote a value that is convertible to a numeric type, the following rules apply, in order:
-
-If any operand is of a reference type, it is subjected to unboxing conversion (§5.1.8).
-
-Widening primitive conversion (§5.1.2) is applied to convert either or both operands as specified by the following rules:
-
-If either operand is of type double, the other is converted to double.
-
-Otherwise, if either operand is of type float, the other is converted to float.
-
-Otherwise, if either operand is of type long, the other is converted to long.
-
-Otherwise, both operands are converted to type int.
-
-After the conversion(s), if any, value set conversion (§5.1.13) is then applied to each operand.
-
-Binary numeric promotion is performed on the operands of certain operators:
-
-The multiplicative operators *, /, and % (§15.17)
-
-The addition and subtraction operators for numeric types + and - (§15.18.2)
-
-The numerical comparison operators <, <=, >, and >= (§15.20.1)
-
-The numerical equality operators == and != (§15.21.1)
-
-The integer bitwise operators &, ^, and | (§15.22.1)
-
-In certain cases, the conditional operator ? : (§15.25)
-
-Example 5.6.2-1. Binary Numeric Promotion
+Example 5.6-2. Binary Numeric Promotion
 
 class Test {
     public static void main(String[] args) {

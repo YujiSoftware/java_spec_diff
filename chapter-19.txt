@@ -13,7 +13,9 @@ any Unicode character that is a "Java letter"
 JavaLetterOrDigit:
 any Unicode character that is a "Java letter-or-digit"
 TypeIdentifier:
-Identifier but not var
+Identifier but not var or yield
+UnqualifiedMethodIdentifier:
+Identifier but not yield
 Literal:
 IntegerLiteral
 FloatingPointLiteral
@@ -97,8 +99,7 @@ ExpressionName:
 Identifier
 AmbiguousName . Identifier
 MethodName:
-Identifier
-
+UnqualifiedMethodIdentifier
 PackageOrTypeName:
 Identifier
 PackageOrTypeName . Identifier
@@ -415,6 +416,7 @@ ReturnStatement
 SynchronizedStatement
 ThrowStatement
 TryStatement
+YieldStatement
 EmptyStatement:
 ;
 LabeledStatement:
@@ -443,17 +445,19 @@ assert Expression : Expression ;
 SwitchStatement:
 switch ( Expression ) SwitchBlock
 SwitchBlock:
-{ {SwitchBlockStatementGroup} {SwitchLabel} }
+{ SwitchRule {SwitchRule} }
+{ {SwitchBlockStatementGroup} {SwitchLabel :} }
+SwitchRule:
+SwitchLabel -> Expression ;
+SwitchLabel -> Block
+SwitchLabel -> ThrowStatement
 SwitchBlockStatementGroup:
-SwitchLabels BlockStatements
-SwitchLabels:
-SwitchLabel {SwitchLabel}
+SwitchLabel : {SwitchLabel :} BlockStatements
 SwitchLabel:
-case ConstantExpression :
-case EnumConstantName :
-default :
-EnumConstantName:
-Identifier
+case CaseConstant {, CaseConstant}
+default
+CaseConstant:
+ConditionalExpression
 WhileStatement:
 while ( Expression ) Statement
 WhileStatementNoShortIf:
@@ -483,6 +487,8 @@ EnhancedForStatementNoShortIf:
 for ( {VariableModifier} LocalVariableType VariableDeclaratorId : Expression ) StatementNoShortIf
 BreakStatement:
 break [Identifier] ;
+YieldStatement:
+yield Expression ;
 ContinueStatement:
 continue [Identifier] ;
 ReturnStatement:
@@ -673,6 +679,7 @@ PostfixExpression
 ~ UnaryExpression
 ! UnaryExpression
 CastExpression
+SwitchExpression
 PostfixExpression:
 Primary
 ExpressionName
@@ -687,5 +694,7 @@ CastExpression:
 ( ReferenceType {AdditionalBound} ) UnaryExpressionNotPlusMinus
 ( ReferenceType {AdditionalBound} ) LambdaExpression
 
+SwitchExpression:
+switch ( Expression ) SwitchBlock
 ConstantExpression:
 Expression

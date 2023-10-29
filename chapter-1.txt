@@ -16,7 +16,7 @@ The Java programming language is strongly and statically typed. This specificati
 
 The Java programming language is a relatively high-level language, in that details of the machine representation are not available through the language. It includes automatic storage management, typically using a garbage collector, to avoid the safety problems of explicit deallocation (as in C's free or C++'s delete). High-performance garbage-collected implementations can have bounded pauses to support systems programming and real-time applications. The language does not include any unsafe constructs, such as array accesses without index checking, since such unsafe constructs would cause a program to behave in an unspecified way.
 
-The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 13 Edition.
+The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 14 Edition.
 
 1.1. Organization of the Specification
 
@@ -129,7 +129,27 @@ Implementations must disable, at both compile time and run time, the preview fea
 
 The preview features defined by a given release of the Java SE Platform are specified in standalone documents that indicate changes ("diffs") to The Java® Language Specification for that release. The specifications of preview features are incorporated into The Java® Language Specification by reference, and made a part thereof, if and only if preview features are enabled at compile time.
 
-Java SE 13 defines two preview features in the Java programming language: Switch Expressions and Text Blocks. The standalone documents which specify these preview features are available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
+Java SE 14 defines three preview features in the Java programming language: Pattern Matching for instanceof; Records; and Text Blocks. The standalone documents which specify these preview features are available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
+
+A preview feature may be associated with elements of the Java SE Platform API. Namely, an API element is essential if it exists in the package java.lang or java.lang.annotation, and programs cannot use the preview feature without referring (directly or indirectly) to the API element.
+
+If preview features are disabled, then a compile-time error occurs if an essential API element is used (overridden, invoked, or referenced by name) in the declaration of a program element (whether explicitly or implicitly declared).
+
+If preview features are enabled, then a Java compiler must produce a preview warning if an essential API element is used (overridden, invoked, or referenced by name) in the declaration of a program element (whether explicitly or implicitly declared), unless:
+
+The use is within a declaration that is itself an essential API element; or
+
+The use is within a declaration that is annotated to suppress preview warnings (§9.6.4.5); or
+
+The declaration where the use appears and the declaration of the essential API element are both within the same outermost class; or
+
+The use is within an import declaration that imports the essential API element.
+
+Java SE 14 contain the following essential API elements:
+
+For the preview feature Records: The class Record; and in enum java.lang.annotation.ElementType, the enum constant RECORD_COMPONENT.
+
+For the preview feature Text Blocks: In class String, the methods stripIndent and translateEscapes.
 
 1.6. Feedback
 

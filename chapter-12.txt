@@ -33,7 +33,7 @@ The chapter continues with a specification of the procedures for creation of new
 
 The Java Virtual Machine starts execution by invoking the method main of some specified class or interface, passing it a single argument which is an array of strings. In the examples in this specification, this first class is typically called Test.
 
-The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 13 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 14 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 The manner in which the initial class or interface is specified to the Java Virtual Machine is beyond the scope of this specification, but it is typical, in host environments that use command lines, for the fully qualified name of the class or interface to be specified as a command line argument and for following command line arguments to be used as strings to be provided as the argument to the method main.
 
@@ -98,9 +98,9 @@ public static void main(String... args)
 
 Loading refers to the process of finding the binary form of a class or interface type with a particular name, perhaps by computing it on the fly, but more typically by retrieving a binary representation previously computed from source code by a Java compiler, and constructing, from that binary form, a Class object to represent the class or interface.
 
-The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 13 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 14 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
-The binary format of a class or interface is normally the class file format described in The Java Virtual Machine Specification, Java SE 13 Edition cited above, but other formats are possible, provided they meet the requirements specified in §13.1. The method defineClass of class ClassLoader may be used to construct Class objects from binary representations in the class file format.
+The binary format of a class or interface is normally the class file format described in The Java Virtual Machine Specification, Java SE 14 Edition cited above, but other formats are possible, provided they meet the requirements specified in §13.1. The method defineClass of class ClassLoader may be used to construct Class objects from binary representations in the class file format.
 
 Well-behaved class loaders maintain these properties:
 
@@ -110,7 +110,7 @@ If a class loader L1 delegates loading of a class C to another loader L2, then f
 
 A malicious class loader could violate these properties. However, it could not undermine the security of the type system, because the Java Virtual Machine guards against this.
 
-For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 13 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
+For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 14 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
 
 12.2.1. The Loading Process
 
@@ -134,7 +134,7 @@ Linking is the process of taking a binary form of a class or interface type and 
 
 Three different activities are involved in linking: verification, preparation, and resolution of symbolic references.
 
-The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 13 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 14 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 This specification allows an implementation flexibility as to when linking activities (and, because of recursion, loading) take place, provided that the semantics of the Java programming language are respected, that a class or interface is completely verified and prepared before it is initialized, and that errors detected during linkage are thrown at a point in the program where some action is taken by the program that might require linkage to the class or interface involved in the error.
 
@@ -370,7 +370,7 @@ Loading of a class or interface that contains a string literal (§3.10.5) may cr
 
 Execution of an operation that causes boxing conversion (§5.1.7). Boxing conversion may create a new object of a wrapper class (Boolean, Byte, Short, Character, Integer, Long, Float, Double) associated with one of the primitive types.
 
-Execution of a string concatenation operator + (§15.18.1) that is not part of a constant expression (§15.28) always creates a new String object to represent the result. String concatenation operators may also create temporary wrapper objects for a value of a primitive type.
+Execution of a string concatenation operator + (§15.18.1) that is not part of a constant expression (§15.29) always creates a new String object to represent the result. String concatenation operators may also create temporary wrapper objects for a value of a primitive type.
 
 Evaluation of a method reference expression (§15.13.3) or a lambda expression (§15.27.4) may require that a new instance of a class that implements a functional interface type be created.
 

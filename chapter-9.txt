@@ -302,7 +302,7 @@ In the previous example, the fields RED, GREEN, and BLUE are inherited by interf
 
 Every declarator in a field declaration of an interface must have a variable initializer, or a compile-time error occurs.
 
-The initializer need not be a constant expression (§15.28).
+The initializer need not be a constant expression (§15.29).
 
 It is a compile-time error if the initializer of an interface field uses the simple name of the same field or another field whose declaration occurs textually later in the same interface.
 
@@ -576,7 +576,7 @@ By virtue of the AnnotationTypeElementDeclaration production, a method declarati
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 13.
+By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 14.
 
 By convention, the only AnnotationTypeElementModifiers that should be present on an annotation type element are annotations.
 
@@ -939,9 +939,7 @@ There are 16 type contexts (§4.11), all represented by the enum constant TYPE_U
 
 It is a compile-time error if the same enum constant appears more than once in the value element of an annotation of type java.lang.annotation.Target.
 
-If an annotation of type java.lang.annotation.Target is not present on the declaration of an annotation type T, then T is applicable in all declaration contexts except type parameter declarations, and in no type contexts.
-
-These contexts are the syntactic locations where annotations were allowed in Java SE 7.
+If an annotation of type java.lang.annotation.Target is not present on the declaration of an annotation type T, then T is applicable in all nine declaration contexts and in all 16 type contexts.
 
 9.6.4.2. @Retention
 
@@ -1014,7 +1012,7 @@ The annotation type SuppressWarnings supports programmer control over warnings o
 
 If a declaration is annotated with @SuppressWarnings(value = {S1, ..., Sk}), then a Java compiler must suppress (that is, not report) any warning specified by one of S1 ... Sk if that warning would have been generated as a result of the annotated declaration or any of its parts.
 
-The three kinds of warnings defined by the Java programming language are specified using the following strings:
+The Java programming language defines four kinds of warnings that can be specified by @SuppressWarnings:
 
 Unchecked warnings (§4.8, §5.1.6, §5.1.9, §8.4.1, §8.4.8.3, §15.12.4.2, §15.13.2, §15.27.3) are specified by the string "unchecked".
 
@@ -1022,7 +1020,11 @@ Deprecation warnings (§9.6.4.6) are specified by the string "deprecation".
 
 Removal warnings (§9.6.4.6) are specified by the string "removal".
 
-For other kinds of warnings, compiler vendors should document the strings they support for @SuppressWarnings. Vendors are encouraged to cooperate to ensure that the same names work across multiple compilers.
+Preview warnings (§1.5) are specified by the string "preview".
+
+Any other string specifies a non-standard warning. A Java compiler must ignore any such string that it does not recognize.
+
+Compiler vendors are encouraged to document the strings they support for @SuppressWarnings, and to cooperate to ensure that the same strings are recognized across multiple compilers.
 
 9.6.4.6. @Deprecated
 
@@ -1042,21 +1044,21 @@ A Java compiler must produce a deprecation warning when an ordinarily deprecated
 
 The use is within a declaration that is itself deprecated, either ordinarily or terminally; or
 
-The use is within a declaration that is annotated to suppress deprecation warnings; or
+The use is within a declaration that is annotated to suppress deprecation warnings (§9.6.4.5); or
 
-The use and declaration are both within the same outermost class; or
+The declaration where the use appears and the declaration of the ordinarily deprecated program element are both within the same outermost class; or
 
-The use is within an import declaration that imports the ordinarily deprecated type or member.
+The use is within an import declaration that imports the ordinarily deprecated type or member; or
 
 The use is within an exports or opens directive (§7.7.2).
 
 A Java compiler must produce a removal warning when a terminally deprecated program element is used (overridden, invoked, or referenced by name) in the declaration of a program element (whether explicitly or implicitly declared), unless:
 
-The use is within a declaration that is annotated to suppress removal warnings; or
+The use is within a declaration that is annotated to suppress removal warnings (§9.6.4.5); or
 
-The use and declaration are both within the same outermost class; or
+The declaration where the use appears and the declaration of the terminally deprecated program element are both within the same outermost class; or
 
-The use is within an import declaration that imports the terminally deprecated type or member.
+The use is within an import declaration that imports the terminally deprecated type or member; or
 
 The use is within an exports or opens directive.
 
@@ -1166,7 +1168,7 @@ An ElementValueArrayInitializer is similar to a normal array initializer (§10.6
 
 T is not an array type, and the type of V is assignment compatible (§5.2) with T, and:
 
-If T is a primitive type or String, then V is a constant expression (§15.28).
+If T is a primitive type or String, then V is a constant expression (§15.29).
 
 If T is Class or an invocation of Class (§4.5), then V is a class literal (§15.8.2).
 

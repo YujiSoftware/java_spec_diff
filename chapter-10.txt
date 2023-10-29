@@ -190,7 +190,7 @@ The program declares a variable ia that has type array of int, that is, int[]. T
 
 
 
-Arrays must be indexed by int values; short, byte, or char values may also be used as index values because they are subjected to unary numeric promotion (§5.6.1) and become int values.
+Arrays must be indexed by int values; short, byte, or char values may also be used as index values because they are subjected to unary numeric promotion (§5.6) and become int values.
 
 An attempt to access an array component with a long index value results in a compile-time error.
 

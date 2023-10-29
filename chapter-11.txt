@@ -141,6 +141,12 @@ E is one of the exception types of the invocation type of the chosen method (§1
 
 A lambda expression (§15.27) can throw no exception classes.
 
+A switch expression (§15.28) can throw an exception class E iff either:
+
+The selector expression can throw E; or
+
+Some switch rule expression, switch rule block, switch rule throw statement, or switch labeled statement group in the switch block can throw E.
+
 For every other kind of expression, the expression can throw an exception class E iff one of its immediate subexpressions can throw E.
 
 Note that a method reference expression (§15.13) of the form Primary :: [TypeArguments] Identifier can throw an exception class if the Primary subexpression can throw an exception class. In contrast, a lambda expression can throw nothing, and has no immediate subexpressions on which to perform exception analysis. It is the body of a lambda expression, containing expressions and statements, that can throw exception classes.
@@ -172,6 +178,12 @@ An explicit constructor invocation statement (§8.8.7.1) can throw an exception 
 Some expression of the constructor invocation's parameter list can throw E; or
 
 E is determined to be an exception class of the throws clause of the constructor that is invoked (§15.12.2.6).
+
+A switch statement (§14.11) can throw an exception class E iff either:
+
+The selector expression can throw E; or
+
+Some switch rule expression, switch rule block, switch rule throw statement, or switch labeled statement group in the switch block can throw E.
 
 Any other statement S can throw an exception class E iff an expression or statement immediately contained in S can throw E.
 

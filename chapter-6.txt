@@ -728,7 +728,7 @@ The meaning of a name depends on the context in which it is used. The determinat
 
 First, context causes a name syntactically to fall into one of seven categories: ModuleName, PackageName, TypeName, ExpressionName, MethodName, PackageOrTypeName, or AmbiguousName.
 
-TypeName is less expressive than the other six categories, because it is denoted with TypeIdentifier, which excludes the character sequence var (§3.8).
+TypeName and MethodName are less expressive than the other five categories, because they are denoted with TypeIdentifier and UnqualifiedMethodIdentifier, respectively. The former excludes the character sequences var and yield (§3.8), and the latter excludes the character sequence yield.
 
 Second, a name that is initially classified by its context as an AmbiguousName or as a PackageOrTypeName is then reclassified to be a PackageName, TypeName, or ExpressionName.
 
@@ -750,8 +750,7 @@ ExpressionName:
 Identifier
 AmbiguousName . Identifier
 MethodName:
-Identifier
-
+UnqualifiedMethodIdentifier
 AmbiguousName:
 Identifier
 AmbiguousName . Identifier
@@ -920,7 +919,7 @@ Otherwise, a compile-time error occurs.
 
 If the name to the left of the "." is reclassified as an ExpressionName, then this AmbiguousName is reclassified as an ExpressionName. A later step determines whether or not a member with the name Identifier actually exists.
 
-The requirement that a potential type name be "a valid TypeIdentifier" prevents treating var as a type name. It is usually redundant, because the rules for declarations already prevent the introduction of types named var. However, in some cases, a compiler may find a binary class named var, and we want to be clear that such classes can never be named. The simplest solution is to consistently check for a valid TypeIdentifier.
+The requirement that a potential type name be "a valid TypeIdentifier" prevents treating var and yield as a type name. It is usually redundant, because the rules for declarations already prevent the introduction of types named var and yield. However, in some cases, a compiler may find a binary class named var or yield, and we want to be clear that such classes can never be named. The simplest solution is to consistently check for a valid TypeIdentifier.
 
 Example 6.5.2-1. Reclassification of Contextually Ambiguous Names
 
