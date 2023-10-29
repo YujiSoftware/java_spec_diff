@@ -4,7 +4,7 @@ Table of Contents
 
 13.1. The Form of a Binary
 13.2. What Binary Compatibility Is and Is Not
-13.3. Evolution of Packages
+13.3. Evolution of Packages and Modules
 13.4. Evolution of Classes
 13.4.1. abstract Classes
 13.4.2. final Classes
@@ -65,19 +65,19 @@ Reordering the list of direct superinterfaces of a class or interface.
 
 Inserting new class or interface types in the type hierarchy.
 
-This chapter specifies minimum standards for binary compatibility guaranteed by all implementations. The Java programming language guarantees compatibility when binaries of classes and interfaces are mixed that are not known to be from compatible sources, but whose sources have been modified in the compatible ways described here. Note that we are discussing compatibility between releases of an application. A discussion of compatibility among releases of the Java SE platform is beyond the scope of this chapter.
+This chapter specifies minimum standards for binary compatibility guaranteed by all implementations. The Java programming language guarantees compatibility when binaries of classes and interfaces are mixed that are not known to be from compatible sources, but whose sources have been modified in the compatible ways described here. Note that we are discussing compatibility between releases of an application. A discussion of compatibility among releases of the Java SE Platform is beyond the scope of this chapter.
 
 We encourage development systems to provide facilities that alert developers to the impact of changes on pre-existing binaries that cannot be recompiled.
 
 This chapter first specifies some properties that any binary format for the Java programming language must have (§13.1). It next defines binary compatibility, explaining what it is and what it is not (§13.2). It finally enumerates a large set of possible changes to packages (§13.3), classes (§13.4), and interfaces (§13.5), specifying which of these changes are guaranteed to preserve binary compatibility and which are not.
 
-Occasionally, references of the form: (JVMS §x.y) are used to indicate concepts from The Java Virtual Machine Specification, Java SE 8 Edition.
+Occasionally, references of the form: (JVMS §x.y) are used to indicate concepts from The Java Virtual Machine Specification, Java SE 9 Edition.
 
 13.1. The Form of a Binary
 
-Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 8 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
+Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 9 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
 
-The resulting class file must have certain properties. A number of these properties are specifically chosen to support source code transformations that preserve binary compatibility. The required properties are:
+A class file corresponding to a class or interface declaration must have certain properties. A number of these properties are specifically chosen to support source code transformations that preserve binary compatibility. The required properties are:
 
 The class or interface must be named by its binary name, which must meet the following constraints:
 
@@ -181,13 +181,13 @@ For each method declared in the class or interface (excluding, for an interface,
 
 The code needed to implement the class or interface:
 
-For an interface, code for the field initializers and the implementation of each default method.
+For an interface, code for the field initializers and the implementation of each method with a block body (§9.4.3).
 
-For a class, code for the field initializers, the instance and static initializers, and the implementation of each method or constructor.
+For a class, code for the field initializers, the instance and static initializers, the implementation of each method with a block body (§8.4.7), and the implementation of each constructor.
 
 Every type must contain sufficient information to recover its canonical name (§6.7).
 
-Every member type must have sufficient information to recover its source level access modifier.
+Every member type must have sufficient information to recover its source-level access modifier.
 
 Every nested class and nested interface must have a symbolic reference to its immediately enclosing class (§8.1.3).
 
@@ -207,7 +207,7 @@ The first formal parameter of an anonymous constructor of an anonymous class who
 
 The formal parameter name of the valueOf method which is implicitly declared in an enum type (§8.9.3).
 
-For reference, the following constructs are declared implicitly in source code, but are not marked as mandated because only formal parameters can be so marked in a class file (JVMS §4.7.22):
+For reference, the following constructs are declared implicitly in source code, but are not marked as mandated because only formal parameters can be so marked in a class file (JVMS §4.7.24):
 
 Default constructors of classes and enum types (§8.8.9, §8.9.2)
 
@@ -220,6 +220,18 @@ Certain public fields of enum types (§8.9.3)
 Certain public methods of interfaces (§9.2)
 
 Container annotations (§9.7.5)
+
+A class file corresponding to a module declaration must have the properties of a class file for a class whose binary name is module-info and which has no superclass, no superinterfaces, no fields, and no methods. In addition, the binary representation of the module must contain all of the following:
+
+A specification of the name of the module, given as a symbolic reference to the name indicated after module. Also, the specification must include whether the module is normal or open (§7.7).
+
+A specification of each dependence denoted by a requires directive, given as a symbolic reference to the name of the module indicated by the directive (§7.7.1). Also, the specification must include whether the dependence is transitive and whether the dependence is static.
+
+A specification of each package denoted by an exports or opens directive, given as a symbolic reference to the name of the package indicated by the directive (§7.7.2). Also, if the directive was qualified, the specification must give symbolic references to the names of the modules indicated by the directive's to clause.
+
+A specification of each service denoted by a uses directive, given as a symbolic reference to the name of the type indicated by the directive (§7.7.3).
+
+A specification of the service providers denoted by a provides directive, given as symbolic references to the names of the types indicated by the directive's with clause (§7.7.4). Also, the specification must give a symbolic reference to the name of the type indicated as the service by the directive.
 
 The following sections discuss changes that may be made to class and interface type declarations without breaking compatibility with pre-existing binaries. Under the translation requirements given above, the Java Virtual Machine and its class file format support these changes. Any other valid binary format, such as a compressed or encrypted representation that is mapped back into class files by a class loader under the above requirements, will necessarily support these changes as well.
 
@@ -235,13 +247,21 @@ If the Java programming language had been designed so that the particular method
 
 Binary compatibility is not the same as source compatibility. In particular, the example in §13.4.6 shows that a set of compatible binaries can be produced from sources that will not compile all together. This example is typical: a new declaration is added, changing the meaning of a name in an unchanged part of the source code, while the pre-existing binary for that unchanged part of the source code retains the fully-qualified, previous meaning of the name. Producing a consistent set of source code requires providing a qualified name or field access expression corresponding to the previous meaning.
 
-13.3. Evolution of Packages
+13.3. Evolution of Packages and Modules
 
-A new top level class or interface type may be added to a package without breaking compatibility with pre-existing binaries, provided the new type does not reuse a name previously given to an unrelated type.
-
-If a new type reuses a name previously given to an unrelated type, then a conflict may result, since binaries for both types could not be loaded by the same class loader.
+A new top level class or interface type may be added to a package without breaking compatibility with pre-existing binaries, provided the new type does not reuse a name previously given to an unrelated type. If a new type reuses a name previously given to an unrelated type, then a conflict may result, since binaries for both types could not be loaded by the same class loader.
 
 Changes in top level class and interface types that are not public and that are not a superclass or superinterface, respectively, of a public type, affect only types within the package in which they are declared. Such types may be deleted or otherwise changed, even if incompatibilities are otherwise described here, provided that the affected binaries of that package are updated together.
+
+If a module that was declared to export or open a package is changed to not export or open the package, or to export or open the package to a different set of friends, then an IllegalAccessError is thrown if a pre-existing binary is linked that needs but no longer has access to the public and protected types of the package. Such a change is not recommended for modules that have been widely distributed.
+
+If a module was not declared to export or open a given package, then changing the module to export or open the package does not break compatibility with pre-existing binaries. However, changing the module to export the package may prevent the program from starting, since any module that reads the module may also read some other module that exports a package with the same name.
+
+Adding a requires directive to a module declaration, or adding the transitive modifier to a requires directive, does not break compatibility with pre-existing binaries. However, it may prevent the program from starting, since the module may now read multiple modules that export packages with the same name.
+
+Deleting a requires directive in a module declaration, or deleting the transitive modifier from a requires directive, may break compatibility with any pre-existing binary that relied on the directive or modifier for readability of a given module in the course of referencing types exported by that module. An IllegalAccessError may be thrown when such a reference from a pre-existing binary is linked.
+
+Adding or deleting a uses or provides directive in a module declaration does not break compatibility with pre-existing binaries.
 
 13.4. Evolution of Classes
 
@@ -590,54 +610,6 @@ Deleting the keyword final or changing the value to which a field is initialized
 
 If a field is a constant variable (§4.12.4), and moreover is static, then deleting the keyword final or changing its value will not break compatibility with pre-existing binaries by causing them not to run, but they will not see any new value for a usage of the field unless they are recompiled. This result is a side-effect of the decision to support conditional compilation (§14.21). (One might suppose that the new value is not seen if the usage occurs in a constant expression (§15.28) but is seen otherwise. This is not so; pre-existing binaries do not see the new value at all.)
 
-Another reason for requiring inlining of values of static constant variables is because of switch statements. They are the only kind of statement that relies on constant expressions, namely that each case label of a switch statement must be a constant expression whose value is different than every other case label. case labels are often references to static constant variables so it may not be immediately obvious that all the labels have different values. If it is proven that there are no duplicate labels at compile time, then inlining the values into the class file ensures there are no duplicate labels at run time either - a very desirable property.
-
-Example 13.4.9-2. Conditional Compilation
-
-If the example:
-
-class Flags { static final boolean debug = true; }
-class Test {
-    public static void main(String[] args) {
-        if (Flags.debug)
-            System.out.println("debug is true");
-    }
-}
-
-
-is compiled and executed, it produces the output:
-
-debug is true
-
-
-Suppose that a new version of class Flags is produced:
-
-class Flags { static final boolean debug = false; }
-
-
-If Flags is recompiled but not Test, then running the new binary with the existing binary of Test produces the output:
-
-debug is true
-
-
-because the value of debug was a constant expression, and could have been used in compiling Test without making a reference to the class Flags.
-
-This behavior would not change if Flags were changed to be an interface, as in the modified example:
-
-interface Flags { boolean debug = true; }
-class Test {
-    public static void main(String[] args) {
-        if (Flags.debug)
-            System.out.println("debug is true");
-    }
-}
-
-
-Conditional compilation is discussed further at the end of §14.21.
-
-
-
-
 The best way to avoid problems with "inconstant constants" in widely-distributed code is to use static constant variables only for values which truly are unlikely ever to change. Other than for true mathematical constants, we recommend that source code make very sparing use of static constant variables.
 
 If the read-only nature of final is required, a better choice is to declare a private static variable and a suitable accessor method to get its value. Thus we recommend:
@@ -663,21 +635,6 @@ public static int N = ...;
 
 
 if N need not be read-only.
-
-We recommend, as a general rule, that only constant expressions be assigned to fields of interfaces.
-
-We note, but do not recommend, that if a field of primitive type of an interface may change, its value may be expressed idiomatically as in:
-
-
-interface Flags {
-    boolean debug = new Boolean(true).booleanValue();
-}
-
-
-
-ensuring that this value is not a constant. Similar idioms exist for the other primitive types.
-
-One other thing to note is that static constant variables must never appear to have the default initial value for their type (§4.12.5). This means that all such fields appear to be initialized first during class initialization (§8.3.2, §9.3.1, §12.4.2).
 
 13.4.10. static Fields
 
@@ -916,9 +873,9 @@ Changes to the interface hierarchy cause errors in the same way that changes to 
 
 13.5.3. Interface Members
 
-Adding an abstract method to an interface does not break compatibility with pre-existing binaries.
+Adding an abstract, private, or static method to an interface does not break compatibility with pre-existing binaries.
 
-A field added to a superinterface of C may hide a field inherited from a superclass of C. If the original reference was to an instance field, an IncompatibleClassChangeError will result. If the original reference was an assignment, an IllegalAccessError will result.
+Adding a field to a superinterface of C may hide a field inherited from a superclass of C. If the original reference was to an instance field, an IncompatibleClassChangeError will result. If the original reference was an assignment, an IllegalAccessError will result.
 
 Deleting a member from an interface may cause linkage errors in pre-existing binaries.
 
@@ -958,7 +915,7 @@ The considerations for changing field declarations in interfaces are the same as
 
 13.5.6. Interface Method Declarations
 
-The considerations for changing abstract method declarations in interfaces include those for abstract methods in classes, as described in §13.4.14, §13.4.15, §13.4.19, §13.4.21, and §13.4.23.
+The considerations for changing method declarations in interfaces include those for changing methods in classes, as described in §13.4.7, §13.4.14, §13.4.15, §13.4.19, §13.4.21, §13.4.22, and §13.4.23.
 
 Adding a default method, or changing a method from abstract to default, does not break compatibility with pre-existing binaries, but may cause an IncompatibleClassChangeError if a pre-existing binary attempts to invoke the method. This error occurs if the qualifying type, T, is a subtype of two interfaces, I and J, where both I and J declare a default method with the same signature and result, and neither I nor J is a subinterface of the other.
 

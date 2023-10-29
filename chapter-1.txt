@@ -15,7 +15,7 @@ The Java programming language is strongly and statically typed. This specificati
 
 The Java programming language is a relatively high-level language, in that details of the machine representation are not available through the language. It includes automatic storage management, typically using a garbage collector, to avoid the safety problems of explicit deallocation (as in C's free or C++'s delete). High-performance garbage-collected implementations can have bounded pauses to support systems programming and real-time applications. The language does not include any unsafe constructs, such as array accesses without index checking, since such unsafe constructs would cause a program to behave in an unspecified way.
 
-The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 8 Edition.
+The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 9 Edition.
 
 1.1. Organization of the Specification
 
@@ -33,15 +33,17 @@ Variables are typed storage locations. A variable of a primitive type holds a va
 
 Chapter 5 describes conversions and numeric promotions. Conversions change the compile-time type and, sometimes, the value of an expression. These conversions include the boxing and unboxing conversions between primitive types and reference types. Numeric promotions are used to convert the operands of a numeric operator to a common type where an operation can be performed. There are no loopholes in the language; casts on reference types are checked at run time to ensure type safety.
 
-Chapter 6 describes declarations and names, and how to determine what names mean (denote). The language does not require types or their members to be declared before they are used. Declaration order is significant only for local variables, local classes, and the order of initializers of fields in a class or interface.
+Chapter 6 describes declarations and names, and how to determine what names mean (that is, which declaration a name denotes). The Java programming language does not require classes and interfaces, or their members, to be declared before they are used. Declaration order is significant only for local variables, local classes, and the order of field initializers in a class or interface. Recommended naming conventions that make for more readable programs are described here.
 
-The Java programming language provides control over the scope of names and supports limitations on external access to members of packages, classes, and interfaces. This helps in writing large programs by distinguishing the implementation of a type from its users and those who extend it. Recommended naming conventions that make for more readable programs are described here.
+Chapter 7 describes the structure of a program, which is organized into packages. The members of a package are classes, interfaces, and subpackages. Packages, and consequently their members, have names in a hierarchical name space; the Internet domain name system can usually be used to form unique package names. Compilation units contain declarations of the classes and interfaces that are members of a given package, and may import classes and interfaces from other packages to give them short names.
 
-Chapter 7 describes the structure of a program, which is organized into packages similar to the modules of Modula. The members of a package are classes, interfaces, and subpackages. Packages are divided into compilation units. Compilation units contain type declarations and can import types from other packages to give them short names. Packages have names in a hierarchical name space, and the Internet domain name system can usually be used to form unique package names.
+Packages may be grouped into modules that serve as building blocks in the construction of very large programs. The declaration of a module specifies which other modules (and thus packages, and thus classes and interfaces) are required in order to compile and run code in its own packages.
+
+The Java programming language supports limitations on external access to the members of packages, classes, and interfaces. The members of a package may be accessible solely by other members in the same package, or by members in other packages of the same module, or by members of packages in different modules. Similar constraints apply to the members of classes and interfaces.
 
 Chapter 8 describes classes. The members of classes are classes, interfaces, fields (variables) and methods. Class variables exist once per class. Class methods operate without reference to a specific object. Instance variables are dynamically created in objects that are instances of classes. Instance methods are invoked on instances of classes; such instances become the current object this during their execution, supporting the object-oriented programming style.
 
-Classes support single implementation inheritance, in which the implementation of each class is derived from that of a single superclass, and ultimately from the class Object. Variables of a class type can reference an instance of that class or of any subclass of that class, allowing new types to be used with existing methods, polymorphically.
+Classes support single inheritance, in which each class has a single superclass. Each class inherits members from its superclass, and ultimately from the class Object. Variables of a class type can reference an instance of that class or of any subclass of that class, allowing new types to be used with existing methods, polymorphically.
 
 Classes support concurrent programming with synchronized methods. Methods declare the checked exceptions that can arise from their execution, which allows compile-time checking to ensure that exceptional conditions are handled. Objects can declare a finalize method that will be invoked before the objects are discarded by the garbage collector, allowing the objects to clean up their state.
 
@@ -49,7 +51,9 @@ For simplicity, the language has neither declaration "headers" separate from the
 
 A special form of classes, enums, support the definition of small sets of values and their manipulation in a type safe manner. Unlike enumerations in other languages, enums are objects and may have their own methods.
 
-Chapter 9 describes interface types, which declare a set of abstract methods, member types, and constants. Classes that are otherwise unrelated can implement the same interface type. A variable of an interface type can contain a reference to any object that implements the interface. Multiple interface inheritance is supported.
+Chapter 9 describes interfaces. The members of interfaces are classes, interfaces, constant fields, and methods. Classes that are otherwise unrelated can implement the same interface. A variable of an interface type can contain a reference to any object that implements the interface.
+
+Classes and interfaces support multiple inheritance from interfaces. A class that implements one or more interfaces may inherit instance methods from both its superclass and its superinterfaces.
 
 Annotation types are specialized interfaces used to annotate declarations. Such annotations are not permitted to affect the semantics of programs in the Java programming language in any way. However, they provide useful input to various tools.
 
@@ -102,7 +106,7 @@ Hello, world.
 
 1.3. Notation
 
-Throughout this specification we refer to classes and interfaces drawn from the Java SE platform API. Whenever we refer to a class or interface (other than those declared in an example) using a single identifier N, the intended reference is to the class or interface named N in the package java.lang. We use the canonical name (§6.7) for classes or interfaces from packages other than java.lang.
+Throughout this specification we refer to classes and interfaces drawn from the Java SE Platform API. Whenever we refer to a class or interface (other than those declared in an example) using a single identifier N, the intended reference is to the class or interface named N in the package java.lang. We use the canonical name (§6.7) for classes or interfaces from packages other than java.lang.
 
 Non-normative information, designed to clarify the specification, is given in smaller, indented text.
 
@@ -112,7 +116,7 @@ The type system of the Java programming language occasionally relies on the noti
 
 1.4. Relationship to Predefined Classes and Interfaces
 
-As noted above, this specification often refers to classes of the Java SE platform API. In particular, some classes have a special relationship with the Java programming language. Examples include classes such as Object, Class, ClassLoader, String, Thread, and the classes and interfaces in package java.lang.reflect, among others. This specification constrains the behavior of such classes and interfaces, but does not provide a complete specification for them. The reader is referred to the Java SE platform API documentation.
+As noted above, this specification often refers to classes of the Java SE Platform API. In particular, some classes have a special relationship with the Java programming language. Examples include classes such as Object, Class, ClassLoader, String, Thread, and the classes and interfaces in package java.lang.reflect, among others. This specification constrains the behavior of such classes and interfaces, but does not provide a complete specification for them. The reader is referred to the Java SE Platform API documentation.
 
 Consequently, this specification does not describe reflection in any detail. Many linguistic constructs have analogs in the Core Reflection API (java.lang.reflect) and the Language Model API (javax.lang.model), but these are generally not discussed here. For example, when we list the ways in which an object can be created, we generally do not include the ways in which the Core Reflection API can accomplish this. Readers should be aware of these additional mechanisms even though they are not mentioned in the text.
 
@@ -147,4 +151,4 @@ Mitchell, James G., William Maybury, and Richard Sweet. The Mesa Programming Lan
 
 Stroustrup, Bjarne. The C++ Progamming Language, 2nd ed. Addison-Wesley, Reading, Massachusetts, 1991, reprinted with corrections January 1994, ISBN 0-201-53992-6.
 
-Unicode Consortium, The. The Unicode Standard, Version 6.2.0. Mountain View, California, 2012, ISBN 978-1-936213-07-8.
+Unicode Consortium, The. The Unicode Standard, Version 8.0.0. Mountain View, California, 2015, ISBN 978-1-936213-10-8.

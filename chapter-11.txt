@@ -14,7 +14,7 @@ Table of Contents
 
 When a program violates the semantic constraints of the Java programming language, the Java Virtual Machine signals this error to the program as an exception.
 
-An example of such a violation is an attempt to index outside the bounds of an array. Some programming languages and their implementations react to such errors by peremptorily terminating the program; other programming languages allow an implementation to react in an arbitrary or unpredictable way. Neither of these approaches is compatible with the design goals of the Java SE platform: to provide portability and robustness.
+An example of such a violation is an attempt to index outside the bounds of an array. Some programming languages and their implementations react to such errors by peremptorily terminating the program; other programming languages allow an implementation to react in an arbitrary or unpredictable way. Neither of these approaches is compatible with the design goals of the Java SE Platform: to provide portability and robustness.
 
 Instead, the Java programming language specifies that an exception will be thrown when semantic constraints are violated and will cause a non-local transfer of control from the point where the exception occurred to a point that can be specified by the programmer.
 
@@ -28,7 +28,7 @@ Every exception is represented by an instance of the class Throwable or one of i
 
 During the process of throwing an exception, the Java Virtual Machine abruptly completes, one by one, any expressions, statements, method and constructor invocations, initializers, and field initialization expressions that have begun but not completed execution in the current thread. This process continues until a handler is found that indicates that it handles that particular exception by naming the class of the exception or a superclass of the class of the exception (§11.2). If no such handler is found, then the exception may be handled by one of a hierarchy of uncaught exception handlers (§11.3) - thus every effort is made to avoid letting an exception go unhandled.
 
-The exception mechanism of the Java SE platform is integrated with its synchronization model (§17.1), so that monitors are unlocked as synchronized statements (§14.19) and invocations of synchronized methods (§8.4.3.6, §15.12) complete abruptly.
+The exception mechanism of the Java SE Platform is integrated with its synchronization model (§17.1), so that monitors are unlocked as synchronized statements (§14.19) and invocations of synchronized methods (§8.4.3.6, §15.12) complete abruptly.
 
 11.1. The Kinds and Causes of Exceptions
 11.1.1. The Kinds of Exceptions
@@ -53,7 +53,7 @@ The unchecked exception classes are the run-time exception classes and the error
 
 The checked exception classes are all exception classes other than the unchecked exception classes. That is, the checked exception classes are Throwable and all its subclasses other than RuntimeException and its subclasses and Error and its subclasses.
 
-Programs can use the pre-existing exception classes of the Java SE platform API in throw statements, or define additional exception classes as subclasses of Throwable or of any of its subclasses, as appropriate. To take advantage of compile-time checking for exception handlers (§11.2), it is typical to define most new exception classes as checked exception classes, that is, as subclasses of Exception that are not subclasses of RuntimeException.
+Programs can use the pre-existing exception classes of the Java SE Platform API in throw statements, or define additional exception classes as subclasses of Throwable or of any of its subclasses, as appropriate. To take advantage of compile-time checking for exception handlers (§11.2), it is typical to define most new exception classes as checked exception classes, that is, as subclasses of Exception that are not subclasses of RuntimeException.
 
 The class Error is a separate subclass of Throwable, distinct from Exception in the class hierarchy, to allow programs to use the idiom "} catch (Exception e) {" (§11.2.3) to catch all exceptions from which recovery may be possible without catching errors from which recovery is typically not possible.
 
@@ -91,7 +91,7 @@ An internal error or resource limitation in the Java Virtual Machine that preven
 
 Note that StackOverflowError, a subclass of VirtualMachineError, may be thrown synchronously by method invocation (§15.12.4.5) as well as asynchronously due to native method execution or Java Virtual Machine resource limitations. Similarly, OutOfMemoryError, another subclass of VirtualMachineError, may be thrown synchronously during class instance creation (§15.9.4, §12.5), array creation (§15.10.2, §10.6), class initialization (§12.4.2), and boxing conversion (§5.1.7), as well as asynchronously.
 
-The Java SE platform permits a small but bounded amount of execution to occur before an asynchronous exception is thrown.
+The Java SE Platform permits a small but bounded amount of execution to occur before an asynchronous exception is thrown.
 
 Asynchronous exceptions are rare, but proper understanding of their semantics is necessary if high-quality machine code is to be generated.
 

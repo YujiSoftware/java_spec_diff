@@ -9,6 +9,9 @@ Table of Contents
 5.1.4. Widening and Narrowing Primitive Conversion
 5.1.5. Widening Reference Conversion
 5.1.6. Narrowing Reference Conversion
+5.1.6.1. Allowed Narrowing Reference Conversion
+5.1.6.2. Checked and Unchecked Narrowing Reference Conversions
+5.1.6.3. Narrowing Reference Conversions at Run Time
 5.1.7. Boxing Conversion
 5.1.8. Unboxing Conversion
 5.1.9. Unchecked Conversion
@@ -20,9 +23,6 @@ Table of Contents
 5.3. Invocation Contexts
 5.4. String Contexts
 5.5. Casting Contexts
-5.5.1. Reference Type Casting
-5.5.2. Checked Casts and Unchecked Casts
-5.5.3. Checked Casts at Run Time
 5.6. Numeric Contexts
 5.6.1. Unary Numeric Promotion
 5.6.2. Binary Numeric Promotion
@@ -335,33 +335,129 @@ First, the byte is converted to an int via widening primitive conversion (§5.1.
 
 5.1.5. Widening Reference Conversion
 
-A widening reference conversion exists from any reference type S to any reference type T, provided S is a subtype (§4.10) of T.
+A widening reference conversion exists from any reference type S to any reference type T, provided S is a subtype of T (§4.10).
 
 Widening reference conversions never require a special action at run time and therefore never throw an exception at run time. They consist simply in regarding a reference as having some other type in a manner that can be proved correct at compile time.
 
+The null type is not a reference type (§4.1), and so a widening reference conversion does not exist from the null type to a reference type. However, many conversion contexts explicitly allow the null type to be converted to a reference type.
+
 5.1.6. Narrowing Reference Conversion
 
-Six kinds of conversions are called the narrowing reference conversions:
+A narrowing reference conversion treats expressions of a reference type S as expressions of a different reference type T, where S is not a subtype of T. The supported pairs of types are defined in §5.1.6.1. Unlike widening reference conversion, the types need not be directly related. However, there are restrictions that prohibit conversion between certain pairs of types when it can be statically proven that no value can be of both types.
 
-From any reference type S to any reference type T, provided that S is a proper supertype of T (§4.10).
+A narrowing reference conversion may require a test at run time to validate that a value of type S is a legitimate value of type T. However, due to the lack of parameterized type information at run time, some conversions cannot be fully validated by a run time test; they are flagged at compile time (§5.1.6.2). For conversions that can be fully validated by a run time test, and for certain conversions that involve parameterized type information but can still be partially validated at run time, a ClassCastException is thrown if the test fails (§5.1.6.3).
 
-An important special case is that there is a narrowing reference conversion from the class type Object to any other reference type (§4.12.4).
+5.1.6.1. Allowed Narrowing Reference Conversion
 
-From any class type C to any non-parameterized interface type K, provided that C is not final and does not implement K.
+A narrowing reference conversion exists from reference type S to reference type T if all of the following are true:
 
-From any interface type J to any non-parameterized class type C that is not final.
+S is not a subtype of T (§4.10)
 
-From any interface type J to any non-parameterized interface type K, provided that J is not a subinterface of K.
+If there exists a parameterized type X that is a supertype of T, and a parameterized type Y that is a supertype of S, such that the erasures of X and Y are the same, then X and Y are not provably distinct (§4.5).
 
-From the interface types Cloneable and java.io.Serializable to any array type T[].
+Using types from the java.util package as an example, no narrowing reference conversion exists from ArrayList<String> to ArrayList<Object>, or vice versa, because the type arguments String and Object are provably distinct. For the same reason, no narrowing reference conversion exists from ArrayList<String> to List<Object>, or vice versa. The rejection of provably distinct types is a simple static gate to prevent "stupid" narrowing reference conversions.
 
-From any array type SC[] to any array type TC[], provided that SC and TC are reference types and there is a narrowing reference conversion from SC to TC.
+One of the following cases applies:
 
-Such conversions require a test at run time to find out whether the actual reference value is a legitimate value of the new type. If not, then a ClassCastException is thrown.
+S and T are class types, and either |S| <: |T| or |T| <: |S|.
+
+S and T are interface types.
+
+S is a class type, T is an interface type, and S does not name a final class (§8.1.1).
+
+S is a class type, T is an interface type, and S names a final class that implements the interface named by T.
+
+S is an interface type, T is a class type, and T does not name a final class.
+
+S is an interface type, T is a class type, and T names a final class that implements the interface named by S.
+
+S is the class type Object or the interface type java.io.Serializable or Cloneable (the only interfaces implemented by arrays (§10.8)), and T is an array type.
+
+S is an array type SC[], that is, an array of components of type SC; T is an array type TC[], that is, an array of components of type TC; and a narrowing reference conversion exists from SC to TC.
+
+S is a type variable, and a narrowing reference conversion exists from the upper bound of S to T.
+
+T is a type variable, and either a widening reference conversion or a narrowing reference conversion exists from S to the upper bound of T.
+
+S is an intersection type S1 & ... & Sn, and for all i (1 ≤ i ≤ n), either a widening reference conversion or a narrowing reference conversion exists from Si to T.
+
+T is an intersection type T1 & ... & Tn, and for all i (1 ≤ i ≤ n), either a widening reference conversion or a narrowing reference conversion exists from S to Ti.
+
+5.1.6.2. Checked and Unchecked Narrowing Reference Conversions
+
+A narrowing reference conversion is either checked or unchecked. These terms refer to the ability of the Java Virtual Machine to validate, or not, the type correctness of the conversion.
+
+If a narrowing reference conversion is unchecked, then the Java Virtual Machine will not be able to fully validate its type correctness, possibly leading to heap pollution (§4.12.2). To flag this to the programmer, an unchecked narrowing reference conversion causes a compile-time unchecked warning, unless suppressed by @SuppressWarnings (§9.6.4.5). In contrast, if a narrowing reference conversion is not unchecked, then it is checked; the Java Virtual Machine will be able to fully validate its type correctness, so no warning is given at compile time.
+
+The unchecked narrowing reference conversions are as follows:
+
+A narrowing reference conversion from a type S to a parameterized class or interface type T is unchecked, unless at least one of the following is true:
+
+All of the type arguments of T are unbounded wildcards.
+
+T <: S, and S has no subtype X other than T where the type arguments of X are not contained in the type arguments of T.
+
+A narrowing reference conversion from a type S to a type variable T is unchecked.
+
+A narrowing reference conversion from a type S to an intersection type T1 & ... & Tn is unchecked if there exists a Ti (1 ≤ i ≤ n) such that S is not a subtype of Ti and a narrowing reference conversion from S to Ti is unchecked.
+
+5.1.6.3. Narrowing Reference Conversions at Run Time
+
+All checked narrowing reference conversions require a validity check at run time. Primarily, these conversions are to class and interface types that are not parameterized.
+
+Some unchecked narrowing reference conversions require a validity check at run time. This depends on whether the unchecked narrowing reference conversion is completely unchecked or partially unchecked. A partially unchecked narrowing reference conversion requires a validity check at run time, while a completely unchecked narrowing reference conversion does not.
+
+These terms refer to the compatibility of the types involved in the conversion when viewed as raw types. If the conversion is conceptually an "upcast", then the conversion is completely unchecked; no run time test is needed because the conversion is legal in the non-generic type system of the Java Virtual Machine. In contrast, if the conversion is conceptually a "downcast", then the conversion is partially unchecked; even in the non-generic type system of the Java Virtual Machine, a run time check is needed to test the compatibility of the (raw) types involved in the conversion.
+
+Using types from the java.util package as an example, a conversion from ArrayList<String> to Collection<T> is completely unchecked, because the (raw) type ArrayList is a subtype of the (raw) type Collection in the Java Virtual Machine. In contrast, a conversion from Collection<T> to ArrayList<String> is partially unchecked, because the (raw) type Collection is not a subtype of the (raw) type ArrayList in the Java Virtual Machine.
+
+The categorization of an unchecked narrowing reference conversion is as follows:
+
+An unchecked narrowing reference conversion from S to a non-intersection type T is completely unchecked if |S| <: |T|.
+
+Otherwise, it is partially unchecked.
+
+An unchecked narrowing reference conversion from S to an intersection type T1 & ... & Tn is completely unchecked if, for all i (1 ≤ i ≤ n), either S <: Ti or a narrowing reference conversion from S to Ti is completely unchecked.
+
+Otherwise, it is partially unchecked.
+
+The run time validity check for a checked or partially unchecked narrowing reference conversion is as follows:
+
+If the value at run time is null, then the conversion is allowed.
+
+Otherwise, let R be the class of the object referred to by the value, and let T be the erasure (§4.6) of the type being converted to. Then:
+
+If R is an ordinary class (not an array class):
+
+If T is a class type, then R must be either the same class as T (§4.3.4) or a subclass of T, or a ClassCastException is thrown.
+
+If T is an interface type, then R must implement interface T (§8.1.5), or a ClassCastException is thrown.
+
+If T is an array type, then a ClassCastException is thrown.
+
+If R is an interface:
+
+Note that R cannot be an interface when these rules are first applied for any given conversion, but R may be an interface if the rules are applied recursively because the run-time reference value may refer to an array whose element type is an interface type.
+
+If T is a class type, then T must be Object (§4.3.2), or a ClassCastException is thrown.
+
+If T is an interface type, then R must be either the same interface as T or a subinterface of T, or a ClassCastException is thrown.
+
+If T is an array type, then a ClassCastException is thrown.
+
+If R is a class representing an array type RC[], that is, an array of components of type RC:
+
+If T is a class type, then T must be Object (§4.3.2), or a ClassCastException is thrown.
+
+If T is an interface type, then T must be the type java.io.Serializable or Cloneable (the only interfaces implemented by arrays), or a ClassCastException is thrown.
+
+If T is an array type TC[], that is, an array of components of type TC, then a ClassCastException is thrown unless either TC and RC are the same primitive type, or TC and RC are reference types and are allowed by a recursive application of these run-time rules.
+
+If the conversion is to an intersection type T1 & ... & Tn, then for all i (1 ≤ i ≤ n), any run-time check required for a conversion from S to Ti is also required for the conversion to the intersection type.
 
 5.1.7. Boxing Conversion
 
-Boxing conversion converts expressions of primitive type to corresponding expressions of reference type. Specifically, the following nine conversions are called the boxing conversions:
+Boxing conversion treats expressions of a primitive type as expressions of a corresponding reference type. Specifically, the following nine conversions are called the boxing conversions:
 
 From type boolean to type Boolean
 
@@ -411,7 +507,7 @@ Otherwise, boxing conversion converts p into a reference r of class and type Dou
 
 If p is a value of any other type, boxing conversion is equivalent to an identity conversion (§5.1.1).
 
-If the value p being boxed is an integer literal of type int between -128 and 127 inclusive (§3.10.1), or the boolean literal true or false (§3.10.3), or a character literal between '\u0000' and '\u007f' inclusive (§3.10.4), then let a and b be the results of any two boxing conversions of p. It is always the case that a == b.
+If the value p being boxed is the result of evaluating a constant expression (§15.28) of type boolean, char, short, int, or long, and the result is true, false, a character in the range '\u0000' to '\u007f' inclusive, or an integer in the range -128 to 127 inclusive, then let a and b be the results of any two boxing conversions of p. It is always the case that a == b.
 
 Ideally, boxing a primitive value would always yield an identical reference. In practice, this may not be feasible using existing implementation techniques. The rule above is a pragmatic compromise, requiring that certain common values always be boxed into indistinguishable objects. The implementation may cache these, lazily or eagerly. For other values, the rule disallows any assumptions about the identity of the boxed values on the programmer's part. This allows (but does not require) sharing of some or all of these references. Notice that integer literals of type long are allowed, but not required, to be shared.
 
@@ -421,7 +517,7 @@ A boxing conversion may result in an OutOfMemoryError if a new instance of one o
 
 5.1.8. Unboxing Conversion
 
-Unboxing conversion converts expressions of reference type to corresponding expressions of primitive type. Specifically, the following eight conversions are called the unboxing conversions:
+Unboxing conversion treats expressions of a reference type as expressions of a corresponding primitive type. Specifically, the following eight conversions are called the unboxing conversions:
 
 From type Boolean to type boolean
 
@@ -471,7 +567,7 @@ There is an unchecked conversion from the raw class or interface type (§4.8) G 
 
 There is an unchecked conversion from the raw array type G[]k to any array type of the form G<T1,...,Tn>[]k. (The notation []k indicates an array type of k dimensions.)
 
-Use of an unchecked conversion causes a compile-time unchecked warning unless all type arguments Ti (1 ≤ i ≤ n) are unbounded wildcards (§4.5.1), or the unchecked warning is suppressed by the SuppressWarnings annotation (§9.6.4.5).
+Use of an unchecked conversion causes a compile-time unchecked warning unless all type arguments Ti (1 ≤ i ≤ n) are unbounded wildcards (§4.5.1), or the warning is suppressed by @SuppressWarnings (§9.6.4.5).
 
 Unchecked conversion is used to enable a smooth interoperation of legacy code, written before the introduction of generic types, with libraries that have undergone a conversion to use genericity (a process we call generification). In such circumstances (most notably, clients of the Collections Framework in java.util), legacy code uses raw types (e.g. Collection instead of Collection<String>). Expressions of raw types are passed as arguments to library methods that use parameterized versions of those same types as the types of their corresponding formal parameters.
 
@@ -586,8 +682,6 @@ Otherwise, the conversion is performed as if by an invocation of the toString me
 
 The toString method is defined by the primordial class Object (§4.3.2). Many classes override it, notably Boolean, Character, Integer, Long, Float, Double, and String.
 
-See §5.4 for details of the string context.
-
 5.1.12. Forbidden Conversions
 
 Any conversion that is not explicitly allowed is forbidden.
@@ -624,23 +718,25 @@ a widening primitive conversion (§5.1.2)
 
 a widening reference conversion (§5.1.5)
 
-a boxing conversion (§5.1.7) optionally followed by a widening reference conversion
+a widening reference conversion followed by an unboxing conversion
 
-an unboxing conversion (§5.1.8) optionally followed by a widening primitive conversion.
+a widening reference conversion followed by an unboxing conversion, then followed by a widening primitive conversion
+
+a boxing conversion (§5.1.7)
+
+a boxing conversion followed by a widening reference conversion
+
+an unboxing conversion (§5.1.8)
+
+an unboxing conversion followed by a widening primitive conversion
 
 If, after the conversions listed above have been applied, the resulting type is a raw type (§4.8), an unchecked conversion (§5.1.9) may then be applied.
 
 In addition, if the expression is a constant expression (§15.28) of type byte, short, char, or int:
 
-A narrowing primitive conversion may be used if the type of the variable is byte, short, or char, and the value of the constant expression is representable in the type of the variable.
+A narrowing primitive conversion may be used if the variable is of type byte, short, or char, and the value of the constant expression is representable in the type of the variable.
 
-A narrowing primitive conversion followed by a boxing conversion may be used if the type of the variable is:
-
-Byte and the value of the constant expression is representable in the type byte.
-
-Short and the value of the constant expression is representable in the type short.
-
-Character and the value of the constant expression is representable in the type char.
+A narrowing primitive conversion followed by a boxing conversion may be used if the variable is of type Byte, Short, or Character, and the value of the constant expression is representable in the type byte, short, or char respectively.
 
 The compile-time narrowing of constant expressions means that code such as:
 
@@ -663,8 +759,6 @@ Integer, Comparable<Integer>, Comparable, Comparable<String>
 
 The first three elements of the chain are related by widening reference conversion, while the last entry is derived from its predecessor by unchecked conversion. However, this is not a valid assignment conversion, because the chain contains two parameterized types, Comparable<Integer> and Comparable<String>, that are not subtypes.
 
-If the type of the expression cannot be converted to the type of the variable by a conversion permitted in an assignment context, then a compile-time error occurs.
-
 If the type of an expression can be converted to the type of a variable by assignment conversion, we say the expression (or its value) is assignable to the variable or, equivalently, that the type of the expression is assignment compatible with the type of the variable.
 
 If the type of the variable is float or double, then value set conversion (§5.1.13) is applied to the value v that is the result of the conversion(s):
@@ -685,7 +779,7 @@ A NullPointerException as a result of an unboxing conversion on a null reference
 
 An ArrayStoreException in special cases involving array elements or field access (§10.5, §15.26.1).
 
-Example 5.2-1. Assignment Conversion for Primitive Types
+Example 5.2-1. Assignment for Primitive Types
 
 class Test {
     public static void main(String[] args) {
@@ -725,7 +819,7 @@ because not all short values are char values, and neither are all char values sh
 
 
 
-Example 5.2-2. Assignment Conversion for Reference Types
+Example 5.2-2. Assignment for Reference Types
 
 class Point { int x, y; }
 class Point3D extends Point { int z; }
@@ -802,7 +896,7 @@ class Test {
 
 
 
-Example 5.2-3. Assignment Conversion for Array Types
+Example 5.2-3. Assignment for Array Types
 
 class Point { int x, y; }
 class ColoredPoint extends Point { int color; }
@@ -832,7 +926,7 @@ The value of veclong cannot be assigned to vecshort, because they are arrays of 
 
 The value of cpvec can be assigned to pvec, because any reference that could be the value of an expression of type ColoredPoint can be the value of a variable of type Point. The subsequent assignment of the new Point to a component of pvec then would throw an ArrayStoreException (if the program were otherwise corrected so that it could be compiled), because a ColoredPoint array cannot have an instance of Point as the value of a component.
 
-The value of pvec cannot be assigned to cpvec, because not every reference that could be the value of an expression of type ColoredPoint can correctly be the value of a variable of type Point. If the value of pvec at run time were a reference to an instance of Point[], and the assignment to cpvec were allowed, a simple reference to a component of cpvec, say, cpvec[0], could return a Point, and a Point is not a ColoredPoint. Thus to allow such an assignment would allow a violation of the type system. A cast may be used (§5.5, §15.16) to ensure that pvec references a ColoredPoint[]:
+The value of pvec cannot be assigned to cpvec, because not every reference that could be the value of an expression of type Point can correctly be the value of a variable of type ColoredPoint. If the value of pvec at run time were a reference to an instance of Point[], and the assignment to cpvec were allowed, a simple reference to a component of cpvec, say, cpvec[0], could return a Point, and a Point is not a ColoredPoint. Thus to allow such an assignment would allow a violation of the type system. A cast may be used (§5.5, §15.16) to ensure that pvec references a ColoredPoint[]:
 
       cpvec = (ColoredPoint[])pvec;  // OK, but may throw an 
                                // exception at run time
@@ -859,17 +953,23 @@ a widening primitive conversion (§5.1.2)
 
 a widening reference conversion (§5.1.5)
 
-a boxing conversion (§5.1.7) optionally followed by widening reference conversion
+a widening reference conversion followed by an unboxing conversion
 
-an unboxing conversion (§5.1.8) optionally followed by a widening primitive conversion
+a widening reference conversion followed by an unboxing conversion, then followed by a widening primitive conversion
+
+a boxing conversion (§5.1.7)
+
+a boxing conversion followed by widening reference conversion
+
+an unboxing conversion (§5.1.8)
+
+an unboxing conversion followed by a widening primitive conversion
 
 If, after the conversions listed for an invocation context have been applied, the resulting type is a raw type (§4.8), an unchecked conversion (§5.1.9) may then be applied.
 
 A value of the null type (the null reference is the only such value) may be assigned to any reference type.
 
 It is a compile-time error if the chain of conversions contains two parameterized types that are not in the subtype relation (§4.10).
-
-If the type of the expression cannot be converted to the type of the parameter by a conversion permitted in a loose invocation context, then a compile-time error occurs.
 
 If the type of an argument expression is either float or double, then value set conversion (§5.1.13) is applied after the conversion(s):
 
@@ -908,9 +1008,9 @@ The target type in these contexts is always String, and a string conversion (§5
 
 5.5. Casting Contexts
 
-Casting contexts allow the operand of a cast operator (§15.16) to be converted to the type explicitly named by the cast operator.
+Casting contexts allow the operand of a cast expression (§15.16) to be converted to the type explicitly named by the cast operator. Compared to assignment contexts and invocation contexts, casting contexts allow the use of more of the conversions defined in §5.1, and allow more combinations of those conversions.
 
-Casting contexts allow the use of one of:
+If the expression is of a primitive type, then a casting context allows the use of one of the following:
 
 an identity conversion (§5.1.1)
 
@@ -920,29 +1020,37 @@ a narrowing primitive conversion (§5.1.3)
 
 a widening and narrowing primitive conversion (§5.1.4)
 
-a widening reference conversion (§5.1.5) optionally followed by either an unboxing conversion (§5.1.8) or an unchecked conversion (§5.1.9)
+a boxing conversion (§5.1.7)
 
-a narrowing reference conversion (§5.1.6) optionally followed by either an unboxing conversion (§5.1.8) or an unchecked conversion (§5.1.9)
+a boxing conversion followed by a widening reference conversion (§5.1.5)
 
-a boxing conversion (§5.1.7) optionally followed by a widening reference conversion (§5.1.5)
+If the expression is of a reference type, then a casting context allows the use of one of the following:
 
-an unboxing conversion (§5.1.8) optionally followed by a widening primitive conversion (§5.1.2).
+an identity conversion (§5.1.1)
+
+a widening reference conversion (§5.1.5)
+
+a widening reference conversion followed by an unboxing conversion
+
+a widening reference conversion followed by an unboxing conversion, then followed by a widening primitive conversion
+
+a narrowing reference conversion (§5.1.6)
+
+a narrowing reference conversion followed by an unboxing conversion
+
+an unboxing conversion (§5.1.8)
+
+an unboxing conversion followed by a widening primitive conversion
+
+If the expression has the null type, then the expression may be cast to any reference type.
+
+If a casting context makes use of a narrowing reference conversion that is checked or partially unchecked (§5.1.6.2, §5.1.6.3), then a run time check will be performed on the class of the expression's value, possibly causing a ClassCastException. Otherwise, no run time check is performed.
 
 Value set conversion (§5.1.13) is applied after the type conversion.
 
-The compile-time legality of a casting conversion is as follows:
+The following tables enumerate which conversions are used in certain casting contexts. Each conversion is signified by a symbol:
 
-An expression of a primitive type may undergo casting conversion to another primitive type, by an identity conversion (if the types are the same), or by a widening primitive conversion, or by a narrowing primitive conversion, or by a widening and narrowing primitive conversion.
-
-An expression of a primitive type may undergo casting conversion to a reference type without error, by boxing conversion.
-
-An expression of a reference type may undergo casting conversion to a primitive type without error, by unboxing conversion.
-
-An expression of a reference type may undergo casting conversion to another reference type if no compile-time error occurs given the rules in §5.5.1.
-
-The following tables enumerate which conversions are used in certain casting conversions. Each conversion is signified by a symbol:
-
-- signifies no casting conversion allowed
+- signifies no conversion allowed
 
 ≈ signifies identity conversion (§5.1.1)
 
@@ -960,9 +1068,9 @@ The following tables enumerate which conversions are used in certain casting con
 
 ⊗ signifies unboxing conversion (§5.1.8)
 
-In the tables, a comma between symbols indicates that a casting conversion uses one conversion followed by another. The type Object means any reference type other than the eight wrapper classes Boolean, Byte, Short, Character, Integer, Long, Float, Double.
+In the tables, a comma between symbols indicates that a casting context uses one conversion followed by another. The type Object means any reference type other than the eight wrapper classes Boolean, Byte, Short, Character, Integer, Long, Float, Double.
 
-Table 5.5-A. Casting conversions to primitive types
+Table 5.5-A. Casting to primitive types
 
 To →	byte	short	char	int	long	float	double	boolean
 From ↓	 	 	 	 	 	 	 	 
@@ -986,7 +1094,7 @@ Object	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗	⇓,⊗
 
 
 
-Table 5.5-B. Casting conversions to reference types
+Table 5.5-B. Casting to reference types
 
 To →	Byte	Short	Character	Integer	Long	Float	Double	Boolean	Object
 From ↓	 	 	 	 	 	 	 	 	 
@@ -1009,71 +1117,8 @@ Boolean	-	-	-	-	-	-	-	≈	⇑
 Object	⇓	⇓	⇓	⇓	⇓	⇓	⇓	⇓	≈
 
 
-5.5.1. Reference Type Casting
 
-Given a compile-time reference type S (source) and a compile-time reference type T (target), a casting conversion exists from S to T if no compile-time errors occur due to the following rules.
-
-If S is a class type:
-
-If T is a class type, then either |S| <: |T|, or |T| <: |S|. Otherwise, a compile-time error occurs.
-
-Furthermore, if there exists a supertype X of T, and a supertype Y of S, such that both X and Y are provably distinct parameterized types (§4.5), and that the erasures of X and Y are the same, a compile-time error occurs.
-
-If T is an interface type:
-
-If S is not a final class (§8.1.1), then, if there exists a supertype X of T, and a supertype Y of S, such that both X and Y are provably distinct parameterized types, and that the erasures of X and Y are the same, a compile-time error occurs.
-
-Otherwise, the cast is always legal at compile time (because even if S does not implement T, a subclass of S might).
-
-If S is a final class (§8.1.1), then S must implement T, or a compile-time error occurs.
-
-If T is a type variable, then this algorithm is applied recursively, using the upper bound of T in place of T.
-
-If T is an array type, then S must be the class Object, or a compile-time error occurs.
-
-If T is an intersection type, T1 & ... & Tn, then it is a compile-time error if there exists a Ti (1 ≤ i ≤ n) such that S cannot be cast to Ti by this algorithm. That is, the success of the cast is determined by the most restrictive component of the intersection type.
-
-If S is an interface type:
-
-If T is an array type, then S must be the type java.io.Serializable or Cloneable (the only interfaces implemented by arrays), or a compile-time error occurs.
-
-If T is a class or interface type that is not final (§8.1.1), then if there exists a supertype X of T, and a supertype Y of S, such that both X and Y are provably distinct parameterized types, and that the erasures of X and Y are the same, a compile-time error occurs.
-
-Otherwise, the cast is always legal at compile time (because even if T does not implement S, a subclass of T might).
-
-If T is a class type that is final, then:
-
-If S is not a parameterized type or a raw type, then T must implement S, or a compile-time error occurs.
-
-Otherwise, S is either a parameterized type that is an invocation of some generic type declaration G, or a raw type corresponding to a generic type declaration G. Then there must exist a supertype X of T, such that X is an invocation of G, or a compile-time error occurs.
-
-Furthermore, if S and X are provably distinct parameterized types then a compile-time error occurs.
-
-If T is a type variable, then this algorithm is applied recursively, using the upper bound of T in place of T.
-
-If T is an intersection type, T1 & ... & Tn, then it is a compile-time error if there exists a Ti (1 ≤ i ≤ n) such that S cannot be cast to Ti by this algorithm.
-
-If S is a type variable, then this algorithm is applied recursively, using the upper bound of S in place of S.
-
-If S is an intersection type A1 & ... & An, then it is a compile-time error if there exists an Ai (1 ≤ i ≤ n) such that Ai cannot be cast to T by this algorithm. That is, the success of the cast is determined by the most restrictive component of the intersection type.
-
-If S is an array type SC[], that is, an array of components of type SC:
-
-If T is a class type, then if T is not Object, then a compile-time error occurs (because Object is the only class type to which arrays can be assigned).
-
-If T is an interface type, then a compile-time error occurs unless T is the type java.io.Serializable or the type Cloneable (the only interfaces implemented by arrays).
-
-If T is a type variable, then this algorithm is applied recursively, using the upper bound of T in place of T.
-
-If T is an array type TC[], that is, an array of components of type TC, then a compile-time error occurs unless one of the following is true:
-
-TC and SC are the same primitive type.
-
-TC and SC are reference types and type SC can undergo casting conversion to TC.
-
-If T is an intersection type, T1 & ... & Tn, then it is a compile-time error if there exists a Ti (1 ≤ i ≤ n) such that S cannot be cast to Ti by this algorithm.
-
-Example 5.5.1-1. Casting Conversion for Reference Types
+Example 5.5-1. Casting for Reference Types
 
 class Point { int x, y; }
 interface Colorable { void setColor(int color); }
@@ -1111,7 +1156,7 @@ The second compile-time error occurs because a variable of type EndPoint can nev
 
 
 
-Example 5.5.1-2. Casting Conversion for Array Types
+Example 5.5-2. Casting for Array Types
 
 class Point {
     int x, y;
@@ -1150,89 +1195,8 @@ cpa: { (2,2)@12, (4,5)@24, null, null }
 
 
 
-5.5.2. Checked Casts and Unchecked Casts
 
-A cast from a type S to a type T is statically known to be correct if and only if S <: T (§4.10).
-
-A cast from a type S to a parameterized type (§4.5) T is unchecked unless at least one of the following is true:
-
-S <: T
-
-All of the type arguments (§4.5.1) of T are unbounded wildcards
-
-T <: S and S has no subtype X other than T where the type arguments of X are not contained in the type arguments of T.
-
-A cast from a type S to a type variable T is unchecked unless S <: T.
-
-A cast from a type S to an intersection type T1 & ... & Tn is unchecked if there exists a Ti (1 ≤ i ≤ n) such that a cast from S to Ti is unchecked.
-
-An unchecked cast from S to a non-intersection type T is completely unchecked if the cast from |S| to |T| is statically known to be correct. Otherwise, it is partially unchecked.
-
-An unchecked cast from S to an intersection type T1 & ... & Tn is completely unchecked if, for all i (1 ≤ i ≤ n), a cast from S to Ti is either statically known to be correct or completely unchecked. Otherwise, it is partially unchecked.
-
-An unchecked cast causes a compile-time unchecked warning, unless suppressed by the SuppressWarnings annotation (§9.6.4.5).
-
-A cast is checked if it is not statically known to be correct and it is not unchecked.
-
-If a cast to a reference type is not a compile-time error, there are several cases:
-
-The cast is statically known to be correct.
-
-No run-time action is performed for such a cast.
-
-The cast is a completely unchecked cast.
-
-No run-time action is performed for such a cast.
-
-The cast is a partially unchecked or checked cast to an intersection type.
-
-Where the intersection type is T1 & ... & Tn, then for all i (1 ≤ i ≤ n), any run-time check required for a cast from S to Ti is also required for the cast to the intersection type.
-
-The cast is a partially unchecked cast to a non-intersection type.
-
-Such a cast requires a run-time validity check. The check is performed as if the cast had been a checked cast between |S| and |T|, as described below.
-
-The cast is a checked cast to a non-intersection type.
-
-Such a cast requires a run-time validity check. If the value at run time is null, then the cast is allowed. Otherwise, let R be the class of the object referred to by the run-time reference value, and let T be the erasure (§4.6) of the type named in the cast operator. A cast conversion must check, at run time, that the class R is assignment compatible with the type T, via the algorithm in §5.5.3.
-
-Note that R cannot be an interface when these rules are first applied for any given cast, but R may be an interface if the rules are applied recursively because the run-time reference value may refer to an array whose element type is an interface type.
-
-5.5.3. Checked Casts at Run Time
-
-Here is the algorithm to check whether the run-time type R of an object is assignment compatible with the type T which is the erasure (§4.6) of the type named in the cast operator. If a run-time exception is thrown, it is a ClassCastException.
-
-If R is an ordinary class (not an array class):
-
-If T is a class type, then R must be either the same class (§4.3.4) as T or a subclass of T, or a run-time exception is thrown.
-
-If T is an interface type, then R must implement (§8.1.5) interface T, or a run-time exception is thrown.
-
-If T is an array type, then a run-time exception is thrown.
-
-If R is an interface:
-
-If T is a class type, then T must be Object (§4.3.2), or a run-time exception is thrown.
-
-If T is an interface type, then R must be either the same interface as T or a subinterface of T, or a run-time exception is thrown.
-
-If T is an array type, then a run-time exception is thrown.
-
-If R is a class representing an array type RC[], that is, an array of components of type RC:
-
-If T is a class type, then T must be Object (§4.3.2), or a run-time exception is thrown.
-
-If T is an interface type, then a run-time exception is thrown unless T is the type java.io.Serializable or the type Cloneable (the only interfaces implemented by arrays).
-
-This case could slip past the compile-time checking if, for example, a reference to an array were stored in a variable of type Object.
-
-If T is an array type TC[], that is, an array of components of type TC, then a run-time exception is thrown unless one of the following is true:
-
-TC and RC are the same primitive type.
-
-TC and RC are reference types and type RC can be cast to TC by a recursive application of these run-time rules for casting.
-
-Example 5.5.3-1. Incompatible Types at Run Time
+Example 5.5-3. Casting Incompatible Types at Run Time
 
 class Point { int x, y; }
 interface Colorable { void setColor(int color); }
@@ -1272,7 +1236,13 @@ an identity conversion (§5.1.1)
 
 a widening primitive conversion (§5.1.2)
 
-an unboxing conversion (§5.1.8) optionally followed by a widening primitive conversion
+a widening reference conversion (§5.1.5) followed by an unboxing conversion
+
+a widening reference conversion followed by an unboxing conversion, then followed by a widening primitive conversion
+
+an unboxing conversion (§5.1.8)
+
+an unboxing conversion followed by a widening primitive conversion
 
 A numeric promotion is a process by which, given an arithmetic operator and its argument expressions, the arguments are converted to an inferred target type T. T is chosen during promotion such that each argument expression can be converted to T and the arithmetic operation is defined for values of type T.
 

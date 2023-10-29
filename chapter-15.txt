@@ -209,9 +209,9 @@ If the type of an expression is a reference type, then the class of the referenc
 
 Method invocation (§15.12). The particular method used for an invocation o.m(...) is chosen based on the methods that are part of the class or interface that is the type of o. For instance methods, the class of the object referenced by the run-time value of o participates because a subclass may override a specific method already declared in a parent class so that this overriding method is invoked. (The overriding method may or may not choose to further invoke the original overridden m method.)
 
-The instanceof operator (§15.20.2). An expression whose type is a reference type may be tested using instanceof to find out whether the class of the object referenced by the run-time value of the expression is assignment compatible (§5.2) with some other reference type.
+The instanceof operator (§15.20.2). An expression whose type is a reference type may be tested using instanceof to find out whether the class of the object referenced by the run-time value of the expression may be converted to some other reference type.
 
-Casting (§5.5, §15.16). The class of the object referenced by the run-time value of the operand expression might not be compatible with the type specified by the cast. For reference types, this may require a run-time check that throws an exception if the class of the referenced object, as determined at run time, is not assignment compatible (§5.2) with the target type.
+Casting (§15.16). The class of the object referenced by the run-time value of the operand expression might not be compatible with the type specified by the cast operator. For reference types, this may require a run-time check that throws an exception if the class of the referenced object, as determined at run time, cannot be converted to the target type.
 
 Assignment to an array component of reference type (§10.5, §15.13, §15.26.1). The type-checking rules allow the array type S[] to be treated as a subtype of T[] if S is a subtype of T, but this requires a run-time check for assignment to an array component, similar to the check performed for a cast.
 
@@ -538,7 +538,7 @@ MethodReference
 
 This part of the grammar of the Java programming language is unusual, in two ways. First, one might expect simple names, such as names of local variables and method parameters, to be primary expressions. For technical reasons, names are grouped together with primary expressions a little later when postfix expressions are introduced (§15.14).
 
-The technical reasons have to do with allowing left-to-right parsing of Java programs with only one-token lookahead. Consider the expressions (z[3]) and (z[]). The first is a parenthesized array access (§15.10.3) and the second is the start of a cast (§15.16). At the point that the look-ahead symbol is [, a left-to-right parse will have reduced the z to the nonterminal Name. In the context of a cast we prefer not to have to reduce the name to a Primary, but if Name were one of the alternatives for Primary, then we could not tell whether to do the reduction (that is, we could not determine whether the current situation would turn out to be a parenthesized array access or a cast) without looking ahead two tokens, to the token following the [. The grammar presented here avoids the problem by keeping Name and Primary separate and allowing either in certain other syntax rules (those for ClassInstanceCreationExpression, MethodInvocation, ArrayAccess, and PostfixExpression, but not for FieldAccess because this uses an identifier directly). This strategy effectively defers the question of whether a Name should be treated as a Primary until more context can be examined.
+The technical reasons have to do with allowing left-to-right parsing of Java programs with only one-token lookahead. Consider the expressions (z[3]) and (z[]). The first is a parenthesized array access (§15.10.3) and the second is the start of a cast (§15.16). At the point that the look-ahead symbol is [, a left-to-right parse will have reduced the z to the nonterminal Name. In the context of a cast we prefer not to have to reduce the name to a Primary, but if Name were one of the alternatives for Primary, then we could not tell whether to do the reduction (that is, we could not determine whether the current situation would turn out to be a parenthesized array access or a cast) without looking ahead two tokens, to the token following the [. The grammar presented here avoids the problem by keeping Name and Primary separate and allowing either in certain other syntax rules (those for ClassInstanceCreationExpression, MethodInvocation, ArrayAccess, and PostfixExpression, though not FieldAccess because it uses an identifier directly). This strategy effectively defers the question of whether a Name should be treated as a Primary until more context can be examined.
 
 The second unusual feature avoids a potential grammatical ambiguity in the expression "new int[3][3]" which in Java always means a single creation of a multidimensional array, but which, without appropriate grammatical finesse, might also be interpreted as meaning the same as "(new int[3])[3]".
 
@@ -588,15 +588,13 @@ NumericType {[ ]} . class
 boolean {[ ]} . class
 void . class
 
+The TypeName must denote a class or interface type that is accessible (§6.6). It is a compile-time error if the TypeName denotes a class or interface type that is not accessible, or denotes a type variable.
+
 The type of C.class, where C is the name of a class, interface, or array type (§4.3), is Class<C>.
 
 The type of p.class, where p is the name of a primitive type (§4.2), is Class<B>, where B is the type of an expression of type p after boxing conversion (§5.1.7).
 
 The type of void.class (§8.4.5) is Class<Void>.
-
-It is a compile-time error if the named type is a type variable (§4.4) or a parameterized type (§4.5) or an array whose element type is a type variable or parameterized type.
-
-It is a compile-time error if the named type does not denote a type that is accessible (§6.6) and in scope (§6.3) at the point where the class literal appears.
 
 A class literal evaluates to the Class object for the named type (or for void) as defined by the defining class loader (§12.2) of the class of the current instance.
 
@@ -679,6 +677,8 @@ If a parenthesized expression appears in a context of a particular kind with tar
 
 If the contained expression is a poly expression (§15.2), the parenthesized expression is also a poly expression. Otherwise, it is a standalone expression.
 
+A poly parenthesized expression is compatible with a target type T if its contained expression is compatible with T.
+
 15.9. Class Instance Creation Expressions
 
 A class instance creation expression is used to create new objects that are instances of classes.
@@ -732,53 +732,39 @@ We say that a class is instantiated when an instance of the class is created by 
 
 15.9.1. Determining the Class being Instantiated
 
+If ClassOrInterfaceTypeToInstantiate ends with TypeArguments (rather than <>), then ClassOrInterfaceTypeToInstantiate must denote a well-formed parameterized type (§4.5), or a compile-time error occurs.
+
+If ClassOrInterfaceTypeToInstantiate ends with <>, but the type denoted by the Identifier in ClassOrInterfaceTypeToInstantiate is not generic, then a compile-time error occurs.
+
 If the class instance creation expression ends in a class body, then the class being instantiated is an anonymous class. Then:
 
-If the class instance creation expression is unqualified:
+If the class instance creation expression is unqualified, then:
 
-The ClassOrInterfaceTypeToInstantiate must denote a class that is accessible, non-final, and not an enum type; or denote an interface that is accessible. Otherwise a compile-time error occurs.
+The Identifier in ClassOrInterfaceTypeToInstantiate must denote either a class that is accessible, non-final, and not an enum type, or an interface that is accessible (§6.6). Otherwise a compile-time error occurs.
 
-If ClassOrInterfaceTypeToInstantiate ends with <>, then a compile-time error occurs.
+If the Identifier in ClassOrInterfaceTypeToInstantiate denotes a class, C, then an anonymous direct subclass of C is declared. If TypeArguments is present, then C has type arguments given by TypeArguments; if <> is present, then C will have its type arguments inferred in §15.9.3; otherwise, C has no type arguments. The body of the subclass is the ClassBody given in the class instance creation expression. The class being instantiated is the anonymous subclass.
 
-If ClassOrInterfaceTypeToInstantiate ends with TypeArguments, then ClassOrInterfaceTypeToInstantiate must denote a well-formed parameterized type (§4.5), or a compile-time error occurs.
+If the Identifier in ClassOrInterfaceTypeToInstantiate denotes an interface, I, then an anonymous direct subclass of Object that implements I is declared. If TypeArguments is present, then I has type arguments given by TypeArguments; if <> is present, then I will have its type arguments inferred in §15.9.3; otherwise, I has no type arguments. The body of the subclass is the ClassBody given in the class instance creation expression. The class being instantiated is the anonymous subclass.
 
-Let T be the type denoted by ClassOrInterfaceTypeToInstantiate. If T denotes a class, then an anonymous direct subclass of T is declared. If T denotes an interface, then an anonymous direct subclass of Object that implements T is declared. In either case, the body of the subclass is the ClassBody given in the class instance creation expression.
+If the class instance creation expression is qualified, then:
 
-The class being instantiated is the anonymous subclass.
+The Identifier in ClassOrInterfaceTypeToInstantiate must unambiguously denote an inner class that is accessible, non-final, not an enum type, and a member of the compile-time type of the Primary expression or the ExpressionName. Otherwise, a compile-time error occurs.
 
-If the class instance creation expression is qualified:
-
-The ClassOrInterfaceTypeToInstantiate must unambiguously denote an inner class that is accessible, non-final, not an enum type, and a member of the compile-time type of the Primary expression or the ExpressionName. Otherwise, a compile-time error occurs.
-
-If ClassOrInterfaceTypeToInstantiate ends with <>, then a compile-time error occurs.
-
-If ClassOrInterfaceTypeToInstantiate ends with TypeArguments, then ClassOrInterfaceTypeToInstantiate must denote a well-formed parameterized type, or a compile-time error occurs.
-
-Let T be the type denoted by ClassOrInterfaceTypeToInstantiate. An anonymous direct subclass of T is declared. The body of the subclass is the ClassBody given in the class instance creation expression.
-
-The class being instantiated is the anonymous subclass.
+Let the Identifier in ClassOrInterfaceTypeToInstantiate denote a class, C. An anonymous direct subclass of C is declared. If TypeArguments is present, then C has type arguments given by TypeArguments; if <> is present, then C will have its type arguments inferred in §15.9.3; otherwise, C has no type arguments. The body of the subclass is the ClassBody given in the class instance creation expression. The class being instantiated is the anonymous subclass.
 
 If a class instance creation expression does not declare an anonymous class, then:
 
-If the class instance creation expression is unqualified:
+If the class instance creation expression is unqualified, then:
 
-The ClassOrInterfaceTypeToInstantiate must denote a class that is accessible, non-abstract, and not an enum type. Otherwise, a compile-time error occurs.
+The Identifier in ClassOrInterfaceTypeToInstantiate must denote a class that is accessible, non-abstract, and not an enum type. Otherwise, a compile-time error occurs.
 
-If ClassOrInterfaceTypeToInstantiate ends with <>, but the class denoted by ClassOrInterfaceTypeToInstantiate is not generic, then a compile-time error occurs.
+The class being instantiated is specified by the Identifier in ClassOrInterfaceTypeToInstantiate. If TypeArguments is present, then the class has type arguments given by TypeArguments; if <> is present, then the class will have its type arguments inferred in §15.9.3; otherwise, the class has no type arguments.
 
-If ClassOrInterfaceTypeToInstantiate ends with TypeArguments, then ClassOrInterfaceTypeToInstantiate must denote a well-formed parameterized class, or a compile-time error occurs.
-
-The class being instantiated is the class denoted by ClassOrInterfaceTypeToInstantiate.
-
-If the class instance creation expression is qualified:
+If the class instance creation expression is qualified, then:
 
 The ClassOrInterfaceTypeToInstantiate must unambiguously denote an inner class that is accessible, non-abstract, not an enum type, and a member of the compile-time type of the Primary expression or the ExpressionName.
 
-If ClassOrInterfaceTypeToInstantiate ends with <>, and the class denoted by ClassOrInterfaceTypeToInstantiate is not generic, then a compile-time error occurs.
-
-If ClassOrInterfaceTypeToInstantiate ends with TypeArguments, then ClassOrInterfaceTypeToInstantiate must denote a well-formed parameterized class, or a compile-time error occurs.
-
-The class being instantiated is the class denoted by ClassOrInterfaceTypeToInstantiate.
+The class being instantiated is specified by the Identifier in ClassOrInterfaceTypeToInstantiate. If TypeArguments is present, then the class has type arguments given by TypeArguments; if <> is present, then the class will have its type arguments inferred in §15.9.3; otherwise, the class has no type arguments.
 
 15.9.2. Determining Enclosing Instances
 
@@ -822,7 +808,7 @@ If S occurs in a static context, then i has no immediately enclosing instance wi
 
 Otherwise, if the class instance creation expression occurs in a static context, then a compile-time error occurs.
 
-Otherwise, let O be the immediately enclosing class of S. Let n be an integer such that O is the n'th lexically enclosing type declaration of the class in which the class instance creation expression appears.
+Otherwise, let O be the immediately enclosing type declaration of S. Let n be an integer such that O is the n'th lexically enclosing type declaration of the class in which the class instance creation expression appears.
 
 The immediately enclosing instance of i with respect to S is the n'th lexically enclosing instance of this.
 
@@ -842,7 +828,7 @@ If the class instance creation expression is qualified, then the immediately enc
 
 15.9.3. Choosing the Constructor and its Arguments
 
-Let C be the class being instantiated. To create an instance of C, i, a constructor of C is chosen at compile time by the following rules:
+Let C be the class being instantiated. To create an instance of C, i, a constructor of C is chosen at compile time by the following rules.
 
 First, the actual arguments to the constructor invocation are determined:
 
@@ -858,53 +844,95 @@ If C is a non-private inner member class, then the first argument to the constru
 
 Otherwise, the arguments to the constructor are the arguments in the argument list of the class instance creation expression, if any, in the order they appear in the expression.
 
-Second, a constructor of C and corresponding return type and throws clause are determined:
+Second, a constructor of C and corresponding throws clause and return type are determined:
 
-If the class instance creation expression uses <> to elide class type arguments, a list of methods m1...mn is defined for the purpose of overload resolution and type argument inference.
+If the class instance creation expression does not use <>, then:
 
-Let c1...cn be the constructors of class C. Let #m be an automatically generated name that is distinct from all constructor and method names in C. For all j (1 ≤ j ≤ n), mj is defined in terms of cj as follows:
+If C is not an anonymous class, then:
+
+Let T be the type denoted by C followed by any class type arguments in the expression. The process specified in §15.12.2, modified to handle constructors, is used to choose one of the constructors of T and determine its throws clause.
+
+If there is no unique most-specific constructor in T that is both applicable and accessible (§6.6), then a compile-time error occurs (as in method invocations).
+
+Otherwise, the return type corresponding to the chosen constructor is T.
+
+If C is an anonymous class, then:
+
+The process specified in §15.12.2, modified to handle constructors, is used to choose one of the constructors of the direct superclass of C and determine its throws clause.
+
+If there is no unique most-specific constructor in the direct superclass of C that is both applicable and accessible, then a compile-time error occurs (as in method invocations).
+
+Otherwise, C's anonymous constructor is chosen as the constructor of C (§15.9.5.1). Its body consists of an explicit constructor invocation of the constructor chosen in the direct superclass of C.
+
+The throws clause of the chosen constructor includes the exceptions in the throws clause of the constructor chosen in the direct superclass of C.
+
+The return type corresponding to the chosen constructor is the anonymous class type.
+
+If the class instance creation expression uses <>, then:
+
+If C is not an anonymous class, let D be the same as C. If C is an anonymous class, let D be the superclass or superinterface of C named by the class instance creation expression.
+
+If D is a class, let c1...cn be the constructors of class D. If D is an interface, let c1...cn be a singleton list (n = 1) containing the zero-argument constructor of class Object.
+
+A list of methods m1...mn is defined for the purpose of overload resolution and type argument inference. For all j (1 ≤ j ≤ n), mj is defined in terms of cj as follows:
 
 A substitution θj is first defined to instantiate the types in cj.
 
-Let F1...Fp be the type parameters of C, and let G1...Gq be the type parameters (if any) of cj. Let X1...Xp and Y1...Yq be type variables with distinct names that are not in scope in the body of C.
+Let F1...Fp be the type parameters of D, and let G1...Gq be the type parameters (if any) of cj. Let X1...Xp and Y1...Yq be type variables with distinct names that are not in scope in the body of D.
 
 θj is [F1:=X1, ..., Fp:=Xp, G1:=Y1, ..., Gq:=Yq].
 
-The modifiers of mj are those of cj.
+The type parameters of mj are X1...Xp,Y1...Yq. The bound of each type parameter, if any, is θj applied to the corresponding type parameter bound in D or cj.
 
-The type parameters of mj are X1...Xp,Y1...Yq. The bound of each parameter, if any, is θj applied to the corresponding parameter bound in C or cj.
-
-The return type of mj is θj applied to C<F1,...,Fp>.
-
-The name of mj is #m.
+The return type of mj is θj applied to D<F1,...,Fp>.
 
 The (possibly empty) list of argument types of mj is θj applied to the argument types of cj.
 
 The (possibly empty) list of thrown types of mj is θj applied to the thrown types of cj.
 
+The modifiers of mj are those of cj.
+
+The name of mj is #m, an automatically generated name that is distinct from all constructor and method names in D and is shared by m1...mn.
+
 The body of mj is irrelevant.
 
-To choose a constructor, we temporarily consider m1...mn to be members of C. Then one of m1...mn is selected, as determined by the class instance creation's argument expressions, using the process specified in §15.12.2.
+To choose a constructor, we temporarily consider m1...mn to be members of D. One of m1...mn is chosen, as determined by the class instance creation expression's argument expressions, using the process specified in §15.12.2.
 
 If there is no unique most specific method that is both applicable and accessible, then a compile-time error occurs.
 
-Otherwise, where mj is the selected method, cj is the chosen constructor. The return type and throws clause of cj are the same as the return type and throws clause determined for mj (§15.12.2.6).
+Otherwise, where mj is the chosen method:
 
-Otherwise, the class instance creation expression does not use <> to elide class type arguments.
+If C is not an anonymous class, then cj is chosen as the constructor of C.
 
-Let T be the type denoted by C followed by any class type arguments in the expression. The process specified in §15.12.2, modified to handle constructors, is used to select one of the constructors of T and determine its throws clause.
+The throws clause of the chosen constructor is the same as the throws clause determined for mj.
 
-If there is no unique most-specific constructor that is both applicable and accessible, then a compile-time error occurs (as in method invocations).
+The return type corresponding to the chosen constructor is the return type determined for mj (§15.12.2.6).
 
-Otherwise, the return type is T.
+If C is an anonymous class, then C's anonymous constructor is chosen as the constructor of C. Its body consists of an explicit constructor invocation of cj.
+
+The throws clause of the chosen constructor includes the exceptions in the throws clause determined for mj.
+
+The return type corresponding to the chosen constructor is the anonymous class type.
+
+If the class instance creation expression is a poly expression, then its compatibility with a target type is as determined by §18.5.2.1, using mj as the selected method m.
+
+Testing for compatibility with a target type may occur multiple times before making a final determination of the class instance creation expression's target type and the return type corresponding to the chosen constructor. For example, an enclosing method invocation expression may require testing the class instance creation expression for compatibility with different methods' formal parameter types.
+
+If C is an anonymous class, then its superclass or superinterface (§15.9.5) is the return type determined for mj (§15.12.2.6).
+
+It is a compile-time error if the superclass or superinterface, or any subexpression therein ("subexpression" includes type arguments of parameterized types, bounds of wildcard type arguments, and element types of array types, but excludes bounds of type variables), has one of the following forms:
+
+A type variable that was not declared as a type parameter (such as a type variable produced by capture conversion).
+
+An intersection type.
+
+A class or interface type, where the class or interface declaration is not accessible from the class or interface in which the class instance creation expression appears.
 
 It is a compile-time error if an argument to a class instance creation expression is not compatible with its target type, as derived from the invocation type (§15.12.2.6).
 
 If the compile-time declaration is applicable by variable arity invocation (§15.12.2.4), then where the last formal parameter type of the invocation type of the constructor is Fn[], it is a compile-time error if the type which is the erasure of Fn is not accessible at the point of invocation.
 
-The type of the class instance creation expression is the return type of the chosen constructor, as defined above.
-
-Note that the type of the class instance creation expression may be an anonymous class type, in which case the constructor being invoked is an anonymous constructor (§15.9.5.1).
+The type of the class instance creation expression is the return type corresponding to the chosen constructor, as defined above.
 
 15.9.4. Run-Time Evaluation of Class Instance Creation Expressions
 
@@ -967,9 +995,17 @@ An anonymous class declaration is automatically derived from a class instance cr
 
 An anonymous class is never abstract (§8.1.1.1).
 
-An anonymous class is always implicitly final (§8.1.1.2).
+An anonymous class is never final (§8.1.1.2).
+
+The fact that an anonymous class is not final is relevant in casting, in particular the narrowing reference conversion allowed for the cast operator (§5.5). It is also of interest in subclassing, in that it is impossible to declare a subclass of an anonymous class, despite an anonymous class being non-final, because an anonymous class cannot be named by an extends clause (§8.1.4).
 
 An anonymous class is always an inner class (§8.1.3); it is never static (§8.1.1, §8.5.1).
+
+The superclass or superinterface of an anonymous class is given by the class instance creation expression (§15.9.1), with type arguments inferred as necessary while choosing a constructor (§15.9.3).
+
+If the class instance creation expression uses <> with an anonymous class, then for all non-private methods declared in the anonymous class body, it is as if the method declaration is annotated with @Override (§9.6.4.4).
+
+When <> is used, the inferred type arguments may not be as anticipated by the programmer. Consequently, the supertype of the anonymous class may not be as anticipated, and methods declared in the anonymous class may not override supertype methods as intended. Treating such methods as if annotated with @Override (if they are not explicitly annotated with @Override) helps avoid silently incorrect programs.
 
 15.9.5.1. Anonymous Constructors
 
@@ -977,19 +1013,19 @@ An anonymous class cannot have an explicitly declared constructor. Instead, an a
 
 If S is not an inner class, or if S is a local class that occurs in a static context, then the anonymous constructor has one formal parameter for each actual argument to the class instance creation expression in which C is declared.
 
-The actual arguments to the class instance creation expression are used to determine a constructor cs of S, using the same rules as for method invocations (§15.12). The type of each formal parameter of the anonymous constructor must be identical to the corresponding formal parameter of cs.
+The actual arguments to the class instance creation expression are used to determine a constructor cs of S, as specified by §15.9.3. The type of each formal parameter of the anonymous constructor must be identical to the corresponding formal parameter of cs.
 
-The constructor body consists of an explicit constructor invocation (§8.8.7.1) of the form super(...), where the actual arguments are the formal parameters of the constructor, in the order they were declared.
+The constructor body consists of an explicit constructor invocation (§8.8.7.1) of the form super(...), where the actual arguments are the formal parameters of the constructor, in the order they were declared. The superclass constructor to be invoked is cs.
 
 Otherwise, the first formal parameter of the constructor of C represents the value of the immediately enclosing instance of i with respect to S (§15.9.2, §15.9.3). The type of this parameter is the class type that immediately encloses the declaration of S.
 
 The constructor has an additional formal parameter for each actual argument to the class instance creation expression that declared the anonymous class. The n'th formal parameter e corresponds to the n-1'th actual argument.
 
-The actual arguments to the class instance creation expression are used to determine a constructor cs of S, using the same rules as for method invocations (§15.12). The type of each formal parameter of the anonymous constructor must be identical to the corresponding formal parameter of cs.
+The actual arguments to the class instance creation expression are used to determine a constructor cs of S, as specified by §15.9.3. The type of each formal parameter of the anonymous constructor must be identical to the corresponding formal parameter of cs.
 
-The constructor body consists of an explicit constructor invocation (§8.8.7.1) of the form o.super(...), where o is the first formal parameter of the constructor, and the actual arguments are the subsequent formal parameters of the constructor, in the order they were declared.
+The constructor body consists of an explicit constructor invocation (§8.8.7.1) of the form o.super(...), where o is the first formal parameter of the constructor, and the actual arguments are the subsequent formal parameters of the constructor, in the order they were declared. The superclass constructor to be invoked is cs
 
-In all cases, the throws clause of an anonymous constructor must list all the checked exceptions thrown by the explicit superclass constructor invocation statement contained within the anonymous constructor, and all checked exceptions thrown by any instance initializers or instance variable initializers of the anonymous class.
+In all cases, the throws clause of an anonymous constructor must list all the checked exceptions thrown by the explicit superclass constructor invocation statement contained within the anonymous constructor, as specified in §15.9.3, and all checked exceptions thrown by any instance initializers or instance variable initializers of the anonymous class.
 
 Note that it is possible for the signature of the anonymous constructor to refer to an inaccessible type (for example, if such a type occurred in the signature of the superclass constructor cs). This does not, in itself, cause any errors at either compile-time or run-time.
 
@@ -1348,7 +1384,7 @@ If the identifier does not name an accessible member field in type T, then the f
 
 Otherwise, the identifier names a single accessible member field in type T, and the type of the field access expression is the type of the member field after capture conversion (§5.1.10).
 
-At run time, the result of the field access expression is computed as follows: (assuming that the program is correct with respect to definite assignment analysis, i.e. every blank final variable is definitely assigned before access)
+At run time, the result of the field access expression is computed as follows: (assuming that the program is correct with respect to definite assignment analysis, that is, every blank final variable is definitely assigned before access)
 
 If the field is static:
 
@@ -1356,7 +1392,7 @@ The Primary expression is evaluated, and the result is discarded. If evaluation 
 
 If the field is a non-blank final field, then the result is the value of the specified class variable in the class or interface that is the type of the Primary expression.
 
-If the field is not final, or is a blank final and the field access occurs in a static initializer or class variable initializer, then the result is a variable, namely, the specified class variable in the class that is the type of the Primary expression.
+If the field is not final, or is a blank final and the field access occurs in a class variable initializer (§8.3.2) or static initializer (§8.7), then the result is a variable, namely, the specified class variable in the class that is the type of the Primary expression.
 
 If the field is not static:
 
@@ -1366,7 +1402,7 @@ If the value of the Primary is null, then a NullPointerException is thrown.
 
 If the field is a non-blank final, then the result is the value of the named member field in type T found in the object referenced by the value of the Primary.
 
-If the field is not final, or is a blank final and the field access occurs in a constructor or instance variable initializer, then the result is a variable, namely the named member field in type T found in the object referenced by the value of the Primary.
+If the field is not final, or is a blank final and the field access occurs in an instance variable initializer (§8.3.2), instance initializer (§8.6), or constructor (§8.8), then the result is a variable, namely the named member field in type T found in the object referenced by the value of the Primary.
 
 Note that only the type of the Primary expression, not the class of the actual object referred to at run time, is used in determining which field to use.
 
@@ -1557,13 +1593,13 @@ For the class or interface to search, there are six cases to consider, depending
 
 If the form is MethodName, that is, just an Identifier, then:
 
-If the Identifier appears in the scope of a visible method declaration with that name (§6.3, §6.4.1), then:
+If the Identifier appears in the scope of a method declaration with that name (§6.3, §6.4.1), then:
 
 If there is an enclosing type declaration of which that method is a member, let T be the innermost such type declaration. The class or interface to search is T.
 
 This search policy is called the "comb rule". It effectively looks for methods in a nested class's superclass hierarchy before looking for methods in an enclosing class and its superclass hierarchy. See §6.5.7.1 for an example.
 
-Otherwise, the visible method declaration may be in scope due to one or more single-static-import or static-import-on-demand declarations. There is no class or interface to search, as the method to be invoked is determined later (§15.12.2.1).
+Otherwise, the method declaration may be in scope due to one or more single-static-import or static-import-on-demand declarations. There is no class or interface to search, as the method to be invoked is determined later (§15.12.2.1).
 
 If the form is TypeName . [TypeArguments] Identifier, then the type to search is the type denoted by TypeName.
 
@@ -1644,39 +1680,33 @@ The second step searches the type determined in the previous step for member met
 
 There may be more than one such method, in which case the most specific one is chosen. The descriptor (signature plus return type) of the most specific method is the one used at run time to perform the method dispatch.
 
-A method is applicable if it is applicable by one of strict invocation (§15.12.2.2), loose invocation (§15.12.2.3), or variable arity invocation (§15.12.2.4).
+Certain argument expressions that contain implicitly typed lambda expressions (§15.27.1) or inexact method references (§15.13.1) are ignored by the applicability tests, because their meaning cannot be determined until the invocation's target type is selected. On the other hand, it is only argument expressions - not the invocation's target type - that influence the applicability tests, even if the method invocation expression is a poly expression.
 
-Certain argument expressions that contain implicitly typed lambda expressions (§15.27.1) or inexact method references (§15.13.1) are ignored by the applicability tests, because their meaning cannot be determined until a target type is selected.
+The process of determining applicability begins by determining the potentially applicable methods (§15.12.2.1). Then, to ensure compatibility with the Java programming language prior to Java SE 5.0, the process continues in three phases:
 
-Although the method invocation may be a poly expression, only its argument expressions - not the invocation's target type - influence the selection of applicable methods.
-
-The process of determining applicability begins by determining the potentially applicable methods (§15.12.2.1).
-
-The remainder of the process is split into three phases, to ensure compatibility with versions of the Java programming language prior to Java SE 5.0. The phases are:
-
-The first phase (§15.12.2.2) performs overload resolution without permitting boxing or unboxing conversion, or the use of variable arity method invocation. If no applicable method is found during this phase then processing continues to the second phase.
+The first phase performs overload resolution without permitting boxing or unboxing conversion, or the use of variable arity method invocation. If no applicable method is found during this phase then processing continues to the second phase.
 
 This guarantees that any calls that were valid in the Java programming language before Java SE 5.0 are not considered ambiguous as the result of the introduction of variable arity methods, implicit boxing and/or unboxing. However, the declaration of a variable arity method (§8.4.1) can change the method chosen for a given method method invocation expression, because a variable arity method is treated as a fixed arity method in the first phase. For example, declaring m(Object...) in a class which already declares m(Object) causes m(Object) to no longer be chosen for some invocation expressions (such as m(null)), as m(Object[]) is more specific.
 
-The second phase (§15.12.2.3) performs overload resolution while allowing boxing and unboxing, but still precludes the use of variable arity method invocation. If no applicable method is found during this phase then processing continues to the third phase.
+The second phase performs overload resolution while allowing boxing and unboxing, but still precludes the use of variable arity method invocation. If no applicable method is found during this phase then processing continues to the third phase.
 
 This ensures that a method is never chosen through variable arity method invocation if it is applicable through fixed arity method invocation.
 
-The third phase (§15.12.2.4) allows overloading to be combined with variable arity methods, boxing, and unboxing.
+The third phase allows overloading to be combined with variable arity methods, boxing, and unboxing.
 
-Deciding whether a method is applicable will, in the case of generic methods (§8.4.4), require an analysis of the type arguments. Type arguments may be passed explicitly or implicitly. If they are passed implicitly, bounds of the type arguments must be inferred (§18 (Type Inference)) from the argument expressions.
+A method is applicable if it is applicable by one of strict invocation (the first phase, §15.12.2.2), loose invocation (the second phase, §15.12.2.3), or variable arity invocation (the third phase, §15.12.2.4). Deciding whether a method is applicable will, in the case of generic methods (§8.4.4), require an analysis of the type arguments. Type arguments may be passed explicitly or implicitly; if they are passed implicitly, then bounds of the type arguments must be inferred from the argument expressions (§18 (Type Inference)).
 
 If several applicable methods have been identified during one of the three phases of applicability testing, then the most specific one is chosen, as specified in section §15.12.2.5.
 
 To check for applicability, the types of an invocation's arguments cannot, in general, be inputs to the analysis. This is because:
 
-The arguments to a method invocation may be poly expressions
+The arguments to a method invocation may be poly expressions.
 
-Poly expressions cannot be typed in the absence of a target type
+Poly expressions cannot be typed in the absence of a target type.
 
-Overload resolution has to be completed before the arguments' target types will be known
+Overload resolution has to be completed before the arguments' target types will be known.
 
-Instead, the input to the applicability check is a list of argument expressions, which can be checked for compatibility with potential target types, even if the ultimate types of the expressions are unknown.
+Instead, the input to the applicability check is a list of the arguments themselves. The arguments can be checked for compatibility with potential target types, even if the ultimate types of the arguments are unknown.
 
 Note that overload resolution is independent of a target type. This is for two reasons:
 
@@ -1899,7 +1929,7 @@ The name of the member is identical to the name of the method in the method invo
 
 The member is accessible (§6.6) to the class or interface in which the method invocation appears.
 
-Whether a member method is accessible at a method invocation depends on the access modifier (public, protected, no modifier (package access), or private) in the member's declaration and on where the method invocation appears.
+Whether a member method is accessible at a method invocation depends on the access modifier (public, protected, no modifier (package access), or private) in the member's declaration, and on the inheritance of the member by the class or interface determined by compile-time step 1, and on where the method invocation appears.
 
 If the member is a fixed arity method with arity n, the arity of the method invocation is equal to n, and for all i (1 ≤ i ≤ n), the i'th argument of the method invocation is potentially compatible, as defined below, with the type of the i'th parameter of the method.
 
@@ -1921,17 +1951,17 @@ If the search does not yield at least one method that is potentially applicable,
 
 An expression is potentially compatible with a target type according to the following rules:
 
-A lambda expression (§15.27) is potentially compatible with a functional interface type (§9.8) if all of the following are true:
+A lambda expression (§15.27) is potentially compatible with a functional interface type T (§9.8) if all of the following are true:
 
-The arity of the target type's function type is the same as the arity of the lambda expression.
+The arity of the function type of T (§9.9) is the same as the arity of the lambda expression.
 
-If the target type's function type has a void return, then the lambda body is either a statement expression (§14.8) or a void-compatible block (§15.27.2).
+If the function type of T has a void return, then the lambda body is either a statement expression (§14.8) or a void-compatible block (§15.27.2).
 
-If the target type's function type has a (non-void) return type, then the lambda body is either an expression or a value-compatible block (§15.27.2).
+If the function type of T has a (non-void) return type, then the lambda body is either an expression or a value-compatible block (§15.27.2).
 
-A method reference expression (§15.13) is potentially compatible with a functional interface type if, where the type's function type arity is n, there exists at least one potentially applicable method for the method reference expression with arity n (§15.13.1), and one of the following is true:
+A method reference expression (§15.13) is potentially compatible with a functional interface type T if, where the arity of the function type of T is n, there exists at least one potentially applicable method when the method reference expression targets the function type with arity n (§15.13.1), and one of the following is true:
 
-The method reference expression has the form ReferenceType :: [TypeArguments] Identifier and at least one potentially applicable method is i) static and supports arity n, or ii) not static and supports arity n-1.
+The method reference expression has the form ReferenceType :: [TypeArguments] Identifier and at least one potentially applicable method is either i) static and supports arity n, or ii) not static and supports arity n-1.
 
 The method reference expression has some other form and at least one potentially applicable method is not static.
 
@@ -1969,11 +1999,11 @@ If m is a generic method and the method invocation does not provide explicit typ
 
 If m is a generic method and the method invocation provides explicit type arguments, then let R1 ... Rp (p ≥ 1) be the type parameters of m, let Bl be the declared bound of Rl (1 ≤ l ≤ p), and let U1, ..., Up be the explicit type arguments given in the method invocation. Then m is applicable by strict invocation if both of the following are true:
 
-For 1 ≤ i ≤ n, if ei is pertinent to applicability then ei is compatible in a strict invocation context with Fi[R1:=U1, ..., Rp:=Up].
+For 1 ≤ i ≤ n, if ei is pertinent to applicability then ei is compatible in a strict invocation context with Fi[R1:=U1, ..., Rp:=Up] (§5.3).
 
 For 1 ≤ l ≤ p, Ul <: Bl[R1:=U1, ..., Rp:=Up].
 
-If m is not a generic method, then m is applicable by strict invocation if, for 1 ≤ i ≤ n, either ei is compatible in a strict invocation context with Fi or ei is not pertinent to applicability.
+If m is not a generic method, then m is applicable by strict invocation if, for 1 ≤ i ≤ n, either ei is compatible in a strict invocation context with Fi (§5.3) or ei is not pertinent to applicability.
 
 If no method applicable by strict invocation is found, the search for applicable methods continues with phase 2 (§15.12.2.3).
 
@@ -1989,11 +2019,11 @@ If m is a generic method and the method invocation does not provide explicit typ
 
 If m is a generic method and the method invocation provides explicit type arguments, then let R1 ... Rp (p ≥ 1) be the type parameters of m, let Bl be the declared bound of Rl (1 ≤ l ≤ p), and let U1 ... Up be the explicit type arguments given in the method invocation. Then m is applicable by loose invocation if both of the following are true:
 
-For 1 ≤ i ≤ n, if ei is pertinent to applicability (§15.12.2.2) then ei is compatible in a loose invocation context with Fi[R1:=U1, ..., Rp:=Up].
+For 1 ≤ i ≤ n, if ei is pertinent to applicability (§15.12.2.2) then ei is compatible in a loose invocation context with Fi[R1:=U1, ..., Rp:=Up] (§5.3).
 
 For 1 ≤ l ≤ p, Ul <: Bl[R1:=U1, ..., Rp:=Up].
 
-If m is not a generic method, then m is applicable by loose invocation if, for 1 ≤ i ≤ n, either ei is compatible in a loose invocation context with Fi or ei is not pertinent to applicability.
+If m is not a generic method, then m is applicable by loose invocation if, for 1 ≤ i ≤ n, either ei is compatible in a loose invocation context with Fi (§5.3) or ei is not pertinent to applicability.
 
 If no method applicable by loose invocation is found, the search for applicable methods continues with phase 3 (§15.12.2.4).
 
@@ -2013,11 +2043,11 @@ If m is a generic method and the method invocation does not provide explicit typ
 
 If m is a generic method and the method invocation provides explicit type arguments, then let R1 ... Rp (p ≥ 1) be the type parameters of m, let Bl be the declared bound of Rl (1 ≤ l ≤ p), and let U1 ... Up be the explicit type arguments given in the method invocation. Then m is applicable by variable arity invocation if:
 
-For 1 ≤ i ≤ k, if ei is pertinent to applicability (§15.12.2.2) then ei is compatible in a loose invocation context with Ti[R1:=U1, ..., Rp:=Up].
+For 1 ≤ i ≤ k, if ei is pertinent to applicability (§15.12.2.2) then ei is compatible in a loose invocation context with Ti[R1:=U1, ..., Rp:=Up] (§5.3).
 
 For 1 ≤ l ≤ p, Ul <: Bl[R1:=U1, ..., Rp:=Up].
 
-If m is not a generic method, then m is applicable by variable arity invocation if, for 1 ≤ i ≤ k, either ei is compatible in a loose invocation context with Ti or ei is not pertinent to applicability.
+If m is not a generic method, then m is applicable by variable arity invocation if, for 1 ≤ i ≤ k, either ei is compatible in a loose invocation context with Ti (§5.3) or ei is not pertinent to applicability.
 
 If no method applicable by variable arity invocation is found, then a compile-time error occurs.
 
@@ -2041,59 +2071,97 @@ The above conditions are the only circumstances under which one method may be mo
 
 A type S is more specific than a type T for any expression if S <: T (§4.10).
 
-A functional interface type S is more specific than a functional interface type T for an expression e if T is not a subtype of S and one of the following is true (where U1 ... Uk and R1 are the parameter types and return type of the function type of the capture of S, and V1 ... Vk and R2 are the parameter types and return type of the function type of T):
+A functional interface type S is more specific than a functional interface type T for an expression e if all of the following are true:
 
-If e is an explicitly typed lambda expression (§15.27.1), then one of the following is true:
+The interface of S is neither a superinterface nor a subinterface of the interface of T.
 
-R2 is void.
+If S or T is an intersection type, it is not the case that any interface of S is a superinterface or a subinterface of any interface of T. (The "interfaces of" an intersection type refers here to the set of interfaces that appear as (possibly parameterized) interface types in the intersection.)
 
-R1 <: R2.
+Let MTS be the function type of the capture of S, and let MTT be the function type of T. MTS and MTT must have the same type parameters (if any) (§8.4.4).
 
-R1 and R2 are functional interface types, and there is at least one result expression, and R1 is more specific than R2 for each result expression of e.
+Let P1, ..., Pn be the formal parameter types of MTS, adapted to the type parameters of MTT. Let P1', ..., Pn' be the formal parameter types of the function type of S (without capture), adapted to the type parameters of MTT. Let Q1, ..., Qn be the formal parameter types of MTT. Then, for all i (1 ≤ i ≤ n), Qi <: Pi and Qi = Pi'.
 
-(The result expression of a lambda expression with a block body is defined in §15.27.2; the result expression of a lambda expression with an expression body is simply the body itself.)
+Generally, this rule asserts that the formal parameter types derived from S and T are the same. But in the case in which S is a wildcard-parameterized type, the check is more complex in order to allow capture variables to occur in formal parameter types: first, each formal parameter type of T must be a subtype of the corresponding formal parameter type of the capture of S; second, after mapping the wildcards to their bounds (§9.9), the formal parameter types of the resulting function types are the same.
 
-R1 is a primitive type, and R2 is a reference type, and there is at least one result expression, and each result expression of e is a standalone expression (§15.2) of a primitive type.
+Let RS be the return type of MTS, adapted to the type parameters of MTT, and let RT be the return type of MTT. One of the following must be true:
 
-R1 is a reference type, and R2 is a primitive type, and there is at least one result expression, and each result expression of e is either a standalone expression of a reference type or a poly expression.
+e is an explicitly typed lambda expression (§15.27.1), and one of the following is true:
 
-If e is an exact method reference expression (§15.13.1), then i) for all i (1 ≤ i ≤ k), Ui is the same as Vi, and ii) one of the following is true:
+RT is void.
 
-R2 is void.
+RS <: RT.
 
-R1 <: R2.
+RS and RT are functional interface types, and there is at least one result expression, and RS is more specific than RT for each result expression of e.
 
-R1 is a primitive type, R2 is a reference type, and the compile-time declaration for the method reference has a return type which is a primitive type.
+The result expression of a lambda expression with a block body is defined in §15.27.2; the result expression of a lambda expression with an expression body is simply the body itself.
 
-R1 is a reference type, R2 is a primitive type, and the compile-time declaration for the method reference has a return type which is a reference type.
+RS is a primitive type, and RT is a reference type, and there is at least one result expression, and each result expression of e is a standalone expression (§15.2) of a primitive type.
 
-If e is a parenthesized expression, then one of these conditions applies recursively to the contained expression.
+RS is a reference type, and RT is a primitive type, and there is at least one result expression, and each result expression of e is either a standalone expression of a reference type or a poly expression.
 
-If e is a conditional expression, then for each of the second and third operands, one of these conditions applies recursively.
+e is an exact method reference expression (§15.13.1), and one of the following is true:
+
+RT is void.
+
+RS <: RT.
+
+RS is a primitive type, RT is a reference type, and the compile-time declaration for the method reference has a return type which is a primitive type.
+
+RS is a reference type, RT is a primitive type, and the compile-time declaration for the method reference has a return type which is a reference type.
+
+e is a parenthesized expression, and one of these conditions applies recursively to the contained expression.
+
+e is a conditional expression, and, for each of the second and third operands, one of these conditions applies recursively.
 
 A method m1 is strictly more specific than another method m2 if and only if m1 is more specific than m2 and m2 is not more specific than m1.
 
-A method is said to be maximally specific for a method invocation if it is accessible and applicable and there is no other method that is applicable and accessible that is strictly more specific.
+A method is said to be maximally specific for a method invocation if it is accessible and applicable and there is no other method that is accessible and applicable that is strictly more specific.
 
 If there is exactly one maximally specific method, then that method is in fact the most specific method; it is necessarily more specific than any other accessible method that is applicable. It is then subjected to some further compile-time checks as specified in §15.12.3.
 
 It is possible that no method is the most specific, because there are two or more methods that are maximally specific. In this case:
 
-If all the maximally specific methods have override-equivalent signatures (§8.4.2), then:
+If all the maximally specific methods have override-equivalent signatures (§8.4.2), and exactly one of the maximally specific methods is concrete (that is, neither abstract nor default), then it is the most specific method.
 
-If exactly one of the maximally specific methods is concrete (that is, non-abstract or default), it is the most specific method.
+Otherwise, if all the maximally specific methods have override-equivalent signatures, and all the maximally specific methods are abstract or default, and the declarations of these methods have the same erased parameter types, and at least one maximally specific method is preferred according to the rules below, then the most specific method is chosen arbitrarily among the subset of the maximally specific methods that are preferred. The most specific method is then considered to be abstract.
 
-Otherwise, if all the maximally specific methods are abstract or default, and the signatures of all of the maximally specific methods have the same erasure (§4.6), then the most specific method is chosen arbitrarily among the subset of the maximally specific methods that have the most specific return type.
+A maximally specific method is preferred if it has:
 
-In this case, the most specific method is considered to be abstract. Also, the most specific method is considered to throw a checked exception if and only if that exception or its erasure is declared in the throws clauses of each of the maximally specific methods.
+a signature that is a subsignature of every maximally specific method's signature; and
+
+a return type R (possibly void), where either R is the same as every maximally specific method's return type, or R is a reference type and is a subtype of every maximally specific method's return type (after adapting for any type parameters (§8.4.4) if the two methods have the same signature).
+
+If no preferred method exists according to the above rules, then a maximally specific method is preferred if it:
+
+has a signature that is a subsignature of every maximally specific method's signature; and
+
+is return-type-substitutable (§8.4.5) for every maximally specific method.
+
+The thrown exception types of the most specific method are derived from the throws clauses of the maximally specific methods, as follows:
+
+If the most specific method is generic, the throws clauses are first adapted to the type parameters of the most specific method (§8.4.4).
+
+If the most specific method is not generic but at least one maximally specific method is generic, the throws clauses are first erased.
+
+Then, the thrown exception types include every type E which satisfies the following constraints:
+
+E is mentioned in one of the throws clauses.
+
+For each throws clause, E is a subtype of some type named in that clause.
+
+These rules for deriving a single method type from a group of overloaded methods are also used to identify the function type of a functional interface (§9.9).
 
 Otherwise, the method invocation is ambiguous, and a compile-time error occurs.
 
 15.12.2.6. Method Invocation Type
 
-The invocation type of a most specific accessible and applicable method is a method type (§8.2) expressing the target types of the invocation arguments, the result (return type or void) of the invocation, and the exception types of the invocation. It is determined as follows:
+The invocation type of a most specific accessible and applicable method is a method type (§8.2) which expresses the target types of the invocation arguments, the result (return type or void) of the invocation, and the exception types of the invocation. It is determined as follows:
 
 If the chosen method is generic and the method invocation does not provide explicit type arguments, the invocation type is inferred as specified in §18.5.2.
+
+In this case, if the method invocation expression is a poly expression, then its compatibility with a target type is as determined by §18.5.2.1.
+
+Testing for compatibility with a target type may occur multiple times before making a final determination of the method invocation expression's target type and invocation type. For example, an enclosing method invocation expression may require testing the deeper method invocation expression for compatibility with different methods' formal parameter types.
 
 If the chosen method is generic and the method invocation provides explicit type arguments, let Pi be the type parameters of the method and let Ti be the explicit type arguments provided for the method invocation (1 ≤ i ≤ p). Then:
 
@@ -2115,7 +2183,7 @@ If there is a most specific method declaration for a method invocation, it is ca
 
 It is a compile-time error if an argument to a method invocation is not compatible with its target type, as derived from the invocation type of the compile-time declaration.
 
-If the compile-time declaration is applicable by variable arity invocation, then where the last formal parameter type of the invocation type of the method is Fn[], it is a compile-time error if the type which is the erasure of Fn is not accessible at the point of invocation.
+If the compile-time declaration is applicable by variable arity invocation, then where the last formal parameter type of the invocation type of the method is Fn[], it is a compile-time error if the type which is the erasure of Fn is not accessible (§6.6) at the point of invocation.
 
 If the compile-time declaration is void, then the method invocation must be a top level expression (that is, the Expression in an expression statement or in the ForInit or ForUpdate part of a for statement), or a compile-time error occurs. Such a method invocation produces no value and so must be used only in a situation where a value is not needed.
 
@@ -2147,35 +2215,37 @@ If TypeName denotes a class C, then if the method invocation is not directly enc
 
 If TypeName denotes an interface, let T be the type declaration immediately enclosing the method invocation. A compile-time error occurs if there exists a method, distinct from the compile-time declaration, that overrides (§9.4.1) the compile-time declaration from a direct superclass or direct superinterface of T.
 
-In the case that a superinterface overrides a method declared in a grandparent interface, this rule prevents the child interface from "skipping" the override by simply adding the grandparent to its list of direct superinterfaces. The appropriate way to access functionality of a grandparent is through the direct superinterface, and only if that interface chooses to expose the desired behavior. (Alternately, the developer is free to define his own additional superinterface that exposes the desired behavior with a super method invocation.)
+In the case that a superinterface overrides a method declared in a grandparent interface, this rule prevents the child interface from "skipping" the override by simply adding the grandparent to its list of direct superinterfaces. The appropriate way to access functionality of a grandparent is through the direct superinterface, and only if that interface chooses to expose the desired behavior. (Alternately, the programmer is free to define an additional superinterface that exposes the desired behavior with a super method invocation.)
 
 The compile-time parameter types and compile-time result are determined as follows:
 
-If the compile-time declaration for the method invocation is not a signature polymorphic method, then the compile-time parameter types are the types of the formal parameters of the compile-time declaration, and the compile-time result is the result chosen for the compile-time declaration (§15.12.2.6).
+If the compile-time declaration for the method invocation is not a signature polymorphic method, then:
+
+The compile-time parameter types are the types of the formal parameters of the compile-time declaration.
+
+The compile-time result is the result of the invocation type of the compile-time declaration (§15.12.2.6).
 
 If the compile-time declaration for the method invocation is a signature polymorphic method, then:
 
-The compile-time parameter types are the static types of the actual argument expressions. An argument expression which is the null literal null (§3.10.7) is treated as having the static type Void.
+The compile-time parameter types are the types of the actual argument expressions. An argument expression which is the null literal null (§3.10.7) is treated as having the type Void.
 
 The compile-time result is determined as follows:
 
-If the method invocation expression is an expression statement, the compile-time result is void.
+If the signature polymorphic method is either void or has a return type other than Object, the compile-time result is the result of the invocation type of the compile-time declaration (§15.12.2.6).
+
+Otherwise, if the method invocation expression is an expression statement, the compile-time result is void.
 
 Otherwise, if the method invocation expression is the operand of a cast expression (§15.16), the compile-time result is the erasure of the type of the cast expression (§4.6).
 
-Otherwise, the compile-time result is the signature polymorphic method's declared return type, Object.
+Otherwise, the compile-time result is the signature polymorphic method's return type, Object.
 
 A method is signature polymorphic if all of the following are true:
 
-It is declared in the java.lang.invoke.MethodHandle class.
+It is declared in the java.lang.invoke.MethodHandle class or the java.lang.invoke.VarHandle class.
 
-It takes a single variable arity parameter (§8.4.1) whose declared type is Object[].
-
-It has a return type of Object.
+It has a single variable arity parameter (§8.4.1) whose declared type is Object[].
 
 It is native.
-
-In Java SE 8, the only signature polymorphic methods are the invoke and invokeExact methods of the class java.lang.invoke.MethodHandle.
 
 The following compile-time information is then associated with the method invocation for use at run time:
 
@@ -2185,11 +2255,9 @@ The qualifying type of the method invocation (§13.1).
 
 The number of parameters and the compile-time parameter types, in order.
 
-The compile-time result, or void.
+The compile-time result.
 
 The invocation mode, computed as follows:
-
-If the qualifying type of the method declaration is a class, then:
 
 If the compile-time declaration has the static modifier, then the invocation mode is static.
 
@@ -2197,9 +2265,9 @@ Otherwise, if the compile-time declaration has the private modifier, then the in
 
 Otherwise, if the part of the method invocation before the left parenthesis is of the form super . Identifier or of the form TypeName . super . Identifier, then the invocation mode is super.
 
-Otherwise, the invocation mode is virtual.
+Otherwise, if the qualifying type of the method invocation is an interface, then the invocation mode is interface.
 
-If the qualifying type of the method invocation is an interface, then the invocation mode is interface.
+Otherwise, the invocation mode is virtual.
 
 If the result of the invocation type of the compile-time declaration is not void, then the type of the method invocation expression is obtained by applying capture conversion (§5.1.10) to the return type of the invocation type of the compile-time declaration.
 
@@ -2294,7 +2362,7 @@ If the method being invoked is a variable arity method m, it necessarily has n >
 
 If m is being invoked with k ≠ n actual argument expressions, or, if m is being invoked with k = n actual argument expressions and the type of the k'th argument expression is not assignment compatible with T[], then the argument list (e1, ..., en-1, en, ..., ek) is evaluated as if it were written as (e1, ..., en-1, new |T[]| { en, ..., ek }), where |T[]| denotes the erasure (§4.6) of T[].
 
-The preceding paragraph is crafted to handle the interaction of parameterized types and array types that occurs in a Java Virtual Machine with erased generics. Namely, if the element type T of the variable array parameter is non-reifiable, e.g. List<String>, then special care must be taken with the array creation expression (§15.10) because the created array's element type must be reifiable. By erasing the array type of the final expression in the argument list, we are guaranteed to obtain a reifiable element type. Then, since the array creation expression appears in an invocation context (§5.3), an unchecked conversion is possible from the array type with reifiable element type to an array type with non-reifiable element type, specifically that of the variable arity parameter. A Java compiler is required to give a compile-time unchecked warning at this conversion. Oracle's reference implementation of a Java compiler identifies the unchecked warning here as a more informative unchecked generic array creation.
+The preceding paragraph is crafted to handle the interaction of parameterized types and array types that occurs in a Java Virtual Machine with erased generics. Namely, if the element type T of the variable array parameter is non-reifiable, e.g. List<String>, then special care must be taken with the array creation expression (§15.10) because the created array's element type must be reifiable. By erasing the array type of the final expression in the argument list, we are guaranteed to obtain a reifiable element type. Then, since the array creation expression appears in an invocation context (§5.3), an unchecked conversion is possible from the array type with reifiable element type to an array type with non-reifiable element type, specifically that of the variable arity parameter. A Java compiler is required to give a compile-time unchecked warning at this conversion. Oracle's reference implementation of a Java compiler identifies this unchecked warning as a more informative unchecked generic array creation.
 
 The argument expressions (possibly rewritten as described above) are now evaluated to yield argument values. Each argument value corresponds to exactly one of the method's n formal parameters.
 
@@ -2302,33 +2370,39 @@ The argument expressions, if any, are evaluated in order, from left to right. If
 
 15.12.4.3. Check Accessibility of Type and Method
 
-Let C be the class containing the method invocation, and let T be the qualifying type of the method invocation (§13.1), and let m be the name of the method as determined at compile time (§15.12.3).
+In this section:
 
-An implementation of the Java programming language must ensure, as part of linkage, that the method m still exists in the type T. If this is not true, then a NoSuchMethodError (which is a subclass of IncompatibleClassChangeError) occurs.
+Let D be the class containing the method invocation.
 
-If the invocation mode is interface, then the implementation must also check that the target reference type still implements the specified interface. If the target reference type does not still implement the interface, then an IncompatibleClassChangeError occurs.
+Let T be the qualifying type of the method invocation (§13.1).
 
-The implementation must also ensure, during linkage, that the type T and the method m are accessible:
+Let m be the name of the method as determined at compile time (§15.12.3).
 
-For the type T:
+An implementation of the Java programming language must ensure, as part of linkage, that the type T is accessible:
 
-If T is in the same package as C, then T is accessible.
+If T is in the same package as D, then T is accessible.
 
-If T is in a different package than C, and T is public, then T is accessible.
+If T is in a different package than D, and their packages are in the same module, and T is public or protected, then T is accessible.
 
-If T is in a different package than C, and T is protected, then T is accessible if and only if C is a subclass of T.
+If T is in a different package than D, and their packages are in different modules, and T's module exports T's package to D's module, and T is public or protected, then T is accessible.
 
-For the method m:
+If T is protected, it is necessarily a nested type, so at compile time, its accessibility is affected by the accessibility of types enclosing its declaration. However, during linkage, its accessibility is not affected by the accessibility of types enclosing its declaration. Moreover, during linkage, a protected T is as accessible as a public T. These discrepancies between access control at compile time (§6.6) and access control at run time are due to limitations in the Java Virtual Machine.
 
-If m is public, then m is accessible. (All members of interfaces are public (§9.2).)
+The implementation must also ensure, during linkage, that the method m can still be found in T or a supertype of T. If m cannot be found, then a NoSuchMethodError (which is a subclass of IncompatibleClassChangeError) occurs. If m can be found, then let C be the type that declares m. The implementation must ensure, during linkage, that the declaration of m in C is accessible to D:
 
-If m is protected, then m is accessible if and only if either T is in the same package as C, or C is T or a subclass of T.
+If m is public, then m is accessible.
 
-If m has package access, then m is accessible if and only if T is in the same package as C.
+If m is protected, then m is accessible iff (i) either D is in the same package as C, or D is a subtype of C or C itself; and (ii) if m is a protected instance method, then T must be a subtype of D or D itself.
 
-If m is private, then m is accessible if and only if C is T, or C encloses T, or T encloses C, or T and C are both enclosed by a third class.
+This is the only place where T is involved in checks for m, because a protected instance method may only be invoked via a qualifying type that aligns with the invoker's type.
+
+If m has package access, then m is accessible iff D is in the same package as C.
+
+If m is private, then m is accessible iff D is C, or D encloses C, or C encloses D, or C and D are both enclosed by a third type.
 
 If either T or m is not accessible, then an IllegalAccessError occurs (§12.3).
+
+If the invocation mode is interface, then the implementation must check that the target reference type still implements the specified interface. If the target reference type does not still implement the interface, then an IncompatibleClassChangeError occurs.
 
 15.12.4.4. Locate Method to Invoke
 
@@ -2340,7 +2414,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is nonvirtual, overriding is not allowed. Method m of class T is the one to be invoked.
 
-Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle. The method handle encapsulates a type which is matched against the information associated with the method invocation at compile time (§15.12.3). Details of this matching are given in The Java Virtual Machine Specification, Java SE 8 Edition and the Java SE platform API. If matching succeeds, the target method encapsulated by the method handle is directly and immediately invoked, and the procedure in §15.12.4.5 is not executed.
+Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 9 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface, virtual, or super, and overriding may occur. A dynamic method lookup is used. The dynamic lookup process starts from a class S, determined as follows:
 
@@ -2376,7 +2450,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the selected method is not public, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 8 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 9 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 
@@ -2520,7 +2594,7 @@ c.id(new Object());  // fails with a ClassCastException
 
 The erasure of the actual method being invoked, D.id(), differs in its signature from that of the compile-time method declaration, C.id(). The former takes an argument of type String while the latter takes an argument of type Object. The invocation fails with a ClassCastException before the body of the method is executed.
 
-Such situations can only arise if the program gives rise to a compile-time unchecked warning (§4.8, §5.1.9, §5.5.2, §8.4.1, §8.4.8.3, §8.4.8.4, §9.4.1.2, §15.12.4.2).
+Such situations can only arise if the program gives rise to a compile-time unchecked warning (§4.8, §5.1.6, §5.1.9, §8.4.1, §8.4.8.3, §15.13.2, §15.12.4.2, §15.27.3).
 
 Implementations can enforce these semantics by creating bridge methods. In the above example, the following bridge method would be created in class D:
 
@@ -2537,8 +2611,8 @@ A method reference expression is used to refer to the invocation of a method wit
 
 MethodReference:
 ExpressionName :: [TypeArguments] Identifier
-ReferenceType :: [TypeArguments] Identifier
 Primary :: [TypeArguments] Identifier
+ReferenceType :: [TypeArguments] Identifier
 super :: [TypeArguments] Identifier
 TypeName . super :: [TypeArguments] Identifier
 ClassType :: [TypeArguments] new
@@ -2562,7 +2636,7 @@ If a method reference expression has the form super :: [TypeArguments] Identifie
 
 If a method reference expression has the form ClassType :: [TypeArguments] new, then:
 
-ClassType must denote a class that is accessible, non-abstract, and not an enum type, or a compile-time error occurs.
+ClassType must denote a class that is accessible (§6.6), non-abstract, and not an enum type, or a compile-time error occurs.
 
 If ClassType denotes a parameterized type (§4.5), then it is a compile-time error if any of its type arguments are wildcards.
 
@@ -2572,7 +2646,7 @@ If a method reference expression has the form ArrayType :: new, then ArrayType m
 
 The target reference of an instance method (§15.12.4.1) may be provided by the method reference expression using an ExpressionName, a Primary, or super, or it may be provided later when the method is invoked. The immediately enclosing instance of a new inner class instance (§15.9.2) is provided by a lexically enclosing instance of this (§8.1.3).
 
-When more than one member method of a type has the same name, or when a class has more than one constructor, the appropriate method or constructor is selected based on the functional interface type targeted by the expression, as specified in §15.13.1.
+When more than one member method of a type has the same name, or when a class has more than one constructor, the appropriate method or constructor is selected based on the functional interface type targeted by the method reference expression, as specified in §15.13.1.
 
 If a method or constructor is generic, the appropriate type arguments may either be inferred or provided explicitly. Similarly, the type arguments of a generic type mentioned by the method reference expression may be provided explicitly or inferred.
 
@@ -2580,7 +2654,7 @@ Method reference expressions are always poly expressions (§15.2).
 
 It is a compile-time error if a method reference expression occurs in a program in someplace other than an assignment context (§5.2), an invocation context (§5.3), or a casting context (§5.5).
 
-Evaluation of a method reference expression produces an instance of a functional interface type (§9.8). Method reference evaluation does not cause the execution of the corresponding method; instead, this may occur at a later time when an appropriate method of the functional interface is invoked.
+Evaluation of a method reference expression produces an instance of a functional interface type (§9.8). This does not cause the execution of the corresponding method; instead, the execution may occur at a later time when an appropriate method of the functional interface is invoked.
 
 Here are some method reference expressions, first with no target reference and then with a target reference:
 
@@ -2623,7 +2697,7 @@ The use of type argument syntax in the class name before a delimiter (List<Strin
 
 15.13.1. Compile-Time Declaration of a Method Reference
 
-The compile-time declaration of a method reference is the method to which the expression refers. In special cases, the compile-time declaration does not actually exist, but is a notional method that represents a class instance creation or an array creation. The choice of compile-time declaration depends on a function type targeted by the expression, just as the compile-time declaration of a method invocation depends on the invocation's arguments (§15.12).
+The compile-time declaration of a method reference expression is the method to which the expression refers. In special cases, the compile-time declaration does not actually exist, but is a notional method that represents a class instance creation or an array creation. The choice of compile-time declaration depends on a function type targeted by the expression, just as the compile-time declaration of a method invocation depends on the invocation's arguments (§15.12.3).
 
 The search for a compile-time declaration mirrors the process for method invocations in §15.12.1 and §15.12.2, as follows:
 
@@ -2641,33 +2715,37 @@ For the two other forms (involving :: new), the referenced method is notional an
 
 Second, given a targeted function type with n parameters, a set of potentially applicable methods is identified:
 
-If the method reference expression has the form ReferenceType :: [TypeArguments] Identifier, the potentially applicable methods are the member methods of the type to search that have an appropriate name (given by Identifier), accessibility, arity (n or n-1), and type argument arity (derived from [TypeArguments]), as specified in §15.12.2.1.
+If the method reference expression has the form ReferenceType :: [TypeArguments] Identifier, then the potentially applicable methods are:
+
+the member methods of the type to search that would be potentially applicable (§15.12.2.1) for a method invocation which names Identifier, has arity n, has type arguments TypeArguments, and appears in the same class as the method reference expression; plus
+
+the member methods of the type to search that would be potentially applicable for a method invocation which names Identifier, has arity n-1, has type arguments TypeArguments, and appears in the same class as the method reference expression.
 
 Two different arities, n and n-1, are considered, to account for the possibility that this form refers to either a static method or an instance method.
 
-If the method reference expression has the form ClassType :: [TypeArguments] new, the potentially applicable methods are a set of notional methods corresponding to the constructors of ClassType.
+If the method reference expression has the form ClassType :: [TypeArguments] new, then the potentially applicable methods are a set of notional methods corresponding to the constructors of ClassType.
 
-If ClassType is a raw type, but is not a non-static member type of a raw type, the candidate notional member methods are those specified in §15.9.3 for a class instance creation expression that uses <> to elide the type arguments to a class.
+If ClassType is a raw type, but is not a non-static member type of a raw type, the candidate notional member methods are those specified in §15.9.3 for a class instance creation expression that uses <> to elide the type arguments to a class. Otherwise, the candidate notional member methods are the constructors of ClassType, treated as if they were methods with return type ClassType.
 
-Otherwise, the candidate notional member methods are the constructors of ClassType, treated as if they were methods with return type ClassType. Among these candidates, the methods with appropriate accessibility, arity (n), and type argument arity (derived from [TypeArguments]) are selected, as specified in §15.12.2.1.
+Among these candidates, the potentially applicable methods are the notional methods that would be potentially applicable for a method invocation which has arity n, has type arguments TypeArguments, and appears in the same class as the method reference expression.
 
 If the method reference expression has the form ArrayType :: new, a single notional method is considered. The method has a single parameter of type int, returns the ArrayType, and has no throws clause. If n = 1, this is the only potentially applicable method; otherwise, there are no potentially applicable methods.
 
-For all other forms, the potentially applicable methods are the member methods of the type to search that have an appropriate name (given by Identifier), accessibility, arity (n), and type argument arity (derived from [TypeArguments]), as specified in §15.12.2.1.
+For all other forms, the potentially applicable methods are the member methods of the type to search that would be potentially applicable for a method invocation which names Identifier, has arity n, has type argument TypeArguments, and appears in the same class as the method reference expression.
 
 Finally, if there are no potentially applicable methods, then there is no compile-time declaration.
 
 Otherwise, given a targeted function type with parameter types P1, ..., Pn and a set of potentially applicable methods, the compile-time declaration is selected as follows:
 
-If the method reference expression has the form ReferenceType :: [TypeArguments] Identifier, then two searches for a most specific applicable method are performed. Each search is as specified in §15.12.2.2 through §15.12.2.5, with the clarifications below. Each search may produce a method or, in the case of an error as specified in §15.12.2.2 through §15.12.2.5, no result.
+If the method reference expression has the form ReferenceType :: [TypeArguments] Identifier, then two searches for a most specific applicable method are performed. Each search is as specified in §15.12.2.2 through §15.12.2.5, with the clarifications below. Each search produces a set of applicable methods and, possibly, designates a most specific method of the set. In the case of an error as specified in §15.12.2.4, the set of applicable methods is empty. In the case of an error as specified in §15.12.2.5, there is no most specific method.
 
-In the first search, the method reference is treated as if it were an invocation with argument expressions of types P1, ..., Pn; the type arguments, if any, are given by the method reference expression.
+In the first search, the method reference is treated as if it were an invocation with argument expressions of types P1, ..., Pn. Type arguments, if any, are given by the method reference expression.
 
-In the second search, if P1, ..., Pn is not empty and P1 is a subtype of ReferenceType, then the method reference expression is treated as if it were a method invocation expression with argument expressions of types P2, ..., Pn. If ReferenceType is a raw type, and there exists a parameterization of this type, G<...>, that is a supertype of P1, the type to search is the result of capture conversion (§5.1.10) applied to G<...>; otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference expression.
+In the second search, if P1, ..., Pn is not empty and P1 is a subtype of ReferenceType, then the method reference expression is treated as if it were a method invocation expression with argument expressions of types P2, ..., Pn. If ReferenceType is a raw type, and there exists a parameterization of this type, G<...>, that is a supertype of P1, the type to search is the result of capture conversion (§5.1.10) applied to G<...>; otherwise, the type to search is the same as the type of the first search. Type arguments, if any, are given by the method reference expression.
 
-If the first search produces a static method, and no non-static method is applicable by §15.12.2.2, §15.12.2.3, or §15.12.2.4 during the second search, then the compile-time declaration is the result of the first search.
+If the first search produces a most specific method that is static, and the set of applicable methods produced by the second search contains no non-static methods, then the compile-time declaration is the most specified method of the first search.
 
-Otherwise, if no static method is applicable by §15.12.2.2, §15.12.2.3, or §15.12.2.4 during the first search, and the second search produces a non-static method, then the compile-time declaration is the result of the second search.
+Otherwise, if the set of applicable methods produced by the first search contains no static methods, and the second search produces a most specific method that is non-static, then the compile-time declaration is the most specific method of the second search.
 
 Otherwise, there is no compile-time declaration.
 
@@ -2784,13 +2862,13 @@ The result of the function type is void.
 
 The result of the function type is R, and the result of applying capture conversion (§5.1.10) to the return type of the invocation type (§15.12.2.6) of the chosen compile-time declaration is R' (where R is the target type that may be used to infer R'), and neither R nor R' is void, and R' is compatible with R in an assignment context.
 
-A compile-time unchecked warning occurs if unchecked conversion was necessary for the compile-time declaration to be applicable, and this conversion would cause an unchecked warning in an invocation context.
+If unchecked conversion was necessary for the compile-time declaration to be applicable, and this conversion would cause an unchecked warning in an invocation context, then a compile-time unchecked warning occurs, unless suppressed by @SuppressWarnings (§9.6.4.5).
 
-A compile-time unchecked warning occurs if unchecked conversion was necessary for the return type R', described above, to be compatible with the function type's return type, R, and this conversion would cause an unchecked warning in an assignment context.
+If unchecked conversion was necessary for the return type R', described above, to be compatible with the function type's return type, R, and this conversion would cause an unchecked warning in an assignment context, then a compile-time unchecked warning occurs, unless suppressed by @SuppressWarnings.
 
 If a method reference expression is compatible with a target type T, then the type of the expression, U, is the ground target type derived from T.
 
-It is a compile-time error if any class or interface mentioned by either U or the function type of U is not accessible from the class or interface in which the method reference expression appears.
+It is a compile-time error if any class or interface mentioned by either U or the function type of U is not accessible (§6.6) from the class or interface in which the method reference expression appears.
 
 For each non-static member method m of U, if the function type of U has a subsignature of the signature of m, then a notional method whose method type is the function type of U is said to override m, and any compile-time error or unchecked warning specified in §8.4.8.3 may occur.
 
@@ -2873,12 +2951,6 @@ The constructor to invoke is the constructor that corresponds to the compile-tim
 If the form is Type[]k :: new (k ≥ 1), then the body of the invocation method has the same effect as an array creation expression of the form new Type [ size ] []k-1, where size is the invocation method's single parameter. (The notation []k indicates a sequence of k bracket pairs.)
 
 If the body of the invocation method has the effect of a method invocation expression, then the compile-time parameter types and the compile-time result of the method invocation are determined as specified in §15.12.3. For the purpose of determining the compile-time result, the method invocation expression is an expression statement if the invocation method's result is void, and the Expression of a return statement if the invocation method's result is non-void.
-
-The effect of this determination when the compile-time declaration of the method reference is signature polymorphic is that:
-
-The types of the parameters for the method invocation are the types of the corresponding arguments.
-
-The method invocation is either void or has a return type of Object, depending on whether the invocation method which encloses the method invocation is void or has a return type.
 
 The timing of method reference expression evaluation is more complex than that of lambda expressions (§15.27.4). When a method reference expression has an expression (rather than a type) preceding the :: separator, that subexpression is evaluated immediately. The result of evaluation is stored until the method of the corresponding functional interface type is invoked; at that point, the result is used as the target reference for the invocation. This means the expression preceding the :: separator is evaluated only when the program encounters the method reference expression, and is not re-evaluated on subsequent invocations on the functional interface type.
 
@@ -3047,9 +3119,7 @@ At run time, the operand is subject to unboxing conversion (§5.1.8) if necessar
 
 15.16. Cast Expressions
 
-A cast expression converts, at run time, a value of one numeric type to a similar value of another numeric type; or confirms, at compile time, that the type of an expression is boolean; or checks, at run time, that a reference value refers to an object whose class is compatible with a specified reference type or list of reference types.
-
-The parentheses and the type or list of types they contain are sometimes called the cast operator.
+A cast expression converts, at run time, a value of one numeric type to a similar value of another numeric type; or confirms, at compile time, that the type of an expression is boolean; or checks, at run time, that a reference value refers to an object either whose class is compatible with a specified reference type or list of reference types, or which embodies a value of a primitive type.
 
 CastExpression:
 ( PrimitiveType ) UnaryExpression
@@ -3062,7 +3132,9 @@ The following production from §4.4 is shown here for convenience:
 AdditionalBound:
 & InterfaceType
 
-If the cast operator contains a list of types - that is, a ReferenceType followed by one or more AdditionalBound terms - then all of the following must be true, or a compile-time error occurs:
+The parentheses and the type or list of types they contain are sometimes called the cast operator.
+
+If the cast operator contains a list of types, that is, a ReferenceType followed by one or more AdditionalBound terms, then all of the following must be true, or a compile-time error occurs:
 
 ReferenceType must denote a class or interface type.
 
@@ -3076,13 +3148,13 @@ The type of a cast expression is the result of applying capture conversion (§5.
 
 Casts can be used to explicitly "tag" a lambda expression or a method reference expression with a particular target type. To provide an appropriate degree of flexibility, the target type may be a list of types denoting an intersection type, provided the intersection induces a functional interface (§9.8).
 
-The result of a cast expression is not a variable, but a value, even if the result of the operand expression is a variable.
+The result of a cast expression is not a variable, but a value, even if the result of evaluating the operand expression is a variable.
 
 A cast operator has no effect on the choice of value set (§4.2.3) for a value of type float or type double. Consequently, a cast to type float within an expression that is not FP-strict (§15.4) does not necessarily cause its value to be converted to an element of the float value set, and a cast to type double within an expression that is not FP-strict does not necessarily cause its value to be converted to an element of the double value set.
 
-It is a compile-time error if the compile-time type of the operand may never be cast to the type specified by the cast operator according to the rules of casting conversion (§5.5).
+If the compile-time type of the operand cannot be converted by casting conversion (§5.5) to the target type specified by the cast operator, then a compile-time error occurs.
 
-Otherwise, at run time, the operand value is converted (if necessary) by casting conversion to the type specified by the cast operator.
+Otherwise, at run time, the operand value is converted (if necessary) by casting conversion to the target type specified by the cast operator.
 
 A ClassCastException is thrown if a cast is found at run time to be impermissible.
 
@@ -3597,11 +3669,11 @@ The value produced by the >= operator is true if the value of the left-hand oper
 
 15.20.2. Type Comparison Operator instanceof
 
-The type of the RelationalExpression operand of the instanceof operator must be a reference type or the null type; otherwise, a compile-time error occurs.
+The type of the RelationalExpression operand of the instanceof operator must be a reference type or the null type, or a compile-time error occurs.
 
 It is a compile-time error if the ReferenceType mentioned after the instanceof operator does not denote a reference type that is reifiable (§4.7).
 
-If a cast (§15.16) of the RelationalExpression to the ReferenceType would be rejected as a compile-time error, then the instanceof relational expression likewise produces a compile-time error. In such a situation, the result of the instanceof expression could never be true.
+If a cast of the RelationalExpression to the ReferenceType would be rejected as a compile-time error (§15.16), then the instanceof relational expression likewise produces a compile-time error. In such a situation, the result of the instanceof expression could never be true.
 
 At run time, the result of the instanceof operator is true if the value of the RelationalExpression is not null and the reference could be cast to the ReferenceType without raising a ClassCastException. Otherwise the result is false.
 
@@ -3882,6 +3954,8 @@ A class instance creation expression (§15.9) for a class that is convertible to
 
 A method invocation expression (§15.12) for which the chosen most specific method (§15.12.2.5) has a return type that is convertible to a numeric type.
 
+Note that, for a generic method, this is the type before instantiating the method's type arguments.
+
 A numeric conditional expression.
 
 Otherwise, the conditional expression is a reference conditional expression.
@@ -4065,6 +4139,8 @@ A reference conditional expression is a poly expression if it appears in an assi
 
 Where a poly reference conditional expression appears in a context of a particular kind with target type T, its second and third operand expressions similarly appear in a context of the same kind with target type T.
 
+A poly reference conditional expression is compatible with a target type T if its second and third operand expressions are compatible with T.
+
 The type of a poly reference conditional expression is the same as its target type.
 
 The type of a standalone reference conditional expression is determined as follows:
@@ -4135,9 +4211,9 @@ A variable that is declared final cannot be assigned to (unless it is definitely
 
 15.26.1. Simple Assignment Operator =
 
-A compile-time error occurs if the type of the right-hand operand cannot be converted to the type of the variable by assignment conversion (§5.2).
+If the type of the right-hand operand is not assignment compatible with the type of the variable (§5.2), then a compile-time error occurs.
 
-At run time, the expression is evaluated in one of three ways.
+Otherwise, at run time, the expression is evaluated in one of three ways.
 
 If the left-hand operand expression is a field access expression e.f (§15.11), possibly enclosed in one or more pairs of parentheses, then:
 
@@ -4711,8 +4787,8 @@ LastFormalParameter:
 {VariableModifier} UnannType {Annotation} ... VariableDeclaratorId
 FormalParameter
 VariableModifier:
-(one of)
-Annotation final
+Annotation
+final
 VariableDeclaratorId:
 Identifier [Dims]
 Dims:
@@ -4748,11 +4824,9 @@ It is a compile-time error to use mixed array notation (§10.2) for a variable a
 
 The scope and shadowing of a formal parameter declaration is specified in §6.3 and §6.4.
 
-It is a compile-time error for a lambda expression to declare two formal parameters with the same name. (That is, their declarations mention the same Identifier.)
+It is a compile-time error for a lambda expression to declare two formal parameters with the same name.
 
-It is a compile-time error if a lambda parameter has the name _ (that is, a single underscore character).
-
-The use of the variable name _ in any context is discouraged. Future versions of the Java programming language may reserve this name as a keyword and/or give it special semantics.
+In Java SE 8, the use of _ as the name of a lambda parameter was forbidden, and its use discouraged as the name for other kinds of variable (§4.12.3). As of Java SE 9, _ is a keyword (§3.9) so it cannot be used as a variable name in any context.
 
 It is a compile-time error if a receiver parameter (§8.4.1) appears in the FormalParameters of a lambda expression.
 
@@ -4923,7 +4997,7 @@ If the function type's result is a (non-void) type R, then either i) the lambda 
 
 If a lambda expression is compatible with a target type T, then the type of the expression, U, is the ground target type derived from T.
 
-It is a compile-time error if any class or interface mentioned by either U or the function type of U is not accessible from the class or interface in which the lambda expression appears.
+It is a compile-time error if any class or interface mentioned by either U or the function type of U is not accessible (§6.6) from the class or interface in which the lambda expression appears.
 
 For each non-static member method m of U, if the function type of U has a subsignature of the signature of m, then a notional method whose method type is the function type of U is deemed to override m, and any compile-time error or unchecked warning specified in §8.4.8.3 may occur.
 
@@ -5011,7 +5085,7 @@ Constant expressions of type String are always "interned" so as to share unique 
 
 A constant expression is always treated as FP-strict (§15.4), even if it occurs in a context where a non-constant expression would not be considered to be FP-strict.
 
-Constant expressions are used as case labels in switch statements (§14.11) and have a special significance for assignment conversion (§5.2) and initialization of a class or interface (§12.4.2). They may also govern the ability of a while, do, or for statement to complete normally (§14.21), and the type of a conditional operator ? : with numeric operands.
+Constant expressions are used as case labels in switch statements (§14.11) and have a special significance in assignment contexts (§5.2) and the initialization of a class or interface (§12.4.2). They may also govern the ability of a while, do, or for statement to complete normally (§14.21), and the type of a conditional operator ? : with numeric operands.
 
 Example 15.28-1. Constant Expressions
 

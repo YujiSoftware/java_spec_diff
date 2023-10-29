@@ -411,17 +411,25 @@ V is [un]assigned before a iff V is [un]assigned before ++a, --a, a++, or a--.
 
 16.1.10. Other Expressions
 
-If an expression is not a boolean constant expression, and is not a preincrement expression ++a, predecrement expression --a, postincrement expression a++, postdecrement expression a--, logical complement expression !a, conditional-and expression a && b, conditional-or expression a || b, conditional expression a ? b : c, or assignment expression, then the following rules apply:
+If an expression is not a boolean constant expression, and is not a preincrement expression ++a, predecrement expression --a, postincrement expression a++, postdecrement expression a--, logical complement expression !a, conditional-and expression a && b, conditional-or expression a || b, conditional expression a ? b : c, assignment expression, or lambda expression, then the following rules apply:
 
 If the expression has no subexpressions, V is [un]assigned after the expression iff V is [un]assigned before the expression.
 
-This case applies to literals, names, this (both qualified and unqualified), unqualified class instance creation expressions with no arguments, initialized array creation expressions whose initializers contain no expressions, unqualified superclass field access expressions, named method invocations with no arguments, and unqualified superclass method invocations with no arguments.
+This case applies to literals, names, this (both qualified and unqualified), unqualified class instance creation expressions with no arguments, array creation expressions with initializers that contain no expressions, superclass field access expressions, unqualified and type-qualified method invocation expressions with no arguments, superclass method invocation expressions with no arguments, and superclass and type-qualified method reference expressions.
 
 If the expression has subexpressions, V is [un]assigned after the expression iff V is [un]assigned after its rightmost immediate subexpression.
 
-There is a piece of subtle reasoning behind the assertion that a variable V can be known to be definitely unassigned after a method invocation. Taken by itself, at face value and without qualification, such an assertion is not always true, because an invoked method can perform assignments. But it must be remembered that, for the purposes of the Java programming language, the concept of definite unassignment is applied only to blank final variables. If V is a blank final local variable, then only the method to which its declaration belongs can perform assignments to V. If V is a blank final field, then only a constructor or an initializer for the class containing the declaration for V can perform assignments to V; no method can perform assignments to V. Finally, explicit constructor invocations (§8.8.7.1) are handled specially (§16.9); although they are syntactically similar to expression statements containing method invocations, they are not expression statements and therefore the rules of this section do not apply to explicit constructor invocations.
+There is a piece of subtle reasoning behind the assertion that a variable V can be known to be definitely unassigned after a method invocation expression. Taken by itself, at face value and without qualification, such an assertion is not always true, because an invoked method can perform assignments. But it must be remembered that, for the purposes of the Java programming language, the concept of definite unassignment is applied only to blank final variables. If V is a blank final local variable, then only the method to which its declaration belongs can perform assignments to V. If V is a blank final field, then only a constructor or an initializer for the class containing the declaration for V can perform assignments to V; no method can perform assignments to V. Finally, explicit constructor invocations (§8.8.7.1) are handled specially (§16.9); although they are syntactically similar to expression statements containing method invocations, they are not expression statements and therefore the rules of this section do not apply to explicit constructor invocations.
 
-For any immediate subexpression y of an expression x, V is [un]assigned before y iff one of the following is true:
+If an expression is a lambda expression, then the following rules apply:
+
+V is [un]assigned after the expression iff V is [un]assigned before the expression.
+
+V is definitely assigned before the expression or block that is the lambda body (§15.27.2) iff V is definitely assigned before the lambda expression.
+
+No rule allows V to be definitely unassigned before a lambda body. This is by design: a variable that was definitely unassigned before the lambda body may end up being assigned to later on, so we cannot conclude that the variable will be unassigned when the body is executed.
+
+For any immediate subexpression y of an expression x, where x is not a lambda expression, V is [un]assigned before y iff one of the following is true:
 
 y is the leftmost immediate subexpression of x and V is [un]assigned before x.
 
@@ -435,9 +443,9 @@ x is a method invocation expression or a class instance creation expression; y i
 
 x is a qualified class instance creation expression, y is the first argument expression in the class instance creation expression, and V is [un]assigned after the primary expression that computes the qualifying object.
 
-x is an array instance creation expression; y is a dimension expression, but not the first; and V is [un]assigned after the dimension expression to the left of y.
+x is an array creation expression; y is a dimension expression, but not the first; and V is [un]assigned after the dimension expression to the left of y.
 
-x is an array instance creation expression initialized via an array initializer; y is the array initializer in x; and V is [un]assigned after the dimension expression to the left of y.
+x is an array creation expression initialized via an array initializer; y is the array initializer in x; and V is [un]assigned after the dimension expression to the left of y.
 
 16.2. Definite Assignment and Statements
 16.2.1. Empty Statements
@@ -698,7 +706,7 @@ V is definitely assigned after the try block and V is definitely assigned after 
 
 V is definitely assigned after the finally block.
 
-V is definitely unassigned after a try statement iff V is definitely unassigned after the finally block.
+V is definitely unassigned after the try statement iff V is definitely unassigned after the finally block.
 
 V is definitely assigned before the finally block iff V is definitely assigned before the try statement.
 

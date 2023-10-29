@@ -165,8 +165,8 @@ LocalVariableDeclaration:
 See §8.3 for UnannType. The following productions from §4.3, §8.4.1, and §8.3 are shown here for convenience:
 
 VariableModifier:
-(one of)
-Annotation final
+Annotation
+final
 VariableDeclaratorList:
 VariableDeclarator {, VariableDeclarator}
 VariableDeclarator:
@@ -415,7 +415,7 @@ To ease the presentation, the first Expression in both forms of the assert state
 
 It is a compile-time error if Expression1 does not have type boolean or Boolean.
 
-In the second form of the assert statement, it is a compile-time error if Expression2 is void (§15.1).
+It is a compile-time error if, in the second form of the assert statement, Expression2 is void (§15.1).
 
 An assert statement that is executed after its class or interface has completed initialization is enabled if and only if the host system has determined that the top level class or interface that lexically contains the assert statement enables assertions.
 
@@ -553,13 +553,15 @@ switch (n%8) {
 
 Fortunately, this trick does not seem to be widely known or used. Moreover, it is less needed nowadays; this sort of code transformation is properly in the province of state-of-the-art optimizing compilers.
 
-When the switch statement is executed, first the Expression is evaluated. If the Expression evaluates to null, a NullPointerException is thrown and the entire switch statement completes abruptly for that reason. Otherwise, if the result is of a reference type, it is subject to unboxing conversion (§5.1.8).
+A switch statement is executed by first evaluating the Expression. If the Expression evaluates to null, a NullPointerException is thrown and the entire switch statement completes abruptly for that reason. Otherwise, if the result is of type Character, Byte, Short, or Integer, it is subject to unboxing conversion (§5.1.8).
 
 If evaluation of the Expression or the subsequent unboxing conversion (if any) completes abruptly for some reason, the switch statement completes abruptly for the same reason.
 
 Otherwise, execution continues by comparing the value of the Expression with each case constant, and there is a choice:
 
-If one of the case constants is equal to the value of the expression, then we say that the case label matches. All statements after the matching case label in the switch block, if any, are executed in sequence.
+If one of the case constants is equal to the value of the expression, then we say that the case label matches. Equality is defined in terms of the == operator (§15.21) unless the value of the expression is a String, in which case equality is defined in terms of the equals method of class String.
+
+All statements after the matching case label in the switch block, if any, are executed in sequence.
 
 If all these statements complete normally, or if there are no statements after the matching case label, then the entire switch statement completes normally.
 
@@ -869,8 +871,8 @@ for ( {VariableModifier} UnannType VariableDeclaratorId : Expression ) Statement
 See §8.3 for UnannType. The following productions from §4.3, §8.4.1, and §8.3 are shown here for convenience:
 
 VariableModifier:
-(one of)
-Annotation final
+Annotation
+final
 VariableDeclaratorId:
 Identifier [Dims]
 Dims:
@@ -1265,8 +1267,8 @@ finally Block
 See §8.3 for UnannClassType. The following productions from §4.3, §8.3, and §8.4.1 are shown here for convenience:
 
 VariableModifier:
-(one of)
-Annotation final
+Annotation
+final
 VariableDeclaratorId:
 Identifier [Dims]
 Dims:
@@ -1478,26 +1480,32 @@ ResourceList:
 Resource {; Resource}
 Resource:
 {VariableModifier} UnannType VariableDeclaratorId = Expression
+VariableAccess
+VariableAccess:
+ExpressionName
+FieldAccess
 
 See §8.3 for UnannType. The following productions from §4.3, §8.3, and §8.4.1 are shown here for convenience:
 
 VariableModifier:
-(one of)
-Annotation final
+Annotation
+final
 VariableDeclaratorId:
 Identifier [Dims]
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-A resource specification declares one or more local variables with initializer expressions to act as resources for the try statement.
+A resource specification uses variables to denote resources for the try statement, either by declaring local variables with initializer expressions or by referring to suitable existing variables. An existing variable is referred to by either an expression name (§6.5.6) or a field access expression (§15.11).
 
 It is a compile-time error for a resource specification to declare two variables with the same name.
 
 It is a compile-time error if final appears more than once as a modifier for each variable declared in a resource specification.
 
-A variable declared in a resource specification is implicitly declared final (§4.12.4) if it is not explicitly declared final.
+A variable declared in a resource specification is implicitly declared final if it is not explicitly declared final (§4.12.4).
 
-The type of a variable declared in a resource specification must be a subtype of AutoCloseable, or a compile-time error occurs.
+A resource denoted by an expression name or field access expression must be a final or effectively final variable that is definitely assigned before the try-with-resources statement (§16 (Definite Assignment)), or a compile-time error occurs.
+
+The type of a variable declared or referred to as a resource in a resource specification must be a subtype of AutoCloseable, or a compile-time error occurs.
 
 The scope and shadowing of a variable declared in a resource specification is specified in §6.3 and §6.4.
 
@@ -1505,13 +1513,28 @@ Resources are initialized in left-to-right order. If a resource fails to initial
 
 Resources are closed in the reverse order from that in which they were initialized. A resource is closed only if it initialized to a non-null value. An exception from the closing of one resource does not prevent the closing of other resources. Such an exception is suppressed if an exception was thrown previously by an initializer, the try block, or the closing of a resource.
 
-A try-with-resources statement whose resource specification declares multiple resources is treated as if it were multiple try-with-resources statements, each of which has a resource specification that declares a single resource. When a try-with-resources statement with n resources (n > 1) is translated, the result is a try-with-resources statement with n-1 resources. After n such translations, there are n nested try-catch-finally statements, and the overall translation is complete.
+A try-with-resources statement whose resource specification indicates multiple resources is treated as if it were multiple try-with-resources statements, each of which has a resource specification that indicates a single resource. When a try-with-resources statement with n resources (n > 1) is translated, the result is a try-with-resources statement with n-1 resources. After n such translations, there are n nested try-catch-finally statements, and the overall translation is complete.
 
 14.20.3.1. Basic try-with-resources
 
 A try-with-resources statement with no catch clauses or finally clause is called a basic try-with-resources statement.
 
-The meaning of a basic try-with-resources statement:
+If a basic try-with-resource statement is of the form:
+
+try (VariableAccess ...)
+    Block
+
+
+then the resource is first converted to a local variable declaration by the following translation:
+
+try (T #r = VariableAccess ...) {
+    Block
+}
+
+
+T is the type of the variable denoted by VariableAccess and #r is an automatically generated identifier that is distinct from any other identifiers (automatically generated or otherwise) that are in scope at the point where the try-with-resources statement occurs. The try-with-resources statement is then translated according to the rest of this section.
+
+The meaning of a basic try-with-resources statement of the form:
 
 try ({VariableModifier} R Identifier = Expression ...)
     Block
@@ -1548,9 +1571,9 @@ is given by the following translation to a local variable declaration and a try-
 
 #t, #primaryExc, and #suppressedExc are automatically generated identifiers that are distinct from any other identifiers (automatically generated or otherwise) that are in scope at the point where the try-with-resources statement occurs.
 
-If the resource specification declares one resource, then ResourceSpecification_tail is empty (and the try-catch-finally statement is not itself a try-with-resources statement).
+If the resource specification indicates one resource, then ResourceSpecification_tail is empty (and the try-catch-finally statement is not itself a try-with-resources statement).
 
-If the resource specification declares n > 1 resources, then ResourceSpecification_tail consists of the 2nd, 3rd, ..., n'th resources declared in resource specification, in the same order (and the try-catch-finally statement is itself a try-with-resources statement).
+If the resource specification indicates n > 1 resources, then ResourceSpecification_tail consists of the 2nd, 3rd, ..., n'th resources indicated in the resource specification, in the same order (and the try-catch-finally statement is itself a try-with-resources statement).
 
 Reachability and definite assignment rules for the basic try-with-resources statement are implicitly specified by the translation above.
 
@@ -1792,7 +1815,7 @@ if (false) { x=3; }
 
 does not result in a compile-time error. An optimizing compiler may realize that the statement x=3; will never be executed and may choose to omit the code for that statement from the generated class file, but the statement x=3; is not regarded as "unreachable" in the technical sense specified here.
 
-The rationale for this differing treatment is to allow programmers to define "flag variables" such as:
+The rationale for this differing treatment is to allow programmers to define "flag" variables such as:
 
 static final boolean DEBUG = false;
 
@@ -1804,4 +1827,58 @@ if (DEBUG) { x=3; }
 
 The idea is that it should be possible to change the value of DEBUG from false to true or from true to false and then compile the code correctly with no other changes to the program text.
 
-This ability to "conditionally compile" has no relationship to binary compatibility (§13 (Binary Compatibility)). If a set of classes that use such a "flag" variable are compiled and conditional code is omitted, it does not suffice later to distribute just a new version of the class or interface that contains the definition of the flag. The classes that use the flag will not see its new value, so their behavior may be surprising, but no LinkageError will occur. A change to the value of a flag is, therefore, binary compatible with pre-existing binaries, but not behaviorally compatible.
+Conditional compilation comes with a caveat. If a set of classes that use a "flag" variable - or more precisely, any static constant variable (§4.12.4) - are compiled and conditional code is omitted, it does not suffice later to distribute just a new version of the class or interface that contains the definition of the flag. The classes that use the flag will not see its new value, so their behavior may be surprising. In essence, a change to the value of a flag is binary compatible with pre-existing binaries (no LinkageError occurs) but not behaviorally compatible.
+
+Another reason for "inlining" values of static constant variables is because of switch statements. They are the only kind of statement that relies on constant expressions, namely that each case label of a switch statement must be a constant expression whose value is different than every other case label. case labels are often references to static constant variables so it may not be immediately obvious that all the labels have different values. If it is proven that there are no duplicate labels at compile time, then inlining the values into the class file ensures there are no duplicate labels at run time either - a very desirable property.
+
+Example 14.21-1. Conditional Compilation
+
+If the example:
+
+class Flags { static final boolean DEBUG = true; }
+class Test {
+    public static void main(String[] args) {
+        if (Flags.DEBUG)
+            System.out.println("DEBUG is true");
+    }
+}
+
+
+is compiled and executed, it produces the output:
+
+DEBUG is true
+
+
+Suppose that a new version of class Flags is produced:
+
+class Flags { static final boolean DEBUG = false; }
+
+
+If Flags is recompiled but not Test, then running the new binary with the existing binary of Test produces the output:
+
+DEBUG is true
+
+
+because DEBUG is a static constant variable, so its value could have been used in compiling Test without making a reference to the class Flags.
+
+This behavior would also occur if Flags was an interface, as in the modified example:
+
+interface Flags { boolean DEBUG = true; }
+class Test {
+    public static void main(String[] args) {
+        if (Flags.DEBUG)
+            System.out.println("DEBUG is true");
+    }
+}
+
+
+In fact, because the fields of interfaces are always static and final, we recommend that only constant expressions be assigned to fields of interfaces. We note, but do not recommend, that if a field of primitive type of an interface may change, its value may be expressed idiomatically as in:
+
+interface Flags {
+    boolean debug = Boolean.valueOf(true).booleanValue();
+}
+
+
+ensuring that this value is not a constant expression. Similar idioms exist for the other primitive types.
+
+

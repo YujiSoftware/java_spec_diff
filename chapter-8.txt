@@ -20,7 +20,7 @@ Table of Contents
 8.3.1.3. transient Fields
 8.3.1.4. volatile Fields
 8.3.2. Field Initialization
-8.3.3. Forward References During Field Initialization
+8.3.3. Restrictions on Field References in Initializers
 8.4. Method Declarations
 8.4.1. Formal Parameters
 8.4.2. Method Signature
@@ -70,7 +70,7 @@ A nested class is any class whose declaration occurs within the body of another 
 
 This chapter discusses the common semantics of all classes - top level (§7.6) and nested (including member classes (§8.5, §9.5), local classes (§14.3) and anonymous classes (§15.9.5)). Details that are specific to particular kinds of classes are discussed in the sections dedicated to these constructs.
 
-A named class may be declared abstract (§8.1.1.1) and must be declared abstract if it is incompletely implemented; such a class cannot be instantiated, but can be extended by subclasses. A class may be declared final (§8.1.1.2), in which case it cannot have subclasses. If a class is declared public, then it can be referred to from other packages. Each class except Object is an extension of (that is, a subclass of) a single existing class (§8.1.4) and may implement interfaces (§8.1.5). Classes may be generic (§8.1.2), that is, they may declare type variables whose bindings may differ among different instances of the class.
+A named class may be declared abstract (§8.1.1.1) and must be declared abstract if it is incompletely implemented; such a class cannot be instantiated, but can be extended by subclasses. A class may be declared final (§8.1.1.2), in which case it cannot have subclasses. If a class is declared public, then it can be referred to from code in any package of its module and potentially from code in other modules. Each class except Object is an extension of (that is, a subclass of) a single existing class (§8.1.4) and may implement interfaces (§8.1.5). Classes may be generic (§8.1.2), that is, they may declare type variables whose bindings may differ among different instances of the class.
 
 Classes may be decorated with annotations (§9.7) just like any other kind of declaration.
 
@@ -129,7 +129,7 @@ The access modifiers protected and private pertain only to member classes within
 
 The modifier static pertains only to member classes (§8.5.1), not to top level or local or anonymous classes.
 
-It is a compile-time error if the same keyword appears more than once as a modifier for a class declaration.
+It is a compile-time error if the same keyword appears more than once as a modifier for a class declaration, or if a class declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
 If two or more (distinct) class modifiers appear in a class declaration, then it is customary, though not required, that they appear in the order consistent with that shown above in the production for ClassModifier.
 
@@ -1015,7 +1015,7 @@ The scope and shadowing of a field declaration is specified in §6.3 and §6.4.
 
 It is a compile-time error for the body of a class declaration to declare two fields with the same name.
 
-If the class declares a field with a certain name, then the declaration of that field is said to hide any and all accessible declarations of fields with the same name in superclasses, and superinterfaces of the class.
+If a class declares a field with a certain name, then the declaration of that field is said to hide any and all accessible declarations of fields with the same name in superclasses, and superinterfaces of the class.
 
 In this respect, hiding of fields differs from hiding of methods (§8.4.8.3), for there is no distinction drawn between static and non-static fields in field hiding whereas a distinction is drawn between static and non-static methods in method hiding.
 
@@ -1025,19 +1025,19 @@ In this respect, hiding of fields is similar to hiding of methods.
 
 If a field declaration hides the declaration of another field, the two fields need not have the same type.
 
-A class inherits from its direct superclass and direct superinterfaces all the non-private fields of the superclass and superinterfaces that are both accessible to code in the class and not hidden by a declaration in the class.
+A class inherits from its direct superclass and direct superinterfaces all the non-private fields of the superclass and superinterfaces that are both accessible (§6.6) to code in the class and not hidden by a declaration in the class.
 
 A private field of a superclass might be accessible to a subclass - for example, if both classes are members of the same class. Nevertheless, a private field is never inherited by a subclass.
 
-It is possible for a class to inherit more than one field with the same name. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the class to refer to any such field by its simple name will result in a compile-time error, because such a reference is ambiguous.
+It is possible for a class to inherit more than one field with the same name, either from its superclass and superinterfaces or from its superinterfaces alone. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the class to refer to any such field by its simple name will result in a compile-time error, because the reference is ambiguous.
 
-There might be several paths by which the same field declaration might be inherited from an interface. In such a situation, the field is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
+There might be several paths by which the same field declaration is inherited from an interface. In such a situation, the field is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
 
 A value stored in a field of type float is always an element of the float value set (§4.2.3); similarly, a value stored in a field of type double is always an element of the double value set. It is not permitted for a field of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a field of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
 
 Example 8.3-1. Multiply Inherited Fields
 
-A class may inherit two or more fields with the same name, either from two interfaces or from its superclass and an interface. A compile-time error occurs on any attempt to refer to any ambiguously inherited field by its simple name. A qualified name or a field access expression that contains the keyword super (§15.11.2) may be used to access such fields unambiguously. In the program:
+A class may inherit two or more fields with the same name, either from its superclass and a superinterface or from two superinterfaces. A compile-time error occurs on any attempt to refer to any ambiguously inherited field by its simple name. A qualified name or a field access expression that contains the keyword super (§15.11.2) may be used to access such fields unambiguously. In the program:
 
 interface Frob  { float v = 2.0f; }
 class SuperTest { int   v = 3; }
@@ -1116,7 +1116,7 @@ static final transient volatile
 
 The rules for annotation modifiers on a field declaration are specified in §9.7.4 and §9.7.5.
 
-It is a compile-time error if the same keyword appears more than once as a modifier for a field declaration.
+It is a compile-time error if the same keyword appears more than once as a modifier for a field declaration, or if a field declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
 If two or more (distinct) field modifiers appear in a field declaration, it is customary, though not required, that they appear in the order consistent with that shown above in the production for FieldModifier.
 
@@ -1273,7 +1273,7 @@ A field can be declared final (§4.12.4). Both class and instance variables (sta
 
 A blank final class variable must be definitely assigned by a static initializer of the class in which it is declared, or a compile-time error occurs (§8.7, §16.8).
 
-A blank final instance variable must be definitely assigned at the end of every constructor of the class in which it is declared, or a compile-time error occurs (§8.8, §16.9).
+A blank final instance variable must be definitely assigned and moreover not definitely unassigned at the end of every constructor of the class in which it is declared, or a compile-time error occurs (§8.8, §16.9).
 
 8.3.1.3. transient Fields
 
@@ -1362,15 +1362,17 @@ It is a compile-time error if the keyword this (§15.8.3) or the keyword super (
 
 At run time, the initializer is evaluated and the assignment performed exactly once, when the class is initialized (§12.4.2).
 
-Note that static fields that are constant variables (§4.12.4) are initialized before other static fields (§12.4.2). This also applies in interfaces (§9.3.1). Such fields will never be observed to have their default initial values (§4.12.5), even by devious programs.
+Note that static fields that are constant variables (§4.12.4) are initialized before other static fields (§12.4.2). This also applies in interfaces (§9.3.1). When such fields are referenced by simple name, they will never be observed to have their default initial values (§4.12.5).
 
 If the declarator is for an instance variable (that is, a field that is not static), then the following rules apply to its initializer:
 
-The initializer may use the simple name of any class variable declared in or inherited by the class, even one whose declaration occurs textually after the initializer.
+The initializer may refer by simple name to any class variable declared in or inherited by the class, even one whose declaration occurs to the right of the initializer (§3.5).
 
-The initializer may refer to the current object this (§15.8.3) and may use the keyword super (§15.11.2, §15.12).
+The initializer may refer to the current object using the keyword this (§15.8.3) or the keyword super (§15.11.2, §15.12).
 
 At run time, the initializer is evaluated and the assignment performed each time an instance of the class is created (§12.5).
+
+References from variable initializers to fields that may not yet be initialized are subject to additional restrictions, as specified in §8.3.3 and §16 (Definite Assignment).
 
 Exception checking for a variable initializer in a field declaration is specified in §11.2.3.
 
@@ -1411,29 +1413,31 @@ This program compiles without error; it initializes j to 1 when class Test is in
 
 
 
-8.3.3. Forward References During Field Initialization
+8.3.3. Restrictions on Field References in Initializers
 
-Use of class variables whose declarations appear textually after the use is sometimes restricted, even though these class variables are in scope (§6.3). Specifically, it is a compile-time error if all of the following are true:
+References to a field are sometimes restricted, even through the field is in scope. The following rules constrain forward references to a field (where the use textually precedes the field declaration) as well as self-reference (where the field is used in its own initializer).
 
-The declaration of a class variable in a class or interface C appears textually after a use of the class variable;
+For a reference by simple name to a class variable f declared in class or interface C, it is a compile-time error if:
 
-The use is a simple name in either a class variable initializer of C or a static initializer of C;
+The reference appears either in a class variable initializer of C or in a static initializer of C (§8.7); and
 
-The use is not on the left hand side of an assignment;
+The reference appears either in the initializer of f's own declarator or at a point to the left of f's declarator; and
 
-C is the innermost class or interface enclosing the use.
+The reference is not on the left hand side of an assignment expression (§15.26); and
 
-Use of instance variables whose declarations appear textually after the use is sometimes restricted, even though these instance variables are in scope. Specifically, it is a compile-time error if all of the following are true:
+The innermost class or interface enclosing the reference is C.
 
-The declaration of an instance variable in a class or interface C appears textually after a use of the instance variable;
+For a reference by simple name to an instance variable f declared in class C, it is a compile-time error if:
 
-The use is a simple name in either an instance variable initializer of C or an instance initializer of C;
+The reference appears either in an instance variable initializer of C or in an instance initializer of C (§8.6); and
 
-The use is not on the left hand side of an assignment;
+The reference appears in the initializer of f's own declarator or at a point to the left of f's declarator; and
 
-C is the innermost class or interface enclosing the use.
+The reference is not on the left hand side of an assignment expression (§15.26); and
 
-Example 8.3.3-1. Restrictions on Field Initialization
+The innermost class enclosing the reference is C.
+
+Example 8.3.3-1. Restrictions on Field References
 
 A compile-time error occurs for this program:
 
@@ -1579,7 +1583,7 @@ The FormalParameterList is described in §8.4.1, the MethodModifier clause in §
 
 The Identifier in a MethodDeclarator may be used in a name to refer to the method (§6.5.7.1, §15.12).
 
-It is a compile-time error for the body of a class to declare as members two methods with override-equivalent signatures (§8.4.2).
+It is a compile-time error for the body of a class declaration to declare as members two methods with override-equivalent signatures (§8.4.2).
 
 The scope and shadowing of a method declaration is specified in §6.3 and §6.4.
 
@@ -1601,8 +1605,8 @@ ReceiverParameter {, FormalParameter}
 FormalParameter:
 {VariableModifier} UnannType VariableDeclaratorId
 VariableModifier:
-(one of)
-Annotation final
+Annotation
+final
 ReceiverParameter:
 {Annotation} UnannType [Identifier .] this
 LastFormalParameter:
@@ -1650,7 +1654,7 @@ If the formal parameter is not a variable arity parameter, then the declared typ
 
 If the formal parameter is a variable arity parameter, then the declared type is specified by §10.2. (Note that "mixed notation" is not permitted for variable arity parameters.)
 
-If the declared type of a variable arity parameter has a non-reifiable element type (§4.7), then a compile-time unchecked warning occurs for the declaration of the variable arity method, unless the method is annotated with @SafeVarargs (§9.6.4.7) or the unchecked warning is suppressed by @SuppressWarnings (§9.6.4.5).
+If the declared type of a variable arity parameter has a non-reifiable element type (§4.7), then a compile-time unchecked warning occurs for the declaration of the variable arity method, unless the method is annotated with @SafeVarargs (§9.6.4.7) or the warning is suppressed by @SuppressWarnings (§9.6.4.5).
 
 When the method or constructor is invoked (§15.12), the values of the actual argument expressions initialize newly created parameter variables, each of the declared type, before execution of the body of the method or constructor. The Identifier that appears in the DeclaratorId may be used as a simple name in the body of the method or constructor to refer to the formal parameter.
 
@@ -1762,7 +1766,7 @@ abstract static final synchronized native strictfp
 
 The rules for annotation modifiers on a method declaration are specified in §9.7.4 and §9.7.5.
 
-It is a compile-time error if the same keyword appears more than once as a modifier for a method declaration.
+It is a compile-time error if the same keyword appears more than once as a modifier for a method declaration, or if a method declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
 It is a compile-time error if a method declaration that contains the keyword abstract also contains any one of the keywords private, static, final, native, strictfp, or synchronized.
 
@@ -1849,7 +1853,7 @@ A method that is declared static is called a class method.
 
 It is a compile-time error to use the name of a type parameter of any surrounding declaration in the header or body of a class method.
 
-A class method is always invoked without reference to a particular object. It is a compile-time error to attempt to reference the current object using the keyword this (§15.8.3) or the keyword super (§15.11.2).
+A class method is always invoked without reference to a particular object. It is a compile-time error to attempt to refer to the current object using the keyword this (§15.8.3) or the keyword super (§15.11.2).
 
 A method that is not declared static is called an instance method, and sometimes called a non-static method.
 
@@ -2044,7 +2048,7 @@ An unchecked conversion is allowed in the definition, despite being unsound, as 
 
 8.4.6. Method Throws
 
-A throws clause is used to declare any checked exception classes (§11.1.1) that the statements in a method or constructor body can throw (§11.2.2).
+A throws clause is used to denote any checked exception classes (§11.1.1) that the statements in a method or constructor body can throw (§11.2.2).
 
 Throws:
 throws ExceptionTypeList
@@ -2144,19 +2148,37 @@ No method declared in C has a signature that is a subsignature (§8.4.2) of the 
 
 No concrete method inherited by C from its direct superclass has a signature that is a subsignature of the signature of m.
 
-There exists no method m' that is a member of the direct superclass or a direct superinterface, D', of C (m distinct from m', D distinct from D'), such that m' from D' overrides the declaration of the method m.
+There exists no method m' that is a member of the direct superclass or a direct superinterface, D', of C (m distinct from m', D distinct from D'), such that m' overrides from D' (§8.4.8.1, §9.4.1.1) the declaration of the method m.
 
-A class does not inherit static methods from its superinterfaces.
-
-Note that it is possible for an inherited concrete method to prevent the inheritance of an abstract or default method. (Later we will assert that the concrete method overrides the abstract or default method "from C".) Also, it is possible for one supertype method to prevent the inheritance of another supertype method if the former "already" overrides the latter - this is the same as the rule for interfaces (§9.4.1), and prevents conflicts in which multiple default methods are inherited and one implementation is clearly meant to supersede the other.
+A class does not inherit private or static methods from its superinterfaces.
 
 Note that methods are overridden or hidden on a signature-by-signature basis. If, for example, a class declares two public methods with the same name (§8.4.9), and a subclass overrides one of them, the subclass still inherits the other method.
+
+Example 8.4.8-1. Inheritance
+
+interface I1 {
+    int foo();
+}
+
+interface I2 {
+    int foo();
+}
+
+abstract class Test implements I1, I2 {} 
+
+
+Here, the abstract class Test inherits the abstract method foo from interface I1 and also the abstract method foo from interface I2. The key question in determining the inheritance of foo from I1 is: does the method foo in I2 override "from I2" (§9.4.1.1) the method foo in I1? No, because I1 and I2 are not subinterfaces of each other. Thus, from the viewpoint of class Test, the inheritance of foo from I1 is unfettered; similarly for the inheritance of foo from I2. Per §8.4.8.4, class Test can inherit both foo methods; obviously it must be declared abstract, or else override both abstract foo methods with a concrete method.
+
+
+
+
+Note that it is possible for an inherited concrete method to prevent the inheritance of an abstract or default method. (The concrete method will override the abstract or default method "from C", per §8.4.8.1 and §9.4.1.1.) Also, it is possible for one supertype method to prevent the inheritance of another supertype method if the former "already" overrides the latter - this is the same as the rule for interfaces (§9.4.1), and prevents conflicts in which multiple default methods are inherited and one implementation is clearly meant to supersede the other.
 
 8.4.8.1. Overriding (by Instance Methods)
 
 An instance method mC declared in or inherited by class C, overrides from C another method mA declared in class A, iff all of the following are true:
 
-A is a superclass of C.
+C is a subclass of A.
 
 C does not inherit mA.
 
@@ -2174,15 +2196,23 @@ mA is declared with package access and mC overrides mA from some superclass of C
 
 mA is declared with package access and mC overrides a method m' from C (m' distinct from mC and mA), such that m' overrides mA from some superclass of C.
 
-If a non-abstract method mC overrides an abstract method mA from a class C, then mC is said to implement mA from C.
+If mC is non-abstract and overrides from C an abstract method mA, then mC is said to implement mA from C.
 
-An instance method mC declared in or inherited by class C, overrides from C another method mI declared in an interface I, iff all of the following are true:
+It is a compile-time error if the overridden method, mA, is a static method.
+
+In this respect, overriding of methods differs from hiding of fields (§8.3), for it is permissible for an instance variable to hide a static variable.
+
+An instance method mC declared in or inherited by class C, overrides from C another method mI declared in interface I, iff all of the following are true:
 
 I is a superinterface of C.
 
-mI is an abstract or default method.
+mI is not static.
+
+C does not inherit mI.
 
 The signature of mC is a subsignature (§8.4.2) of the signature of mI.
+
+mI is public.
 
 The signature of an overriding method may differ from the overridden one if a formal parameter in one of the methods has a raw type, while the corresponding parameter in the other has a parameterized type. This accommodates migration of pre-existing code to take advantage of generics.
 
@@ -2191,10 +2221,6 @@ The notion of overriding includes methods that override another from some subcla
 A concrete method in a generic superclass can, under certain parameterizations, have the same signature as an abstract method in that class. In this case, the concrete method is inherited and the abstract method is not (as described above). The inherited method should then be considered to override its abstract peer from C. (This scenario is complicated by package access: if C is in a different package, then mA would not have been inherited anyway, and should not be considered overridden.)
 
 A method inherited from a class can override a superinterface method. (Happily, package access is not a concern here.)
-
-It is a compile-time error if an instance method overrides a static method.
-
-In this respect, overriding of methods differs from hiding of fields (§8.3), for it is permissible for an instance variable to hide a static variable.
 
 An overridden method can be accessed by using a method invocation expression (§15.12) that contains the keyword super. A qualified name or a cast to a superclass type is not effective in attempting to access an overridden method.
 
@@ -2285,7 +2311,7 @@ Documentation for a class such as BufferOutput, which is designed to be extended
 
 8.4.8.2. Hiding (by Class Methods)
 
-If a class C declares or inherits a static method m, then m is said to hide any method m', where the signature of m is a subsignature (§8.4.2) of the signature of m', in the superclasses and superinterfaces of C that would otherwise be accessible to code in C.
+If a class C declares or inherits a static method m, then m is said to hide any method m', where the signature of m is a subsignature (§8.4.2) of the signature of m', in the superclasses and superinterfaces of C that would otherwise be accessible (§6.6) to code in C.
 
 It is a compile-time error if a static method hides an instance method.
 
@@ -2330,7 +2356,7 @@ If a method declaration d1 with return type R1 overrides or hides the declaratio
 
 This rule allows for covariant return types - refining the return type of a method when overriding it.
 
-If R1 is not a subtype of R2, a compile-time unchecked warning occurs unless suppressed by the SuppressWarnings annotation (§9.6.4.5).
+If R1 is not a subtype of R2, then a compile-time unchecked warning occurs, unless suppressed by @SuppressWarnings (§9.6.4.5).
 
 A method that overrides or hides another method, including methods that implement abstract methods defined in interfaces, may not be declared to throw more checked exceptions than the overridden or hidden method.
 
@@ -2342,13 +2368,13 @@ If m2 has a throws clause that mentions any checked exception types, then m1 mus
 
 For every checked exception type listed in the throws clause of m2, that same exception class or one of its supertypes must occur in the erasure (§4.6) of the throws clause of m1; otherwise, a compile-time error occurs.
 
-If the unerased throws clause of m1 does not contain a supertype of each exception type in the throws clause of m2 (adapted, if necessary, to the type parameters of m1), a compile-time unchecked warning occurs.
+If the unerased throws clause of m1 does not contain a supertype of each exception type in the throws clause of m2 (adapted, if necessary, to the type parameters of m1), then a compile-time unchecked warning occurs, unless suppressed by @SuppressWarnings (§9.6.4.5).
 
 It is a compile-time error if a type declaration T has a member method m1 and there exists a method m2 declared in T or a supertype of T such that all of the following are true:
 
 m1 and m2 have the same name.
 
-m2 is accessible from T.
+m2 is accessible (§6.6) from T.
 
 The signature of m1 is not a subsignature (§8.4.2) of the signature of m2.
 
@@ -2356,7 +2382,7 @@ The signature of m1 or some method m1 overrides (directly or indirectly) has the
 
 These restrictions are necessary because generics are implemented via erasure. The rule above implies that methods declared in the same class with the same name must have different erasures. It also implies that a type declaration cannot implement or extend two distinct invocations of the same generic interface.
 
-The access modifier (§6.6) of an overriding or hiding method must provide at least as much access as the overridden or hidden method, as follows:
+The access modifier of an overriding or hiding method must provide at least as much access as the overridden or hidden method, as follows:
 
 If the overridden or hidden method is public, then the overriding or hiding method must be public; otherwise, a compile-time error occurs.
 
@@ -2364,7 +2390,7 @@ If the overridden or hidden method is protected, then the overriding or hiding m
 
 If the overridden or hidden method has package access, then the overriding or hiding method must not be private; otherwise, a compile-time error occurs.
 
-Note that a private method cannot be hidden or overridden in the technical sense of those terms. This means that a subclass can declare a method with the same signature as a private method in one of its superclasses, and there is no requirement that the return type or throws clause of such a method bear any relationship to those of the private method in the superclass.
+Note that a private method cannot be overridden or hidden in the technical sense of those terms. This means that a subclass can declare a method with the same signature as a private method in one of its superclasses, and there is no requirement that the return type or throws clause of such a method bear any relationship to those of the private method in the superclass.
 
 Example 8.4.8.3-1. Covariant Return Types
 
@@ -2660,9 +2686,9 @@ A member class is a class whose declaration is directly enclosed in the body of 
 
 A member interface is an interface whose declaration is directly enclosed in the body of another class or interface declaration (§8.1.6, §9.1.4).
 
-The accessibility of a member type in a class or interface declaration is specified in §6.6.
+The accessibility of a member type declaration in a class is specified by its access modifier, or by §6.6 if lacking an access modifier.
 
-It is a compile-time error if the same keyword appears more than once as a modifier for a member type declaration in a class.
+It is a compile-time error if the same keyword appears more than once as a modifier for a member type declaration in a class, or if a member type declaration has more than one of the access modifiers public, protected, and private (§6.6.)
 
 The scope and shadowing of a member type is specified in §6.3 and §6.4.
 
@@ -2672,9 +2698,9 @@ In this respect, hiding of member types is similar to hiding of fields (§8.3).
 
 A class inherits from its direct superclass and direct superinterfaces all the non-private member types of the superclass and superinterfaces that are both accessible to code in the class and not hidden by a declaration in the class.
 
-A class may inherit two or more type declarations with the same name, either from two interfaces or from its superclass and an interface. It is a compile-time error to attempt to refer to any ambiguously inherited class or interface by its simple name.
+It is possible for a class to inherit more than one member type with the same name, either from its superclass and superinterfaces or from its superinterfaces alone. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the class to refer to any such member type by its simple name will result in a compile-time error, because the reference is ambiguous.
 
-If the same type declaration is inherited from an interface by multiple paths, the class or interface is considered to be inherited only once. It may be referred to by its simple name without ambiguity.
+There might be several paths by which the same member type declaration is inherited from an interface. In such a situation, the member type is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
 
 8.5.1. Static Member Type Declarations
 
@@ -2695,9 +2721,9 @@ It is a compile-time error if an instance initializer cannot complete normally (
 
 It is a compile-time error if a return statement (§14.17) appears anywhere within an instance initializer.
 
-Instance initializers are permitted to refer to the current object via the keyword this (§15.8.3), to use the keyword super (§15.11.2, §15.12), and to use any type variables in scope.
+An instance initializer is permitted to refer to the current object using the keyword this (§15.8.3) or the keyword super (§15.11.2, §15.12), and to use any type variables in scope.
 
-Use of instance variables whose declarations appear textually after the use is sometimes restricted, even though these instance variables are in scope. See §8.3.3 for the precise rules governing forward reference to instance variables.
+Restrictions on how an instance initializer may refer to instance variables, even when the instance variables are in scope, are specified in §8.3.3).
 
 Exception checking for an instance initializer is specified in §11.2.3.
 
@@ -2714,7 +2740,7 @@ It is a compile-time error if a return statement (§14.17) appears anywhere with
 
 It is a compile-time error if the keyword this (§15.8.3) or the keyword super (§15.11, §15.12) or any type variable declared outside the static initializer, appears anywhere within a static initializer.
 
-Use of class variables whose declarations appear textually after the use is sometimes restricted, even though these class variables are in scope. See §8.3.3 for the precise rules governing forward reference to class variables.
+Restrictions on how a static initializer may refer to class variables, even when the class variables are in scope, are specified in §8.3.3.
 
 Exception checking for a static initializer is specified in §11.2.3.
 
@@ -2737,7 +2763,7 @@ In all other respects, a constructor declaration looks just like a method declar
 
 Constructor declarations are not members. They are never inherited and therefore are not subject to hiding or overriding.
 
-Constructors are invoked by class instance creation expressions (§15.9), by the conversions and concatenations caused by the string concatenation operator + (§15.18.1), and by explicit constructor invocations from other constructors (§8.8.7). Access to constructors is governed by access modifiers (§6.6), so it is possible to prevent instantiation by declaring an inaccessible constructor (§8.8.10).
+Constructors are invoked by class instance creation expressions (§15.9), by the conversions and concatenations caused by the string concatenation operator + (§15.18.1), and by explicit constructor invocations from other constructors (§8.8.7). Access to constructors is governed by access modifiers (§6.6), so it is possible to prevent class instantiation by declaring an inaccessible constructor (§8.8.10).
 
 Constructors are never invoked by method invocation expressions (§15.12).
 
@@ -2779,7 +2805,7 @@ Annotation public protected private
 
 The rules for annotation modifiers on a constructor declaration are specified in §9.7.4 and §9.7.5.
 
-It is a compile-time error if the same keyword appears more than once as a modifier in a constructor declaration.
+It is a compile-time error if the same keyword appears more than once as a modifier in a constructor declaration, or if a constructor declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
 In a normal class declaration, a constructor declaration with no access modifiers has package access.
 
@@ -2891,7 +2917,7 @@ Let C be the class being instantiated, and let S be the direct superclass of C.
 
 If a superclass constructor invocation statement is unqualified, then:
 
-If S is an inner member class, but S is not a member of a lexically enclosing type declaration of C, then a compile-time error occurs.
+If S is an inner member class, but S is not a member of a class enclosing C, then a compile-time error occurs.
 
 If a superclass constructor invocation statement is qualified, then:
 
@@ -2911,9 +2937,15 @@ If S is not an inner class, or if the declaration of S occurs in a static contex
 
 If the superclass constructor invocation is unqualified, then S is necessarily a local class or an inner member class.
 
-Let O be the immediately enclosing class of S, and let n be an integer such that O is the n'th lexically enclosing type declaration of C.
+If S is a local class, then let O be the immediately enclosing type declaration of S.
+
+If S is an inner member class, then let O be the innermost enclosing class of C of which S is a member.
+
+Let n be an integer (n ≥ 1) such that O is the n'th lexically enclosing type declaration of C.
 
 The immediately enclosing instance of i with respect to S is the n'th lexically enclosing instance of this.
+
+While it may be the case that S is a member of C due to inheritance, the zeroth lexically enclosing instance of this (that is, this itself) is never used as the immediately enclosing instance of i with respect to S.
 
 If the superclass constructor invocation is qualified, then the Primary expression or the ExpressionName immediately preceding ".super", p, is evaluated.
 
@@ -3009,7 +3041,7 @@ Overloading of constructors is identical in behavior to overloading of methods (
 
 If a class contains no constructor declarations, then a default constructor is implicitly declared. The form of the default constructor for a top level class, member class, or local class is as follows:
 
-The default constructor has the same accessibility as the class (§6.6).
+The default constructor has the same access modifier as the class, unless the class lacks an access modifier, in which case the default constructor has package access (§6.6).
 
 The default constructor has no formal parameters, except in a non-private inner member class, where the default constructor implicitly declares one formal parameter representing the immediately enclosing instance of the class (§8.8.1, §15.9.2, §15.9.3).
 
@@ -3069,9 +3101,9 @@ The default constructor for Inner is protected. However, the constructor is prot
 
 8.8.10. Preventing Instantiation of a Class
 
-A class can be designed to prevent code outside the class declaration from creating instances of the class by declaring at least one constructor, to prevent the creation of a default constructor, and by declaring all constructors to be private.
+A class can be designed to prevent code outside the class declaration from creating instances of the class by declaring at least one constructor, to prevent the creation of a default constructor, and by declaring all constructors to be private (§6.6.1).
 
-A public class can likewise prevent the creation of instances outside its package by declaring at least one constructor, to prevent creation of a default constructor with public access, and by declaring no constructor that is public.
+A public class can likewise prevent the creation of instances outside its package by declaring at least one constructor, to prevent creation of a default constructor with public access, and by declaring no constructor that is public or protected (§6.6.2).
 
 Example 8.8.10-1. Preventing Instantiation via Constructor Accessibility
 
@@ -3094,7 +3126,7 @@ public class PackageOnly {
 
 
 
-the class PackageOnly can be instantiated only within the package just, in which it is declared.
+the public class PackageOnly can be instantiated only within the package just, in which it is declared. This restriction would also apply if the constructor of PackageOnly was protected, although in that case, it would be possible for code in other packages to instantiate subclasses of PackageOnly.
 
 
 
@@ -3113,7 +3145,7 @@ A nested enum type is implicitly static. It is permitted for the declaration of 
 
 This implies that it is impossible to declare an enum type in the body of an inner class (§8.1.3), because an inner class cannot have static members except for constant variables.
 
-It is a compile-time error if the same keyword appears more than once as a modifier for an enum declaration.
+It is a compile-time error if the same keyword appears more than once as a modifier for an enum declaration, or if an enum declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
 The direct superclass of an enum type E is Enum<E> (§8.1.4).
 
@@ -3188,7 +3220,7 @@ It is a compile-time error if a constructor declaration in an enum declaration i
 
 It is a compile-time error if a constructor declaration in an enum declaration contains a superclass constructor invocation statement (§8.8.7.1).
 
-It is a compile-time error to reference a static field of an enum type from constructors, instance initializers, or instance variable initializer expressions of the enum type, unless the field is a constant variable (§4.12.4).
+It is a compile-time error to refer to a static field of an enum type from a constructor, instance initializer, or instance variable initializer of the enum type, unless the field is a constant variable (§4.12.4).
 
 In an enum declaration, a constructor declaration with no access modifiers is private.
 
@@ -3261,7 +3293,7 @@ Members declared in the body of the declaration of E.
 
 Members inherited from Enum<E>.
 
-For each enum constant c declared in the body of the declaration of E, E has an implicitly declared public static final field of type E that has the same name as c. The field has a variable initializer consisting of c, and is annotated by the same annotations as c.
+For each enum constant c declared in the body of the declaration of E, E has an implicitly declared public static final field of type E that has the same name as c. The field has a variable initializer which instantiates E and passes any arguments of c to the constructor chosen for E. The field has the same annotations as c (if any).
 
 These fields are implicitly declared in the same order as the corresponding enum constants, before any static fields explicitly declared in the body of the declaration of E.
 

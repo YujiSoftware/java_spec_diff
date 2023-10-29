@@ -133,7 +133,7 @@ The conditional operator ? : (§15.25)
 
 The cast operator (§15.16), which can convert from an integral value to a value of any specified numeric type
 
-The string concatenation operator + (§15.18.1), which, when given a String operand and an integral operand, will convert the integral operand to a String representing its value in decimal form, and then produce a newly created String that is the concatenation of the two strings
+The string concatenation operator + (§15.18.1), which, when given a String operand and an integral operand, will convert the integral operand to a String (the decimal form of a byte, short, int, or long operand, or the character of a char operand), and then produce a newly created String that is the concatenation of the two strings
 
 Other useful constructors, methods, and constants are predefined in the classes Byte, Short, Integer, Long, and Character.
 
@@ -214,9 +214,9 @@ Except for NaN, floating-point values are ordered; arranged from smallest to lar
 
 IEEE 754 allows multiple distinct NaN values for each of its single and double floating-point formats. While each hardware architecture returns a particular bit pattern for NaN when a new NaN is generated, a programmer can also create NaNs with different bit patterns to encode, for example, retrospective diagnostic information.
 
-For the most part, the Java SE platform treats NaN values of a given type as though collapsed into a single canonical value, and hence this specification normally refers to an arbitrary NaN as though to a canonical value.
+For the most part, the Java SE Platform treats NaN values of a given type as though collapsed into a single canonical value, and hence this specification normally refers to an arbitrary NaN as though to a canonical value.
 
-However, version 1.3 of the Java SE platform introduced methods enabling the programmer to distinguish between NaN values: the Float.floatToRawIntBits and Double.doubleToRawLongBits methods. The interested reader is referred to the specifications for the Float and Double classes for more information.
+However, version 1.3 of the Java SE Platform introduced methods enabling the programmer to distinguish between NaN values: the Float.floatToRawIntBits and Double.doubleToRawLongBits methods. The interested reader is referred to the specifications for the Float and Double classes for more information.
 
 Positive zero and negative zero compare equal; thus the result of the expression 0.0==-0.0 is true and the result of 0.0>-0.0 is false. But other operations can distinguish positive and negative zero; for example, 1.0/0.0 has the value positive infinity, while the value of 1.0/-0.0 is negative infinity.
 
@@ -224,9 +224,9 @@ NaN is unordered, so:
 
 The numerical comparison operators <, <=, >, and >= return false if either or both operands are NaN (§15.20.1).
 
-The equality operator == returns false if either operand is NaN.
-
 In particular, (x<y) == !(x>=y) will be false if x or y is NaN.
+
+The equality operator == returns false if either operand is NaN.
 
 The inequality operator != returns true if either operand is NaN (§15.21.1).
 
@@ -276,7 +276,7 @@ Operators on floating-point numbers behave as specified by IEEE 754 (with the ex
 
 The Java programming language requires that floating-point arithmetic behave as if every floating-point operator rounded its floating-point result to the result precision. Inexact results must be rounded to the representable value nearest to the infinitely precise result; if the two nearest representable values are equally near, the one with its least significant bit zero is chosen. This is the IEEE 754 standard's default rounding mode known as round to nearest.
 
-The Java programming language uses round toward zero when converting a floating value to an integer (§5.1.3), which acts, in this case, as though the number were truncated, discarding the mantissa bits. Rounding toward zero chooses at its result the format's value closest to and no greater in magnitude than the infinitely precise result.
+The Java programming language uses round toward zero when converting a floating value to an integer (§5.1.3), which acts, in this case, as though the number were truncated, discarding the mantissa bits. Rounding toward zero chooses as its result the format's value closest to and no greater in magnitude than the infinitely precise result.
 
 A floating-point operation that overflows produces a signed infinity.
 
@@ -336,9 +336,9 @@ class Test {
 
 This program produces the output:
 
-overflow produces infinity: 1.0e+308*10==Infinity
+overflow produces infinity: 1.0E308*10==Infinity
 gradual underflow: 3.141592653589793E-305
-3.1415926535898E-310 3.141592653E-315 3.142E-320 0.0
+    3.1415926535898E-310 3.141592653E-315 3.142E-320 0.0
 0.0/0.0 is Not-a-Number: NaN
 inexact results with float: 0 41 47 55 61 82 83 94 97
 inexact results with double: 0 49 98
@@ -438,11 +438,7 @@ A class instance is explicitly created by a class instance creation expression (
 
 An array is explicitly created by an array creation expression (§15.10.1).
 
-A new class instance is implicitly created when the string concatenation operator + (§15.18.1) is used in a non-constant expression (§15.28), resulting in a new object of type String (§4.3.3).
-
-A new array object is implicitly created when an array initializer expression (§10.6) is evaluated; this can occur when a class or interface is initialized (§12.4), when a new instance of a class is created (§15.9), or when a local variable declaration statement is executed (§14.4).
-
-New objects of the types Boolean, Byte, Short, Character, Integer, Long, Float, and Double may be implicitly created by boxing conversion (§5.1.7).
+Other expressions may implicitly create a class instance (§12.5) or an array (§10.6).
 
 Example 4.3.1-1. Object Creation
 
@@ -589,7 +585,7 @@ The string concatenation operator + (§15.18.1) implicitly creates a new String 
 
 4.3.4. When Reference Types Are the Same
 
-Two reference types are the same compile-time type if they have the same binary name (§13.1) and their type arguments, if any, are the same, applying this definition recursively.
+Two reference types are the same compile-time type if they are declared in compilation units associated with the same module (§7.3), and they have the same binary name (§13.1), and their type arguments, if any, are the same, applying this definition recursively.
 
 When two reference types are the same, they are sometimes said to be the same class or the same interface.
 
@@ -895,7 +891,7 @@ An intersection type is not reifiable.
 
 The decision not to make all generic types reifiable is one of the most crucial, and controversial design decisions involving the type system of the Java programming language.
 
-Ultimately, the most important motivation for this decision is compatibility with existing code. In a naive sense, the addition of new constructs such as generics has no implications for pre-existing code. The Java programming language, per se, is compatible with earlier versions as long as every program written in the previous versions retains its meaning in the new version. However, this notion, which may be termed language compatibility, is of purely theoretical interest. Real programs (even trivial ones, such as "Hello World") are composed of several compilation units, some of which are provided by the Java SE platform (such as elements of java.lang or java.util). In practice, then, the minimum requirement is platform compatibility - that any program written for the prior version of the Java SE platform continues to function unchanged in the new version.
+Ultimately, the most important motivation for this decision is compatibility with existing code. In a naive sense, the addition of new constructs such as generics has no implications for pre-existing code. The Java programming language, per se, is compatible with earlier versions as long as every program written in the previous versions retains its meaning in the new version. However, this notion, which may be termed language compatibility, is of purely theoretical interest. Real programs (even trivial ones, such as "Hello World") are composed of several compilation units, some of which are provided by the Java SE Platform (such as elements of java.lang or java.util). In practice, then, the minimum requirement is platform compatibility - that any program written for the prior version of the Java SE Platform continues to function unchanged in the new version.
 
 One way to provide platform compatibility is to leave existing platform functionality unchanged, only adding new functionality. For example, rather than modify the existing Collections hierarchy in java.util, one might introduce a new library utilizing generics.
 
@@ -979,7 +975,7 @@ At an invocation of a method or constructor: if the type of the class or interfa
 
 No compile-time unchecked warning occurs for a method call when the formal parameter types do not change under erasure (even if the return type and/or throws clause changes), for reading from a field, or for a class instance creation of a raw type.
 
-Note that the unchecked warnings above are distinct from the unchecked warnings possible from unchecked conversion (§5.1.9), casts (§5.5.2), method declarations (§8.4.1, §8.4.8.3, §8.4.8.4, §9.4.1.2), and variable arity method invocations (§15.12.4.2).
+Note that the unchecked warnings above are distinct from the unchecked warnings possible from narrowing reference conversion (§5.1.6), unchecked conversion (§5.1.9), method declarations (§8.4.1, §8.4.8.3), and certain expressions (§15.12.4.2, §15.13.2, §15.27.3).
 
 The warnings here cover the case where a legacy consumer uses a generified library. For example, the library declares a generic class Foo<T extends String> that has a field f of type Vector<T>, but the consumer assigns a vector of integers to e.f where e has the raw type Foo. The legacy consumer receives a warning because it may have caused heap pollution (§4.12.2) for generified consumers of the generified library.
 
@@ -1131,7 +1127,7 @@ The raw type C.
 
 Given a generic type declaration C<F1,...,Fn> (n > 0), the direct supertypes of the parameterized type C<T1,...,Tn>, where Ti (1 ≤ i ≤ n) is a type, are all of the following:
 
-D<U1 θ,...,Uk θ>, where D<U1,...,Uk> is a generic type which is a direct supertype of the generic type C<T1,...,Tn> and θ is the substitution [F1:=T1,...,Fn:=Tn].
+D<U1 θ,...,Uk θ>, where D<U1,...,Uk> is a generic type which is a direct supertype of the generic type C<F1,...,Fn> and θ is the substitution [F1:=T1,...,Fn:=Tn].
 
 C<S1,...,Sn>, where Si contains Ti (1 ≤ i ≤ n) (§4.5.1).
 
@@ -1207,13 +1203,13 @@ Relevant(G) = { V | 1 ≤ i ≤ k: V in ST(Ui) and V = G<...> }
 
 In our running example, the only generic element of MEC is List, and Relevant(List) = { List<String>, List<Object> }. We will now seek to find a type argument for List that contains (§4.5.1) both String and Object.
 
-This is done by means of the least containing parameterization (lcp) operation defined below. The first line defines lcp() on a set, such as Relevant(List), as an operation on a list of the elements of the set. The next line defines the operation on such lists, as a pairwise reduction on the elements of the list. The third line is the definition of lcp() on pairs of parameterized types, which in turn relies on the notion of least containing type argument (lcta). lcta() is defined for all possible cases.
+This is done by means of the least containing parameterization (lcp) operation defined below. The first line defines lcp() on a set, such as Relevant(List), as an operation on a list consisting of the elements of the set. The next line defines the operation on such a list as a pairwise reduction on the elements of the list. The third line is the definition of lcp() on pairs of parameterized types, which in turn relies on the notion of least containing type argument (lcta). lcta() is defined for all possible cases.
 
 Let the "candidate" parameterization of G, Candidate(G), be the most specific parameterization of the generic type G that contains all the relevant parameterizations of G:
 
 Candidate(G) = lcp(Relevant(G))
 
-where lcp(), the least containing invocation, is:
+where lcp(), the least containing parameterization, is:
 
 lcp(S) = lcp(e1, ..., en) where ei (1 ≤ i ≤ n) in S
 
@@ -1233,7 +1229,7 @@ lcta(U, ? super V) = ? super glb(U, V)
 
 lcta(? extends U, ? extends V) = ? extends lub(U, V)
 
-lcta(? extends U, ? super V) = U if U = V, otherwise ?
+lcta(? extends U, ? super V) = ?
 
 lcta(? super U, ? super V) = ? super glb(U, V)
 
@@ -1479,7 +1475,7 @@ A variable of type Object can hold a null reference or a reference to any object
 
 It is possible that a variable of a parameterized type will refer to an object that is not of that parameterized type. This situation is known as heap pollution.
 
-Heap pollution can only occur if the program performed some operation involving a raw type that would give rise to a compile-time unchecked warning (§4.8, §5.1.9, §5.5.2, §8.4.1, §8.4.8.3, §8.4.8.4, §9.4.1.2, §15.12.4.2), or if the program aliases an array variable of non-reifiable element type through an array variable of a supertype which is either raw or non-generic.
+Heap pollution can only occur if the program performed some operation involving a raw type that would give rise to a compile-time unchecked warning (§4.8, §5.1.6, §5.1.9, §8.4.1, §8.4.8.3, §8.4.8.4, §9.4.1.2, §15.12.4.2), or if the program aliases an array variable of non-reifiable element type through an array variable of a supertype which is either raw or non-generic.
 
 For example, the code:
 
@@ -1511,7 +1507,7 @@ Heap pollution occurs at (1) because a component in the stringLists array that s
 
 A compile-time unchecked warning will be given at any invocation of the method above because an invocation is considered by the Java programming language's static type system to create an array whose element type, List<String>, is non-reifiable (§15.12.4.2). If and only if the body of the method was type-safe with respect to the variable arity parameter, then the programmer could use the SafeVarargs annotation to silence warnings at invocations (§9.6.4.7). Since the body of the method as written above causes heap pollution, it would be completely inappropriate to use the annotation to disable warnings for callers.
 
-Finally, note that the stringLists array could be aliased through variables of types other than Object[], and heap pollution could still occur. For example, the type of the array variable could be java.util.Collection[] - a raw element type - and the body of the method above would compile without warnings or errors and still cause heap pollution. And if the Java SE platform defined, say, Sequence as a non-generic supertype of List<T>, then using Sequence as the type of array would also cause heap pollution.
+Finally, note that the stringLists array could be aliased through variables of types other than Object[], and heap pollution could still occur. For example, the type of the array variable could be java.util.Collection[] - a raw element type - and the body of the method above would compile without warnings or errors and still cause heap pollution. And if the Java SE Platform defined, say, Sequence as a non-generic supertype of List<T>, then using Sequence as the type of array would also cause heap pollution.
 
 The variable will always refer to an object that is an instance of a class that represents the parameterized type.
 
@@ -1584,9 +1580,9 @@ Once a final variable has been assigned, it always contains the same value. If a
 
 A blank final is a final variable whose declaration lacks an initializer.
 
-A constant variable is a final variable of primitive type or type String that is initialized with a constant expression (§15.28). Whether a variable is a constant variable or not may have implications with respect to class initialization (§12.4.1), binary compatibility (§13.1, §13.4.9), and definite assignment (§16 (Definite Assignment)).
+A constant variable is a final variable of primitive type or type String that is initialized with a constant expression (§15.28). Whether a variable is a constant variable or not may have implications with respect to class initialization (§12.4.1), binary compatibility (§13.1), reachability (§14.21), and definite assignment (§16.1.1).
 
-Three kinds of variable are implicitly declared final: a field of an interface (§9.3), a local variable which is a resource of a try-with-resources statement (§14.20.3), and an exception parameter of a multi-catch clause (§14.20). An exception parameter of a uni-catch clause is never implicitly declared final, but may be effectively final.
+Three kinds of variable are implicitly declared final: a field of an interface (§9.3), a local variable declared as a resource of a try-with-resources statement (§14.20.3), and an exception parameter of a multi-catch clause (§14.20). An exception parameter of a uni-catch clause is never implicitly declared final, but may be effectively final.
 
 Example 4.12.4-1. Final Variables
 
@@ -1706,7 +1702,7 @@ The correspondence between compile-time types and run-time types is incomplete f
 
 At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
 
-See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 8 Edition for more details.
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 9 Edition for more details.
 
 Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile time. Specifically, all compile-time parameterizations of a given generic type (§8.1.2, §9.1.2) share a single run-time representation.
 

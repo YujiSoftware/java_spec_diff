@@ -25,17 +25,17 @@ Table of Contents
 
 This chapter specifies activities that occur during execution of a program. It is organized around the life cycle of the Java Virtual Machine and of the classes, interfaces, and objects that form a program.
 
-The Java Virtual Machine starts up by loading a specified class and then invoking the method main in this specified class. Section §12.1 outlines the loading, linking, and initialization steps involved in executing main, as an introduction to the concepts in this chapter. Further sections specify the details of loading (§12.2), linking (§12.3), and initialization (§12.4).
+The Java Virtual Machine starts up by loading a specified class or interface, then invoking the method main in this specified class or interface. Section §12.1 outlines the loading, linking, and initialization steps involved in executing main, as an introduction to the concepts in this chapter. Further sections specify the details of loading (§12.2), linking (§12.3), and initialization (§12.4).
 
 The chapter continues with a specification of the procedures for creation of new class instances (§12.5); and finalization of class instances (§12.6). It concludes by describing the unloading of classes (§12.7) and the procedure followed when a program exits (§12.8).
 
 12.1. Java Virtual Machine Startup
 
-The Java Virtual Machine starts execution by invoking the method main of some specified class, passing it a single argument, which is an array of strings. In the examples in this specification, this first class is typically called Test.
+The Java Virtual Machine starts execution by invoking the method main of some specified class or interface, passing it a single argument which is an array of strings. In the examples in this specification, this first class is typically called Test.
 
-The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 8 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 9 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
-The manner in which the initial class is specified to the Java Virtual Machine is beyond the scope of this specification, but it is typical, in host environments that use command lines, for the fully-qualified name of the class to be specified as a command-line argument and for following command-line arguments to be used as strings to be provided as the argument to the method main.
+The manner in which the initial class or interface is specified to the Java Virtual Machine is beyond the scope of this specification, but it is typical, in host environments that use command lines, for the fully qualified name of the class or interface to be specified as a command line argument and for following command line arguments to be used as strings to be provided as the argument to the method main.
 
 For example, in a UNIX implementation, the command line:
 
@@ -98,9 +98,9 @@ public static void main(String... args)
 
 Loading refers to the process of finding the binary form of a class or interface type with a particular name, perhaps by computing it on the fly, but more typically by retrieving a binary representation previously computed from source code by a Java compiler, and constructing, from that binary form, a Class object to represent the class or interface.
 
-The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 8 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 9 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
-The binary format of a class or interface is normally the class file format described in The Java Virtual Machine Specification, Java SE 8 Edition cited above, but other formats are possible, provided they meet the requirements specified in §13.1. The method defineClass of class ClassLoader may be used to construct Class objects from binary representations in the class file format.
+The binary format of a class or interface is normally the class file format described in The Java Virtual Machine Specification, Java SE 9 Edition cited above, but other formats are possible, provided they meet the requirements specified in §13.1. The method defineClass of class ClassLoader may be used to construct Class objects from binary representations in the class file format.
 
 Well-behaved class loaders maintain these properties:
 
@@ -110,7 +110,7 @@ If a class loader L1 delegates loading of a class C to another loader L2, then f
 
 A malicious class loader could violate these properties. However, it could not undermine the security of the type system, because the Java Virtual Machine guards against this.
 
-For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 8 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
+For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 9 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of such otherwise sensitive system classes as ClassLoader and SecurityManager.
 
 12.2.1. The Loading Process
 
@@ -134,7 +134,7 @@ Linking is the process of taking a binary form of a class or interface type and 
 
 Three different activities are involved in linking: verification, preparation, and resolution of symbolic references.
 
-The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 8 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 9 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 This specification allows an implementation flexibility as to when linking activities (and, because of recursion, loading) take place, provided that the semantics of the Java programming language are respected, that a class or interface is completely verified and prepared before it is initialized, and that errors detected during linkage are thrown at a point in the program where some action is taken by the program that might require linkage to the class or interface involved in the error.
 
@@ -164,9 +164,9 @@ Before a symbolic reference can be used it must undergo resolution, wherein a sy
 
 If an error occurs during resolution, then an error will be thrown. Most typically, this will be an instance of one of the following subclasses of the class IncompatibleClassChangeError, but it may also be an instance of some other subclass of IncompatibleClassChangeError or even an instance of the class IncompatibleClassChangeError itself. This error may be thrown at any point in the program that uses a symbolic reference to the type, directly or indirectly:
 
-IllegalAccessError: A symbolic reference has been encountered that specifies a use or assignment of a field, or invocation of a method, or creation of an instance of a class, to which the code containing the reference does not have access because the field or method was declared with private, protected, or package access (not public), or because the class was not declared public.
+IllegalAccessError: A symbolic reference has been encountered that specifies a use or assignment of a field, or invocation of a method, or creation of an instance of a class, to which the code containing the reference does not have access because the field or method was declared with private, protected, or package access (not public), or because the class was not declared public in a package that is exported or opened to the code containing the reference.
 
-This can occur, for example, if a field that is originally declared public is changed to be private after another class that refers to the field has been compiled (§13.4.7).
+This can occur, for example, if a field that is originally declared public is changed to be private after another class that refers to the field has been compiled (§13.4.7); or if the package in which a public class is declared ceases to be exported by its module after another module that refers to the class has been compiled (§13.3).
 
 InstantiationError: A symbolic reference has been encountered that is used in class instance creation expression, but an instance cannot be created because the reference turns out to refer to an interface or to an abstract class.
 
@@ -199,8 +199,6 @@ A static method declared by T is invoked.
 A static field declared by T is assigned.
 
 A static field declared by T is used and the field is not a constant variable (§4.12.4).
-
-T is a top level class (§7.6) and an assert statement (§14.10) lexically nested within T (§8.1.3) is executed.
 
 When a class is initialized, its superclasses are initialized (if they have not been previously initialized), as well as any superinterfaces (§8.1.5) that declare any default methods (§9.4.3) (if they have not been previously initialized). Initialization of an interface does not, of itself, cause initialization of any of its superinterfaces.
 
@@ -340,9 +338,9 @@ Otherwise, record the fact that initialization of the Class object for C is in p
 
 Then, initialize the static fields of C which are constant variables (§4.12.4, §8.3.2, §9.3.1).
 
-Next, if C is a class rather than an interface, and its superclass has not yet been initialized, then let SC be its superclass and let SI1, ..., SIn be all superinterfaces of C that declare at least one default method. The order of superinterfaces is given by a recursive enumeration over the superinterface hierarchy of each interface directly implemented by C (in the left-to-right order of C's implements clause). For each interface I directly implemented by C, the enumeration recurs on I's superinterfaces (in the left-to-right order of I's extends clause) before returning I.
+Next, if C is a class rather than an interface, then let SC be its superclass and let SI1, ..., SIn be all superinterfaces of C that declare at least one default method. The order of superinterfaces is given by a recursive enumeration over the superinterface hierarchy of each interface directly implemented by C (in the left-to-right order of C's implements clause). For each interface I directly implemented by C, the enumeration recurs on I's superinterfaces (in the left-to-right order of I's extends clause) before returning I.
 
-For each S in the list [ SC, SI1, ..., SIn ], recursively perform this entire procedure for S. If necessary, verify and prepare S first.
+For each S in the list [ SC, SI1, ..., SIn ], if S has not yet been initialized, then recursively perform this entire procedure for S. If necessary, verify and prepare S first.
 
 If the initialization of S completes abruptly because of a thrown exception, then acquire LC, label the Class object for C as erroneous, notify all waiting threads, release LC, and complete abruptly, throwing the same exception that resulted from initializing S.
 
@@ -370,7 +368,7 @@ A new class instance may be implicitly created in the following situations:
 
 Loading of a class or interface that contains a String literal (§3.10.5) may create a new String object to represent that literal. (This might not occur if the same String has previously been interned (§3.10.5).)
 
-Execution of an operation that causes boxing conversion (§5.1.7). Boxing conversion may create a new object of a wrapper class associated with one of the primitive types.
+Execution of an operation that causes boxing conversion (§5.1.7). Boxing conversion may create a new object of a wrapper class (Boolean, Byte, Short, Character, Integer, Long, Float, Double) associated with one of the primitive types.
 
 Execution of a string concatenation operator + (§15.18.1) that is not part of a constant expression (§15.28) always creates a new String object to represent the result. String concatenation operators may also create temporary wrapper objects for a value of a primitive type.
 

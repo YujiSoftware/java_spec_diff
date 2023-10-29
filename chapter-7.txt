@@ -1,30 +1,39 @@
-Chapter 7. Packages
+Chapter 7. Packages and Modules
 
 Table of Contents
 
 7.1. Package Members
-7.2. Host Support for Packages
+7.2. Host Support for Modules and Packages
 7.3. Compilation Units
 7.4. Package Declarations
 7.4.1. Named Packages
 7.4.2. Unnamed Packages
-7.4.3. Observability of a Package
+7.4.3. Package Observability and Visibility
 7.5. Import Declarations
 7.5.1. Single-Type-Import Declarations
 7.5.2. Type-Import-on-Demand Declarations
 7.5.3. Single-Static-Import Declarations
 7.5.4. Static-Import-on-Demand Declarations
 7.6. Top Level Type Declarations
+7.7. Module Declarations
+7.7.1. Dependences
+7.7.2. Exported and Opened Packages
+7.7.3. Service Consumption
+7.7.4. Service Provision
+7.7.5. Unnamed Modules
+7.7.6. Observability of a Module
 
-Programs are organized as sets of packages. Each package has its own set of names for types, which helps to prevent name conflicts.
+Programs are organized as sets of packages. The members of a package (§7.1) are class and interface types, which are declared in compilation units of the package, and subpackages, which may contain compilation units and subpackages of their own.
 
-A top level type is accessible (§6.6) outside the package that declares it only if the type is declared public.
+Each package has its own set of names for types, which helps to prevent name conflicts. The naming structure for packages is hierarchical.
 
-The naming structure for packages is hierarchical (§7.1). The members of a package are class and interface types (§7.6), which are declared in compilation units of the package, and subpackages, which may contain compilation units and subpackages of their own.
+If a set of packages is sufficiently cohesive, then the packages may be grouped into a module. A module categorizes some or all of its packages as exported, which means their types may be accessed from code outside the module. If a package is not exported by a module, then only code inside the module may access its types. Furthermore, if code in a module wishes to access the packages exported by another module, then the first module must explicitly depend on the second module. Thus, a module controls how its packages use other modules (by specifying dependences) and controls how other modules use its packages (by specifying which of its packages are exported).
 
-A package can be stored in a file system or in a database (§7.2). Packages that are stored in a file system may have certain constraints on the organization of their compilation units to allow a simple implementation to find classes easily.
+Modules and packages may be stored in a file system or in a database (§7.2). Modules and packages that are stored in a file system may have certain constraints on the organization of their compilation units to allow a simple implementation to find module and type declarations easily.
 
-A package consists of a number of compilation units (§7.3). A compilation unit automatically has access to all types declared in its package and also automatically imports all of the public types declared in the predefined package java.lang.
+Code in a compilation unit automatically has access to all types declared in its package and also automatically imports all of the public types declared in the predefined package java.lang.
+
+A top level type is accessible (§6.6) outside the package that declares it only if the type is declared public. A top level type is accessible outside the module that declares it only if the type is declared public and is a member of an exported package. A type that is declared public but is not a member of an exported package is accessible only to code inside the module.
 
 For small programs and casual development, a package can be unnamed (§7.4.2) or have a simple name, but if code is to be widely distributed, unique package names should be chosen using qualified names. This can prevent the conflicts that would otherwise occur if two development groups happened to pick the same package name and these packages were later to be used in a single program.
 
@@ -32,7 +41,7 @@ For small programs and casual development, a package can be unnamed (§7.4.2) or
 
 The members of a package are its subpackages and all the top level class types (§7.6, §8 (Classes)) and top level interface types (§9 (Interfaces)) declared in all the compilation units (§7.3) of the package.
 
-For example, in the Java SE platform API:
+For example, in the Java SE Platform API:
 
 The package java has subpackages awt, applet, io, lang, net, and util, but no compilation units.
 
@@ -58,19 +67,23 @@ public class Vector { Object[] vec; }
 
 
 
-that has as a member a public class named Vector, even though the package java.util also declares a class named Vector. These two class types are different, reflected by the fact that they have different fully qualified names (§6.7). The fully qualified name of this example Vector is vector.Vector, whereas java.util.Vector is the fully qualified name of the Vector class included in the Java SE platform. Because the package vector contains a class named Vector, it cannot also have a subpackage named Vector.
+that has as a member a public class named Vector, even though the package java.util also declares a class named Vector. These two class types are different, reflected by the fact that they have different fully qualified names (§6.7). The fully qualified name of this example Vector is vector.Vector, whereas java.util.Vector is the fully qualified name of the Vector class included in the Java SE Platform. Because the package vector contains a class named Vector, it cannot also have a subpackage named Vector.
 
 The hierarchical naming structure for packages is intended to be convenient for organizing related packages in a conventional manner, but has no significance in itself other than the prohibition against a package having a subpackage with the same simple name as a top level type (§7.6) declared in that package.
 
 For example, there is no special access relationship between a package named oliver and another package named oliver.twist, or between packages named evelyn.wood and evelyn.waugh. That is, the code in a package named oliver.twist has no better access to the types declared within package oliver than code in any other package.
 
-7.2. Host Support for Packages
+7.2. Host Support for Modules and Packages
 
-Each host system determines how packages and compilation units are created and stored.
+Each host system determines how modules, packages, and compilation units are created and stored.
 
-Each host system also determines which compilation units are observable (§7.3) in a particular compilation. The observability of compilation units in turn determines which packages are observable, and which packages are in scope.
+Each host system determines which compilation units are observable in a particular compilation (§7.3). Each host system also determines which observable compilation units are associated with a module. The observability of compilation units associated with a module determines which modules are observable (§7.7.3) and which packages are visible within those modules (§7.4.3).
 
-In simple implementations of the Java SE platform, packages and compilation units may be stored in a local file system. Other implementations may store them using a distributed file system or some form of database.
+The host system is free to determine that a compilation unit which contains a module declaration is not, in fact, observable, and thus is not associated with the module declared therein. This enables a compiler to choose which directory on a modulesourcepath is "really" the embodiment of a given module. However, if the host system determines that a compilation unit which contains a module declaration is observable, then §7.4.3 mandates that the compilation unit must be associated with the module declared therein, and not with any other module.
+
+The host system is free to determine that a compilation unit which contains a type declaration is (first) observable and (second) associated with an unnamed module or an automatic module - despite no declaration of an unnamed or automatic module existing in any compilation unit, observable or otherwise.
+
+In simple implementations of the Java SE Platform, packages and compilation units may be stored in a local file system. Other implementations may store them using a distributed file system or some form of database.
 
 If a host system stores packages and compilation units in a database, then the database must not impose the optional restrictions (§7.6) on compilation units permissible in file-based implementations.
 
@@ -89,7 +102,7 @@ java
 wnj
 
 
-where directory java would contain the Java SE platform packages; the directories jag, gls, and wnj might contain packages that three of the authors of this specification created for their personal use and to share with each other within this small group; and the directory com would contain packages procured from companies that used the conventions described in §6.1 to generate unique names for their packages.
+where directory java would contain the Java SE Platform packages; the directories jag, gls, and wnj might contain packages that three of the authors of this specification created for their personal use and to share with each other within this small group; and the directory com would contain packages procured from companies that used the conventions described in §6.1 to generate unique names for their packages.
 
 Continuing the example, the directory java would contain, among others, the following subdirectories:
 
@@ -101,7 +114,7 @@ net
 util
 
 
-corresponding to the packages java.applet, java.awt, java.io, java.lang, java.net, and java.util that are defined as part of the Java SE platform API.
+corresponding to the packages java.applet, java.awt, java.io, java.lang, java.net, and java.util that are defined as part of the Java SE Platform API.
 
 Still continuing the example, if we were to look inside the directory util, we might see the following files:
 
@@ -114,7 +127,7 @@ Date.class         Observer.class
 
 where each of the .java files contains the source for a compilation unit (§7.3) that contains the definition of a class or interface whose binary compiled form is contained in the corresponding .class file.
 
-Under this simple organization of packages, an implementation of the Java SE platform would transform a package name into a pathname by concatenating the components of the package name, placing a file name separator (directory indicator) between adjacent components.
+Under this simple organization of packages, an implementation of the Java SE Platform would transform a package name into a pathname by concatenating the components of the package name, placing a file name separator (directory indicator) between adjacent components.
 
 For example, if this simple organization were used on an operating system where the file name separator is /, the package name:
 
@@ -147,12 +160,17 @@ If the @ character is not a valid character in a file name for some given host f
 
 7.3. Compilation Units
 
-CompilationUnit is the goal symbol (§2.1) for the syntactic grammar (§2.3) of Java programs. It is defined by the following productions:
+CompilationUnit is the goal symbol (§2.1) for the syntactic grammar (§2.3) of Java programs. It is defined by the following production:
 
 CompilationUnit:
+OrdinaryCompilationUnit
+ModularCompilationUnit
+OrdinaryCompilationUnit:
 [PackageDeclaration] {ImportDeclaration} {TypeDeclaration}
+ModularCompilationUnit:
+{ImportDeclaration} ModuleDeclaration
 
-A compilation unit consists of three parts, each of which is optional:
+An ordinary compilation unit consists of three parts, each of which is optional:
 
 A package declaration (§7.4), giving the fully qualified name (§6.7) of the package to which the compilation unit belongs.
 
@@ -162,23 +180,37 @@ import declarations (§7.5) that allow types from other packages and static memb
 
 Top level type declarations (§7.6) of class and interface types.
 
-Every compilation unit implicitly imports every public type name declared in the predefined package java.lang, as if the declaration import java.lang.*; appeared at the beginning of each compilation unit immediately after any package statement. As a result, the names of all those types are available as simple names in every compilation unit.
+A modular compilation unit consists of a module declaration (§7.7), optionally preceded by import declarations. The import declarations allow types from packages in this module and other modules, as well as static members of types, to be referred to using their simple names within the module declaration.
 
-All the compilation units of the predefined package java and its subpackages lang and io are always observable.
+Every compilation unit implicitly imports every public type name declared in the predefined package java.lang, as if the declaration import java.lang.*; appeared at the beginning of each compilation unit immediately after any package declaration. As a result, the names of all those types are available as simple names in every compilation unit.
 
-For all other packages, the host system determines which compilation units are observable.
+The host system determines which compilation units are observable, except for the compilation units in the predefined package java and its subpackages lang and io, which are all always observable.
 
-The observability of a compilation unit influences the observability of its package (§7.4.3).
+Each observable compilation unit may be associated with a module, as follows:
 
-Types declared in different compilation units can depend on each other, circularly. A Java compiler must arrange to compile all such types at the same time.
+The host system may determine that an observable ordinary compilation unit is associated with a module chosen by the host system, except for the ordinary compilation units in the predefined package java and its subpackages lang and io, which are all associated with the java.base module.
+
+The host system must determine that an observable modular compilation unit is associated with the module declared by the modular compilation unit.
+
+The observability of a compilation unit influences the observability of its package (§7.4.3), while the association of an observable compilation unit with a module influences the observability of that module (§7.7.6).
+
+When compiling the modular and ordinary compilation units associated with a module M, the host system must respect the dependences specified in M's declaration. Specifically, the host system must limit the ordinary compilation units that would otherwise be observable, to only those that are visible to M. The ordinary compilation units that are visible to M are the observable ordinary compilation units associated with the modules that are read by M. The modules read by M are given by the result of resolution, as described in the java.lang.module package specification, with M as the only root module. The host system must perform resolution to determine the modules read by M; it is a compile-time error if resolution fails for any of the reasons described in the java.lang.module package specification.
+
+The readability relation is reflexive, so M reads itself, and thus all of the modular and ordinary compilation units associated with M are visible to M.
+
+The modules read by M drive the packages that are uniquely visible to M (§7.4.3), which in turn drives both the top level packages in scope and the meaning of package names for code in the modular and ordinary compilation units associated with M (§6.3, §6.5.3, §6.5.5).
+
+The rules above ensure that package/type names used in annotations in a modular compilation unit (in particular, annotations applied to the module declaration) are interpreted as if they appeared in an ordinary compilation unit associated with the module.
+
+Types declared in different ordinary compilation units can refer to each other, circularly. A Java compiler must arrange to compile all such types at the same time.
 
 7.4. Package Declarations
 
-A package declaration appears within a compilation unit to indicate the package to which the compilation unit belongs.
+A package declaration appears within an ordinary compilation unit to indicate the package to which the compilation unit belongs.
 
 7.4.1. Named Packages
 
-A package declaration in a compilation unit specifies the name (§6.2) of the package to which the compilation unit belongs.
+A package declaration in an ordinary compilation unit specifies the name (§6.2) of the package to which the compilation unit belongs.
 
 PackageDeclaration:
 {PackageModifier} package Identifier {. Identifier} ;
@@ -193,21 +225,23 @@ The rules for annotation modifiers on a package declaration are specified in §9
 
 At most one annotated package declaration is permitted for a given package.
 
-The manner in which this restriction is enforced must, of necessity, vary from implementation to implementation. The following scheme is strongly recommended for file-system-based implementations: The sole annotated package declaration, if it exists, is placed in a source file called package-info.java in the directory containing the source files for the package. This file does not contain the source for a class called package-info.java; indeed it would be illegal for it to do so, as package-info is not a legal identifier. Typically package-info.java contains only a package declaration, preceded immediately by the annotations on the package. While the file could technically contain the source code for one or more classes with package access, it would be very bad form.
+The manner in which this restriction is enforced must, of necessity, vary from implementation to implementation. The following scheme is strongly recommended for file-system-based implementations: The sole annotated package declaration, if it exists, is placed in a source file called package-info.java in the directory containing the source files for the package. This file does not contain the source for a class called package-info; indeed it would be illegal for it to do so, as package-info is not a legal identifier. Typically package-info.java contains only a package declaration, preceded immediately by the annotations on the package. While the file could technically contain the source code for one or more classes with package access, it would be very bad form.
 
 It is recommended that package-info.java, if it is present, take the place of package.html for javadoc and other similar documentation generation systems. If this file is present, the documentation generation tool should look for the package documentation comment immediately preceding the (possibly annotated) package declaration in package-info.java. In this way, package-info.java becomes the sole repository for package-level annotations and documentation. If, in future, it becomes desirable to add any other package-level information, this file should prove a convenient home for this information.
 
 7.4.2. Unnamed Packages
 
-A compilation unit that has no package declaration is part of an unnamed package.
+An ordinary compilation unit that has no package declaration is part of an unnamed package.
 
-Unnamed packages are provided by the Java SE platform principally for convenience when developing small or temporary applications or when just beginning development.
+Unnamed packages are provided by the Java SE Platform principally for convenience when developing small or temporary applications or when just beginning development.
 
 An unnamed package cannot have subpackages, since the syntax of a package declaration always includes a reference to a named top level package.
 
-An implementation of the Java SE platform must support at least one unnamed package. An implementation may support more than one unnamed package, but is not required to do so. Which compilation units are in each unnamed package is determined by the host system.
+An implementation of the Java SE Platform must support at least one unnamed package. An implementation may support more than one unnamed package, but is not required to do so. Which ordinary compilation units are in each unnamed package is determined by the host system.
 
-Example 7.4.2-1. 
+The host system must associate ordinary compilation units in an unnamed package with an unnamed module (§7.7.5), not a named module.
+
+Example 7.4.2-1. Unnamed Package
 
 The compilation unit:
 
@@ -224,19 +258,29 @@ defines a very simple compilation unit as part of an unnamed package.
 
 
 
-In implementations of the Java SE platform that use a hierarchical file system for storing packages, one typical strategy is to associate an unnamed package with each directory; only one unnamed package is observable at a time, namely the one that is associated with the "current working directory". The precise meaning of "current working directory" depends on the host system.
+In implementations of the Java SE Platform that use a hierarchical file system for storing packages, one typical strategy is to associate an unnamed package with each directory; only one unnamed package is observable at a time, namely the one that is associated with the "current working directory". The precise meaning of "current working directory" depends on the host system.
 
-7.4.3. Observability of a Package
+7.4.3. Package Observability and Visibility
 
-A package is observable if and only if either:
+A package is observable if and only if at least one of the following is true:
 
-A compilation unit containing a declaration of the package is observable (§7.3).
+An ordinary compilation unit containing a declaration of the package is observable (§7.3).
 
 A subpackage of the package is observable.
 
 The packages java, java.lang, and java.io are always observable.
 
-One can conclude this from the rule above and from the rules of observable compilation units, as follows. The predefined package java.lang declares the class Object, so the compilation unit for Object is always observable (§7.3). Hence, the java.lang package is observable (§7.4.3), and the java package also. Furthermore, since Object is observable, the array type Object[] implicitly exists. Its superinterface java.io.Serializable (§10.1) also exists, hence the java.io package is observable.
+One can conclude this from the rule above and from the rules of observable compilation units, as follows. The predefined package java.lang declares the class Object, so the compilation unit for Object is always observable (§7.3). Hence, the java.lang package is observable, and the java package also. Furthermore, since Object is observable, the array type Object[] implicitly exists. Its superinterface java.io.Serializable (§10.1) also exists, hence the java.io package is observable.
+
+A package is visible to a module M if and only if an ordinary compilation unit containing a declaration of the package is visible to M.
+
+Package visibility is meant to imply that a package is "really" observable in some module on the system. It is not useful to think that package P is "technically" observable just because a subpackage P.Q is "technically" observable in some module. For example, suppose P.Q is "technically" observable in module M1 and P.R is "technically" observable in module M2; then, P is "technically" observable, but in M1 or M2 or both? During the compilwation of some module N that requires M1 only, it matters that P.Q is "really" observable, and it does not matter that P is "technically" observable.
+
+A package is uniquely visible to a module M if and only if one of the following holds:
+
+An ordinary compilation unit associated with M contains a declaration of the package, and M does not read any other module that exports the package to M.
+
+No ordinary compilation unit associated with M contains a declaration of the package, and M reads exactly one other module that exports the package to M.
 
 7.5. Import Declarations
 
@@ -252,7 +296,7 @@ StaticImportOnDemandDeclaration
 
 A single-type-import declaration (§7.5.1) imports a single named type, by mentioning its canonical name (§6.7).
 
-A type-import-on-demand declaration (§7.5.2) imports all the accessible types (§6.6) of a named type or named package as needed, by mentioning the canonical name of a type or package.
+A type-import-on-demand declaration (§7.5.2) imports all the accessible types of a named type or named package as needed, by mentioning the canonical name of a type or package.
 
 A single-static-import declaration (§7.5.3) imports all accessible static members with a given name from a type, by giving its canonical name.
 
@@ -264,14 +308,14 @@ An import declaration makes types or members available by their simple names onl
 
 7.5.1. Single-Type-Import Declarations
 
-A single-type-import declaration imports a single type by giving its canonical name, making it available under a simple name in the class and interface declarations of the compilation unit in which the single-type-import declaration appears.
+A single-type-import declaration imports a single type by giving its canonical name, making it available under a simple name in the module, class, and interface declarations of the compilation unit in which the single-type-import declaration appears.
 
 SingleTypeImportDeclaration:
 import TypeName ;
 
 The TypeName must be the canonical name of a class type, interface type, enum type, or annotation type (§6.7).
 
-The name must be qualified (§6.5.5.2), or a compile-time error occurs.
+The type must be either a member of a named package, or a member of a type whose outermost lexically enclosing type declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
 
 It is a compile-time error if the named type is not accessible (§6.6).
 
@@ -327,7 +371,7 @@ public class Vector { Object[] vec; }
 
 Example 7.5.1-3. No Import of a Subpackage
 
-Note that an import statement cannot import a subpackage, only a type.
+Note that an import declaration cannot import a subpackage, only a type.
 
 For example, it does not work to try to import java.util and then use the name util.Random to refer to the type java.util.Random:
 
@@ -377,9 +421,9 @@ import PackageOrTypeName . * ;
 
 The PackageOrTypeName must be the canonical name (§6.7) of a package, a class type, an interface type, an enum type, or an annotation type.
 
-If the PackageOrTypeName denotes a type (§6.5.4), then the name must be qualified (§6.5.5.2), or a compile-time error occurs.
+If the PackageOrTypeName denotes a type (§6.5.4), then the type must be either a member of a named package, or a member of a type whose outermost lexically enclosing type declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
 
-It is a compile-time error if the named package or type is not accessible (§6.6).
+It is a compile-time error if the named package is not uniquely visible to the current module (§7.4.3), or if the named type is not accessible (§6.6).
 
 It is not a compile-time error to name either java.lang or the named package of the current compilation unit in a type-import-on-demand declaration. The type-import-on-demand declaration is ignored in such cases.
 
@@ -406,20 +450,20 @@ The declaration might be obscured by a declaration of a field, parameter, or loc
 
 7.5.3. Single-Static-Import Declarations
 
-A single-static-import declaration imports all accessible static members with a given simple name from a type. This makes these static members available under their simple name in the class and interface declarations of the compilation unit in which the single-static-import declaration appears.
+A single-static-import declaration imports all accessible static members with a given simple name from a type. This makes these static members available under their simple name in the module, class, and interface declarations of the compilation unit in which the single-static-import declaration appears.
 
 SingleStaticImportDeclaration:
 import static TypeName . Identifier ;
 
 The TypeName must be the canonical name (§6.7) of a class type, interface type, enum type, or annotation type.
 
-The name must be qualified (§6.5.5.2), or a compile-time error occurs.
+The type must be either a member of a named package, or a member of a type whose outermost lexically enclosing type declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
 
 It is a compile-time error if the named type is not accessible (§6.6).
 
 The Identifier must name at least one static member of the named type. It is a compile-time error if there is no static member of that name, or if all of the named members are not accessible.
 
-It is permissible for one single-static-import declaration to import several fields or types with the same name, or several methods with the same name and signature.
+It is permissible for one single-static-import declaration to import several fields or types with the same name, or several methods with the same name and signature. This occurs when the named type inherits multiple fields, member types, or methods, all with the same name, from its own supertypes.
 
 If a single-static-import declaration imports a type whose simple name is n, and the compilation unit also declares a top level type (§7.6) whose simple name is n, a compile-time error occurs.
 
@@ -434,7 +478,7 @@ import static TypeName . * ;
 
 The TypeName must be the canonical name (§6.7) of a class type, interface type, enum type, or annotation type.
 
-The name must be qualified (§6.5.5.2), or a compile-time error occurs.
+The type must be either a member of a named package, or a member of a type whose outermost lexically enclosing type declaration (§8.1.3) is a member of a named package, or a compile-time error occurs.
 
 It is a compile-time error if the named type is not accessible (§6.6).
 
@@ -442,7 +486,7 @@ Two or more static-import-on-demand declarations in the same compilation unit ma
 
 Two or more static-import-on-demand declarations in the same compilation unit may name the same member; the effect is as if the member was imported exactly once.
 
-It is permissible for one static-import-on-demand declaration to import several fields or types with the same name, or several methods with the same name and signature.
+It is permissible for one static-import-on-demand declaration to import several fields or types with the same name, or several methods with the same name and signature. This occurs when the named type inherits multiple fields, member types, or methods, all with the same name, from its own supertypes.
 
 If a compilation unit contains both a static-import-on-demand declaration and a type-import-on-demand declaration (§7.5.2) that name the same type, the effect is as if the static member types of that type (§8.5, §9.5) were imported only once.
 
@@ -457,7 +501,7 @@ InterfaceDeclaration
 
 Extra ";" tokens appearing at the level of type declarations in a compilation unit have no effect on the meaning of the compilation unit. Stray semicolons are permitted in the Java programming language solely as a concession to C++ programmers who are used to placing ";" after a class declaration. They should not be used in new Java code.
 
-In the absence of an access modifier, a top level type has package access: it is accessible only within compilation units of the package in which it is declared (§6.6.1). A type may be declared public to grant access to the type from code in other packages.
+In the absence of an access modifier, a top level type has package access: it is accessible only within ordinary compilation units of the package in which it is declared (§6.6.1). A type may be declared public to grant access to the type from code in other packages of the same module, and potentially from code in packages of other modules.
 
 It is a compile-time error if a top level type declaration contains any one of the following access modifiers: protected, private, or static.
 
@@ -523,7 +567,7 @@ class Point { int x, y; }
 
 
 
-In this code, the class Point is declared in a compilation unit with no package statement, and thus Point is its fully qualified name, whereas in the code:
+In this code, the class Point is declared in a compilation unit with no package declaration, and thus Point is its fully qualified name, whereas in the code:
 
 
 package vista;
@@ -536,7 +580,7 @@ the fully qualified name of the class Point is vista.Point. (The package name vi
 
 
 
-An implementation of the Java SE platform must keep track of types within packages by their binary names (§13.1). Multiple ways of naming a type must be expanded to binary names to make sure that such names are understood as referring to the same type.
+An implementation of the Java SE Platform must keep track of types within packages by the combination of their enclosing module names and their binary names (§13.1). Multiple ways of naming a type must be expanded to binary names to make sure that such names are understood as referring to the same type.
 
 For example, if a compilation unit contains the single-type-import declaration (§7.5.1):
 
@@ -549,10 +593,270 @@ then within that compilation unit, the simple name Vector and the fully qualifie
 
 If and only if packages are stored in a file system (§7.2), the host system may choose to enforce the restriction that it is a compile-time error if a type is not found in a file under a name composed of the type name plus an extension (such as .java or .jav) if either of the following is true:
 
-The type is referred to by code in other compilation units of the package in which the type is declared.
+The type is referred to by code in other ordinary compilation units of the package in which the type is declared.
 
 The type is declared public (and therefore is potentially accessible from code in other packages).
 
 This restriction implies that there must be at most one such type per compilation unit. This restriction makes it easy for a Java compiler to find a named class within a package. In practice, many programmers choose to put each class or interface type in its own compilation unit, whether or not it is public or is referred to by code in other compilation units.
 
 For example, the source code for a public type wet.sprocket.Toad would be found in a file Toad.java in the directory wet/sprocket, and the corresponding object code would be found in the file Toad.class in the same directory.
+
+7.7. Module Declarations
+
+A module declaration specifies a new named module. A named module specifies dependences on other modules to define the universe of classes and interfaces available to its own code; and specifies which of its packages are exported or opened in order to populate the universe of classes and interfaces available to other modules which specify a dependence on it.
+
+A "dependence" is what is expressed by a requires directive, independent of whether a module exists with the name specified by the directive. A "dependency" is the observable module enumerated by resolution (as described in the java.lang.module package specification) for a given requires directive. Generally, the rules of the Java programming language are more interested in dependences than dependencies.
+
+ModuleDeclaration:
+{Annotation} [open] module Identifier {. Identifier} { {ModuleDirective} }
+
+A module declaration introduces a module name that can be used in other module declarations to express relationships between modules. A module name consists of one or more Java identifiers (§3.8) separated by "." tokens.
+
+There are two kinds of modules: normal modules and open modules. The kind of a module determines the nature of access to the module's types, and the members of those types, for code outside the module.
+
+A normal module, without the open modifier, grants access at compile time and run time to types in only those packages which are explicitly exported.
+
+An open module, with the open modifier, grants access at compile time to types in only those packages which are explicitly exported, but grants access at run time to types in all its packages, as if all packages had been exported.
+
+For code outside a module (whether the module is normal or open), the access granted at compile time or run time to types in the module's exported packages is specifically to the public and protected types in those packages, and the public and protected members of those types (§6.6). No access is granted at compile time or run time to types, or their members, in packages which are not exported. Code inside the module may access public and protected types, and the public and protected members of those types, in all packages in the module at both compile time and run time.
+
+Distinct from access at compile time and access at run time, the Java SE Platform provides reflective access via the Core Reflection API (§1.4). A normal module grants reflective access to types in only those packages which are explicitly exported or explicitly opened (or both). An open module grants reflective access to types in all its packages, as if all packages had been opened.
+
+For code outside a normal module, the reflective access granted to types in the module's exported (and not opened) packages is specifically to the public and protected types in those packages, and the public and protected members of those types. The reflective access granted to types in the module's opened packages (whether exported or not) is to all types in those packages, and all members of those types. No reflective access is granted to types, or their members, in packages which are not exported or opened. Code inside the module enjoys reflective access to all types, and all their members, in all packages in the module.
+
+For code outside an open module, the reflective access granted to types in the module's opened packages (that is, all packages in the module) is to all types in those packages, and all members of those types. Code inside the module enjoys reflective access to all types, and all their members, in all packages in the module.
+
+The directives of a module declaration specify the module's dependences on other modules (via requires, §7.7.1), the packages it makes available to other modules (via exports and opens, §7.7.2), the services it consumes (via uses, §7.7.3), and the services it provides (via provides, §7.7.4).
+
+ModuleDirective:
+requires {RequiresModifier} ModuleName ;
+exports PackageName [to ModuleName {, ModuleName}] ;
+opens PackageName [to ModuleName {, ModuleName}] ;
+uses TypeName ;
+provides TypeName with TypeName {, TypeName} ;
+RequiresModifier:
+(one of)
+transitive static
+
+If and only if packages are stored in a file system (§7.2), the host system may choose to enforce the restriction that it is a compile-time error if a module declaration is not found in a file under a name composed of module-info plus an extension (such as .java or .jav).
+
+To aid comprehension, it is customary, though not required, for a module declaration to group its directives, so that the requires directives which pertain to modules are visually distinct from the exports and opens directives which pertain to packages, and from the uses and provides directives which pertain to services. For example:
+
+module com.example.foo {
+    requires com.example.foo.http;
+    requires java.logging;
+
+    requires transitive com.example.foo.network;
+
+    exports com.example.foo.bar;
+    exports com.example.foo.internal to com.example.foo.probe;
+
+    opens com.example.foo.quux;
+    opens com.example.foo.internal to com.example.foo.network,
+                                      com.example.foo.probe;
+
+    uses com.example.foo.spi.Intf;
+    provides com.example.foo.spi.Intf with com.example.foo.Impl;
+}
+
+
+The opens directives can be avoided if the module is open:
+
+open module com.example.foo {
+    requires com.example.foo.http;
+    requires java.logging;
+
+    requires transitive com.example.foo.network;
+ 
+    exports com.example.foo.bar;
+    exports com.example.foo.internal to com.example.foo.probe;
+
+    uses com.example.foo.spi.Intf;
+    provides com.example.foo.spi.Intf with com.example.foo.Impl;
+}
+
+
+Development tools for the Java programming language are encouraged to highlight requires transitive directives and unqualified exports directives, as these form the primary API of a module.
+
+7.7.1. Dependences
+
+The requires directive specifies the name of a module on which the current module has a dependence.
+
+A requires directive must not appear in the declaration of the java.base module, or a compile-time error occurs, because it is the primordial module and has no dependences (§8.1.4).
+
+If the declaration of a module does not express a dependence on the java.base module, and the module is not itself java.base, then the module has an implicitly declared dependence on the java.base module.
+
+The requires keyword may be followed by the modifier transitive. This causes any module which requires the current module to have an implicitly declared dependence on the module specified by the requires transitive directive.
+
+The requires keyword may be followed by the modifier static. This specifies that the dependence, while mandatory at compile time, is optional at run time.
+
+It is a compile-time error if more than one requires directive in a module declaration specifies the same module name.
+
+It is a compile-time error if resolution, as described in the java.lang.module package specification, with the current module as the only root module, fails for any of the reasons described in the java.lang.module package specification.
+
+For example, if a requires directive specifies a module that is not observable, or if the current module directly or indirectly expresses a dependence on itself.
+
+If resolution succeeds, then its result specifies the modules that are read by the current module. The modules read by the current module determine which ordinary compilation units are visible to the current module (§7.3). The types declared in those ordinary compilation units (and only those ordinary compilation units) may be accessible to code in the current module (§6.6).
+
+The Java SE Platform distinguishes between named modules that are explicitly declared (that is, with a module declaration) and named modules that are implicitly declared (that is, automatic modules). However, the Java programming language does not surface the distinction: requires directives refer to named modules without regard for whether they are explicitly declared or implicitly declared.
+
+While automatic modules are convenient for migration, they are unreliable in the sense that their names and exported packages may change when their authors convert them to explicitly declared modules. A Java compiler is encouraged to issue a warning if a requires directive refers to an automatic module. An especially strong warning is recommended if the transitive modifier appears in the directive.
+
+Example 7.1.1-1. Resolution of requires transitive directives
+
+Suppose there are four module declarations as follows:
+
+module m.A {
+    requires m.B;
+}
+
+
+module m.B {
+    requires transitive m.C;
+}
+
+
+module m.C {
+    requires transitive m.D;
+}
+
+
+module m.D {
+    exports p;
+}
+
+
+
+where the package p exported by m.D is declared as follows:
+
+package p;
+public class Point {}
+
+
+
+and where a package client in module m.A refers to the public type Point in the exported package p:
+
+package client;
+import p.Point;
+public class Test {
+    public static void main(String[] args) {
+        System.out.println(new Point());
+    }
+}
+
+
+
+The modules may be compiled as follows, assuming that the current directory has one subdirectory per module, named after the module it contains:
+
+javac --module-source-path . -d . --module m.D
+javac --module-source-path . -d . --module m.C
+javac --module-source-path . -d . --module m.B
+javac --module-source-path . -d . --module m.A
+
+
+The program client.Test may be run as follows:
+
+java --module-path . --module m.A/client.Test
+
+
+The reference from code in m.A to the exported public type Point in m.D is legal because m.A reads m.D, and m.D exports the package containing Point. Resolution determines that m.A reads m.D as follows:
+
+m.A requires m.B and therefore reads m.B.
+
+Since m.A reads m.B, and since m.B requires transitive m.C, resolution determines that m.A reads m.C.
+
+Then, since m.A reads m.C, and since m.C requires transitive m.D, resolution determines that m.A reads m.D.
+
+In effect, a module may read another module through multiple levels of dependence, in order to support arbitrary amounts of refactoring. Once a module is released for someone to reuse (via requires), the module's author has committed to its name and API but is free to refactor its content into other modules which the original module reuses (via requires transitive) for the benefit of consumers. In the example above, package p may have been exported originally by m.B (thus, m.A requires m.B) but refactoring has caused some of m.B's content to move into m.C and m.D. By using a chain of requires transitive directives, the family of m.B, m.C, and m.D can preserve access to package p for code in m.A without forcing any changes to the requires directives of m.A. Note that package p in m.D is not "re-exported" by m.C and m.B; rather, m.A is made to read m.D directly.
+
+
+
+7.7.2. Exported and Opened Packages
+
+The exports directive specifies the name of a package to be exported by the current module. For code in other modules, this grants access at compile time and run time to the public and protected types in the package, and the public and protected members of those types (§6.6). It also grants reflective access to those types and members for code in other modules.
+
+The opens directive specifies the name of a package to be opened by the current module. For code in other modules, this grants access at run time, but not compile time, to the public and protected types in the package, and the public and protected members of those types. It also grants reflective access to all types in the package, and all their members, for code in other modules.
+
+It is a compile-time error if the package specified by exports is not declared by a compilation unit associated with the current module (§7.3).
+
+It is permitted for opens to specify a package which is not declared by a compilation unit associated with the current module. (If the package should happen to be declared by an observable compilation unit associated with another module, the opens directive has no effect on that other module.)
+
+It is a compile-time error if more than one exports directive in a module declaration specifies the same package name.
+
+It is a compile-time error if more than one opens directive in a module declaration specifies the same package name.
+
+It is a compile-time error if an opens directive appears in the declaration of an open module.
+
+If an exports or opens directive has a to clause, then the directive is qualified; otherwise, it is unqualified. For a qualified directive, the public and protected types in the package, and their public and protected members, are accessible solely to code in the modules specified in the to clause. The modules specified in the to clause are referred to as friends of the current module. For an unqualified directive, these types and their members are accessible to code in any module.
+
+It is permitted for the to clause of an exports or opens directive to specify a module which is not observable (§7.7.6).
+
+It is a compile-time error if the to clause of a given exports directive specifies the same module name more than once.
+
+It is a compile-time error if the to clause of a given opens directive specifies the same module name more than once.
+
+7.7.3. Service Consumption
+
+The uses directive specifies a service for which the current module may discover providers via java.util.ServiceLoader.
+
+The service must be a class type, an interface type, or an annotation type. It is a compile-time error if a uses directive specifies an enum type (§8.9) as the service.
+
+The service may be declared in the current module or in another module. If the service is not declared in the current module, then the service must be accessible to code in the current module (§6.6), or a compile-time error occurs.
+
+It is a compile-time error if more than one uses directive in a module declaration specifies the same service.
+
+7.7.4. Service Provision
+
+The provides directive specifies a service for which the with clause specifies one or more service providers to java.util.ServiceLoader.
+
+The service must be a class type, an interface type, or an annotation type. It is a compile-time error if a provides directive specifies an enum type (§8.9) as the service.
+
+The service may be declared in the current module or in another module. If the service is not declared in the current module, then the service must be accessible to code in the current module (§6.6), or a compile-time error occurs.
+
+Every service provider must be a class type or an interface type, that is public, and that is top level or nested static, or a compile-time error occurs.
+
+Every service provider must be declared in the current module, or a compile-time error occurs.
+
+If a service provider explicitly declares a public constructor with no formal parameters, or implicitly declares a public default constructor (§8.8.9), then that constructor is called the provider constructor.
+
+If a service provider explicitly declares a public static method called provider with no formal parameters, then that method is called the provider method.
+
+If a service provider has a provider method, then its return type must i) either be declared in the current module, or be declared in another module and be accessible to code in the current module; and ii) be a subtype of the service specified in the provides directive; or a compile-time error occurs.
+
+While a service provider that is specified by a provides directive must be declared in the current module, its provider method may have a return type that is declared in another module. Also, note that when a service provider declares a provider method, the service provider itself need not be a subtype of the service.
+
+If a service provider does not have a provider method, then that service provider must have a provider constructor and must be a subtype of the service specified in the provides directive, or a compile-time error occurs.
+
+It is a compile-time error if more than one provides directive in a module declaration specifies the same service.
+
+It is a compile-time error if the with clause of a given provides directive specifies the same service provider more than once.
+
+7.7.5. Unnamed Modules
+
+An observable ordinary compilation unit that the host system does not associate with a named module (§7.3) is associated with an unnamed module.
+
+Unnamed modules are provided by the Java SE Platform in recognition of the fact that programs developed prior to Java SE 9 could not declare named modules. In addition, the reasons for the Java SE Platform providing unnamed packages (§7.4.2) are largely applicable to unnamed modules.
+
+An implementation of the Java SE Platform must support at least one unnamed module. An implementation may support more than one unnamed module, but is not required to do so. Which ordinary compilation units are associated with each unnamed module is determined by the host system.
+
+The host system may associate ordinary compilation units in a named package with an unnamed module.
+
+The rules for unnamed modules are designed to maximize their interoperation with named modules, as follows:
+
+An unnamed module reads every observable module (§7.7.6).
+
+By virtue of the fact that an ordinary compilation unit associated with an unnamed module is observable, the associated unnamed module is observable. Thus, if the implementation of the Java SE Platform supports more than one unnamed module, every unnamed module is observable; and each unnamed module reads every unnamed module including itself.
+
+However, it is important to realize that the ordinary compilation units of an unnamed module are never visible to a named module (§7.3) because no requires directive can arrange for a named module to read an unnamed module. The Core Reflection API of the Java SE Platform may be used to arrange for a named module to read an unnamed module at run time.
+
+An unnamed module exports every package whose ordinary compilation units are associated with that unnamed module.
+
+An unnamed module opens every package whose ordinary compilation units are associated with that unnamed module.
+
+7.7.6. Observability of a Module
+
+A module is observable if at least one of the following is true:
+
+A modular compilation unit containing the declaration of the module is observable (§7.3).
+
+An ordinary compilation unit associated with the module is observable.

@@ -81,10 +81,13 @@ super ReferenceType
 
 Productions from §6 (Names)
 
-TypeName:
+ModuleName:
 Identifier
-PackageOrTypeName . Identifier
-PackageOrTypeName:
+ModuleName . Identifier
+PackageName:
+Identifier
+PackageName . Identifier
+TypeName:
 Identifier
 PackageOrTypeName . Identifier
 ExpressionName:
@@ -93,17 +96,22 @@ AmbiguousName . Identifier
 MethodName:
 Identifier
 
-PackageName:
+PackageOrTypeName:
 Identifier
-PackageName . Identifier
+PackageOrTypeName . Identifier
 AmbiguousName:
 Identifier
 AmbiguousName . Identifier
 
-Productions from §7 (Packages)
+Productions from §7 (Packages and Modules)
 
 CompilationUnit:
+OrdinaryCompilationUnit
+ModularCompilationUnit
+OrdinaryCompilationUnit:
 [PackageDeclaration] {ImportDeclaration} {TypeDeclaration}
+ModularCompilationUnit:
+{ImportDeclaration} ModuleDeclaration
 PackageDeclaration:
 {PackageModifier} package Identifier {. Identifier} ;
 PackageModifier:
@@ -125,6 +133,17 @@ TypeDeclaration:
 ClassDeclaration
 InterfaceDeclaration
 ;
+ModuleDeclaration:
+{Annotation} [open] module Identifier {. Identifier} { {ModuleDirective} }
+ModuleDirective:
+requires {RequiresModifier} ModuleName ;
+exports PackageName [to ModuleName {, ModuleName}] ;
+opens PackageName [to ModuleName {, ModuleName}] ;
+uses TypeName ;
+provides TypeName with TypeName {, TypeName} ;
+RequiresModifier:
+(one of)
+transitive static
 
 Productions from §8 (Classes)
 
@@ -223,8 +242,8 @@ ReceiverParameter {, FormalParameter}
 FormalParameter:
 {VariableModifier} UnannType VariableDeclaratorId
 VariableModifier:
-(one of)
-Annotation final
+Annotation
+final
 LastFormalParameter:
 {VariableModifier} UnannType {Annotation} ... VariableDeclaratorId
 FormalParameter
@@ -304,7 +323,7 @@ InterfaceMethodDeclaration:
 {InterfaceMethodModifier} MethodHeader MethodBody
 InterfaceMethodModifier:
 (one of)
-Annotation public
+Annotation public private
 abstract default static strictfp
 AnnotationTypeDeclaration:
 {InterfaceModifier} @ interface Identifier AnnotationTypeBody
@@ -492,6 +511,7 @@ ResourceList:
 Resource {; Resource}
 Resource:
 {VariableModifier} UnannType VariableDeclaratorId = Expression
+VariableAccess
 
 Productions from §15 (Expressions)
 
@@ -543,8 +563,8 @@ ArgumentList:
 Expression {, Expression}
 MethodReference:
 ExpressionName :: [TypeArguments] Identifier
-ReferenceType :: [TypeArguments] Identifier
 Primary :: [TypeArguments] Identifier
+ReferenceType :: [TypeArguments] Identifier
 super :: [TypeArguments] Identifier
 TypeName . super :: [TypeArguments] Identifier
 ClassType :: [TypeArguments] new

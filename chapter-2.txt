@@ -23,7 +23,7 @@ These input elements, with white space (§3.6) and comments (§3.7) discarded, f
 
 2.3. The Syntactic Grammar
 
-The syntactic grammar for the Java programming language is given in Chapters 4, 6-10, 14, and 15. This grammar has tokens defined by the lexical grammar as its terminal symbols. It defines a set of productions, starting from the goal symbol CompilationUnit (§7.3), that describe how sequences of tokens can form syntactically correct programs.
+The syntactic grammar for the Java programming language is given in Chapters 4, 6-10, 14, and 15. This grammar has as its terminal symbols the tokens defined by the lexical grammar. It defines a set of productions, starting from the goal symbol CompilationUnit (§7.3), that describe how sequences of tokens can form syntactically correct programs.
 
 For convenience, the syntactic grammar is presented all together in Chapter 19.
 
@@ -104,7 +104,7 @@ NormalClassDeclaration:
 
 which defines one right-hand side for the nonterminal NormalClassDeclaration.
 
-The phrase (one of) on the right-hand side of a production signifies that each of the terminal symbols on the following line or lines is an alternative definition.
+The phrase (one of) on the right-hand side of a production signifies that each of the symbols on the following line or lines is an alternative definition.
 
 For example, the lexical grammar contains the production:
 

@@ -11,7 +11,7 @@ Table of Contents
 6.5. Determining the Meaning of a Name
 6.5.1. Syntactic Classification of a Name According to Context
 6.5.2. Reclassification of Contextually Ambiguous Names
-6.5.3. Meaning of Package Names
+6.5.3. Meaning of Module Names and Package Names
 6.5.3.1. Simple Package Names
 6.5.3.2. Qualified Package Names
 6.5.4. Meaning of PackageOrTypeNames
@@ -29,7 +29,7 @@ Table of Contents
 6.6.1. Determining Accessibility
 6.6.2. Details on protected Access
 6.6.2.1. Access to a protected Member
-6.6.2.2. Qualified Access to a protected Constructor
+6.6.2.2. Access to a protected Constructor
 6.7. Fully Qualified Names and Canonical Names
 
 Names are used to refer to entities declared in a program.
@@ -53,6 +53,8 @@ Fully qualified and canonical names (§6.7) are also discussed in this chapter.
 A declaration introduces an entity into a program and includes an identifier (§3.8) that can be used in a name to refer to this entity.
 
 A declared entity is one of the following:
+
+A module, declared in a module declaration (§7.7)
 
 A package, declared in a package declaration (§7.4)
 
@@ -86,7 +88,7 @@ A method, one of the following:
 
 A method (abstract or otherwise) declared in a class type or enum type (§8.4, §8.9.2)
 
-A method (always abstract) declared in an interface type or annotation type (§9.4, §9.6.1)
+A method (abstract or otherwise) declared in an interface type or annotation type (§9.4, §9.6.1)
 
 A parameter, one of the following:
 
@@ -114,7 +116,9 @@ The raw type C which is the erasure (§4.6) of the generic type C<T>; or
 
 A parameterized type which is a particular parameterization (§4.5) of the generic type C<T>.
 
-The 13 non-generic contexts are as follows:
+The 14 non-generic contexts are as follows:
+
+In a uses or provides directive in a module declaration (§7.7.1)
 
 In a single-type-import declaration (§7.5.1)
 
@@ -136,34 +140,34 @@ To the left of .Identifier or .super.Identifier in a qualified method invocation
 
 To the left of .super:: in a method reference expression (§15.13)
 
-In a qualified expression name in a postfix expression (§15.14.1)
+In a qualified expression name in a postfix expression or a try-with-resources statement (§15.14.1, §14.20.3)
 
 In a throws clause of a method or constructor (§8.4.6, §8.8.5, §9.4)
 
 In an exception parameter declaration (§14.20)
 
-The first ten non-generic contexts correspond to the first ten syntactic contexts for a TypeName in §6.5.1. The eleventh non-generic context is a postfix expression, where a qualified ExpressionName such as C.x may include a TypeName C to denote static member access. The common use of TypeName is significant: it indicates that these contexts involve a less-than-first-class use of a type. In contrast, the twelfth and thirteenth non-generic contexts employ ClassType, indicating that throws and catch clauses use types in a first-class way, in line with, say, field declarations. The characterization of these two contexts as non-generic is due to the fact that an exception type cannot be parameterized.
+The first eleven non-generic contexts correspond to the first eleven syntactic contexts for a TypeName in §6.5.1. The twelfth non-generic context is where a qualified ExpressionName such as C.x may include a TypeName C to denote static member access. The common use of TypeName in these twelve contexts is significant: it indicates that these contexts involve a less-than-first-class use of a type. In contrast, the thirteenth and fourteenth non-generic contexts employ ClassType, indicating that throws and catch clauses use types in a first-class way, in line with, say, field declarations. The characterization of these two contexts as non-generic is due to the fact that an exception type cannot be parameterized.
 
 Note that the ClassType production allows annotations, so it is possible to annotate the use of a type in a throws or catch clause, whereas the TypeName production disallows annotations, so it is not possible to annotate the name of a type in, say, a single-type-import declaration.
 
 Naming Conventions
 
-The class libraries of the Java SE platform attempt to use, whenever possible, names chosen according to the conventions presented below. These conventions help to make code more readable and avoid certain kinds of name conflicts.
+The class libraries of the Java SE Platform attempt to use, whenever possible, names chosen according to the conventions presented below. These conventions help to make code more readable and avoid certain kinds of name conflicts.
 
 We recommend these conventions for use in all programs written in the Java programming language. However, these conventions should not be followed slavishly if long-held conventional usage dictates otherwise. So, for example, the sin and cos methods of the class java.lang.Math have mathematically conventional names, even though these method names flout the convention suggested here because they are short and are not verbs.
 
-Package Names
+Package Names and Module Names
 
-Developers should take steps to avoid the possibility of two published packages having the same name by choosing unique package names for packages that are widely distributed. This allows packages to be easily and automatically installed and catalogued. This section specifies a suggested convention for generating such unique package names. Implementations of the Java SE platform are encouraged to provide automatic support for converting a set of packages from local and casual package names to the unique name format described here.
+Developers should take steps to avoid the possibility of two published packages having the same name by choosing unique package names for packages that are widely distributed. This allows packages to be easily and automatically installed and catalogued. This section specifies a suggested convention for generating such unique package names. Implementations of the Java SE Platform are encouraged to provide automatic support for converting a set of packages from local and casual package names to the unique name format described here.
 
-If unique package names are not used, then package name conflicts may arise far from the point of creation of either of the conflicting packages. This may create a situation that is difficult or impossible for the user or programmer to resolve. The class ClassLoader can be used to isolate packages with the same name from each other in those cases where the packages will have constrained interactions, but not in a way that is transparent to a naïve program.
+If unique package names are not used, then package name conflicts may arise far from the point of creation of either of the conflicting packages. This may create a situation that is difficult or impossible for the user or programmer to resolve. The classes ClassLoader and ModuleLayer can be used to isolate packages with the same name from each other in those cases where the packages will have constrained interactions, but not in a way that is transparent to a naïve program.
 
 You form a unique package name by first having (or belonging to an organization that has) an Internet domain name, such as oracle.com. You then reverse this name, component by component, to obtain, in this example, com.oracle, and use this as a prefix for your package names, using a convention developed within your organization to further administer package names. Such a convention might specify that certain package name components be division, department, project, machine, or login names.
 
 Example 6.1-1. Unique Package Names
 
-com.nighthacks.java.jag.scrabble
-org.openjdk.tools.compiler
+com.nighthacks.scrabble.dictionary
+org.openjdk.compiler.source.tree
 net.jcip.annotations
 edu.cmu.cs.bovik.cheese
 gov.whitehouse.socks.mousefinder
@@ -173,10 +177,6 @@ gov.whitehouse.socks.mousefinder
 
 The first component of a unique package name is always written in all-lowercase ASCII letters and should be one of the top level domain names, such as com, edu, gov, mil, net, or org, or one of the English two-letter codes identifying countries as specified in ISO Standard 3166.
 
-The name of a package is not meant to imply where the package is stored on the Internet. The suggested convention for generating unique package names is merely a way to piggyback a package naming convention on top of an existing, widely known unique name registry instead of having to create a separate registry for package names.
-
-For example, a package named edu.cmu.cs.bovik.cheese is not necessarily obtainable from Internet address cmu.edu or cs.cmu.edu or bovik.cs.cmu.edu.
-
 In some cases, the Internet domain name may not be a valid package name. Here are some suggested conventions for dealing with these situations:
 
 If the domain name contains a hyphen, or any other special character not allowed in an identifier (§3.8), convert it into an underscore.
@@ -185,13 +185,26 @@ If any of the resulting package name components are keywords (§3.9), append an 
 
 If any of the resulting package name components start with a digit, or any other character that is not allowed as an initial character of an identifier, have an underscore prefixed to the component.
 
-Names of packages intended only for local use should have a first identifier that begins with a lowercase letter, but that first identifier specifically should not be the identifier java; package names that start with the identifier java are reserved for packages of the Java SE platform.
+The name of a module should correspond to the name of its principal exported package. If a module does not have such a package, or if for legacy reasons it must have a name that does not correspond to one of its exported packages, then its name should still start with the reversed form of an Internet domain with which its author is associated.
+
+Example 6.1-2. Unique Module Names
+
+com.nighthacks.scrabble
+org.openjdk.compiler
+net.jcip.annotations
+
+
+
+
+The first component of a package or module name must not be the identifier java. Package and module names that start with the identifier java are reserved for packages and modules of the Java SE Platform.
+
+The name of a package or module is not meant to imply where the package or module is stored on the Internet. For example, a package named edu.cmu.cs.bovik.cheese is not necessarily obtainable from the host cmu.edu or cs.cmu.edu or bovik.cs.cmu.edu. The suggested convention for generating unique package and module names is merely a way to piggyback a package and module naming convention on top of an existing, widely known unique name registry instead of having to create a separate registry for package and module names.
 
 Class and Interface Type Names
 
 Names of class types should be descriptive nouns or noun phrases, not overly long, in mixed case with the first letter of each word capitalized.
 
-Example 6.1-2. Descriptive Class Names
+Example 6.1-3. Descriptive Class Names
 
 ClassLoader
 SecurityManager
@@ -214,7 +227,7 @@ If there are multiple type parameters that denote arbitrary types, one should us
 
 If a generic method appears inside a generic class, it is a good idea to avoid using the same names for the type parameters of the method and class, to avoid confusion. The same applies to nested generic classes.
 
-Example 6.1-3. Conventional Type Variable Names
+Example 6.1-4. Conventional Type Variable Names
 
 
 public class HashSet<E> extends AbstractSet<E> { ... }
@@ -242,7 +255,7 @@ A method that tests a boolean condition V about an object should be named isV. A
 
 A method that converts its object to a particular format F should be named toF. Examples are the method toString of class Object and the methods toLocaleString and toGMTString of class java.util.Date.
 
-Whenever possible and appropriate, basing the names of methods in a new class on names in an existing class that is similar, especially a class from the Java SE platform API, will make it easier to use.
+Whenever possible and appropriate, basing the names of methods in a new class on names in an existing class that is similar, especially a class from the Java SE Platform API, will make it easier to use.
 
 Field Names
 
@@ -359,11 +372,11 @@ To complicate things further, a field access expression is not the only way to d
 
 6.3. Scope of a Declaration
 
-The scope of a declaration is the region of the program within which the entity declared by the declaration can be referred to using a simple name, provided it is visible (§6.4.1).
+The scope of a declaration is the region of the program within which the entity declared by the declaration can be referred to using a simple name, provided it is not shadowed (§6.4.1).
 
 A declaration is said to be in scope at a particular point in a program if and only if the declaration's scope includes that point.
 
-The scope of the declaration of an observable (§7.4.3) top level package is all observable compilation units (§7.3).
+The scope of the declaration of an observable top level package (§7.4.3) is all observable compilation units associated with modules to which the package is uniquely visible (§7.4.3).
 
 The declaration of a package that is not observable is never in scope.
 
@@ -371,9 +384,9 @@ The declaration of a subpackage is never in scope.
 
 The package java is always in scope.
 
-The scope of a type imported by a single-type-import declaration (§7.5.1) or a type-import-on-demand declaration (§7.5.2) is all the class and interface type declarations (§7.6) in the compilation unit in which the import declaration appears, as well as any annotations on the package declaration (if any) of the compilation unit .
+The scope of a type imported by a single-type-import declaration (§7.5.1) or a type-import-on-demand declaration (§7.5.2) is all the class and interface type declarations (§7.6) in the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
 
-The scope of a member imported by a single-static-import declaration (§7.5.3) or a static-import-on-demand declaration (§7.5.4) is all the class and interface type declarations (§7.6) in the compilation unit in which the import declaration appears, as well as any annotations on the package declaration (if any) of the compilation unit .
+The scope of a member imported by a single-static-import declaration (§7.5.3) or a static-import-on-demand declaration (§7.5.4) is all the class and interface type declarations in the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
 
 The scope of a top level type (§7.6) is all type declarations in the package in which the top level type is declared.
 
@@ -486,7 +499,7 @@ A local variable (§14.4), formal parameter (§8.4.1, §15.27.1), exception para
 
 Some declarations are not permitted within the scope of a local variable, formal parameter, exception parameter, or local class declaration because it would be impossible to distinguish between the declared entities using only simple names.
 
-For example, if the name of a formal parameter of a method could be redeclared as the name of a local variable in the method body, then the local variable would shadow the formal parameter and the formal parameter would no longer be visible - an undesirable outcome.
+For example, if the name of a formal parameter of a method could be redeclared as the name of a local variable in the method body, then the local variable would shadow the formal parameter and there would be no way to refer to the formal parameter - an undesirable outcome.
 
 It is a compile-time error if the name of a formal parameter is used to declare a new variable within the body of the method, constructor, or lambda expression, unless the new variable is declared within a class declaration contained by the method, constructor, or lambda expression.
 
@@ -496,7 +509,7 @@ It is a compile-time error if the name of an exception parameter is used to decl
 
 It is a compile-time error if the name of a local class C is used to declare a new local class within the scope of C, unless the new local class is declared within another class whose declaration is within the scope of C.
 
-These rules allow redeclaration of a variable or local class in nested class declarations (local classes (§14.3) and anonymous classes (§15.9)) that occur in the scope of the variable or local class. Thus, the declaration of a formal parameter, local variable, or local class may be shadowed in a class declaration nested within a method, constructor, or lambda expression; and the declaration of an exception parameter may be shadowed inside a class declaration nested within the Block of the catch clause.
+These rules allow redeclaration of a variable or local class in nested class declarations that occur in the scope of the variable or local class; such nested class declarations may be local classes (§14.3) or anonymous classes (§15.9). Thus, the declaration of a formal parameter, local variable, or local class may be shadowed in a class declaration nested within a method, constructor, or lambda expression; and the declaration of an exception parameter may be shadowed in a class declaration nested within the Block of the catch clause.
 
 There are two design alternatives for handling name clashes created by lambda parameters and other variables declared in lambda expressions. One is to mimic class declarations: like local classes, lambda expressions introduce a new "level" for names, and all variable names outside the expression can be redeclared. Another is a "local" strategy: like catch clauses, for loops, and blocks, lambda expressions operate at the same "level" as the enclosing context, and local variables outside the expression cannot be shadowed. The above rules use the local strategy; there is no special dispensation that allows a variable declared in a lambda expression to shadow a variable declared in an enclosing method.
 
@@ -557,10 +570,6 @@ This program compiles without error and, when executed, produces the output:
 Some declarations may be shadowed in part of their scope by another declaration of the same name, in which case a simple name cannot be used to refer to the declared entity.
 
 Shadowing is distinct from hiding (§8.3, §8.4.8.2, §8.5, §9.3, §9.5), which applies only to members which would otherwise be inherited but are not because of a declaration in a subclass. Shadowing is also distinct from obscuring (§6.4.2).
-
-A declaration d is said to be visible at point p in a program if the scope of d includes p, and d is not shadowed by any other declaration at p.
-
-When the program point we are discussing is clear from context, we will often simply say that a declaration is visible.
 
 A declaration d of a type named n shadows the declarations of any other types named n that are in scope at the point where d occurs throughout the scope of d.
 
@@ -677,9 +686,11 @@ using the class Vector declared here in preference to the generic class java.uti
 
 6.4.2. Obscuring
 
-A simple name may occur in contexts where it may potentially be interpreted as the name of a variable, a type, or a package. In these situations, the rules of §6.5 specify that a variable will be chosen in preference to a type, and that a type will be chosen in preference to a package. Thus, it is may sometimes be impossible to refer to a visible type or package declaration via its simple name. We say that such a declaration is obscured.
+A simple name may occur in contexts where it may potentially be interpreted as the name of a variable, a type, or a package. In these situations, the rules of §6.5 specify that a variable will be chosen in preference to a type, and that a type will be chosen in preference to a package. Thus, it is may sometimes be impossible to refer to a type or package via its simple name, even though its declaration is in scope and not shadowed. We say that such a declaration is obscured.
 
 Obscuring is distinct from shadowing (§6.4.1) and hiding (§8.3, §8.4.8.2, §8.5, §9.3, §9.5).
+
+There is no obscuring between the name of a module and the name of a variable, type, or package; thus, modules may share names with variables, types, and packages, though it is not necessarily recommended to name a module after a package it contains.
 
 The naming conventions of §6.1 help reduce obscuring, but if it does occur, here are some notes about what you can do to avoid it.
 
@@ -715,12 +726,15 @@ Constant names cannot obscure method names, because they are distinguished synta
 
 The meaning of a name depends on the context in which it is used. The determination of the meaning of a name requires three steps:
 
-First, context causes a name syntactically to fall into one of six categories: PackageName, TypeName, ExpressionName, MethodName, PackageOrTypeName, or AmbiguousName.
+First, context causes a name syntactically to fall into one of seven categories: ModuleName, PackageName, TypeName, ExpressionName, MethodName, PackageOrTypeName, or AmbiguousName.
 
 Second, a name that is initially classified by its context as an AmbiguousName or as a PackageOrTypeName is then reclassified to be a PackageName, TypeName, or ExpressionName.
 
 Third, the resulting category then dictates the final determination of the meaning of the name (or a compile-time error if the name has no meaning).
 
+ModuleName:
+Identifier
+ModuleName . Identifier
 PackageName:
 Identifier
 PackageName . Identifier
@@ -744,9 +758,23 @@ The use of context helps to minimize name conflicts between entities of differen
 
 6.5.1. Syntactic Classification of a Name According to Context
 
+A name is syntactically classified as a ModuleName in these contexts:
+
+In a requires directive in a module declaration (§7.7.1)
+
+To the right of to in an exports or opens directive in a module declaration (§7.7.2)
+
+A name is syntactically classified as a PackageName in these contexts:
+
+To the right of exports or opens in a module declaration
+
+To the left of the "." in a qualified PackageName
+
 A name is syntactically classified as a TypeName in these contexts:
 
-The first ten non-generic contexts (§6.1):
+The first eleven non-generic contexts (§6.1):
+
+In a uses or provides directive in a module declaration (§7.7.1)
 
 In a single-type-import declaration (§7.5.1)
 
@@ -820,6 +848,8 @@ As a PostfixExpression (§15.14)
 
 As the left-hand operand of an assignment operator (§15.26)
 
+As a VariableAccess in a try-with-resources statement (§14.20.3)
+
 A name is syntactically classified as a MethodName in this context:
 
 Before the "(" in a method invocation expression (§15.12)
@@ -880,19 +910,13 @@ Otherwise, this AmbiguousName is reclassified as a PackageName. A later step det
 
 If the name to the left of the "." is reclassified as a TypeName, then:
 
-If the Identifier is the name of a method or field of the type denoted by TypeName, this AmbiguousName is reclassified as an ExpressionName.
+If the Identifier is the name of a method or field of the type denoted by TypeName, then this AmbiguousName is reclassified as an ExpressionName.
 
-Otherwise, if the Identifier is the name of a member type of the type denoted by TypeName, this AmbiguousName is reclassified as a TypeName.
-
-Otherwise, a compile-time error occurs.
-
-If the name to the left of the "." is reclassified as an ExpressionName, then let T be the type of the expression denoted by ExpressionName.
-
-If the Identifier is the name of a method or field of the type denoted by T, this AmbiguousName is reclassified as an ExpressionName.
-
-Otherwise, if the Identifier is the name of a member type (§8.5, §9.5) of the type denoted by T, then this AmbiguousName is reclassified as a TypeName.
+Otherwise, if the Identifier is the name of a member type of the type denoted by TypeName, then this AmbiguousName is reclassified as a TypeName.
 
 Otherwise, a compile-time error occurs.
+
+If the name to the left of the "." is reclassified as an ExpressionName, then this AmbiguousName is reclassified as an ExpressionName. A later step determines whether or not a member with the name Identifier actually exists.
 
 Example 6.5.2-1. Reclassification of Contextually Ambiguous Names
 
@@ -931,21 +955,23 @@ Finally, because the name org.rpgpoet.Music is a TypeName, the qualified name or
 
 
 
-6.5.3. Meaning of Package Names
+6.5.3. Meaning of Module Names and Package Names
+
+The module name M, whether simple or qualified, denotes the module (if any) with that name.
+
+This section does not mandate a compile-time error if no module with that name is observable. Instead, the requires directive in a module declaration (§7.7.1) performs its own validation of the module name, while the exports and opens directives (§7.7.2) are tolerant of non-existent module names.
 
 The meaning of a name classified as a PackageName is determined as follows.
 
 6.5.3.1. Simple Package Names
 
-If a package name consists of a single Identifier, then this identifier denotes a top level package named by that identifier.
-
-If no top level package of that name is in scope (§6.3), then a compile-time error occurs.
+If a package name consists of a single Identifier, then the identifier must occur in the scope of exactly one declaration of a top level package with this name (§6.3), and that package must be uniquely visible to the current module (§7.4.3), or a compile-time error occurs. The meaning of the package name is that package.
 
 6.5.3.2. Qualified Package Names
 
 If a package name is of the form Q.Id, then Q must also be a package name. The package name Q.Id names a package that is the member named Id within the package named by Q.
 
-If Q does not name an observable package (§7.4.3), or Id is not the simple name of an observable subpackage of that package, then a compile-time error occurs.
+If Q.Id does not name a package that is uniquely visible to the current module (§7.4.3), then a compile-time error occurs.
 
 6.5.4. Meaning of PackageOrTypeNames
 6.5.4.1. Simple PackageOrTypeNames
@@ -966,11 +992,11 @@ The meaning of a name classified as a TypeName is determined as follows.
 
 6.5.5.1. Simple Type Names
 
-If a type name consists of a single Identifier, then the identifier must occur in the scope of exactly one visible declaration of a type with this name, or a compile-time error occurs. The meaning of the type name is that type.
+If a type name consists of a single Identifier, then the identifier must occur in the scope of exactly one declaration of a type with this name (§6.3), or a compile-time error occurs. The meaning of the type name is that type.
 
 6.5.5.2. Qualified Type Names
 
-If a type name is of the form Q.Id, then Q must be either a type name or a package name.
+If a type name is of the form Q.Id, then Q must be either the name of a type in a package uniquely visible to the current module, or the name of a package uniquely visible to the current module (§7.4.3).
 
 If Id names exactly one accessible type (§6.6) that is a member of the type or package denoted by Q, then the qualified type name denotes that type.
 
@@ -1002,9 +1028,9 @@ The meaning of a name classified as an ExpressionName is determined as follows.
 
 6.5.6.1. Simple Expression Names
 
-If an expression name consists of a single Identifier, then there must be exactly one declaration denoting either a local variable, parameter, or field visible (§6.4.1) at the point at which the Identifier occurs. Otherwise, a compile-time error occurs.
+If an expression name consists of a single Identifier, then there must be exactly one declaration denoting either a local variable, formal parameter, or field in scope at the point at which the Identifier occurs. Otherwise, a compile-time error occurs.
 
-If the declaration denotes an instance variable (§8.3), the expression name must appear within the declaration of an instance method (§8.4), constructor (§8.8), instance initializer (§8.6), or instance variable initializer (§8.3.2). If the expression name appears within a static method (§8.4.3.2), static initializer (§8.7), or initializer for a static variable (§8.3.2, §12.4.2), then a compile-time error occurs.
+If the declaration denotes an instance variable (§8.3.1.1), the expression name must appear within an instance method (§8.4.3.2), instance variable initializer (§8.3.2), instance initializer (§8.6), or constructor (§8.8). If the expression name appears within a class method, class variable initializer, or static initializer (§8.7), then a compile-time error occurs.
 
 If the declaration declares a final variable which is definitely assigned before the simple expression, the meaning of the name is the value of that variable. Otherwise, the meaning of the expression name is the variable declared by the declaration.
 
@@ -1150,11 +1176,11 @@ The meaning of a name classified as a MethodName is determined as follows.
 
 6.5.7.1. Simple Method Names
 
-A simple method name appears in the context of a method invocation expression (§15.12). The simple method name consists of a single Identifier which specifies the name of the method to be invoked. The rules of method invocation require that the Identifier either denotes a method that is visible at the point of the method invocation, or denotes a method imported by a single-static-import declaration or static-import-on-demand declaration (§7.5.3, §7.5.4).
+A simple method name appears in the context of a method invocation expression (§15.12). The simple method name consists of a single Identifier which specifies the name of the method to be invoked. The rules of method invocation require that the Identifier either denotes a method that is in scope at the point of the method invocation, or denotes a method imported by a single-static-import declaration or static-import-on-demand declaration (§7.5.3, §7.5.4).
 
-Example 6.5.7.1-1. Simple Method Names and Visibility
+Example 6.5.7.1-1. Simple Method Names
 
-The following program demonstrates the role of method visibility when determining which method to invoke.
+The following program demonstrates the role of scoping when determining which method to invoke.
 
 class Super {
     void f2(String s)       {}
@@ -1179,11 +1205,11 @@ class Test {
 }
 
 
-For the invocation f1(0), only one method named f1 is visible. It is the method Test.f1(int), whose declaration is in scope throughout the body of Test including the anonymous class declaration. §15.12.1 chooses to search in class Test since the anonymous class declaration has no member named f1. Eventually, Test.f1(int) is resolved.
+For the invocation f1(0), only one method named f1 is in scope. It is the method Test.f1(int), whose declaration is in scope throughout the body of Test including the anonymous class declaration. §15.12.1 chooses to search in class Test since the anonymous class declaration has no member named f1. Eventually, Test.f1(int) is resolved.
 
-For the invocation f2(0), two methods named f2 are visible. First, the declaration of the method Super.f2(String) is in scope throughout the anonymous class declaration. Second, the declaration of the method Test.f2(int) is in scope throughout the body of Test including the anonymous class declaration. §15.12.1 chooses to search in class Super because it has a member named f2. However, Super.f2(String) is not applicable to f2(0), so a compile-time error occurs. Note that class Test is not searched.
+For the invocation f2(0), two methods named f2 are in scope. First, the declaration of the method Super.f2(String) is in scope throughout the anonymous class declaration. Second, the declaration of the method Test.f2(int) is in scope throughout the body of Test including the anonymous class declaration. (Note that neither declaration shadows the other, because at the point where each is declared, the other is not in scope.) §15.12.1 chooses to search in class Super because it has a member named f2. However, Super.f2(String) is not applicable to f2(0), so a compile-time error occurs. Note that class Test is not searched.
 
-For the invocation f3(0), three methods named f3 are visible. First and second, the declarations of the methods Super.f3(String) and Super.f3(int,int) are in scope throughout the anonymous class declaration. Third, the declaration of the method Test.f3(int) is in scope throughout the body of Test including the anonymous class declaration. §15.12.1 chooses to search in class Super because it has a member named f3. However, Super.f3(String) and Super.f3(int,int) are not applicable to f3(0), so a compile-time error occurs. Note that class Test is not searched.
+For the invocation f3(0), three methods named f3 are in scope. First and second, the declarations of the methods Super.f3(String) and Super.f3(int,int) are in scope throughout the anonymous class declaration. Third, the declaration of the method Test.f3(int) is in scope throughout the body of Test including the anonymous class declaration. §15.12.1 chooses to search in class Super because it has a member named f3. However, Super.f3(String) and Super.f3(int,int) are not applicable to f3(0), so a compile-time error occurs. Note that class Test is not searched.
 
 Choosing to search a nested class's superclass hierarchy before the lexically enclosing scope is called the "comb rule" (§15.12.1).
 
@@ -1197,7 +1223,7 @@ Note that accessibility is a static property that can be determined at compile t
 
 Qualified names are a means of access to members of packages and reference types. When the name of such a member is classified from its context (§6.5.1) as a qualified type name (denoting a member of a package or reference type, §6.5.5.2) or a qualified expression name (denoting a member of a reference type, §6.5.6.2), access control is applied.
 
-For example, a single-type-import statement (§7.5.1) uses a qualified type name, so the named type must be accessible from the compilation unit containing the import statement. As another example, a class declaration may use a qualified type name for a superclass (§8.1.5), and again the named type must be accessible.
+For example, a single-type-import declaration uses a qualified type name (§7.5.1), so the named type must be accessible from the compilation unit containing the import declaration. As another example, a class declaration may use a qualified type name for a superclass (§8.1.5), so again the named type must be accessible.
 
 Some obvious expressions are "missing" from context classification in §6.5.1: field access on a Primary (§15.11.1), method invocation on a Primary (§15.12), method reference via a Primary (§15.13), and the instantiated class in a qualified class instance creation (§15.9). Each of these expressions uses identifiers, rather than names, for the reason given in §6.2. Consequently, access control to members (whether fields, methods, or types) is applied explicitly by field access expressions, method invocation expressions, method reference expressions, and qualified class instance creation expressions. (Note that access to a field may also be denoted by a qualified name occuring as a postfix expression.)
 
@@ -1209,15 +1235,13 @@ Accessibility affects inheritance of class members (§8.2), including hiding and
 
 6.6.1. Determining Accessibility
 
-A package is always accessible.
+If a top level class or interface type is declared public and is a member of a package that is exported by a module, then the type may be accessed by any code in the same module, and by any code in another module to which the package is exported, provided that the compilation unit in which the type is declared is visible to that other module (§7.3).
 
-If a class or interface type is declared public, then it may be accessed by any code, provided that the compilation unit (§7.3) in which it is declared is observable.
+If a top level class or interface type is declared public and is a member of a package that is not exported by a module, then the type may be accessed by any code in the same module.
 
-If a class or interface type is declared with package access, then it may be accessed only from within the package in which it is declared.
+If a top level class or interface type is declared with package access, then it may be accessed only from within the package in which it is declared.
 
-A class or interface type declared without an access modifier implicitly has package access.
-
-An array type is accessible if and only if its element type is accessible.
+A top level class or interface type declared without an access modifier implicitly has package access.
 
 A member (class, interface, field, or method) of a reference type, or a constructor of a class type, is accessible only if the type is accessible and the member or constructor is declared to permit access:
 
@@ -1235,7 +1259,9 @@ Otherwise, if the member or constructor is declared with package access, then ac
 
 A class member or constructor declared without an access modifier implicitly has package access.
 
-Otherwise, the member or constructor is declared private, and access is permitted if and only if it occurs within the body of the top level class (§7.6) that encloses the declaration of the member or constructor.
+Otherwise, the member or constructor is declared private, and access is permitted if and only if it occurs within the body of the top level type (§7.6) that encloses the declaration of the member or constructor.
+
+An array type is accessible if and only if its element type is accessible.
 
 Example 6.6-1. Access Control
 
@@ -1392,7 +1418,7 @@ class Point {
 
 the private members ID, masterID, and setMasterID may be used only within the body of class Point. They may not be accessed by qualified names, field access expressions, or method invocation expressions outside the body of the declaration of Point.
 
-See §8.8.8 for an example that uses a private constructor.
+See §8.8.10 for an example that uses a private constructor.
 
 
 
@@ -1404,17 +1430,21 @@ A protected member or constructor of an object may be accessed from outside the 
 
 Let C be the class in which a protected member is declared. Access is permitted only within the body of a subclass S of C.
 
-In addition, if Id denotes an instance field or instance method, then:
+A subclass S is regarded as being responsible for the implementation of objects of class C. Depending on C's accessibility, S may be declared in the same package as C, or in different package of the same module as C, or in a package of a different module entirely.
 
-If the access is by a qualified name Q.Id or a method reference expression Q :: Id (§15.13), where Q is an ExpressionName, then the access is permitted if and only if the type of the expression Q is S or a subclass of S.
+In addition, access to an instance field or instance method is permitted based on the form of the qualified name, field access expression (§15.11), method invocation expression (§15.12), or method reference expression (§15.13):
 
-If the access is by a field access expression E.Id, or a method invocation expression E.Id(...), or a method reference expression E :: Id, where E is a Primary expression (§15.8), then the access is permitted if and only if the type of E is S or a subclass of S.
+If the access is by i) a qualified name of the form ExpressionName.Id or TypeName.Id, or ii) a field access expression of the form Primary.Id, then access to the instance field Id is permitted if and only if the qualifying type is S or a subclass of S.
 
-If the access is by a method reference expression T :: Id, where T is a ReferenceType, then the access is permitted if and only if the type T is S or a subclass of S.
+The qualifying type is the type of the ExpressionName or Primary, or the type denoted by TypeName.
+
+If the access is by i) a method invocation expression of the form ExpressionName.Id(...) or TypeName.Id(...) or Primary.Id(...), or ii) a method reference expression of the form ExpressionName :: Id or Primary :: Id or ReferenceType :: Id, then access to the instance method Id is permitted if and only if the qualifying type is S or a subclass of S.
+
+The qualifying type is the type of the ExpressionName or Primary, or the type denoted by TypeName or ReferenceType.
 
 More information about access to protected members can be found in Checking Access to Protected Members in the Java Virtual Machine by Alessandro Coglio, in the Journal of Object Technology, October 2005.
 
-6.6.2.2. Qualified Access to a protected Constructor
+6.6.2.2. Access to a protected Constructor
 
 Let C be the class in which a protected constructor is declared and let S be the innermost class in whose declaration the use of the protected constructor occurs. Then:
 
@@ -1488,7 +1518,7 @@ An array type has a fully qualified name if and only if its element type has a f
 
 In that case, the fully qualified name of an array type consists of the fully qualified name of the component type of the array type followed by "[]".
 
-A local class does not have a fully qualified name.
+A local class or anonymous class does not have a fully qualified name.
 
 Every primitive type, named package, top level class, and top level interface has a canonical name:
 
@@ -1504,7 +1534,7 @@ An array type has a canonical name if and only if its component type has a canon
 
 In that case, the canonical name of the array type consists of the canonical name of the component type of the array type followed by "[]".
 
-A local class does not have a canonical name.
+A local class or anonymous class does not have a canonical name.
 
 Example 6.7-1. Fully Qualified Names
 

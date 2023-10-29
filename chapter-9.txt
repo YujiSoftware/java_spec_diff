@@ -94,7 +94,7 @@ The access modifiers protected and private pertain only to member interfaces who
 
 The modifier static pertains only to member interfaces (§8.5.1, §9.5), not to top level interfaces (§7.6).
 
-It is a compile-time error if the same keyword appears more than once as a modifier for an interface declaration.
+It is a compile-time error if the same keyword appears more than once as a modifier for an interface declaration, or if a interface declaration has more than one of the access modifiers public, protected, and private (§6.6).
 
 If two or more (distinct) interface modifiers appear in an interface declaration, then it is customary, though not required, that they appear in the order consistent with that shown above in the production for InterfaceModifier.
 
@@ -138,13 +138,13 @@ In an interface's type parameter section, a type variable T directly depends on 
 
 The scope and shadowing of an interface's type parameter is specified in §6.3.
 
-It is a compile-time error to refer to a type parameter of an interface I anywhere in the declaration of a field or type member of I.
+It is a compile-time error to refer to a type parameter of a generic interface I anywhere in the declaration of a static member of I (§9.3, §9.4, §9.5).
 
 A generic interface declaration defines a set of parameterized types (§4.5), one for each possible parameterization of the type parameter section by type arguments. All of these parameterized types share the same interface at run time.
 
 9.1.3. Superinterfaces and Subinterfaces
 
-If an extends clause is provided, then the interface being declared extends each of the other named interfaces and therefore inherits the member types, methods, and constants of each of the other named interfaces.
+If an extends clause is provided, then the interface being declared extends each of the other named interfaces and therefore inherits the member types, instance methods, and constants of each of the other named interfaces.
 
 These other named interfaces are the direct superinterfaces of the interface being declared.
 
@@ -213,13 +213,13 @@ Members declared in the body of the interface (§9.1.4).
 
 Members inherited from any direct superinterfaces (§9.1.3).
 
-If an interface has no direct superinterfaces, then the interface implicitly declares a public abstract member method m with signature s, return type r, and throws clause t corresponding to each public instance method m with signature s, return type r, and throws clause t declared in Object, unless an abstract method with the same signature, same return type, and a compatible throws clause is explicitly declared by the interface.
+If an interface has no direct superinterfaces, then the interface implicitly declares a public abstract member method m with signature s, return type r, and throws clause t corresponding to each public instance method m with signature s, return type r, and throws clause t declared in Object (§4.3.2), unless an abstract method with the same signature, same return type, and a compatible throws clause is explicitly declared by the interface.
 
 It is a compile-time error if the interface explicitly declares such a method m in the case where m is declared to be final in Object.
 
 It is a compile-time error if the interface explicitly declares a method with a signature that is override-equivalent (§8.4.2) to a public method of Object, but which has a different return type, or an incompatible throws clause, or is not abstract.
 
-The interface inherits, from the interfaces it extends, all members of those interfaces, except for fields, classes, and interfaces that it hides; abstract or default methods that it overrides (§9.4.1); and static methods.
+The interface inherits, from the interfaces it extends, all members of those interfaces, except for i) fields, classes, and interfaces that it hides, ii) abstract methods and default methods that it overrides (§9.4.1), iii) private methods, and iv) static methods.
 
 Fields, methods, and member types of an interface type may have the same name, since they are used in different contexts and are disambiguated by different lookup procedures (§6.5). However, this is discouraged as a matter of style.
 
@@ -261,9 +261,9 @@ It is a compile-time error for the body of an interface declaration to declare t
 
 If the interface declares a field with a certain name, then the declaration of that field is said to hide any and all accessible declarations of fields with the same name in superinterfaces of the interface.
 
-It is possible for an interface to inherit more than one field with the same name. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the interface to refer to any such field by its simple name will result in a compile-time error, because such a reference is ambiguous.
+It is possible for an interface to inherit more than one field with the same name. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the interface to refer to any such field by its simple name will result in a compile-time error, because the reference is ambiguous.
 
-There might be several paths by which the same field declaration might be inherited from an interface. In such a situation, the field is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
+There might be several paths by which the same field declaration is inherited from an interface. In such a situation, the field is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
 
 Example 9.3-1. Ambiguous Inherited Fields
 
@@ -330,7 +330,7 @@ InterfaceMethodDeclaration:
 {InterfaceMethodModifier} MethodHeader MethodBody
 InterfaceMethodModifier:
 (one of)
-Annotation public
+Annotation public private
 abstract default static strictfp
 
 The following productions from §8.4, §8.4.5, and §8.4.7 are shown here for convenience:
@@ -349,27 +349,31 @@ Block
 
 The rules for annotation modifiers on an interface method declaration are specified in §9.7.4 and §9.7.5.
 
-Every method declaration in the body of an interface is implicitly public (§6.6). It is permitted, but discouraged as a matter of style, to redundantly specify the public modifier for a method declaration in an interface.
+A method in the body of an interface may be declared public or private (§6.6). If no access modifier is given, the method is implicitly public. It is permitted, but discouraged as a matter of style, to redundantly specify the public modifier for a method declaration in an interface.
 
-A default method is a method that is declared in an interface with the default modifier; its body is always represented by a block. It provides a default implementation for any class that implements the interface without overriding the method. Default methods are distinct from concrete methods (§8.4.3.1), which are declared in classes.
+A default method is an instance method declared in an interface with the default modifier. Its body is always represented by a block, which provides a default implementation for any class that implements the interface without overriding the method. Default methods are distinct from concrete methods (§8.4.3.1), which are declared in classes, and from private interface methods, which are neither inherited nor overridden.
 
-An interface can declare static methods, which are invoked without reference to a particular object.
+An interface can declare static methods, which are invoked without reference to a particular object. static interface methods are distinct from default methods, which are instance methods.
 
 It is a compile-time error to use the name of a type parameter of any surrounding declaration in the header or body of a static method of an interface.
 
 The effect of the strictfp modifier is to make all float or double expressions within the body of a default or static method be explicitly FP-strict (§15.4).
 
-An interface method lacking a default modifier or a static modifier is implicitly abstract, so its body is represented by a semicolon, not a block. It is permitted, but discouraged as a matter of style, to redundantly specify the abstract modifier for such a method declaration.
+An interface method lacking a private, default, or static modifier is implicitly abstract. Its body is represented by a semicolon, not a block. It is permitted, but discouraged as a matter of style, to redundantly specify the abstract modifier for such a method declaration.
 
-It is a compile-time error if the same keyword appears more than once as a modifier for a method declaration in an interface.
+Note that an interface method may not be declared with protected or package access, or with the modifiers final, synchronized, or native.
 
-It is a compile-time error if a method is declared with more than one of the modifiers abstract, default, or static.
+It is a compile-time error if the same keyword appears more than once as a modifier for an interface method declaration, or if an interface method declaration has more than one of the access modifiers public and private (§6.6).
 
-It is a compile-time error if an abstract method declaration contains the keyword strictfp.
+It is a compile-time error if an interface method declaration has more than one of the keywords abstract, default, or static.
+
+It is a compile-time error if an interface method declaration that contains the keyword private also contains the keyword abstract or default. It is permitted for an interface method declaration to contain both private and static.
+
+It is a compile-time error if an interface method declaration that contains the keyword abstract also contains the keyword strictfp.
 
 It is a compile-time error for the body of an interface to declare, explicitly or implicitly, two methods with override-equivalent signatures (§8.4.2). However, an interface may inherit several abstract methods with such signatures (§9.4.1).
 
-A method in an interface may be generic. The rules for type parameters of a generic method in an interface are the same as for a generic method in a class (§8.4.4).
+A method declared in an interface may be generic. The rules for type parameters of a generic method in an interface are the same as for a generic method in a class (§8.4.4).
 
 9.4.1. Inheritance and Overriding
 
@@ -398,19 +402,25 @@ interface Bottom extends Left, Right {}
 
 Right inherits name() from Top, but Bottom inherits name() from Left, not Right. This is because name() from Left overrides the declaration of name() in Top.
 
-An interface does not inherit static methods from its superinterfaces.
+An interface does not inherit private or static methods from its superinterfaces.
 
-If an interface I declares a static method m, and the signature of m is a subsignature of an instance method m' in a superinterface of I, and m' would otherwise be accessible to code in I, then a compile-time error occurs.
+If an interface I declares a private or static method m, and the signature of m is a subsignature of a public instance method m' in a superinterface of I, and m' would otherwise be accessible to code in I, then a compile-time error occurs.
 
-In essence, a static method in an interface cannot "hide" an instance method in a superinterface. This is similar to the rule in §8.4.8.2 whereby a static method in a class cannot hide an instance method in a superclass or superinterface. Note that the rule in §8.4.8.2 speaks of a class that "declares or inherits a static method", whereas the rule above speaks only of an interface that "declares a static method", since an interface cannot inherit a static method. Also note that the rule in §8.4.8.2 allows hiding of both instance and static methods in superclasses/superinterfaces, whereas the rule above considers only instance methods in superinterfaces.
+In essence, a static method in an interface cannot hide an instance method in a superinterface. This is similar to the rule in §8.4.8.2 whereby a static method in a class cannot hide an instance method in a superclass or superinterface. Note that the rule in §8.4.8.2 speaks of a class that "declares or inherits a static method", whereas the rule above speaks only of an interface that "declares a static method", since an interface cannot inherit a static method. Also note that the rule in §8.4.8.2 allows hiding of both instance and static methods in superclasses/superinterfaces, whereas the rule above considers only public instance methods in superinterfaces.
+
+Along the same lines, a private method in an interface cannot override an instance method - whether public or private - in a superinterface. This is similar to the rules in §8.4.8.1 and §8.4.8.3 whereby a private method in a class cannot override any instance method in a superclass or superinterface, because §8.4.8.1 requires the overridden method to be non-private and §8.4.8.3 requires the overriding method to provide at least as much access as the overridden method. In summary, only public methods in interfaces can be overridden, and only by public methods in subinterfaces or in implementing classes.
 
 9.4.1.1. Overriding (by Instance Methods)
 
-An instance method m1, declared in or inherited by an interface I, overrides from I another instance method, m2, declared in interface J, iff both of the following are true:
+An instance method mI declared in or inherited by interface I, overrides from I another instance method mJ declared in interface J, iff all of the following are true:
 
 I is a subinterface of J.
 
-The signature of m1 is a subsignature (§8.4.2) of the signature of m2.
+I does not inherit mJ.
+
+The signature of mI is a subsignature (§8.4.2) of the signature of mJ.
+
+mJ is public.
 
 The presence or absence of the strictfp modifier has absolutely no effect on the rules for overriding methods. For example, it is permitted for a method that is not FP-strict to override an FP-strict method and it is permitted for an FP-strict method to override a method that is not FP-strict.
 
@@ -420,9 +430,11 @@ An overridden default method can be accessed by using a method invocation expres
 
 The relationship between the return type of an interface method and the return types of any overridden interface methods is specified in §8.4.8.3.
 
-The relationship between the throws clause of an interface method and the throws clauses of any overridden interface methods are specified in §8.4.8.3.
+The relationship between the throws clause of an interface method and the throws clauses of any overridden interface methods is specified in §8.4.8.3.
 
-The relationship between the signature of an interface method and the signatures of overridden interface methods are specified in §8.4.8.3.
+The relationship between the signature of an interface method and the signatures of any overridden interface methods is specified in §8.4.8.3.
+
+The relationship between the accessibility of an interface method and the accessibility of any overridden interface methods is specified in §8.4.8.3.
 
 It is a compile-time error if a default method is override-equivalent with a non-private method of the class Object, because any class implementing the interface will inherit its own implementation of the method.
 
@@ -450,9 +462,9 @@ One of the inherited methods must be return-type-substitutable for every other i
 
 There might be several paths by which the same method declaration is inherited from an interface. This fact causes no difficulty and never, of itself, results in a compile-time error.
 
-Naturally, when two different default methods with matching signatures are inherited by a subinterface, there is a behavioral conflict. We actively detect this conflict and notify the developer with an error, rather than waiting for the problem to arise when a concrete class is compiled. The error can be avoided by declaring a new method that overrides, and thus prevents the inheritance of, all conflicting methods.
+Naturally, when two different default methods with matching signatures are inherited by a subinterface, there is a behavioral conflict. We actively detect this conflict and notify the programmer with an error, rather than waiting for the problem to arise when a concrete class is compiled. The error can be avoided by declaring a new method that overrides, and thus prevents the inheritance of, all conflicting methods.
 
-Similarly, when an abstract and a default method with matching signatures are inherited, we produce an error. In this case, it would be possible to give priority to one or the other - perhaps we would assume that the default method provides a reasonable implementation for the abstract method, too. But this is risky, since other than the coincidental name and signature, we have no reason to believe that the default method behaves consistently with the abstract method's contract - the default method may not have even existed when the subinterface was originally developed. It is safer in this situation to ask the user to actively assert that the default implementation is appropriate (via an overriding declaration).
+Similarly, when an abstract method and a default method with matching signatures are inherited by a subinterface, we produce an error. In this case, it would be possible to give priority to one or the other - perhaps we would assume that the default method provides a reasonable implementation for the abstract method. But this is risky, since other than the coincidental name and signature, we have no reason to believe that the default method behaves consistently with the abstract method's contract - the default method may not have even existed when the subinterface was originally developed. It is safer in this situation to ask the user to actively assert that the default implementation is appropriate (via an overriding declaration).
 
 In contrast, the longstanding behavior for inherited concrete methods in classes is that they override abstract methods declared in interfaces (see §8.4.8). The same argument about potential contract violation applies here, but in this case there is an inherent imbalance between classes and interfaces. We prefer, in order to preserve the independent nature of class hierarchies, to minimize class-interface clashes by simply giving priority to concrete methods.
 
@@ -481,11 +493,11 @@ Here, the method named move is overloaded in interface RealPointInterface with t
 
 A default method has a block body. This block of code provides an implementation of the method in the event that a class implements the interface but does not provide its own implementation of the method.
 
-A static method also has a block body, which provides the implementation of the method.
+A private or static method also has a block body, which provides the implementation of the method.
 
 It is a compile-time error if an interface method declaration is abstract (explicitly or implicitly) and has a block for its body.
 
-It is a compile-time error if an interface method declaration is default or static and has a semicolon for its body.
+It is a compile-time error if an interface method declaration is default, private, or static, and has a semicolon for its body.
 
 It is a compile-time error for the body of a static method to attempt to reference the current object using the keyword this or the keyword super.
 
@@ -497,7 +509,7 @@ If a method is declared to have a return type (§8.4.5), then a compile-time err
 
 Interfaces may contain member type declarations (§8.5).
 
-A member type declaration in an interface is implicitly public and static. It is permitted to redundantly specify either or both of these modifiers.
+Every member type declaration in the body of an interface is implicitly public and static. It is permitted to redundantly specify either or both of these modifiers.
 
 It is a compile-time error if a member type declaration in an interface has the modifier protected or private.
 
@@ -507,9 +519,9 @@ If an interface declares a member type with a certain name, then the declaration
 
 An interface inherits from its direct superinterfaces all the non-private member types of the superinterfaces that are both accessible to code in the interface and not hidden by a declaration in the interface.
 
-An interface may inherit two or more type declarations with the same name. It is a compile-time error to attempt to refer to any ambiguously inherited class or interface by its simple name.
+It is possible for an interface to inherit more than one member type with the same name. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the interface to refer to any such member type by its simple name will result in a compile-time error, because the reference is ambiguous.
 
-If the same type declaration is inherited from an interface by multiple paths, the class or interface is considered to be inherited only once; it may be referred to by its simple name without ambiguity.
+There might be several paths by which the same member type declaration is inherited from an interface. In such a situation, the member type is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
 
 9.6. Annotation Types
 
@@ -542,7 +554,7 @@ For example, annotation types share the same namespace as normal class and inter
 
 9.6.1. Annotation Type Elements
 
-The body of an annotation type may contain method declarations, each of which defines an element of the annotation type. An annotation type has no elements other than those defined by the methods it explicitly declares.
+The body of an annotation type declaration may contain method declarations, each of which defines an element of the annotation type. An annotation type has no elements other than those defined by the methods it explicitly declares.
 
 AnnotationTypeBody:
 { {AnnotationTypeMemberDeclaration} }
@@ -564,7 +576,7 @@ By virtue of the AnnotationTypeElementDeclaration production, a method declarati
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 8.
+By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 9.
 
 By convention, the only AnnotationTypeElementModifiers that should be present on an annotation type element are annotations.
 
@@ -772,6 +784,8 @@ Example 9.6.3-1. Ill-formed Containing Annotation Type
 
 Consider the following declarations:
 
+import java.lang.annotation.Repeatable;
+
 @Repeatable(FooContainer.class)
 @interface Foo {}
 
@@ -801,12 +815,16 @@ Example 9.6.3-2. Restricting Where Annotations May Repeat
 
 An annotation whose type declaration indicates a target of java.lang.annotation.ElementType.TYPE can appear in at least as many locations as an annotation whose type declaration indicates a target of java.lang.annotation.ElementType.ANNOTATION_TYPE. For example, given the following declarations of repeatable and containing annotation types:
 
+import java.lang.annotation.Target;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
+
 @Target(ElementType.TYPE)
 @Repeatable(FooContainer.class)
 @interface Foo {}
 
 @Target(ElementType.ANNOTATION_TYPE)
-@Interface FooContainer {
+@interface FooContainer {
     Foo[] value();
 }
 
@@ -814,13 +832,13 @@ An annotation whose type declaration indicates a target of java.lang.annotation.
 @Foo can appear on any type declaration while @FooContainer can appear on only annotation type declarations. Therefore, the following annotation type declaration is legal:
 
 @Foo @Foo
-@interface X {}
+@interface Anno {}
 
 
 while the following interface declaration is illegal:
 
 @Foo @Foo
-interface X {}
+interface Intf {}
 
 
 More broadly, if Foo is a repeatable annotation type and FooContainer is its containing annotation type, then:
@@ -842,6 +860,7 @@ Example 9.6.3-3. A Repeatable Containing Annotation Type
 
 The following declarations are legal:
 
+import java.lang.annotation.Repeatable;
 
 // Foo: Repeatable annotation type
 @Repeatable(FooContainer.class)
@@ -856,13 +875,10 @@ The following declarations are legal:
 @interface FooContainerContainer { FooContainer[] value(); }
 
 
-
 Thus, an annotation whose type is a containing annotation type may itself be repeated:
 
-
 @FooContainer({@Foo(1)}) @FooContainer({@Foo(2)})
-class A {}
-
+class Test {}
 
 
 An annotation type which is both repeatable and containing is subject to the rules on mixing annotations of repeatable annotation type with annotations of containing annotation type (§9.7.5). For example, it is not possible to write multiple @Foo annotations alongside multiple @FooContainer annotations, nor is it possible to write multiple @FooContainer annotations alongside multiple @FooContainerContainer annotations. However, if the FooContainerContainer type was itself repeatable, then it would be possible to write multiple @Foo annotations alongside multiple @FooContainerContainer annotations.
@@ -871,7 +887,7 @@ An annotation type which is both repeatable and containing is subject to the rul
 
 9.6.4. Predefined Annotation Types
 
-Several annotation types are predefined in the libraries of the Java SE platform. Some of these predefined annotation types have special semantics. These semantics are specified in this section. This section does not provide a complete specification for the predefined annotations contained here in; that is the role of the appropriate API specifications. Only those semantics that require special behavior on the part of a Java compiler or Java Virtual Machine implementation are specified here.
+Several annotation types are predefined in the libraries of the Java SE Platform. Some of these predefined annotation types have special semantics. These semantics are specified in this section. This section does not provide a complete specification for the predefined annotations contained here in; that is the role of the appropriate API specifications. Only those semantics that require special behavior on the part of a Java compiler or Java Virtual Machine implementation are specified here.
 
 9.6.4.1. @Target
 
@@ -879,7 +895,11 @@ An annotation of type java.lang.annotation.Target is used on the declaration of 
 
 Annotation types may be applicable in declaration contexts, where annotations apply to declarations, or in type contexts, where annotations apply to types used in declarations and expressions.
 
-There are eight declaration contexts, each corresponding to an enum constant of java.lang.annotation.ElementType:
+There are nine declaration contexts, each corresponding to an enum constant of java.lang.annotation.ElementType:
+
+Module declarations (§7.7)
+
+Corresponds to java.lang.annotation.ElementType.MODULE
 
 Package declarations (§7.4.1)
 
@@ -925,17 +945,19 @@ These contexts are the syntactic locations where annotations were allowed in Jav
 
 9.6.4.2. @Retention
 
-Annotations may be present only in source code, or they may be present in the binary form of a class or interface. An annotation that is present in the binary form may or may not be available at run time via the reflection libraries of the Java SE platform. The annotation type java.lang.annotation.Retention is used to choose among these possibilities.
+Annotations may be present only in source code, or they may be present in the binary form of a class or interface. An annotation that is present in the binary form may or may not be available at run time via the reflection libraries of the Java SE Platform. The annotation type java.lang.annotation.Retention is used to choose among these possibilities.
 
 If an annotation a corresponds to a type T, and T has a (meta-)annotation m that corresponds to java.lang.annotation.Retention, then:
 
 If m has an element whose value is java.lang.annotation.RetentionPolicy.SOURCE, then a Java compiler must ensure that a is not present in the binary representation of the class or interface in which a appears.
 
-If m has an element whose value is java.lang.annotation.RetentionPolicy.CLASS or java.lang.annotation.RetentionPolicy.RUNTIME, then a Java compiler must ensure that a is represented in the binary representation of the class or interface in which a appears, unless m annotates a local variable declaration.
+If m has an element whose value is java.lang.annotation.RetentionPolicy.CLASS or java.lang.annotation.RetentionPolicy.RUNTIME, then a Java compiler must ensure that a is represented in the binary representation of the class or interface in which a appears, unless a annotates a local variable declaration or a annotates a formal parameter declaration of a lambda expression.
 
-An annotation on a local variable declaration is never retained in the binary representation.
+An annotation on the declaration of a local variable, or on the declaration of a formal parameter of a lambda expression, is never retained in the binary representation. In contrast, an annotation on the type of a local variable, or on the type of a formal parameter of a lambda expression, is retained in the binary representation if the annotation type specifies a suitable retention policy.
 
-In addition, if m has an element whose value is java.lang.annotation.RetentionPolicy.RUNTIME, the reflection libraries of the Java SE platform must make a available at run time.
+Note that it is not illegal for an annotation type to be meta-annotated with @Target(java.lang.annotation.ElementType.LOCAL_VARIABLE) and @Retention(java.lang.annotation.RetentionPolicy.CLASS) or @Retention(java.lang.annotation.RetentionPolicy.RUNTIME).
+
+If m has an element whose value is java.lang.annotation.RetentionPolicy.RUNTIME, the reflection libraries of the Java SE Platform must make a available at run time.
 
 If T does not have a (meta-)annotation m that corresponds to java.lang.annotation.Retention, then a Java compiler must treat T as if it does have such a meta-annotation m with an element whose value is java.lang.annotation.RetentionPolicy.CLASS.
 
@@ -957,9 +979,9 @@ when they mean to write:
 public boolean equals(Object that) { ... }
 
 
-This is perfectly legal, but class Foo inherits the equals implementation from Object, which can cause some very subtle bugs.
+This is perfectly legal, but class Foo inherits the equals implementation from Object, which can cause some subtle bugs.
 
-If a method declaration is annotated with the annotation @Override, but the method does not override or implement a method declared in a supertype, or is not override-equivalent to a public method of Object, a compile-time error occurs.
+If a method declaration in type T is annotated with @Override, but the method does not override from T a method declared in a supertype of T (§8.4.8.1, §9.4.1.1), or is not override-equivalent to a public method of Object (§4.3.2, §8.4.2), then a compile-time error occurs.
 
 This behavior differs from Java SE 5.0, where @Override only caused a compile-time error if applied to a method that implemented a method from a superinterface that was not also present in a superclass.
 
@@ -969,9 +991,9 @@ class Foo     { @Override public int hashCode() {..} }
 interface Bar { @Override int hashCode(); }
 
 
-The use of @Override in the class declaration is legal by the first clause, because Foo.hashCode overrides Object.hashCode (§8.4.8).
+The use of @Override in the class declaration is legal by the first clause, because Foo.hashCode overrides from Foo the method Object.hashCode.
 
-For the interface declaration, consider that while an interface does not have Object as a supertype, an interface does have public abstract members that correspond to the public members of Object (§9.2). If an interface chooses to declare them explicitly (i.e. to declare members that are override-equivalent to public methods of Object), then the interface is deemed to override them (§8.4.8), and use of @Override is allowed.
+For the interface declaration, consider that while an interface does not have Object as a supertype, an interface does have public abstract members that correspond to the public members of Object (§9.2). If an interface chooses to declare them explicitly (that is, to declare members that are override-equivalent to public methods of Object), then the interface is deemed to override them, and use of @Override is allowed.
 
 However, consider an interface that attempts to use @Override on a clone method: (finalize could also be used in this example)
 
@@ -988,29 +1010,69 @@ class Beep { @Override protected Object clone() {..} }
 
 Java compilers are increasingly capable of issuing helpful "lint-like" warnings. To encourage the use of such warnings, there should be some way to disable a warning in a part of the program when the programmer knows that the warning is inappropriate.
 
-The annotation type SuppressWarnings supports programmer control over warnings otherwise issued by a Java compiler. It contains a single element that is an array of String.
+The annotation type SuppressWarnings supports programmer control over warnings otherwise issued by a Java compiler. It defines a single element that is an array of String.
 
-If a program declaration is annotated with the annotation @SuppressWarnings(value = {S1, ..., Sk}), then a Java compiler must not report any warning identified by one of S1 ... Sk if that warning would have been generated as a result of the annotated declaration or any of its parts.
+If a declaration is annotated with @SuppressWarnings(value = {S1, ..., Sk}), then a Java compiler must suppress (that is, not report) any warning specified by one of S1 ... Sk if that warning would have been generated as a result of the annotated declaration or any of its parts.
 
-Unchecked warnings are identified by the string "unchecked".
+The three kinds of warnings defined by the Java programming language are specified using the following strings:
 
-Compiler vendors should document the warning names they support in conjunction with this annotation type. Vendors are encouraged to cooperate to ensure that the same names work across multiple compilers.
+Unchecked warnings (§4.8, §5.1.6, §5.1.9, §8.4.1, §8.4.8.3, §15.12.4.2, §15.13.2, §15.27.3) are specified by the string "unchecked".
+
+Deprecation warnings (§9.6.4.6) are specified by the string "deprecation".
+
+Removal warnings (§9.6.4.6) are specified by the string "removal".
+
+For other kinds of warnings, compiler vendors should document the strings they support for @SuppressWarnings. Vendors are encouraged to cooperate to ensure that the same names work across multiple compilers.
 
 9.6.4.6. @Deprecated
 
-A program element annotated @Deprecated is one that programmers are discouraged from using, typically because it is dangerous, or because a better alternative exists.
+Programmers are sometimes discouraged from using certain program elements (modules, types, fields, methods, and constructors) because they are dangerous or because a better alternative exists. The annotation type Deprecated allows a compiler to warn about uses of these program elements.
 
-A Java compiler must produce a deprecation warning when a type, method, field, or constructor whose declaration is annotated with @Deprecated is used (overridden, invoked, or referenced by name) in a construct which is explicitly or implicitly declared, unless:
+A deprecated program element is a module, type, field, method, or constructor whose declaration is annotated with @Deprecated. The manner in which a program element is deprecated depends on the value of the forRemoval element of the annotation:
 
-The use is within an entity that is itself annotated with the annotation @Deprecated; or
+If forRemoval=false (the default), then the program element is ordinarily deprecated.
 
-The use is within an entity that is annotated to suppress the warning with the annotation @SuppressWarnings("deprecation"); or
+An ordinarily deprecated program element is not intended to be removed in a future release, but programmers should nevertheless migrate away from using it.
 
-The use and declaration are both within the same outermost class.
+If forRemoval=true, then the program element is terminally deprecated.
 
-Use of the @Deprecated annotation on a local variable declaration or on a parameter declaration has no effect.
+A terminally deprecated program element is intended to be removed in a future release. Programmers should stop using it or risk source and binary incompatibilities (§13.2) when upgrading to a newer release.
 
-The only implicitly declared construct that can cause a deprecation warning is a container annotation (§9.7.5). Namely, if T is a repeatable annotation type and TC is its containing annotation type, and TC is deprecated, then repeating the @T annotation will cause a deprecation warning. The warning is due to the implicit @TC container annotation. It is strongly discouraged to deprecate a containing annotation type without deprecating the corresponding repeatable annotation type.
+A Java compiler must produce a deprecation warning when an ordinarily deprecated program element is used (overridden, invoked, or referenced by name) in the declaration of a program element (whether explicitly or implicitly declared), unless:
+
+The use is within a declaration that is itself deprecated, either ordinarily or terminally; or
+
+The use is within a declaration that is annotated to suppress deprecation warnings; or
+
+The use and declaration are both within the same outermost class; or
+
+The use is within an import declaration that imports the ordinarily deprecated type or member.
+
+The use is within an exports or opens directive (§7.7.2).
+
+A Java compiler must produce a removal warning when a terminally deprecated program element is used (overridden, invoked, or referenced by name) in the declaration of a program element (whether explicitly or implicitly declared), unless:
+
+The use is within a declaration that is annotated to suppress removal warnings; or
+
+The use and declaration are both within the same outermost class; or
+
+The use is within an import declaration that imports the terminally deprecated type or member.
+
+The use is within an exports or opens directive.
+
+Terminal deprecation is sufficiently urgent that the use of a terminally deprecated element will cause a removal warning even if the using element is itself deprecated, since there is no guarantee that both elements will be removed at the same time. To dismiss the warning but continue using the element, the programmer must manually acknowledge the risk via an @SuppressWarnings annotation.
+
+No deprecation warning or removal warning is produced when:
+
+a local variable or formal parameter is used (referenced by name), even if the declaration of the local variable or formal parameter is annotated with @Deprecated.
+
+the name of a package is used (referenced by a qualified type name, or an import declaration, or an exports or opens directive), even if the declaration of the package is annotated with @Deprecated.
+
+the name of a module is used by a qualified exports or opens directive, even if the declaration of the friend module is annotated with @Deprecated.
+
+A module declaration that exports or opens a package is usually controlled by the same programmer or team that controls the package's declaration. As such, there is little benefit in warning that the package declaration is annotated with @Deprecated when the package is exported or opened by the module declaration. In contrast, a module declaration that exports or opens a package to a friend module is usually not controlled by the same programmer or team that controls the friend module. Simply exporting or opening the package does not make the module declaration rely on the friend module, so there is little value in warning if the friend module is deprecated; the programmer of the module declaration would almost always wish to suppress such a warning.
+
+The only implicit declaration that can cause a deprecation warning or removal warning is a container annotation (§9.7.5). Namely, if T is a repeatable annotation type and TC is its containing annotation type, and TC is deprecated, then repeating the @T annotation will cause a warning. The warning is due to the implicit @TC container annotation. It is strongly discouraged to deprecate a containing annotation type without deprecating the corresponding repeatable annotation type.
 
 9.6.4.7. @SafeVarargs
 
@@ -1018,7 +1080,7 @@ A variable arity parameter with a non-reifiable element type (§4.7) can cause h
 
 The annotation type SafeVarargs, when used to annotate a method or constructor declaration, makes a programmer assertion that prevents a Java compiler from reporting unchecked warnings for the declaration or invocation of a variable arity method or constructor where the compiler would otherwise do so due to the variable arity parameter having a non-reifiable element type.
 
-The annotation @SafeVarargs has non-local effects because it suppresses unchecked warnings at method invocation expressions in addition to an unchecked warning pertaining to the declaration of the variable arity method itself (§8.4.1). In contrast, the annotation @SuppressWarnings("unchecked") has local effects because it only suppresses unchecked warnings pertaining to the declaration of a method.
+The annotation @SafeVarargs has non-local effects because it suppresses unchecked warnings at method invocation expressions, in addition to an unchecked warning pertaining to the declaration of the variable arity method itself (§8.4.1). In contrast, the annotation @SuppressWarnings("unchecked") has local effects because it only suppresses unchecked warnings pertaining to the declaration of a method.
 
 The canonical target for @SafeVarargs is a method like java.util.Collections.addAll, whose declaration starts with:
 
@@ -1030,9 +1092,9 @@ The variable arity parameter has declared type T[], which is non-reifiable. Howe
 
 It is a compile-time error if a fixed arity method or constructor declaration is annotated with the annotation @SafeVarargs.
 
-It is a compile-time error if a variable arity method declaration that is neither static nor final is annotated with the annotation @SafeVarargs.
+It is a compile-time error if a variable arity method declaration that is neither static nor final nor private is annotated with the annotation @SafeVarargs.
 
-Since @SafeVarargs is only applicable to static methods, final instance methods, and constructors, the annotation is not usable where method overriding occurs. Annotation inheritance only works on classes (not methods, interfaces, or constructors), so an @SafeVarargs-style annotation cannot be passed through instance methods in classes or through interfaces.
+Since @SafeVarargs is only applicable to static methods, final and/or private instance methods, and constructors, the annotation is not usable where method overriding occurs. Annotation inheritance only works for annotations on classes (not on methods, interfaces, or constructors), so an @SafeVarargs-style annotation cannot be passed through instance methods in classes or through interfaces.
 
 9.6.4.8. @Repeatable
 
@@ -1084,9 +1146,9 @@ Note that the at-sign (@) is a token unto itself (§3.11). It is possible to put
 
 The TypeName specifies the annotation type corresponding to the annotation. The annotation is said to be "of" that type.
 
-It is a compile-time error if TypeName does not specify an annotation type that is accessible (§6.6) at the point where the annotation appears.
+The TypeName must name an accessible annotation type (§6.6), or a compile-time error occurs.
 
-The Identifier in an element-value pair must be the simple name of one of the elements (i.e. methods) of the annotation type, or a compile-time error occurs.
+The Identifier in an element-value pair must be the simple name of one of the elements (that is, methods) of the annotation type, or a compile-time error occurs.
 
 The return type of this method defines the element type of the element-value pair.
 
@@ -1254,9 +1316,9 @@ public class Karma { ... }
 
 9.7.4. Where Annotations May Appear
 
-A declaration annotation is an annotation that applies to a declaration, and whose own type is applicable in the declaration context (§9.6.4.1) represented by that declaration.
+A declaration annotation is an annotation that applies to a declaration, and whose own type is applicable in the declaration context (§9.6.4.1) represented by that declaration; or an annotation that applies to a class, interface, enum, annotation type, or type parameter declaration, and whose own type is applicable in type contexts (§4.11).
 
-A type annotation is an annotation that applies to a type (or any part of a type), and whose own type is applicable in type contexts (§4.11).
+A type annotation is an annotation that applies to a type (or any part of a type), and whose own type is applicable in type contexts.
 
 For example, given the field declaration:
 
@@ -1291,7 +1353,7 @@ Formal and exception parameter declarations
 
 Local variable declarations (including loop variables of for statements and resource variables of try-with-resources statements)
 
-The grammar of the Java programming language unambiguously treats annotations at these locations as modifiers for a declaration (§8.3), but that is purely a syntactic matter. Whether an annotation applies to a declaration or to the type of the declared entity - and thus, whether the annotation is a declaration annotation or a type annotation - depends on the applicability of the annotation's type:
+The grammar of the Java programming language unambiguously treats annotations at these locations as modifiers for a declaration (§8.3), but that is purely a syntactic matter. Whether an annotation applies to the declaration or to the type of the declared entity - and thus, whether the annotation is a declaration annotation or a type annotation - depends on the applicability of the annotation's type:
 
 If the annotation's type is applicable in the declaration context corresponding to the declaration, and not in type contexts, then the annotation is deemed to apply only to the declaration.
 
@@ -1313,6 +1375,8 @@ If an annotation appears before a void method declaration and is deemed to apply
 
 It is a compile-time error if an annotation of type T is syntactically a modifier for:
 
+a module declaration, but T is not applicable to module declarations.
+
 a package declaration, but T is not applicable to package declarations.
 
 a class, interface, or enum declaration, but T is not applicable to type declarations or type contexts; or an annotation type declaration, but T is not applicable to annotation type declarations or type declarations or type contexts.
@@ -1331,7 +1395,7 @@ a receiver parameter, but T is not applicable to type contexts.
 
 a local variable declaration (including a loop variable of a for statement or a resource variable of a try-with-resources statement), but T is not applicable to local variable declarations or type contexts.
 
-Note that most of the clauses above mention "... or type contexts", because even if an annotation does not apply to the declaration, it may still apply to the type of the declared entity.
+Five of these nine clauses mention "... or type contexts" because they characterize the five syntactic locations where an annotation could plausibly apply either to a declaration or to the type of a declared entity. Furthermore, two of the nine clauses - for class, interface, enum, and annotation type declarations, and for type parameter declarations - mention "... or type contexts" because it may be convenient to apply an annotation whose type is meta-annotated with @Target(ElementType.TYPE_USE) (thus, applicable in type contexts) to a type declaration.
 
 A type annotation is admissible if both of the following are true:
 
@@ -1451,7 +1515,7 @@ is prohibited, even if FooContainer is repeatable with a containing annotation t
 
 A functional interface is an interface that has just one abstract method (aside from the methods of Object), and thus represents a single function contract. This "single" method may take the form of multiple abstract methods with override-equivalent signatures inherited from superinterfaces; in this case, the inherited methods logically represent a single method.
 
-For an interface I, let M be the set of abstract methods that are members of I that do not have the same signature as any public instance method of the class Object. Then, I is a functional interface if there exists a method m in M for which both of the following are true:
+For an interface I, let M be the set of abstract methods that are members of I that do not have the same signature as any public instance method of the class Object (§4.3.2). Then, I is a functional interface if there exists a method m in M for which both of the following are true:
 
 The signature of m is a subsignature (§8.4.2) of every method's signature in M.
 
@@ -1459,9 +1523,9 @@ m is return-type-substitutable (§8.4.5) for every method in M.
 
 In addition to the usual process of creating an interface instance by declaring and instantiating a class (§15.9), instances of functional interfaces can be created with method reference expressions and lambda expressions (§15.13, §15.27).
 
-The definition of functional interface excludes methods in an interface that are also public methods in Object. This is to allow functional treatment of an interface like java.util.Comparator<T> that declares multiple abstract methods of which only one is really "new" - int compare(T,T). The other method - boolean equals(Object) - is an explicit declaration of an abstract method that would otherwise be implicitly declared, and will be automatically implemented by every class that implements the interface.
+The definition of functional interface excludes methods in an interface that are also public methods in Object. This is to allow functional treatment of an interface like java.util.Comparator<T> that declares multiple abstract methods of which only one is really "new" - int compare(T,T). The other - boolean equals(Object) - is an explicit declaration of an abstract method that would otherwise be implicitly declared in the interface (§9.2) and automatically implemented by every class that implements the interface.
 
-Note that if non-public methods of Object, such as clone(), are declared in an interface, they are not automatically implemented by every class that implements the interface. The implementation inherited from Object is protected while the interface method is necessarily public. The only way to implement such an interface would be for a class to override the non-public Object method with a public method.
+Note that if non-public methods of Object, such as clone(), are explicitly declared in an interface as public, they are not automatically implemented by every class that implements the interface. The implementation inherited from Object is protected while the interface method is public, so the only way to implement the interface would be for a class to override the non-public Object method with a public method.
 
 Example 9.8-1. Functional Interfaces
 
@@ -1603,25 +1667,31 @@ The function type of a functional interface I is a method type (§8.2) that can 
 
 Let M be the set of abstract methods defined for I. The function type of I consists of the following:
 
-Type parameters, formal parameters, and return type:
+Type parameters, formal parameter types, and return type:
 
 Let m be a method in M with:
 
 a signature that is a subsignature of every method's signature in M; and
 
-a return type that is a subtype of every method's return type in M (after adapting for any type parameters (§8.4.4)).
+a return type R (possibly void), where either R is the same as every method's return type in M, or R is a reference type and is a subtype of every method's return type in M (after adapting for any type parameters (§8.4.4) if the two methods have the same signature).
 
-If no such method exists, then let m be a method in M that:
+If no such method exists, then let m be a method in M with:
 
-has a signature that is a subsignature of every method's signature in M; and
+a signature that is a subsignature of every method's signature in M; and
 
-is return-type-substitutable (§8.4.5) for every method in M.
+a return type such that m is return-type-substitutable (§8.4.5) for every method in M.
 
 The function type's type parameters, formal parameter types, and return type are as given by m.
 
 throws clause:
 
-The function type's throws clause is derived from the throws clauses of the methods in M. If the function type is generic, these clauses are first adapted to the type parameters of the function type (§8.4.4). If the function type is not generic but at least one method in M is generic, these clauses are first erased. Then, the function type's throws clause includes every type, E, which satisfies the following constraints:
+The function type's throws clause is derived from the throws clauses of the methods in M, as follows:
+
+If the function type is generic, the throws clauses are first adapted to the type parameters of the function type (§8.4.4).
+
+If the function type is not generic but at least one method in M is generic, the throws clauses are first erased.
+
+Then, the function type's throws clause includes every type E which satisfies the following constraints:
 
 E is mentioned in one of the throws clauses.
 
