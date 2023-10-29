@@ -2717,7 +2717,7 @@ It is a compile-time error if a return statement (§14.17) appears anywhere with
 
 An instance initializer is permitted to refer to the current object using the keyword this (§15.8.3) or the keyword super (§15.11.2, §15.12), and to use any type variables in scope.
 
-Restrictions on how an instance initializer may refer to instance variables, even when the instance variables are in scope, are specified in §8.3.3).
+Restrictions on how an instance initializer may refer to instance variables, even when the instance variables are in scope, are specified in §8.3.3.
 
 Exception checking for an instance initializer is specified in §11.2.3.
 
@@ -3293,36 +3293,9 @@ These fields are implicitly declared in the same order as the corresponding enum
 
 An enum constant is said to be created when the corresponding implicitly declared field is initialized.
 
-The following implicitly declared methods:
+An implicitly declared method public static E[] values(), which returns an array containing the enum constants of E, in the same order as they appear in the body of the declaration of E.
 
-
-/**
-* Returns an array containing the constants of this enum 
-* type, in the order they're declared.  This method may be
-* used to iterate over the constants as follows:
-*
-*    for(E c : E.values())
-*        System.out.println(c);
-*
-* @return an array containing the constants of this enum 
-* type, in the order they're declared
-*/
-public static E[] values();
-
-/**
-* Returns the enum constant of this type with the specified
-* name.
-* The string must match exactly an identifier used to declare
-* an enum constant in this type.  (Extraneous whitespace 
-* characters are not permitted.)
-* 
-* @return the enum constant with the specified name
-* @throws IllegalArgumentException if this enum type has no
-* constant with the specified name
-*/
-public static E valueOf(String name);
-
-
+An implicitly declared method public static E valueOf(String name), which returns the enum constant of E with the specified name.
 
 It follows that the declaration of enum type E cannot contain fields that conflict with the implicitly declared fields corresponding to E's enum constants, nor contain methods that conflict with implicitly declared methods or override final methods of class Enum<E>.
 

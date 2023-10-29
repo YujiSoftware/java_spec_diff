@@ -2420,7 +2420,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 12 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 13 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2450,7 +2450,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 12 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 13 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 

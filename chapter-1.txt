@@ -6,8 +6,9 @@ Table of Contents
 1.2. Example Programs
 1.3. Notation
 1.4. Relationship to Predefined Classes and Interfaces
-1.5. Feedback
-1.6. References
+1.5. Preview Features
+1.6. Feedback
+1.7. References
 
 The Java® programming language is a general-purpose, concurrent, class-based, object-oriented language. It is designed to be simple enough that many programmers can achieve fluency in the language. The Java programming language is related to C and C++ but is organized rather differently, with a number of aspects of C and C++ omitted and a few ideas from other languages included. It is intended to be a production language, not a research language, and so, as C. A. R. Hoare suggested in his classic paper on language design, the design has avoided including new and untested features.
 
@@ -15,7 +16,7 @@ The Java programming language is strongly and statically typed. This specificati
 
 The Java programming language is a relatively high-level language, in that details of the machine representation are not available through the language. It includes automatic storage management, typically using a garbage collector, to avoid the safety problems of explicit deallocation (as in C's free or C++'s delete). High-performance garbage-collected implementations can have bounded pauses to support systems programming and real-time applications. The language does not include any unsafe constructs, such as array accesses without index checking, since such unsafe constructs would cause a program to behave in an unspecified way.
 
-The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 12 Edition.
+The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 13 Edition.
 
 1.1. Organization of the Specification
 
@@ -120,13 +121,23 @@ As noted above, this specification often refers to classes of the Java SE Platfo
 
 Consequently, this specification does not describe reflection in any detail. Many linguistic constructs have analogs in the Core Reflection API (java.lang.reflect) and the Language Model API (javax.lang.model), but these are generally not discussed here. For example, when we list the ways in which an object can be created, we generally do not include the ways in which the Core Reflection API can accomplish this. Readers should be aware of these additional mechanisms even though they are not mentioned in the text.
 
-1.5. Feedback
+1.5. Preview Features
+
+A preview feature is a new feature of the Java programming language that is fully specified, fully implemented, and yet impermanent. It is available in implementations of a given release of the Java SE Platform to provoke developer feedback based on real world use; this may lead to it becoming permanent in a future release of the Java SE Platform.
+
+Implementations must disable, at both compile time and run time, the preview features defined by a given release of the Java SE Platform, unless the user indicates via the host system, at both compile time and run time, that preview features are to be enabled.
+
+The preview features defined by a given release of the Java SE Platform are specified in standalone documents that indicate changes ("diffs") to The Java® Language Specification for that release. The specifications of preview features are incorporated into The Java® Language Specification by reference, and made a part thereof, if and only if preview features are enabled at compile time.
+
+Java SE 13 defines two preview features in the Java programming language: Switch Expressions and Text Blocks. The standalone documents which specify these preview features are available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
+
+1.6. Feedback
 
 Readers are invited to report technical errors and ambiguities in The Java® Language Specification to jls-jvms-spec-comments@openjdk.java.net.
 
 Questions concerning the behavior of javac (the reference compiler for the Java programming language), and in particular its conformance to this specification, may be sent to compiler-dev@openjdk.java.net.
 
-1.6. References
+1.7. References
 Bibliography
 
 Apple Computer. Dylan Reference Manual. Apple Computer Inc., Cupertino, California. September 29, 1995.
@@ -151,4 +162,4 @@ Mitchell, James G., William Maybury, and Richard Sweet. The Mesa Programming Lan
 
 Stroustrup, Bjarne. The C++ Progamming Language, 2nd ed. Addison-Wesley, Reading, Massachusetts, 1991, reprinted with corrections January 1994, ISBN 0-201-53992-6.
 
-Unicode Consortium, The. The Unicode Standard, Version 11.0.0. Mountain View, California, 2017, ISBN 978-1-936213-16-0.
+Unicode Consortium, The. The Unicode Standard, Version 12.1.0. Mountain View, California, 2019, ISBN 978-1-936213-25-2.
