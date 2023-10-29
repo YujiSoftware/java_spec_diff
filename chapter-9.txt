@@ -576,7 +576,7 @@ By virtue of the AnnotationTypeElementDeclaration production, a method declarati
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 11.
+By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 12.
 
 By convention, the only AnnotationTypeElementModifiers that should be present on an annotation type element are annotations.
 

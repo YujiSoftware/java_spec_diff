@@ -384,9 +384,9 @@ The declaration of a subpackage is never in scope.
 
 The package java is always in scope.
 
-The scope of a type imported by a single-type-import declaration (§7.5.1) or a type-import-on-demand declaration (§7.5.2) is all the class and interface type declarations (§7.6) in the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
+The scope of a type imported by a single-type-import declaration (§7.5.1) or a type-import-on-demand declaration (§7.5.2) is the module declaration (§7.7) and all the class and interface type declarations (§7.6) of the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
 
-The scope of a member imported by a single-static-import declaration (§7.5.3) or a static-import-on-demand declaration (§7.5.4) is all the class and interface type declarations in the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
+The scope of a member imported by a single-static-import declaration (§7.5.3) or a static-import-on-demand declaration (§7.5.4) is the module declaration and all the class and interface type declarations of the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
 
 The scope of a top level type (§7.6) is all type declarations in the package in which the top level type is declared.
 
@@ -686,7 +686,7 @@ using the class Vector declared here in preference to the generic class java.uti
 
 6.4.2. Obscuring
 
-A simple name may occur in contexts where it may potentially be interpreted as the name of a variable, a type, or a package. In these situations, the rules of §6.5 specify that a variable will be chosen in preference to a type, and that a type will be chosen in preference to a package. Thus, it is may sometimes be impossible to refer to a type or package via its simple name, even though its declaration is in scope and not shadowed. We say that such a declaration is obscured.
+A simple name may occur in contexts where it may potentially be interpreted as the name of a variable, a type, or a package. In these situations, the rules of §6.5.2 specify that a variable will be chosen in preference to a type, and that a type will be chosen in preference to a package. Thus, it is may sometimes be impossible to refer to a type or package via its simple name, even though its declaration is in scope and not shadowed. We say that such a declaration is obscured.
 
 Obscuring is distinct from shadowing (§6.4.1) and hiding (§8.3, §8.4.8.2, §8.5, §9.3, §9.5).
 

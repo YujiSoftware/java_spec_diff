@@ -862,7 +862,7 @@ The process specified in §15.12.2, modified to handle constructors, is used to 
 
 If there is no unique most-specific constructor in the direct superclass of C that is both applicable and accessible, then a compile-time error occurs (as in method invocations).
 
-Otherwise, C's anonymous constructor is chosen as the constructor of C (§15.9.5.1). Its body consists of an explicit constructor invocation of the constructor chosen in the direct superclass of C.
+Otherwise, C's anonymous constructor is chosen as the constructor of C (§15.9.5.1). Its body consists of an explicit constructor invocation (§8.8.7.1) of the constructor chosen in the direct superclass of C.
 
 The throws clause of the chosen constructor includes the exceptions in the throws clause of the constructor chosen in the direct superclass of C.
 
@@ -908,7 +908,7 @@ The throws clause of the chosen constructor is the same as the throws clause det
 
 The return type corresponding to the chosen constructor is the return type determined for mj (§15.12.2.6).
 
-If C is an anonymous class, then C's anonymous constructor is chosen as the constructor of C. Its body consists of an explicit constructor invocation of cj.
+If C is an anonymous class, then C's anonymous constructor is chosen as the constructor of C. Its body consists of an explicit constructor invocation (§8.8.7.1) of cj.
 
 The throws clause of the chosen constructor includes the exceptions in the throws clause determined for mj.
 
@@ -946,7 +946,7 @@ The new object contains new instances of all the fields declared in the specifie
 
 Next, the actual arguments to the constructor are evaluated, left-to-right. If any of the argument evaluations completes abruptly, any argument expressions to its right are not evaluated, and the class instance creation expression completes abruptly for the same reason.
 
-Next, the selected constructor of the specified class type is invoked. This results in invoking at least one constructor for each superclass of the class type. This process can be directed by explicit constructor invocation statements (§8.8) and is specified in detail in §12.5.
+Next, the selected constructor of the specified class type is invoked. This results in invoking at least one constructor for each superclass of the class type. This process can be directed by explicit constructor invocation statements (§8.8.7.1) and is specified in detail in §12.5.
 
 The value of a class instance creation expression is a reference to the newly created object of the specified class. Every time the expression is evaluated, a fresh object is created.
 
@@ -2420,7 +2420,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 11 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and T and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 12 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2450,7 +2450,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 11 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 12 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 

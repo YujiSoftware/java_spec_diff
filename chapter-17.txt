@@ -141,7 +141,7 @@ Similarly, notifications cannot be lost due to interrupts. Assume that a set s o
 
 at least one thread in s must return normally from wait, or
 
-all of the threads in s must exit wait by throwing InterruptedException
+all of the threads in s must exit wait by throwing InterruptedException.
 
 Note that if a thread is both interrupted and woken via notify, and that thread returns from wait by throwing an InterruptedException, then some other thread in the wait set must be notified.
 

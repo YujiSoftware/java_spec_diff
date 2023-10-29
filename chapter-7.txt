@@ -188,7 +188,7 @@ The host system determines which compilation units are observable, except for th
 
 Each observable compilation unit may be associated with a module, as follows:
 
-The host system may determine that an observable ordinary compilation unit is associated with a module chosen by the host system, except for the ordinary compilation units in the predefined package java and its subpackages lang and io, which are all associated with the java.base module.
+The host system may determine that an observable ordinary compilation unit is associated with a module chosen by the host system, except for (i) the ordinary compilation units in the predefined package java and its subpackages lang and io, which are all associated with the java.base module, and (ii) any ordinary compilation unit in an unnamed package, which is associated with a module as specified in §7.4.2.
 
 The host system must determine that an observable modular compilation unit is associated with the module declared by the modular compilation unit.
 
@@ -231,7 +231,7 @@ It is recommended that package-info.java, if it is present, take the place of pa
 
 7.4.2. Unnamed Packages
 
-An ordinary compilation unit that has no package declaration is part of an unnamed package.
+An ordinary compilation unit that has no package declaration, but has at least one other kind of declaration, is part of an unnamed package.
 
 Unnamed packages are provided by the Java SE Platform principally for convenience when developing small or temporary applications or when just beginning development.
 
