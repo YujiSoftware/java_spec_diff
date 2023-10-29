@@ -5,14 +5,15 @@ Table of Contents
 8.1. Class Declarations
 8.1.1. Class Modifiers
 8.1.1.1. abstract Classes
-8.1.1.2. final Classes
+8.1.1.2. sealed, non-sealed, and final Classes
 8.1.1.3. strictfp Classes
 8.1.1.4. static Classes
 8.1.2. Generic Classes and Type Parameters
 8.1.3. Inner Classes and Enclosing Instances
 8.1.4. Superclasses and Subclasses
 8.1.5. Superinterfaces
-8.1.6. Class Body and Member Declarations
+8.1.6. Permitted Direct Subclasses
+8.1.7. Class Body and Member Declarations
 8.2. Class Members
 8.3. Field Declarations
 8.3.1. Field Modifiers
@@ -83,11 +84,15 @@ A record class (§8.10) is a class declared with abbreviated syntax that defines
 
 This chapter discusses the common semantics of all classes. Details that are specific to particular kinds of classes are discussed in the sections dedicated to these constructs.
 
-A class may be declared abstract (§8.1.1.1) and must be declared abstract if it is incompletely implemented; such a class cannot be instantiated, but can be extended by subclasses. A class may be declared final (§8.1.1.2), in which case it cannot have subclasses. If a class is declared public, then it can be referred to from code in any package of its module and potentially from code in other modules. Each class except Object is an extension of (that is, a subclass of) a single existing class (§8.1.4) and may implement interfaces (§8.1.5). Classes may be generic (§8.1.2), that is, they may declare type variables whose bindings may differ among different instances of the class.
+A class may be declared public (§8.1.1) so it can be referred to from code in any package of its module and potentially from code in other modules.
+
+A class may be declared abstract (§8.1.1.1), and must be declared abstract if it is incompletely implemented; such a class cannot be instantiated, but can be extended by subclasses. The degree to which a class can be extended can be controlled explicitly (§8.1.1.2): it may be declared sealed to limit its subclasses, or it may be declared final to ensure no subclasses. Each class except Object is an extension of (that is, a subclass of) a single existing class (§8.1.4) and may implement interfaces (§8.1.5).
+
+A class may be generic (§8.1.2), that is, its declaration may introduce type variables whose bindings differ among different instances of the class.
 
 Class declarations may be decorated with annotations (§9.7) just like any other kind of declaration.
 
-The body of a class declares members (fields, methods, classes, and interfaces), instance and static initializers, and constructors (§8.1.6). The scope (§6.3) of a member (§8.2) is the entire body of the declaration of the class to which the member belongs. Field, method, member class, member interface, and constructor declarations may include the access modifiers public, protected, or private (§6.6). The members of a class include both declared and inherited members (§8.2). Newly declared fields can hide fields declared in a superclass or superinterface. Newly declared member classes and member interfaces can hide member classes and member interfaces declared in a superclass or superinterface. Newly declared methods can hide, implement, or override methods declared in a superclass or superinterface.
+The body of a class declares members (fields, methods, classes, and interfaces), instance and static initializers, and constructors (§8.1.7). The scope (§6.3) of a member (§8.2) is the entire body of the declaration of the class to which the member belongs. Field, method, member class, member interface, and constructor declarations may include the access modifiers public, protected, or private (§6.6). The members of a class include both declared and inherited members (§8.2). Newly declared fields can hide fields declared in a superclass or superinterface. Newly declared member classes and member interfaces can hide member classes and member interfaces declared in a superclass or superinterface. Newly declared methods can hide, implement, or override methods declared in a superclass or superinterface.
 
 Field declarations (§8.3) describe class variables, which are incarnated once, and instance variables, which are freshly incarnated for each instance of the class. A field may be declared final (§8.3.1.2), in which case it can be assigned to only once. Any field declaration may include an initializer.
 
@@ -116,7 +121,7 @@ NormalClassDeclaration
 EnumDeclaration
 RecordDeclaration
 NormalClassDeclaration:
-{ClassModifier} class TypeIdentifier [TypeParameters] [ClassExtends] [ClassImplements] ClassBody
+{ClassModifier} class TypeIdentifier [TypeParameters] [ClassExtends] [ClassImplements] [ClassPermits] ClassBody
 
 A class is also implicitly declared by a class instance creation expression (§15.9.5) and an enum constant that ends with a class body (§8.9.1).
 
@@ -133,7 +138,7 @@ A class declaration may include class modifiers.
 ClassModifier:
 (one of)
 Annotation public protected private
-abstract static final strictfp
+abstract static final sealed non-sealed strictfp
 
 The rules concerning annotation modifiers for a class declaration are specified in §9.7.4 and §9.7.5.
 
@@ -144,6 +149,8 @@ The access modifiers protected and private pertain only to member classes.
 The modifier static pertains only to member classes and local classes.
 
 It is a compile-time error if the same keyword appears more than once as a modifier for a class declaration, or if a class declaration has more than one of the access modifiers public, protected, and private.
+
+It is a compile-time error if a class declaration has more than one of the modifiers sealed, non-sealed, and final.
 
 If two or more (distinct) class modifiers appear in a class declaration, then it is customary, though not required, that they appear in the order consistent with that shown above in the production for ClassModifier.
 
@@ -227,21 +234,35 @@ public final class Math {
 }
 
 
-8.1.1.2. final Classes
+8.1.1.2. sealed, non-sealed, and final Classes
+
+A class can be declared sealed if all its direct subclasses are known when the class is declared (§8.1.6), and no other direct subclasses are desired or required .
+
+Explicit and exhaustive control over a class's direct subclasses is useful when the class hierarchy is used to model the kinds of values in a domain, rather than as a mechanism for code inheritance and reuse. The direct subclasses may themselves be declared sealed in order to further control the class hierarchy.
 
 A class can be declared final if its definition is complete and no subclasses are desired or required.
-
-It is a compile-time error if the name of a final class appears in the extends clause (§8.1.4) of another class declaration; this implies that a final class cannot have any subclasses.
 
 It is a compile-time error if a class is declared both final and abstract, because the implementation of such a class could never be completed (§8.1.1.1).
 
 Because a final class never has any subclasses, the methods of a final class are never overridden (§8.4.8.1).
 
+A class is freely extensible if its direct superclass is not sealed (§8.1.4), and none of its direct superinterfaces are sealed (§8.1.5), and it is neither sealed nor final itself.
+
+A class that has a sealed direct superclass or a sealed direct superinterface is freely extensible if and only if it is declared non-sealed.
+
+It is a compile-time error if a class has a sealed direct superclass or a sealed direct superinterface, and is not declared final, sealed, or non-sealed either explicitly or implicitly.
+
+Thus, an effect of the sealed keyword is to force all direct subclasses to explicitly declare whether they are final, sealed, or non-sealed. This avoids accidentally exposing a sealed class hierarchy to unwanted subclassing.
+
+An enum class is either implicitly final or implicitly sealed, so it can implement a sealed interface. Similarly, a record class is implicitly final, so it can also implement a sealed interface.
+
+It is a compile-time error if a class is declared non-sealed but has neither a sealed direct superclass nor a sealed direct superinterface.
+
+Thus, a subclass of a non-sealed class cannot itself be declared non-sealed.
+
 8.1.1.3. strictfp Classes
 
-The effect of the strictfp modifier is to make all float or double expressions within the class declaration (including within variable initializers, instance initializers, static initializers, and constructors) be explicitly FP-strict (§15.4).
-
-This implies that all methods declared in the class, and all nested classes and interfaces declared in the class, are implicitly strictfp.
+The strictfp modifier on a class declaration is obsolete and should not be used in new code. Its presence or absence has no effect at compile time or run time.
 
 8.1.1.4. static Classes
 
@@ -564,6 +585,8 @@ The extends clause must not appear in the definition of the class Object, or a c
 
 The ClassType must name an accessible class (§6.6), or a compile-time error occurs.
 
+It is a compile-time error if the ClassType names a class that is sealed (§8.1.1.2) and the class being declared is not a permitted direct subclass of the named class (§8.1.6).
+
 It is a compile-time error if the ClassType names a class that is final, because final classes are not allowed to have subclasses (§8.1.1.2).
 
 It is a compile-time error if the ClassType names the class Enum, which can only be extended by an enum class (§8.9), or names the class Record, which can only be extended by a record class (§8.10).
@@ -670,6 +693,8 @@ InterfaceTypeList:
 InterfaceType {, InterfaceType}
 
 Each InterfaceType must name an accessible interface (§6.6), or a compile-time error occurs.
+
+It is a compile-time error if any InterfaceType names a interface that is sealed (§9.1.1.4) and the class being declared is not a permitted direct subclass of the named interface (§9.1.4).
 
 If an InterfaceType has type arguments, it must denote a well-formed parameterized type (§4.5), and none of the type arguments may be wildcard type arguments, or a compile-time error occurs.
 
@@ -809,7 +834,50 @@ it is impossible to declare a method named getNumberOfScales whose signature and
 
 
 
-8.1.6. Class Body and Member Declarations
+8.1.6. Permitted Direct Subclasses
+
+The optional permits clause in a normal class declaration specifies all the classes intended as direct subclasses of the class being declared (§8.1.1.2).
+
+ClassPermits:
+permits TypeName {, TypeName}
+
+It is a compile-time error if a class declaration has a permits clause but no sealed modifier.
+
+Every TypeName must name an accessible class (§6.6), or a compile-time error occurs.
+
+It is a compile-time error if the same class is specified more than once in a permits clause. This is true even if the class is named in different ways.
+
+The canonical name of a class does not need to be used in a permits clause, but a permits clause can only specify a class once. For example, the following program fails to compile:
+
+package p;
+
+sealed class A     permits B, C, p.B {}  // error
+
+non-sealed class B extends A {}  
+non-sealed class C extends A {}
+
+
+If a sealed class C is associated with a named module (§7.3), then every class specified in the permits clause of C's declaration must be associated with the same module as C, or a compile-time error occurs.
+
+If a sealed class C is associated with an unnamed module (§7.7.5), then every class specified in the permits clause of C's declaration must belong to the same package as C, or a compile-time error occurs.
+
+A sealed class and its direct subclasses need to refer to each other in a circular fashion, in permits and extends clauses, respectively. Therefore, in a modular codebase, they must be co-located in the same module, as classes in different modules cannot refer to each other in a circular fashion. Co-location is desirable in any case because a sealed class hierarchy should always be declared within a single maintenance domain, where the same developer or group of developers is responsible for maintaining the hierarchy. A named module typically represents a maintenance domain in a modular codebase.
+
+If the declaration of a sealed class C has a permits clause, then the permitted direct subclasses of C are the classes specified by the permits clause.
+
+Every permitted direct subclass specified by the permits clause must be a direct subclass of C (§8.1.4), or a compile-time error occurs.
+
+If the declaration of a sealed class C lacks a permits clause, then the permitted direct subclasses of C are as follows:
+
+If C is not an enum class, then its permitted direct subclasses are those classes declared in the same compilation unit as C (§7.3) which have a canonical name (§6.7) and whose direct superclass is C.
+
+That is, the permitted direct subclasses are inferred as the classes in the same compilation unit that specify C as their direct superclass. The requirement for a canonical name means that no local classes or anonymous classes will be considered.
+
+It is a compile-time error if the declaration of a sealed class C lacks a permits clause and C has no permitted direct subclasses.
+
+If C is an enum class, then its permitted direct subclasses, if any, are specified in §8.9.
+
+8.1.7. Class Body and Member Declarations
 
 A class body may contain declarations of members of the class, that is, fields (§8.3), methods (§8.4), classes, and interfaces (§8.5).
 
@@ -841,7 +909,7 @@ Members inherited from its direct superclass type (§8.1.4), except in the class
 
 Members inherited from any direct superinterface types (§8.1.5)
 
-Members declared in the body of the class (§8.1.6)
+Members declared in the body of the class (§8.1.7)
 
 Members of a class that are declared private are not inherited by subclasses of that class.
 
@@ -1133,8 +1201,6 @@ A private field of a superclass might be accessible to a subclass - for example,
 It is possible for a class to inherit more than one field with the same name, either from its superclass and superinterfaces or from its superinterfaces alone. Such a situation does not in itself cause a compile-time error. However, any attempt within the body of the class to refer to any such field by its simple name will result in a compile-time error, because the reference is ambiguous.
 
 There might be several paths by which the same field declaration is inherited from an interface. In such a situation, the field is considered to be inherited only once, and it may be referred to by its simple name without ambiguity.
-
-A value stored in a field of type float is always an element of the float value set (§4.2.3); similarly, a value stored in a field of type double is always an element of the double value set. It is not permitted for a field of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a field of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
 
 Example 8.3-1. Multiply Inherited Fields
 
@@ -1756,10 +1822,6 @@ When the method or constructor is invoked (§15.12), the values of the actual ar
 
 Invocations of a variable arity method may contain more actual argument expressions than formal parameters. All the actual argument expressions that do not correspond to the formal parameters preceding the variable arity parameter will be evaluated and the results stored into an array that will be passed to the method invocation (§15.12.4.2).
 
-A method's or constructor's formal parameter of type float always contains an element of the float value set (§4.2.3); similarly, a method's or constructor's formal parameter of type double always contains an element of the double value set. It is not permitted for a method's or constructor's formal parameter of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a method's or constructor's formal parameter of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
-
-Where an actual argument expression corresponding to a parameter variable is not FP-strict (§15.4), evaluation of that actual argument expression is permitted to use intermediate values drawn from the appropriate extended-exponent value sets. Prior to being stored in the parameter variable, the result of such an expression is mapped to the nearest value in the corresponding standard value set by being subjected to invocation conversion (§5.3).
-
 Here are some examples of receiver parameters in instance methods and inner classes' constructors:
 
 
@@ -2025,7 +2087,7 @@ public class RandomAccessFile
 
 8.4.3.5. strictfp Methods
 
-The effect of the strictfp modifier is to make all float or double expressions within the method body be explicitly FP-strict (§15.4).
+The strictfp modifier on a method declaration is obsolete and should not be used in new code. Its presence or absence has has no effect at run time.
 
 8.4.3.6. synchronized Methods
 
@@ -2324,7 +2386,7 @@ An overridden method can be accessed by using a method invocation expression (§
 
 In this respect, overriding of methods differs from hiding of fields.
 
-The presence or absence of the strictfp modifier has absolutely no effect on the rules for overriding methods and implementing abstract methods. For example, it is permitted for a method that is not FP-strict to override an FP-strict method and it is permitted for an FP-strict method to override a method that is not FP-strict.
+The presence or absence of the strictfp modifier has absolutely no effect on the rules for overriding methods and implementing abstract methods. For example, it is permitted for a method that is not strictfp to override a strictfp method, and it is permitted for a strictfp method to override a method that is not strictfp.
 
 Example 8.4.8.1-1. Overriding
 
@@ -2788,7 +2850,7 @@ The last two lines of output show that the method invocations p.getX() and rp.ge
 
 8.5. Member Class and Interface Declarations
 
-A member class is a class whose declaration is directly enclosed in the body of another class or interface declaration (§8.1.6, §9.1.4).
+A member class is a class whose declaration is directly enclosed in the body of another class or interface declaration (§8.1.7, §9.1.5).
 
 A member interface is an interface whose declaration is directly enclosed in the body of another class or interface declaration.
 
@@ -2929,7 +2991,7 @@ There is no practical need for a constructor to be synchronized, because it woul
 
 The lack of native constructors is an arbitrary language design choice that makes it easy for an implementation of the Java Virtual Machine to verify that superclass constructors are always properly invoked during object creation.
 
-The inability to declare a constructor as strictfp (in contrast to a method (§8.4.3)) is an intentional language design choice; it effectively ensures that a constructor is FP-strict if and only if its class is FP-strict (§15.4).
+The inability to declare a constructor as strictfp (in contrast to a method (§8.4.3)) is an intentional language design choice that stemmed from the (now obsolete) ability to declare a class as strictfp.
 
 8.8.4. Generic Constructors
 
@@ -3251,9 +3313,13 @@ An enum declaration may specify a top level enum class (§7.6), a member enum cl
 
 The TypeIdentifier in an enum declaration specifies the name of the enum class.
 
-It is a compile-time error if an enum declaration has the modifier abstract or final.
+It is a compile-time error if an enum declaration has the modifier abstract, final, sealed, or non-sealed.
 
-An enum class is implicitly final unless its declaration contains at least one enum constant that has a class body (§8.9.1).
+An enum class is either implicitly final or implicitly sealed, as follows:
+
+An enum class is implicitly final if its declaration contains no enum constants that have a class body (§8.9.1).
+
+An enum class E is implicitly sealed if its declaration contains at least one enum constant that has a class body. The permitted direct subclasses (§8.1.6) of E are the anonymous classes implicitly declared by the enum constants that have a class body.
 
 A nested enum class is implicitly static. That is, every member enum class and local enum class is static. It is permitted for the declaration of a member enum class to redundantly specify the static modifier, but it is not permitted for the declaration of a local enum class (§14.3).
 
@@ -3299,7 +3365,7 @@ The scope and shadowing of an enum constant is specified in §6.3 and §6.4.1.
 
 An enum constant may be followed by arguments, which are passed to the constructor of the enum when the constant is created during class initialization as described later in this section. The constructor to be invoked is chosen using the normal rules of overload resolution (§15.12.2). If the arguments are omitted, an empty argument list is assumed.
 
-The optional class body of an enum constant implicitly defines an anonymous class (§15.9.5) that extends the immediately enclosing enum class. The class body is governed by the usual rules of anonymous classes; in particular it cannot contain any constructors. Instance methods declared in these class bodies may be invoked outside the enclosing enum class only if they override accessible methods in the enclosing enum class (§8.4.8).
+The optional class body of an enum constant implicitly declares an anonymous class (§15.9.5) that (i) is a direct subclass of the immediately enclosing enum class (§8.1.4), and (ii) is final (§8.1.1.2). The class body is governed by the usual rules of anonymous classes; in particular it cannot contain any constructors. Instance methods declared in these class bodies may be invoked outside the enclosing enum class only if they override accessible methods in the enclosing enum class (§8.4.8).
 
 It is a compile-time error for the class body of an enum constant to declare an abstract method.
 
@@ -3314,7 +3380,7 @@ In addition to enum constants, the body of an enum declaration may contain const
 EnumBodyDeclarations:
 ; {ClassBodyDeclaration}
 
-The following productions from §8.1.6 are shown here for convenience:
+The following productions from §8.1.7 are shown here for convenience:
 
 ClassBodyDeclaration:
 ClassMemberDeclaration
@@ -3629,7 +3695,7 @@ A record declaration may specify a top level record class (§7.6), a member reco
 
 The TypeIdentifier in a record declaration specifies the name of the record class.
 
-It is a compile-time error if a record declaration has the modifier abstract.
+It is a compile-time error if a record declaration has the modifier abstract, sealed, or non-sealed.
 
 A record class is implicitly final. It is permitted for the declaration of a record class to redundantly specify the final modifier.
 
@@ -3691,7 +3757,7 @@ RecordBodyDeclaration:
 ClassBodyDeclaration
 CompactConstructorDeclaration
 
-The following productions from §8.1.6 are shown here for convenience:
+The following productions from §8.1.7 are shown here for convenience:
 
 ClassBodyDeclaration:
 ClassMemberDeclaration
@@ -3790,7 +3856,7 @@ If the type of the record component c is a reference type, equality is determine
 
 If the type of the record component c is a primitive type T, equality is determined as if by invoking the static method compare of the wrapper class corresponding to T (§5.1.7), with the first argument given by the value of the component field c of a, and the second argument given by the value of the component field c of b; if the method would return 0 then true is returned, otherwise false is returned.
 
-The use of compare in wrapper classes ensures that the implicitly declared equals method is reflexive and behaves consistently with the implicitly declared hashCode method for record classes that have floating point components.
+The use of compare in wrapper classes ensures that the implicitly declared equals method is reflexive and behaves consistently with the implicitly declared hashCode method for record classes that have floating-point components.
 
 A method public final int hashCode() that returns a hash code value derived from the hash code values at every record component of R.
 

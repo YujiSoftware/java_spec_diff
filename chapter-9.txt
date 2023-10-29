@@ -7,9 +7,11 @@ Table of Contents
 9.1.1.1. abstract Interfaces
 9.1.1.2. strictfp Interfaces
 9.1.1.3. static Interfaces
+9.1.1.4. sealed and non-sealed Interfaces
 9.1.2. Generic Interfaces and Type Parameters
 9.1.3. Superinterfaces and Subinterfaces
-9.1.4. Interface Body and Member Declarations
+9.1.4. Permitted Direct Subclasses and Subinterfaces
+9.1.5. Interface Body and Member Declarations
 9.2. Interface Members
 9.3. Field (Constant) Declarations
 9.3.1. Initialization of Fields in Interfaces
@@ -60,6 +62,8 @@ An interface may be declared to be a direct extension of one or more other inter
 
 A class may be declared to directly implement one or more interfaces (§8.1.5), meaning that any instance of the class implements all the abstract methods specified by the interface or interfaces. A class necessarily implements all the interfaces that its direct superclasses and direct superinterfaces do. This (multiple) interface inheritance allows objects to support (multiple) common behaviors without sharing a superclass.
 
+Unlike a class, an interface cannot be declared final. However, an interface may be declared sealed (§9.1.1.4) to limit its subclasses and subinterfaces.
+
 A variable whose declared type is an interface type may have as its value a reference to any instance of a class which implements the specified interface. It is not sufficient that the class happen to implement all the abstract methods of the interface; the class or one of its superclasses must actually be declared to implement the interface, or else the class is not considered to implement the interface.
 
 9.1. Interface Declarations
@@ -72,7 +76,7 @@ InterfaceDeclaration:
 NormalInterfaceDeclaration
 AnnotationInterfaceDeclaration
 NormalInterfaceDeclaration:
-{InterfaceModifier} interface TypeIdentifier [TypeParameters] [InterfaceExtends] InterfaceBody
+{InterfaceModifier} interface TypeIdentifier [TypeParameters] [InterfaceExtends] [InterfacePermits] InterfaceBody
 
 The TypeIdentifier in an interface declaration specifies the name of the interface.
 
@@ -87,7 +91,7 @@ An interface declaration may include interface modifiers.
 InterfaceModifier:
 (one of)
 Annotation public protected private
-abstract static strictfp
+abstract static sealed non-sealed strictfp
 
 The rules concerning annotation modifiers for an interface declaration are specified in §9.7.4 and §9.7.5.
 
@@ -99,25 +103,39 @@ The modifier static pertains only to member interfaces and local interfaces.
 
 It is a compile-time error if the same keyword appears more than once as a modifier for an interface declaration, or if a interface declaration has more than one of the access modifiers public, protected, and private.
 
+It is a compile-time error if an interface declaration has more than one of the modifiers sealed and non-sealed.
+
 If two or more (distinct) interface modifiers appear in an interface declaration, then it is customary, though not required, that they appear in the order consistent with that shown above in the production for InterfaceModifier.
 
 9.1.1.1. abstract Interfaces
 
 Every interface is implicitly abstract.
 
-This modifier is obsolete and should not be used in new programs.
+This modifier is obsolete and should not be used in new code.
 
 9.1.1.2. strictfp Interfaces
 
-The effect of the strictfp modifier is to make all float or double expressions within the interface declaration be explicitly FP-strict (§15.4).
-
-This implies that all methods declared in the interface, and all nested types declared in the interface, are implicitly strictfp.
+The strictfp modifier on an interface declaration is obsolete and should not be used in new code. Its presence or absence has no effect at compile time or run time.
 
 9.1.1.3. static Interfaces
 
 A nested interface is implicitly static. That is, every member interface and local interface is static. It is permitted for the declaration of a member interface to redundantly specify the static modifier (§9.5), but it is not permitted for the declaration of a local interface (§14.3).
 
 Because a nested interface is static, it has no immediately enclosing instance (§8.1.3). References from a nested interface to type parameters, instance variables, local variables, formal parameters, exception parameters, or instance methods in lexically enclosing class, interface, or method declarations are disallowed (§6.5.5.1, §6.5.6.1, §15.12.3).
+
+9.1.1.4. sealed and non-sealed Interfaces
+
+An interface can be declared sealed if all its direct subclasses and direct subinterfaces are known when the interface is declared (§9.1.4), and no other direct subclasses or direct subinterfaces are desired or required.
+
+It is useful to recall that a class is said to be a direct subclass of its direct superinterfaces (§8.1.5).
+
+An interface is freely extensible if none of its direct superinterfaces are sealed (§9.1.3), and it is not sealed itself.
+
+An interface that has a sealed direct superinterface is freely extensible if and only if it is declared non-sealed.
+
+It is a compile-time error if an interface has a sealed direct superinterface and is not declared sealed or non-sealed.
+
+It is a compile-time error if an interface is declared non-sealed but has no sealed direct superinterface.
 
 9.1.2. Generic Interfaces and Type Parameters
 
@@ -169,6 +187,8 @@ InterfaceType {, InterfaceType}
 
 Each InterfaceType in the extends clause of an interface declaration must name an accessible interface (§6.6), or a compile-time error occurs.
 
+It is a compile-time error if any InterfaceType names a interface that is sealed (§9.1.1.4) and the interface being declared is not a permitted direct subinterface of the named interface (§9.1.4).
+
 If an InterfaceType has type arguments, it must denote a well-formed parameterized type (§4.5), and none of the type arguments may be wildcard type arguments, or a compile-time error occurs.
 
 One interface is a direct superinterface of another interface if the first interface is named by one of the direct superinterface types of the second interface.
@@ -197,7 +217,46 @@ It is a compile-time error if an interface depends on itself.
 
 If circularly declared interfaces are detected at run time, as interfaces are loaded, then a ClassCircularityError is thrown (§12.2.1).
 
-9.1.4. Interface Body and Member Declarations
+9.1.4. Permitted Direct Subclasses and Subinterfaces
+
+The optional permits clause in a normal interface declaration specifies all the classes and interfaces intended as direct subclasses and direct subinterfaces of the interface being declared (§9.1.1.4).
+
+InterfacePermits:
+permits TypeName {, TypeName}
+
+It is a compile-time error if an interface declaration has a permits clause but no sealed modifier.
+
+Every TypeName must name an accessible class or interface (§6.6), or a compile-time error occurs.
+
+It is a compile-time error if the same class or interface is specified more than once in a permits clause. This is true even if the class or interface is named in different ways.
+
+The canonical name of a class or interface does not need to be used in a permits clause, but a permits clause can only specify a class or interface once. For example, the following program fails to compile:
+
+package p;
+
+sealed interface I permits C, D, p.C {}  // error
+
+non-sealed class C implements I {}  
+non-sealed class D implements I {}
+
+
+If a sealed interface I is associated with a named module (§7.3), then every class or interface specified in the permits clause of I's declaration must be associated with the same module as I, or a compile-time error occurs.
+
+If a sealed interface I is associated with an unnamed module (§7.7.5), then every class or interface specified in the permits clause of I's declaration must belong to the same package as I, or a compile-time error occurs.
+
+A sealed interface and its direct subclasses and direct subinterfaces need to refer to each other in a circular fashion, in permits, implements, and extends clauses, respectively. Therefore, in a modular codebase, they must be co-located in the same module, as classes and interfaces in different modules cannot refer to each other in a circular fashion. Co-location is desirable in any case because a sealed interface hierarchy should always be declared within a single maintenance domain, where the same developer or group of developers is responsible for maintaining the hierarchy. A named module typically represents a maintenance domain in a modular codebase.
+
+If the declaration of a sealed interface I has a permits clause, then the permitted direct subclasses and subinterfaces of I are the classes and interfaces specified by the permits clause.
+
+Every permitted direct subclass and subinterface specified by the permits clause must be a direct subclass of I (§8.1.5) or a direct subinterface of I (§9.1.3), or a compile-time error occurs.
+
+If the declaration of a sealed interface I lacks a permits clause, then the permitted direct subclasses and subinterfaces of I are those classes and interfaces declared in the same compilation unit as I (§7.3) which have a canonical name (§6.7) and whose direct superinterfaces include I.
+
+That is, the permitted direct subclasses and subinterfaces are inferred as the classes and interfaces in the same compilation unit that specify I as a direct superinterface. The requirement for a canonical name means that no local classes, local interfaces, or anonymous classes will be considered.
+
+It is a compile-time error if the declaration of a sealed interface I lacks a permits clause and I has no permitted direct subclasses or subinterfaces.
+
+9.1.5. Interface Body and Member Declarations
 
 An interface body may contain declarations of members of the interface, that is, fields (§9.3), methods (§9.4), classes, and interfaces (§9.5).
 
@@ -216,7 +275,7 @@ The scope of a declaration of a member m declared in or inherited by an interfac
 
 The members of an interface are:
 
-Members declared in the body of the interface declaration (§9.1.4).
+Members declared in the body of the interface declaration (§9.1.5).
 
 Members inherited from any direct superinterface types (§9.1.3).
 
@@ -368,7 +427,7 @@ The declaration of a static interface method introduces a static context (§8.1.
 
 References to an instance method from a static context or a nested class or interface are restricted (§15.12.3).
 
-The effect of the strictfp modifier is to make all float or double expressions within the body of a default or static method be explicitly FP-strict (§15.4).
+The strictfp modifier on an interface method declaration is obsolete and should not be used in new code. Its presence or absence has no effect at run time.
 
 An interface method lacking a private, default, or static modifier is implicitly abstract. Its body is represented by a semicolon, not a block. It is permitted, but discouraged as a matter of style, to redundantly specify the abstract modifier for such a method declaration.
 
@@ -433,7 +492,7 @@ The signature of mI is a subsignature (§8.4.2) of the signature of mJ as a memb
 
 mJ is public.
 
-The presence or absence of the strictfp modifier has absolutely no effect on the rules for overriding methods. For example, it is permitted for a method that is not FP-strict to override an FP-strict method and it is permitted for an FP-strict method to override a method that is not FP-strict.
+The presence or absence of the strictfp modifier has absolutely no effect on the rules for overriding methods. For example, it is permitted for a method that is not strictfp to override a strictfp method, and it is permitted for a strictfp method to override a method that is not strictfp.
 
 An overridden default method can be accessed by using a method invocation expression (§15.12) that contains the keyword super qualified by a superinterface name.
 
@@ -516,7 +575,7 @@ If a method is declared to have a return type (§8.4.5), then a compile-time err
 
 9.5. Member Class and Interface Declarations
 
-An interface body (§9.1.4) may contain declarations of member classes and member interfaces (§8.5).
+An interface body (§9.1.5) may contain declarations of member classes and member interfaces (§8.5).
 
 Every member class or interface declaration in the body of an interface declaration is implicitly public and static (§9.1.1.3). It is permitted to redundantly specify either or both of these modifiers.
 
@@ -545,7 +604,9 @@ Note that the at sign (@) and the keyword interface are distinct tokens. It is p
 
 Unless explicitly modified in this section and its subsections, all of the rules that apply to normal interface declarations (§9.1) apply to annotation interface declarations.
 
-For example, annotation interface declarations have the same rules for modifiers and scope as normal interface declarations.
+For example, annotation interface declarations have the same rules for scope as normal interface declarations.
+
+It is a compile-time error if an annotation interface declaration has the modifier sealed or non-sealed (§9.1.1.4).
 
 An annotation interface declaration may specify a top level interface or a member interface, but not a local interface (§14.3).
 
@@ -620,7 +681,7 @@ The following production from §4.3 is shown here for convenience:
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 16.
+By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 17.
 
 By convention, the only modifiers that should be present on the declaration of an annotation interface element are annotations.
 
@@ -1002,7 +1063,7 @@ There are 17 type contexts (§4.11), all represented by the enum constant TYPE_U
 
 It is a compile-time error if the same enum constant appears more than once in the value element of an annotation of type java.lang.annotation.Target.
 
-If an annotation of type java.lang.annotation.Target is not present on the declaration of an annotation interface A, then A is applicable in all ten declaration contexts and in all 17 type contexts.
+If an annotation of type java.lang.annotation.Target is not present on the declaration of an annotation interface A, then A is applicable in all declaration contexts and in no type contexts.
 
 9.6.4.2. @Retention
 
@@ -1060,7 +1121,7 @@ interface Bar { @Override int hashCode(); }
 
 The use of @Override in the class declaration is legal by the first clause, because Foo.hashCode overrides from Foo the method Object.hashCode.
 
-For the interface declaration, consider that while an interface does not have Object as a supertype, an interface does have public abstract members that correspond to the public members of Object (§9.2). If an interface chooses to declare them explicitly (that is, to declare members that are override-equivalent to public methods of Object), then the interface is deemed to override them, and use of @Override is allowed.
+For the interface declaration, consider that an interface has public abstract members which correspond to the public members of Object (§9.2). If an interface chooses to declare them explicitly (that is, to declare members that are override-equivalent to public methods of Object), then the interface is deemed to override them, and use of @Override is allowed.
 
 However, consider an interface that attempts to use @Override on a clone method: (finalize could also be used in this example)
 
@@ -1260,8 +1321,6 @@ If T is an enum class type (§8.9), then v is an enum constant (§8.9.1).
 v is not null.
 
 Note that if T is not an array type or an annotation interface, the element value must be a ConditionalExpression (§15.25). The use of ConditionalExpression rather than a more general production like Expression is a syntactic trick to prevent assignment expressions as element values. Since an assignment expression is not a constant expression, it cannot be a commensurate element value for a primitive or String-typed element.
-
-Formally, it is invalid to speak of an ElementValue as FP-strict (§15.4) because it might be an annotation or a class literal. Still, we can speak informally of ElementValue as FP-strict when it is either a constant expression or an array of constant expressions or an annotation whose element values are (recursively) found to be constant expressions; after all, every constant expression is FP-strict.
 
 A normal annotation must contain an element-value pair for every element of the corresponding annotation interface, except for those elements with default values, or a compile-time error occurs.
 
@@ -1582,9 +1641,9 @@ is prohibited, even if FooContainer is repeatable with a containing annotation i
 
 9.8. Functional Interfaces
 
-A functional interface is an interface that has just one abstract method (aside from the methods of Object), and thus represents a single function contract. This "single" method may take the form of multiple abstract methods with override-equivalent signatures inherited from superinterfaces; in this case, the inherited methods logically represent a single method.
+A functional interface is an interface that is not declared sealed and has just one abstract method (aside from the methods of Object), and thus represents a single function contract. This "single" method may take the form of multiple abstract methods with override-equivalent signatures inherited from superinterfaces; in this case, the inherited methods logically represent a single method.
 
-For an interface I, let M be the set of abstract methods that are members of I that do not have the same signature as any public instance method of the class Object (§4.3.2). Then, I is a functional interface if there exists a method m in M for which both of the following are true:
+For an interface I that is not declared sealed, let M be the set of abstract methods that are members of I that do not have the same signature as any public instance method of the class Object (§4.3.2). Then, I is a functional interface if there exists a method m in M for which both of the following are true:
 
 The signature of m is a subsignature (§8.4.2) of every method's signature in M.
 

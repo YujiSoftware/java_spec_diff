@@ -45,7 +45,7 @@ Some APIs of the Java SE Platform, primarily in the Character class, use 32-bit 
 
 This specification uses the terms code point and UTF-16 code unit where the representation is relevant, and the generic term character where the representation is irrelevant to the discussion.
 
-Except for comments (§3.7), identifiers (§3.8, and the contents of character literals, string literals, and text blocks (§3.10.4, §3.10.5, §3.10.6), all input elements (§3.5) in a program are formed only from ASCII characters (or Unicode escapes (§3.3) which result in ASCII characters).
+Except for comments (§3.7), identifiers (§3.8), and the contents of character literals, string literals, and text blocks (§3.10.4, §3.10.5, §3.10.6), all input elements (§3.5) in a program are formed only from ASCII characters (or Unicode escapes (§3.3) which result in ASCII characters).
 
 ASCII (ANSI X3.4) is the American Standard Code for Information Interchange. The first 128 characters of the Unicode UTF-16 encoding are the ASCII characters.
 
@@ -57,17 +57,19 @@ A translation of Unicode escapes (§3.3) in the raw stream of Unicode characters
 
 A translation of the Unicode stream resulting from step 1 into a stream of input characters and line terminators (§3.4).
 
-A translation of the stream of input characters and line terminators resulting from step 2 into a sequence of input elements (§3.5) which, after white space (§3.6) and comments (§3.7) are discarded, comprise the tokens (§3.5) that are the terminal symbols of the syntactic grammar (§2.3).
+A translation of the stream of input characters and line terminators resulting from step 2 into a sequence of input elements (§3.5) which, after white space (§3.6) and comments (§3.7) are discarded, comprise the tokens that are the terminal symbols of the syntactic grammar (§2.3).
 
-The longest possible translation is used at each step, even if the result does not ultimately make a correct program while another lexical translation would. There is one exception: if lexical translation occurs in a type context (§4.11) and the input stream has two or more consecutive > characters that are followed by a non-> character, then each > character must be translated to the token for the numerical comparison operator >.
+The longest possible translation is used at each step, even if the result does not ultimately make a correct program while another lexical translation would. There are two exceptions to account for situations that need more granular translation: in step 1, for the processing of contiguous \ characters (§3.3), and in step 3, for the processing of contextual keywords and adjacent > characters (§3.5).
 
-The input characters a--b are tokenized (§3.5) as a, --, b, which is not part of any grammatically correct program, even though the tokenization a, -, -, b could be part of a grammatically correct program.
+The input characters a--b are tokenized as a, --, and b, which is not part of any grammatically correct program, even though the tokenization a, -, -, b could be part of a grammatically correct program. The tokenization a, -, -, b can be realized with the input characters a- -b (with an ASCII SP character between the two - characters).
 
-Without the rule for > characters, two consecutive > brackets in a type such as List<List<String>> would be tokenized as the signed right shift operator >>, while three consecutive > brackets in a type such as List<List<List<String>>> would be tokenized as the unsigned right shift operator >>>. Worse, the tokenization of four or more consecutive > brackets in a type such as List<List<List<List<String>>>> would be ambiguous, as various combinations of >, >>, and >>> tokens could represent the >>>> characters.
+It might be supposed that the raw input \\u1234 is translated to a \ character and (following the "longest possible" rule) a Unicode escape of the form \u1234. In fact, the leading \ character causes this raw input to be translated to seven distinct characters: \ \ u 1 2 3 4.
 
 3.3. Unicode Escapes
 
-A compiler for the Java programming language ("Java compiler") first recognizes Unicode escapes in its input, translating the ASCII characters \u followed by four hexadecimal digits to the UTF-16 code unit (§3.1) for the indicated hexadecimal value, and passing all other characters unchanged. One Unicode escape can represent characters in the range U+0000 to U+FFFF; representing supplementary characters in the range U+010000 to U+10FFFF requires two consecutive Unicode escapes. This translation step results in a sequence of Unicode input characters.
+A compiler for the Java programming language ("Java compiler") first recognizes Unicode escapes in its raw input, translating the ASCII characters \u followed by four hexadecimal digits to a raw input character which denotes the UTF-16 code unit (§3.1) for the indicated hexadecimal value. One Unicode escape can represent characters in the range U+0000 to U+FFFF; representing supplementary characters in the range U+010000 to U+10FFFF requires two consecutive Unicode escapes. All other characters in the compiler's raw input are recognized as raw input characters and passed unchanged.
+
+This translation step results in a sequence of Unicode input characters, all of which are raw input characters (any Unicode escapes having been reduced to raw input characters).
 
 UnicodeInputCharacter:
 UnicodeEscape
@@ -84,9 +86,15 @@ any Unicode character
 
 The \, u, and hexadecimal digits here are all ASCII characters.
 
-In addition to the processing implied by the grammar, for each raw input character that is a backslash \, input processing must consider how many other \ characters contiguously precede it, separating it from a non-\ character or the start of the input stream. If this number is even, then the \ is eligible to begin a Unicode escape; if the number is odd, then the \ is not eligible to begin a Unicode escape.
+The UnicodeInputCharacter production is ambiguous because an ASCII \ character in the compiler's raw input could be reduced to either a RawInputCharacter or the \ of a UnicodeEscape (to be followed by an ASCII u). To avoid ambiguity, for each ASCII \ character in the compiler's raw input, input processing must consider the most recent raw input characters that resulted from this translation step:
 
-For example, the raw input "\\u2122=\u2122" results in the eleven characters " \ \ u 2 1 2 2 = ™ " (\u2122 is the Unicode encoding of the character ™).
+If the most recent raw input character in the result was itself translated from a Unicode escape in the compiler's raw input, then the ASCII \ character is eligible to begin a Unicode escape.
+
+For example, if the most recent raw input character in the result was a backslash that arose from a Unicode escape \u005c in the raw input, then an ASCII \ character appearing next in the raw input is eligible to begin another Unicode escape.
+
+Otherwise, consider how many backslashes appeared contiguously as raw input characters in the result, back to a non-backslash character or the start of the result. (It is immaterial whether any such backslash arose from an ASCII \ character in the compiler's raw input or from a Unicode escape \u005c in the compiler's raw input.) If this number is even, then the ASCII \ character is eligible to begin a Unicode escape; if the number is odd, then the ASCII \ character is not eligible to begin a Unicode escape.
+
+For example, the raw input "\\u2122=\u2122" results in the eleven characters " \ \ u 2 1 2 2 = ™ " because while the second ASCII \ character in the raw input is not eligible to begin a Unicode escape, the third ASCII \ character is eligible, and \u2122 is the Unicode encoding of the character ™.
 
 If an eligible \ is not followed by u, then it is treated as a RawInputCharacter and remains part of the escaped Unicode stream.
 
@@ -94,7 +102,13 @@ If an eligible \ is followed by u, or more than one u, and the last u is not fol
 
 The character produced by a Unicode escape does not participate in further Unicode escapes.
 
-For example, the raw input \u005cu005a results in the six characters \ u 0 0 5 a, because 005c is the Unicode value for \. It does not result in the character Z, which is Unicode character 005a, because the \ that resulted from the \u005c is not interpreted as the start of a further Unicode escape.
+For example, the raw input \u005cu005a results in the six characters \ u 0 0 5 a, because 005c is the Unicode value for a backslash. It does not result in the character Z, which is Unicode value 005a, because the backslash that resulted from processing the Unicode escape \u005c is not interpreted as the start of a further Unicode escape.
+
+Note that \u005cu005a cannot be written in a string literal to denote the six characters \ u 0 0 5 a. This is because the first two characters resulting from translation, \ and u, are interpreted in a string literal as an illegal escape sequence (§3.10.7).
+
+Fortunately, the rule about contiguous backslash characters helps programmers to craft raw inputs that denote Unicode escapes in a string literal. Denoting the six characters \ u 0 0 5 a in a string literal simply requires another \ to be placed adjacent to the existing \, such as "\\u005a is Z". This works because the second \ in the raw input \\u005a is not eligible to begin a Unicode escape, so the first \ and the second \ are preserved as raw input characters, as are the next five characters u 0 0 5 a. The two \ characters are subsequently interpreted in a string literal as the escape sequence for a backslash, resulting in a string with the desired six characters \ u 0 0 5 a. Without the rule, the raw input \\u005a would be processed as a raw input character \ followed by a Unicode escape \u005a which becomes a raw input character Z; this would be unhelpful because \Z is an illegal escape sequence in a string literal. (Note that the rule translates \u005c\u005c to \\ because the translation of the first Unicode escape to a raw input character \ does not prevent the translation of the second Unicode escape to another raw input character \.)
+
+The rule also allows programmers to craft raw inputs that denote escape sequences in a string literal. For example, the raw input \\\u006e results in the three characters \ \ n because the first \ and the second \ are preserved as raw input characters, while the third \ is eligible to begin a Unicode escape and thus \u006e is translated to a raw input character n. The three characters \ \ n are subsequently interpreted in a string literal as \ n which denotes the escape sequence for a linefeed. (Note that \\\u006e may be written as \u005c\u005c\u006e because each Unicode escape \u005c is translated to a raw input character \ and so the remaining raw input \u006e is preceded by an even number of backslashes and processed as the Unicode escape for n.)
 
 The Java programming language specifies a standard way of transforming a program written in Unicode into ASCII that changes a program into a form that can be processed by ASCII-based tools. The transformation involves converting any Unicode escapes in the source text of the program to ASCII by adding an extra u - for example, \uxxxx becomes \uuxxxx - while simultaneously converting non-ASCII characters in the source text to Unicode escapes containing a single u each.
 
@@ -142,9 +156,23 @@ the ASCII SUB character, also known as "control-Z"
 
 Those input elements that are not white space or comments are tokens. The tokens are the terminal symbols of the syntactic grammar (§2.3).
 
-White space (§3.6) and comments (§3.7) can serve to separate tokens that, if adjacent, might be tokenized in another manner. For example, the ASCII characters - and = in the input can form the operator token -= (§3.12) only if there is no intervening white space or comment.
+White space (§3.6) and comments (§3.7) can serve to separate tokens that, if adjacent, might be tokenized in another manner.
+
+For example, the input characters - and = can form the operator token -= (§3.12) only if there is no intervening white space or comment. As another example, the ten input characters staticvoid form a single identifier token while the eleven input characters static void (with an ASCII SP character between c and v) form a pair of keyword tokens, static and void, separated by white space.
 
 As a special concession for compatibility with certain operating systems, the ASCII SUB character (\u001a, or control-Z) is ignored if it is the last character in the escaped input stream.
+
+The Input production is ambiguous, meaning that for some sequences of input characters, there is more than one way to reduce the input characters to input elements (that is, to tokenize the input characters). Ambiguities are resolved as follows:
+
+A sequence of input characters that could be reduced to either an identifier token or a literal token is always reduced to a literal token.
+
+A sequence of input characters that could be reduced to either an identifier token or a reserved keyword token (§3.9) is always reduced to a reserved keyword token.
+
+A sequence of input characters that could be reduced to either a contextual keyword token or to other (non-keyword) tokens is reduced according to context, as specified in §3.9.
+
+If the input character > appears in a type context (§4.11), that is, as part of a Type or an UnannType in the syntactic grammar (§4.1, §8.3), it is always reduced to the numerical comparison operator >, even when it could be combined with an adjacent > character to form a different operator.
+
+Without this rule for > characters, two consecutive > brackets in a type such as List<List<String>> would be tokenized as the signed right shift operator >>, while three consecutive > brackets in a type such as List<List<List<String>>> would be tokenized as the unsigned right shift operator >>>. Worse, the tokenization of four or more consecutive > brackets in a type such as List<List<List<List<String>>>> would be ambiguous, as various combinations of >, >>, and >>> tokens could represent the >>>> characters.
 
 Consider two tokens x and y in the resulting input stream. If x precedes y, then we say that x is to the left of y and that y is to the right of x.
 
@@ -236,8 +264,6 @@ The "Java digits" include the ASCII digits 0-9 (\u0030-\u0039).
 
 Letters and digits may be drawn from the entire Unicode character set, which supports most writing scripts in use in the world today, including the large sets for Chinese, Japanese, and Korean. This allows programmers to use identifiers in their programs that are written in their native languages.
 
-An identifier cannot have the same spelling (Unicode character sequence) as a keyword (§3.9), boolean literal (§3.10.3), or the null literal (§3.10.8), or a compile-time error occurs.
-
 Two identifiers are the same only if, after ignoring characters that are ignorable, the identifiers have the same Unicode character for each letter or digit. An ignorable character is a character for which the method Character.isIdentifierIgnorable(int) returns true. Identifiers that have the same external appearance may yet be different.
 
 For example, the identifiers consisting of the single letters LATIN CAPITAL LETTER A (A, \u0041), LATIN SMALL LETTER A (a, \u0061), GREEK CAPITAL LETTER ALPHA (A, \u0391), CYRILLIC SMALL LETTER A (a, \u0430) and MATHEMATICAL BOLD ITALIC SMALL A (a, \ud835\udc82) are all different.
@@ -256,27 +282,27 @@ MAX_VALUE
 
 isLetterOrDigit
 
-The identifiers var, yield, and record are restricted identifiers because they are not allowed in some contexts.
+An identifier never has the same spelling (Unicode character sequence) as a reserved keyword (§3.9), a boolean literal (§3.10.3) or the null literal (§3.10.8), due to the rules of tokenization (§3.5). However, an identifier may have the same spelling as a contextual keyword, because the tokenization of a sequence of input characters as an identifier or a contextual keyword depends on where the sequence appears in the program.
 
-A type identifier is an identifier that is not the character sequence var, yield, or record.
+To facilitate the recognition of contextual keywords, the syntactic grammar (§2.3) sometimes disallows certain identifiers by defining a production to accept only a subset of identifiers. The subsets are as follows:
 
 TypeIdentifier:
-Identifier but not var, yield, or record
-
-Type identifiers are used in certain contexts involving the declaration of classes and interfaces, and the use of types. For example, the name of a class must be a TypeIdentifier, so it is illegal to declare a class named var, yield, or record (§8.1).
-
-An unqualified method identifier is an identifier that is not the character sequence yield.
-
+Identifier but not permits, record, sealed, var, or yield
 UnqualifiedMethodIdentifier:
 Identifier but not yield
 
-This restriction allows yield to be used in a yield statement (§14.21) and still also be used as a (qualified) method name for compatibility reasons.
+TypeIdentifier is used in the declaration of classes, interfaces, and type parameters (§8.1, §9.1, §4.4), and when referring to types (§6.5). For example, the name of a class must be a TypeIdentifier, so it is illegal to declare a class named permits, record, sealed, var, or yield.
+
+UnqualifiedMethodIdentifier is used when a method invocation expression refers to a method by its simple name (§6.5.7.1). Since the term yield is excluded from UnqualifiedMethodIdentifier, any invocation of a method named yield must be qualified, thus distinguishing the invocation from a yield statement (§14.21).
 
 3.9. Keywords
 
-51 character sequences, formed from ASCII letters, are reserved for use as keywords and cannot be used as identifiers (§3.8).
+51 character sequences, formed from ASCII characters, are reserved for use as keywords and cannot be used as identifiers (§3.8). Another 16 character sequences, also formed from ASCII characters, may be interpreted as keywords or as other tokens, depending on the context in which they appear.
 
 Keyword:
+ReservedKeyword
+ContextualKeyword
+ReservedKeyword:
 (one of)
 
 abstract   continue   for          new         switch
@@ -290,18 +316,57 @@ char       final      interface    static      void
 class      finally    long         strictfp    volatile
 const      float      native       super       while
 _ (underscore)
+ContextualKeyword:
+(one of)
 
-The keywords const and goto are reserved, even though they are not currently used. This may allow a Java compiler to produce better error messages if these C++ keywords incorrectly appear in programs. The keyword _ (underscore) is reserved for possible future use in parameter declarations.
+exports      opens      requires     uses
+module       permits    sealed       var
+non-sealed   provides   to           with
+open         record     transitive   yield
 
-A variety of character sequences are sometimes assumed, incorrectly, to be keywords:
+The keywords const and goto are reserved, even though they are not currently used. This may allow a Java compiler to produce better error messages if these C++ keywords incorrectly appear in programs.
+
+The keyword strictfp is obsolete and should not be used in new code.
+
+The keyword _ (underscore) is reserved for possible future use in parameter declarations.
 
 true and false are not keywords, but rather boolean literals (§3.10.3).
 
 null is not a keyword, but rather the null literal (§3.10.8).
 
-var, yield, and record are not keywords, but rather restricted identifiers (§3.8). var has special meaning as the type of a local variable declaration (§14.4) and the type of a lambda formal parameter (§15.27.1). yield has special meaning in a yield statement (§14.21); all invocations of a method named yield must be qualified so as to be distinguished from a yield statement. record has special meaning in a record declaration (§8.10).
+During the reduction of input characters to input elements (§3.5), a sequence of input characters that notionally matches a contextual keyword is reduced to a contextual keyword if and only if both of the following conditions hold:
 
-A further ten character sequences are restricted keywords: open, module, requires, transitive, exports, opens, to, uses, provides, and with. These character sequences are tokenized as keywords solely where they appear as terminals in the ModuleDeclaration, ModuleDirective, and RequiresModifier productions (§7.7). They are tokenized as identifiers everywhere else, for compatibility with programs written before the introduction of restricted keywords. There is one exception: immediately to the right of the character sequence requires in the ModuleDirective production, the character sequence transitive is tokenized as a keyword unless it is followed by a separator, in which case it is tokenized as an identifier.
+The sequence is recognized as a terminal specified in a suitable context of the syntactic grammar (§2.3), as follows:
+
+For module and open, when recognized as a terminal in a ModuleDeclaration (§7.7).
+
+For exports, opens, provides, requires, to, uses, and with, when recognized as a terminal in a ModuleDirective.
+
+For transitive, when recognized as a terminal in a RequiresModifier.
+
+For example, recognizing the sequence requires transitive ; does not make use of RequiresModifier, so the term transitive is reduced here to an identifier and not a contextual keyword.
+
+For var, when recognized as a terminal in a LocalVariableType (§14.4) or a LambdaParameterType (§15.27.1).
+
+In other contexts, attempting to use var as an identifier will cause an error, because var is not a TypeIdentifier (§3.8).
+
+For yield, when recognized as a terminal in a YieldStatement (§14.21).
+
+In other contexts, attempting to use the yield as an identifier will cause an error, because yield is neither a TypeIdentifier nor a UnqualifiedMethodIdentifier.
+
+For record, when recognized as a terminal in a RecordDeclaration (§8.10).
+
+For non-sealed, permits, and sealed, when recognized as a terminal in a NormalClassDeclaration (§8.1) or a NormalInterfaceDeclaration (§9.1).
+
+The sequence is not immediately preceded or immediately followed by an input character that matches JavaLetterOrDigit.
+
+In general, accidentally omitting white space in source code will cause a sequence of input characters to be tokenized as an identifier, due to the "longest possible translation" rule (§3.2). For example, the sequence of twelve input characters p u b l i c s t a t i c is always tokenized as the identifier publicstatic, rather than as the reserved keywords public and static. If two tokens are intended, they must be separated by white space or a comment.
+
+The rule above works in tandem with the "longest possible translation" rule to produce an intuitive result in contexts where contextual keywords may appear. For example, the sequence of eleven input characters v a r f i l e n a m e is usually tokenized as the identifier varfilename, but in a local variable declaration, the first three input characters are tentatively recognized as the contextual keyword var by the first condition of the rule above. However, it would be confusing to overlook the lack of white space in the sequence by recognizing the next eight input characters as the identifier filename. (This would mean that the sequence undergoes different tokenization in different contexts: an identifier in most contexts, but a contextual keyword and an identifier in local variable declarations.) Accordingly, the second condition prevents recognition of the contextual keyword var on the grounds that the immediately following input character f is a JavaLetterOrDigit. The sequence v a r f i l e n a m e is therefore tokenized as the identifier varfilename in a local variable declaration.
+
+As another example of the careful recognition of contextual keywords, consider the sequence of 15 input characters n o n - s e a l e d c l a s s. This sequence is usually translated to three tokens - the identifier non, the operator -, and the identifier sealedclass - but in a normal class declaration, where the first condition holds, the first ten input characters are tentatively recognized as the contextual keyword non-sealed. To avoid translating the sequence to two keyword tokens (non-sealed and class) rather than three non-keyword tokens, and to avoid rewarding the programmer for omitting white space before class, the second condition prevents recognition of the contextual keyword. The sequence n o n - s e a l e d c l a s s is therefore tokenized as three tokens in a class declaration.
+
+In the rule above, the first condition depends on details of the syntactic grammar, but a compiler for the Java programming language can implement the rule without fully parsing the input program. For example, a heuristic could be used to track the contextual state of the tokenizer, as long as the heuristic guarantees that valid uses of contextual keywords are tokenized as keywords, and valid uses of identifiers are tokenized as identifiers. Alternatively, a compiler could always tokenize a contextual keyword as an identifier, leaving it to a later phase to recognize special uses of these identifiers.
 
 3.10. Literals
 

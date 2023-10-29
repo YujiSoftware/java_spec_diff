@@ -5,7 +5,7 @@ Table of Contents
 15.1. Evaluation, Denotation, and Result
 15.2. Forms of Expressions
 15.3. Type of an Expression
-15.4. FP-strict Expressions
+15.4. Floating-point Expressions
 15.5. Expressions and Run-Time Checks
 15.6. Normal and Abrupt Completion of Evaluation
 15.7. Evaluation Order
@@ -120,17 +120,15 @@ Nothing (the expression is said to be void)
 
 If an expression denotes a variable, and a value is required for use in further evaluation, then the value of that variable is used. In this context, if the expression denotes a variable or a value, we may speak simply of the value of the expression.
 
-Value set conversion (§5.1.13) is applied to the result of every expression that produces a value, including when the value of a variable of type float or double is used.
-
 An expression denotes nothing if and only if it is a method invocation (§15.12) that invokes a method that does not return a value, that is, a method declared void (§8.4). Such an expression can be used only as an expression statement (§14.8) or as the single expression of a lambda body (§15.27.2), because every other context in which an expression can appear requires the expression to denote something. An expression statement or lambda body that is a method invocation may also invoke a method that produces a result; in this case the value returned by the method is quietly discarded.
 
 Evaluation of an expression can produce side effects, because expressions may contain embedded assignments, increment operators, decrement operators, method invocations, and, in switch expressions, arbitrary statements.
 
 An expression occurs in either:
 
-The declaration of some (class or interface) type that is being declared: in a field initializer, in a static initializer, in an instance initializer, in a constructor declaration, in a method declaration, or in an annotation.
+The declaration of some class or interface that is being declared: in a field initializer, in a static initializer, in an instance initializer, in a constructor declaration, in a method declaration, or in an annotation.
 
-An annotation on a package declaration or on a top level type declaration.
+An annotation on the declaration of a module, a package, or a top level class or interface.
 
 15.2. Forms of Expressions
 
@@ -188,25 +186,79 @@ Likewise, the value stored in a variable is always compatible with the type of t
 
 In other words, the value of an expression whose type is T is always suitable for assignment to a variable of type T.
 
-Note that an expression whose type is a class type F that is declared final is guaranteed to have a value that is either a null reference or an object whose class is F itself, because final types have no subclasses.
+Note that if the type of an expression is a class type which names the class C, then the declaration of class C as final or sealed (§8.1.1.2) has implications for the value of the expression:
 
-15.4. FP-strict Expressions
+If C is final, then the expression is guaranteed to have a value that is either (i) the null reference, or (ii) an object whose class is C itself, because final classes have no subclasses.
 
-If the type of an expression is float or double, then there is a question as to what value set (§4.2.3) the value of the expression is drawn from. This is governed by the rules of value set conversion (§5.1.13); these rules in turn depend on whether or not the expression is FP-strict.
+If C is sealed, then the expression is guaranteed to have a value that is either (i) the null reference, (ii) an object whose class is C itself, or (iii) assignment compatible with one of the permitted direct subclasses of C (§8.1.6).
 
-Every constant expression (§15.29) is FP-strict.
+If C is freely extensible, then the expression is guaranteed to have a value that is either (i) the null reference, (ii) an object whose class is C itself, or (iii) assignment compatible with C.
 
-If an expression is not a constant expression, then consider all the class declarations, interface declarations, and method declarations that contain the expression. If any such declaration bears the strictfp modifier (§8.1.1.3, §8.4.3.5, §9.1.1.2), then the expression is FP-strict.
+15.4. Floating-point Expressions
 
-If a class, interface, or method, X, is declared strictfp, then X and any class, interface, method, constructor, instance initializer, static initializer, or variable initializer within X is said to be FP-strict.
+A floating-point expression is an expression whose type is float or double (§4.2.3). Floating-point expressions of type float denote values that exactly correspond to the values representable in the 32-bit IEEE 754 binary32 format. Floating-point expressions of type double denote values that exactly correspond to the values representable in the 64-bit IEEE 754 binary64 format.
 
-Note that an annotation's element value (§9.7) is always FP-strict, because it is always a constant expression.
+Many of the comparison and numerical operators of the Java programming language that can be used to form floating-point expressions correspond to IEEE 754 operations, as do the conversions that act on floating-point values (Table 15.4-A).
 
-It follows that an expression is not FP-strict if and only if it is not a constant expression and it does not appear within any declaration that has the strictfp modifier.
+Table 15.4-A. Correspondence with IEEE 754 operations
 
-Within an FP-strict expression, all intermediate values must be elements of the float value set or the double value set, implying that the results of all FP-strict expressions must be those predicted by IEEE 754 arithmetic on operands represented using binary32 and binary64 floating-point formats.
+Operator/Conversion	IEEE 754 operation
+The numerical comparison operators <, <=, >, and >= (§15.20.1)	compareQuietLess, compareQuietLessEqual, compareQuietGreater, compareQuietGreaterEqual
+The numerical equality operators == and != (§15.21.1)	compareQuietEqual, compareQuietNotEqual
+The unary minus operator - (§15.15.4)	negate
+The multiplicative operators * and / (§15.17.1, §15.17.2)	multiplication, division
+The additive operators + and - (§15.18.2)	addition, subtraction
+Widening primitive conversion from an integral type (§5.1.2)	convertFromInt
+Narrowing primitive conversion to an integral type (§5.1.3)	convertToIntegerTowardZero
+Conversion between float and double	convertFormat
 
-Within an expression that is not FP-strict, some leeway is granted for an implementation to use an extended exponent range to represent intermediate results; the net effect, roughly speaking, is that a calculation might produce "the correct answer" in situations where exclusive use of the float value set or double value set might result in overflow or underflow.
+
+
+The floating-point remainder operator % (§15.17.3) does not correspond to the IEEE 754 remainder operation.
+
+Some IEEE 754 operations without corresponding operators in the Java programming language are provided via methods in the Math and StrictMath classes, including the sqrt method for the IEEE 754 squareRoot operation, the fma method for the IEEE 754 fusedMultiplyAdd operation, and the IEEEremainder method for the IEEE 754 remainder operation.
+
+The Java programming language requires support of IEEE 754 subnormal floating-point numbers and gradual underflow, which make it easier to prove desirable properties of particular numerical algorithms. Floating-point operations do not "flush to zero" if the calculated result is a subnormal number.
+
+The result of a floating-point operator of the Java programming language must match the result of the corresponding IEEE 754 operation on the same operands. For finite results, this implies the sign, significand, and exponent of the floating-point result must all be those specified by IEEE 754.
+
+The requirement for matching sign, significand, and exponent precludes some transformations that might be allowed if floating-point behavior was less precisely specified. For example, -x cannot generally be replaced by (0.0 - x) because the sign of the result will differ if x is -0.0. Also, other possibly value-changing transformation such as replacing (a * b + c) with a call to a fused multiply-accumulate library method are not allowed unless the result can be proven to be identical.
+
+There are no circumstances where the evaluation of a floating-point expression may use intermediate results that have more precision or more exponent range than indicated by the expression's type.
+
+A floating-point operation that overflows produces a signed infinity.
+
+A floating-point operation that underflows produces a subnormal value or a signed zero.
+
+A floating-point operation that has no unique mathematically defined result produces NaN.
+
+All numeric operations with NaN as an operand produce NaN as a result.
+
+Since NaN is unordered, any numerical comparison operation involving one or two NaNs returns false, any == comparison involving NaN returns false, and any != comparison involving NaN returns true.
+
+Floating-point arithmetic is an approximation to real arithmetic. While there are an infinite number of real numbers, a particular floating-point format only has a finite number of values. In the Java programming language, a rounding policy is a function used to map from a real number to a floating-point value in a given format. For real numbers in the representable range of a floating-point format, a continuous segment of the real number line is mapped to a single floating-point value. The real number whose value is numerically equal to a floating-point value is mapped to that floating-point value; for example, the real number 1.5 is mapped to the floating-point value 1.5 in a given format. The Java programming language defines two rounding policies, as follows:
+
+The round to nearest rounding policy applies to all floating-point operators except for (i) conversion to an integer value, and (ii) floating-point remainder. Under the round to nearest rounding policy, inexact results must be rounded to the representable value nearest to the infinitely precise result; if the two nearest representable values are equally near, then the value whose least significant bit is zero is chosen.
+
+The round to nearest rounding policy corresponds to the default rounding-direction attribute for binary arithmetic in IEEE 754, roundTiesToEven.
+
+The roundTiesToEven rounding-direction attribute was known as the "round to nearest" rounding mode in the 1985 version of the IEEE 754 Standard. The rounding policy in the Java programming language is named after this rounding mode.
+
+The round toward zero rounding policy applies to (i) conversion of a floating-point value to an integer value (§5.1.3), and (ii) floating-point remainder (§15.17.3). Under the round toward zero rounding policy, inexact results are rounded to the nearest representable value that is not greater in magnitude than the infinitely precise result. For conversion to integer, the round toward zero rounding policy is equivalent to truncation where fractional significand bits are discarded.
+
+The round toward zero rounding policy corresponds to the roundTowardZero rounding-direction attribute for binary arithmetic in IEEE 754.
+
+The roundTowardZero rounding-direction attribute was known as the "round toward zero" rounding mode in the 1985 version of the IEEE 754 Standard. The rounding policy in the Java programming language is named after this rounding mode.
+
+The Java programming language requires that every floating-point operator rounds its floating-point result to the result precision. The rounding policy used for each floating-point operator is either round to nearest or round toward zero, as specified above.
+
+Java 1.0 and 1.1 required strict evaluation of floating-point expressions. Strict evaluation means that each float operand corresponds to a value representable in the IEEE 754 binary32 format, each double operand corresponds to a value representable in the IEEE 754 binary64 format, and each floating-point operator with a corresponding IEEE 754 operation matches the IEEE 754 result for the same operands.
+
+Strict evaluation provides predictable results, but caused performance problems in the Java Virtual Machine implementations for some processor families common in the Java 1.0/1.1 era. Consequently, in Java 1.2 through Java SE 16, the Java SE Platform allowed a Java Virtual Machine implementation to have one or two value sets associated with each floating-point type. The float type was associated with the float value set and the float-extended-exponent value set, while the double type was associated with the double value set and the double-extended-exponent value set. The float value set corresponded to the values representable in the IEEE 754 binary32 format; the float-extended-exponent value set had the same number of precision bits but larger exponent range. Similarly, the double value set corresponded to the values representable in the IEEE 754 binary64 format; the double-extended-exponent value set had the same number of precision bits but larger exponent range. Allowing use of the extended-exponent value sets by default ameliorated the performance problems on some processor families.
+
+For compatibility, Java 1.2 allowed the programmer to forbid an implementation from using the extended-exponent value sets. The programmer expressed this by placing the strictfp modifier on the declaration of a class, interface, or method. strictfp constrained the floating-point semantics of any enclosed expressions to use the float value set for float expressions and the double value set for double expressions, ensuring the results of such expressions were fully predictable. Code modified by strictfp thus had the same floating-point semantics as specified in Java 1.0 and 1.1.
+
+In Java SE 17 and later, the Java SE Platform always requires strict evaluation of floating-point expressions. Newer members of the processor families that had performance problems implementing strict evaluation no longer have that difficulty. This specification no longer associates float and double with the four value sets described above, and the strictfp modifier no longer affects the evaluation of floating-point expressions. For compatibility, strictfp remains a keyword in Java SE 17 (§3.8) and continues to have restrictions on its use (§8.4.3, §9.4), although Java compilers are encouraged to warn the programmer about its obsolete status. Future versions of the Java programming language may redefine or remove the strictfp keyword.
 
 15.5. Expressions and Run-Time Checks
 
@@ -429,19 +481,20 @@ For example, it is not correct for a Java compiler to rewrite 4.0*x*0.5 as 2.0*x
 
 So, for example, the test program:
 
-strictfp class Test {
+class Test {
     public static void main(String[] args) {
-        double d = 8e+307;
+        double d = 8E307;
         System.out.println(4.0 * d * 0.5);
         System.out.println(2.0 * d);
     }
 }
 
 
+
 prints:
 
 Infinity
-1.6e+308
+1.6E308
 
 
 because the first expression overflows and the second does not.
@@ -574,9 +627,9 @@ The type of an integer literal (§3.10.1) that ends with L or l (ell) is long (�
 
 The type of any other integer literal is int (§4.2.1).
 
-The type of a floating-point literal (§3.10.2) that ends with F or f is float and its value must be an element of the float value set (§4.2.3).
+The type of a floating-point literal (§3.10.2) that ends with F or f is float (§4.2.3).
 
-The type of any other floating-point literal is double and its value must be an element of the double value set (§4.2.3).
+The type of any other floating-point literal is double (§4.2.3).
 
 The type of a boolean literal (§3.10.3) is boolean (§4.2.5).
 
@@ -661,7 +714,7 @@ Let n be an integer such that TypeName denotes the n'th lexically enclosing clas
 
 The value of a qualified this expression TypeName.this is the n'th lexically enclosing instance of this.
 
-If TypeName denotes a generic class, with type parameters F1,...,, the type of the qualified this expression is TypeName<F1,...,>. Otherwise, the type of the qualified this expression is TypeName.
+If TypeName denotes a generic class, with type parameters F1,...,Fn, the type of the qualified this expression is TypeName<F1,...,Fn>. Otherwise, the type of the qualified this expression is TypeName.
 
 It is a compile-time error if a qualified this expression occurs in a static context (§8.1.3).
 
@@ -675,11 +728,7 @@ The use of parentheses affects only the order of evaluation, except for a corner
 
 This is because the decimal literals 2147483648 and 9223372036854775808L are allowed only as an operand of the unary minus operator (§3.10.1).
 
-In particular, the presence or absence of parentheses around an expression does not (except for the case noted above) affect in any way:
-
-the choice of value set (§4.2.3) for the value of an expression of type float or double.
-
-whether a variable is definitely assigned, definitely assigned when true, definitely assigned when false, definitely unassigned, definitely unassigned when true, or definitely unassigned when false (§16 (Definite Assignment)).
+In particular, the presence or absence of parentheses around an expression does not affect whether a variable is definitely assigned, definitely assigned when true, definitely assigned when false, definitely unassigned, definitely unassigned when true, or definitely unassigned when false (§16 (Definite Assignment)).
 
 If a parenthesized expression appears in a context of a particular kind with target type T (§5 (Conversions and Contexts)), its contained expression similarly appears in a context of the same kind with target type T.
 
@@ -748,7 +797,7 @@ If the class instance creation expression ends in a class body, then the class b
 
 If the class instance creation expression is unqualified, then:
 
-The Identifier in ClassOrInterfaceTypeToInstantiate must denote either a class that is accessible, non-final, and not an enum class, or an interface that is accessible. Otherwise, a compile-time error occurs.
+The Identifier in ClassOrInterfaceTypeToInstantiate must denote either a class that is accessible, freely extensible (§8.1.1.2), and not an enum class, or an interface that is accessible and freely extensible (§9.1.1.4). Otherwise, a compile-time error occurs.
 
 If the Identifier in ClassOrInterfaceTypeToInstantiate denotes a class, C, then an anonymous direct subclass of C is declared. If TypeArguments is present, then C has type arguments given by TypeArguments; if <> is present, then C will have its type arguments inferred in §15.9.3; otherwise, C has no type arguments. The body of the subclass is the ClassBody given in the class instance creation expression. The class being instantiated is the anonymous subclass.
 
@@ -756,7 +805,7 @@ If the Identifier in ClassOrInterfaceTypeToInstantiate denotes an interface, I, 
 
 If the class instance creation expression is qualified, then:
 
-The Identifier in ClassOrInterfaceTypeToInstantiate must unambiguously denote an inner class that is accessible, non-final, not an enum class, and a member of the compile-time type of the Primary expression or the ExpressionName. Otherwise, a compile-time error occurs.
+The Identifier in ClassOrInterfaceTypeToInstantiate must unambiguously denote an inner class that is accessible, freely extensible, not an enum class, and a member of the compile-time type of the Primary expression or the ExpressionName. Otherwise, a compile-time error occurs.
 
 Let the Identifier in ClassOrInterfaceTypeToInstantiate denote a class, C. An anonymous direct subclass of C is declared. If TypeArguments is present, then C has type arguments given by TypeArguments; if <> is present, then C will have its type arguments inferred in §15.9.3; otherwise, C has no type arguments. The body of the subclass is the ClassBody given in the class instance creation expression. The class being instantiated is the anonymous subclass.
 
@@ -1020,6 +1069,8 @@ Compare this to the treatment of array creation expressions, for which the out-o
 An anonymous class is implicitly declared by a class instance creation expression or by an enum constant that ends with a class body (§8.9.1).
 
 An anonymous class is never abstract (§8.1.1.1).
+
+An anonymous class is never sealed (§8.1.1.2), and thus has no permitted direct subclasses (§8.1.6).
 
 An anonymous class declared by a class instance creation expression is never final (§8.1.1.2).
 
@@ -2466,7 +2517,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 16 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 17 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2496,7 +2547,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 16 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 17 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 
@@ -2610,7 +2661,7 @@ A method m in some class S has been identified as the one to be invoked.
 
 Now a new activation frame is created, containing the target reference (if any) and the argument values (if any), as well as enough space for the local variables and stack for the method to be invoked and any other bookkeeping information that may be required by the implementation (stack pointer, program counter, reference to previous activation frame, and the like). If there is not sufficient memory available to create such an activation frame, a StackOverflowError is thrown.
 
-The newly created activation frame becomes the current activation frame. The effect of this is to assign the argument values to corresponding freshly created parameter variables of the method, and to make the target reference available as this, if there is a target reference. Before each argument value is assigned to its corresponding parameter variable, it is subjected to invocation conversion (§5.3), which includes any required value set conversion (§5.1.13).
+The newly created activation frame becomes the current activation frame. The effect of this is to assign the argument values to corresponding freshly created parameter variables of the method, and to make the target reference available as this, if there is a target reference. Before each argument value is assigned to its corresponding parameter variable, it is subjected to invocation conversion (§5.3).
 
 If the erasure (§4.6) of the type of the method being invoked differs in its signature from the erasure of the type of the compile-time declaration for the method invocation (§15.12.3), then if any of the argument values is an object which is not an instance of a subclass or subinterface of the erasure of the corresponding formal parameter type in the compile-time declaration for the method invocation, then a ClassCastException is thrown.
 
@@ -2797,7 +2848,7 @@ In the first search, the method reference is treated as if it were an invocation
 
 In the second search, if P1, ..., Pn is not empty and P1 is a subtype of ReferenceType, then the method reference expression is treated as if it were a method invocation expression with argument expressions of types P2, ..., Pn. If ReferenceType is a raw type, and there exists a parameterization of this type, G<...>, that is a supertype of P1, the type to search is the result of capture conversion (§5.1.10) applied to G<...>; otherwise, the type to search is the same as the type of the first search. Type arguments, if any, are given by the method reference expression.
 
-If the first search produces a most specific method that is static, and the set of applicable methods produced by the second search contains no non-static methods, then the compile-time declaration is the most specified method of the first search.
+If the first search produces a most specific method that is static, and the set of applicable methods produced by the second search contains no non-static methods, then the compile-time declaration is the most specific method of the first search.
 
 Otherwise, if the set of applicable methods produced by the first search contains no static methods, and the second search produces a most specific method that is non-static, then the compile-time declaration is the most specific method of the second search.
 
@@ -3040,7 +3091,7 @@ The type of the postfix increment expression is the type of the variable. The re
 
 At run time, if evaluation of the operand expression completes abruptly, then the postfix increment expression completes abruptly for the same reason and no incrementation occurs. Otherwise, the value 1 is added to the value of the variable and the sum is stored back into the variable. Before the addition, binary numeric promotion (§5.6) is performed on the value 1 and the value of the variable. If necessary, the sum is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the postfix increment expression is the value of the variable before the new value is stored.
 
-Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8) and value set conversion (§5.1.13). If necessary, value set conversion is applied to the sum prior to its being stored in the variable.
+Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8).
 
 A variable that is declared final cannot be incremented because when an access of such a final variable is used as an expression, the result is a value, not a variable. Thus, it cannot be used as the operand of a postfix increment operator.
 
@@ -3057,7 +3108,7 @@ The type of the postfix decrement expression is the type of the variable. The re
 
 At run time, if evaluation of the operand expression completes abruptly, then the postfix decrement expression completes abruptly for the same reason and no decrementation occurs. Otherwise, the value 1 is subtracted from the value of the variable and the difference is stored back into the variable. Before the subtraction, binary numeric promotion (§5.6) is performed on the value 1 and the value of the variable. If necessary, the difference is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the postfix decrement expression is the value of the variable before the new value is stored.
 
-Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8) and value set conversion (§5.1.13). If necessary, value set conversion is applied to the difference prior to its being stored in the variable.
+Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8).
 
 A variable that is declared final cannot be decremented because when an access of such a final variable is used as an expression, the result is a value, not a variable. Thus, it cannot be used as the operand of a postfix decrement operator.
 
@@ -3112,7 +3163,7 @@ The type of the prefix increment expression is the type of the variable. The res
 
 At run time, if evaluation of the operand expression completes abruptly, then the prefix increment expression completes abruptly for the same reason and no incrementation occurs. Otherwise, the value 1 is added to the value of the variable and the sum is stored back into the variable. Before the addition, binary numeric promotion (§5.6) is performed on the value 1 and the value of the variable. If necessary, the sum is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the prefix increment expression is the value of the variable after the new value is stored.
 
-Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8) and value set conversion (§5.1.13). If necessary, value set conversion is applied to the sum prior to its being stored in the variable.
+Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8).
 
 A variable that is declared final cannot be incremented because when an access of such a final variable is used as an expression, the result is a value, not a variable. Thus, it cannot be used as the operand of a prefix increment operator.
 
@@ -3126,7 +3177,7 @@ The type of the prefix decrement expression is the type of the variable. The res
 
 At run time, if evaluation of the operand expression completes abruptly, then the prefix decrement expression completes abruptly for the same reason and no decrementation occurs. Otherwise, the value 1 is subtracted from the value of the variable and the difference is stored back into the variable. Before the subtraction, binary numeric promotion (§5.6) is performed on the value 1 and the value of the variable. If necessary, the difference is narrowed by a narrowing primitive conversion (§5.1.3) and/or subjected to boxing conversion (§5.1.7) to the type of the variable before it is stored. The value of the prefix decrement expression is the value of the variable after the new value is stored.
 
-Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8) and value set conversion (§5.1.13). If necessary, format conversion is applied to the difference prior to its being stored in the variable.
+Note that the binary numeric promotion mentioned above may include unboxing conversion (§5.1.8).
 
 A variable that is declared final cannot be decremented because when an access of such a final variable is used as an expression, the result is a value, not a variable. Thus, it cannot be used as the operand of a prefix decrement operator.
 
@@ -3146,8 +3197,6 @@ Unary numeric promotion (§5.6) is performed on the operand.
 
 The type of the unary minus expression is the promoted type of the operand.
 
-Note that unary numeric promotion performs value set conversion (§5.1.13). Whatever value set the promoted operand value is drawn from, the unary negation operation is carried out and the result is drawn from that same value set. That result is then subject to further value set conversion.
-
 At run time, the value of the unary minus expression is the arithmetic negation of the promoted value of the operand.
 
 For integer values, negation is the same as subtraction from zero. The Java programming language uses two's-complement representation for integers, and the range of two's-complement values is not symmetric, so negation of the maximum negative int or long results in that same maximum negative number. Overflow occurs in this case, but no exception is thrown. For all integer values x, -x equals (~x)+1.
@@ -3155,6 +3204,8 @@ For integer values, negation is the same as subtraction from zero. The Java prog
 For floating-point values, negation is not the same as subtraction from zero, because if x is +0.0, then 0.0-x is +0.0, but -x is -0.0. Unary minus merely inverts the sign of a floating-point number. Special cases of interest:
 
 If the operand is NaN, the result is NaN. (Recall that NaN has no sign (§4.2.3).)
+
+The Java programming language has not adopted the stronger requirement from the 2019 version of the IEEE 754 Standard that negation inverts the sign bit for all inputs including NaN.
 
 If the operand is an infinity, the result is the infinity of opposite sign.
 
@@ -3209,8 +3260,6 @@ Casts can be used to explicitly "tag" a lambda expression or a method reference 
 
 The result of a cast expression is not a variable, but a value, even if the result of evaluating the operand expression is a variable.
 
-A cast operator has no effect on the choice of value set (§4.2.3) for a value of type float or type double. Consequently, a cast to type float within an expression that is not FP-strict (§15.4) does not necessarily cause its value to be converted to an element of the float value set, and a cast to type double within an expression that is not FP-strict does not necessarily cause its value to be converted to an element of the double value set.
-
 If the compile-time type of the operand cannot be converted by casting conversion (§5.5) to the target type specified by the cast operator, then a compile-time error occurs.
 
 Otherwise, at run time, the operand value is converted (if necessary) by casting conversion to the target type specified by the cast operator.
@@ -3235,7 +3284,7 @@ The type of each of the operands of a multiplicative operator must be a type tha
 
 Binary numeric promotion is performed on the operands (§5.6).
 
-Note that binary numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
+Note that binary numeric promotion may include unboxing conversion (§5.1.8).
 
 The type of a multiplicative expression is the promoted type of its operands.
 
@@ -3265,25 +3314,11 @@ Multiplication of an infinity by a zero results in NaN.
 
 Multiplication of an infinity by a finite value results in a signed infinity. The sign is determined by the rule stated above.
 
-In the remaining cases, where neither an infinity nor NaN is involved, the exact mathematical product is computed. A floating-point value set is then chosen:
-
-If the multiplication expression is FP-strict (§15.4):
-
-If the type of the multiplication expression is float, then the float value set must be chosen.
-
-If the type of the multiplication expression is double, then the double value set must be chosen.
-
-If the multiplication expression is not FP-strict:
-
-If the type of the multiplication expression is float, then either the float value set or the float-extended-exponent value set may be chosen, at the whim of the implementation.
-
-If the type of the multiplication expression is double, then either the double value set or the double-extended-exponent value set may be chosen, at the whim of the implementation.
-
-Next, a value must be chosen from the chosen value set to represent the product.
+In the remaining cases, where neither an infinity nor NaN is involved, the exact mathematical product is computed.
 
 If the magnitude of the product is too large to represent, we say the operation overflows; the result is then an infinity of appropriate sign.
 
-Otherwise, the product is rounded to the nearest value in the chosen value set using the round to nearest rounding policy (§4.2.4). The Java programming language requires support of gradual underflow as defined by IEEE 754.
+Otherwise, the product is rounded to the nearest representable value using the round to nearest rounding policy (§15.4). The Java programming language requires support of gradual underflow as defined by IEEE 754.
 
 Despite the fact that overflow, underflow, or loss of information may occur, evaluation of a multiplication operator * never throws a run-time exception.
 
@@ -3311,25 +3346,11 @@ Division of a zero by a zero results in NaN; division of zero by any other finit
 
 Division of a nonzero finite value by a zero results in a signed infinity. The sign is determined by the rule stated above.
 
-In the remaining cases, where neither an infinity nor NaN is involved, the exact mathematical quotient is computed. A floating-point value set is then chosen:
-
-If the division expression is FP-strict (§15.4):
-
-If the type of the division expression is float, then the float value set must be chosen.
-
-If the type of the division expression is double, then the double value set must be chosen.
-
-If the division expression is not FP-strict:
-
-If the type of the division expression is float, then either the float value set or the float-extended-exponent value set may be chosen, at the whim of the implementation.
-
-If the type of the division expression is double, then either the double value set or the double-extended-exponent value set may be chosen, at the whim of the implementation.
-
-Next, a value must be chosen from the chosen value set to represent the quotient.
+In the remaining cases, where neither an infinity nor NaN is involved, the exact mathematical quotient is computed.
 
 If the magnitude of the quotient is too large to represent, we say the operation overflows; the result is then an infinity of appropriate sign.
 
-Otherwise, the quotient is rounded to the nearest value in the chosen value set using the round to nearest rounding policy (§4.2.4). The Java programming language requires support of gradual underflow as defined by IEEE 754.
+Otherwise, the quotient is rounded to the nearest representable value using the round to nearest rounding policy (§15.4). The Java programming language requires support of gradual underflow as defined by IEEE 754.
 
 Despite the fact that overflow, underflow, division by zero, or loss of information may occur, evaluation of a floating-point division operator / never throws a run-time exception.
 
@@ -3384,7 +3405,7 @@ This program produces the output:
 
 
 
-The result of a floating-point remainder operation as computed by the % operator is not the same as that computed by the remainder operation in IEEE 754, due to the choice of rounding policy in the Java programming language (§4.2.4). The IEEE 754 remainder operation computes the remainder from a rounding division, not a truncating division, and so its behavior is not analogous to that of the usual integer remainder operator. Instead, the Java programming language defines % on floating-point operands to behave in a manner analogous to that of the integer remainder operator, with an implied division using the round toward zero rounding policy; this may be compared with the C library function fmod. The IEEE 754 remainder operation may be computed by the library routine Math.IEEEremainder or StrictMath.IEEEremainder.
+The result of a floating-point remainder operation as computed by the % operator is not the same as that computed by the remainder operation in IEEE 754, due to the choice of rounding policy in the Java programming language (§15.4). The IEEE 754 remainder operation computes the remainder from a rounding division, not a truncating division, and so its behavior is not analogous to that of the usual integer remainder operator. Instead, the Java programming language defines % on floating-point operands to behave in a manner analogous to that of the integer remainder operator, with an implied division using the round toward zero rounding policy; this may be compared with the C library function fmod. The IEEE 754 remainder operation may be computed by the library routine Math.IEEEremainder or StrictMath.IEEEremainder.
 
 The result of a floating-point remainder operation is determined by the following rules, which match IEEE 754 arithmetic except for how the implied division is computed:
 
@@ -3570,7 +3591,7 @@ The binary - operator performs subtraction, producing the difference of two nume
 
 Binary numeric promotion is performed on the operands (§5.6).
 
-Note that binary numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
+Note that binary numeric promotion may include unboxing conversion (§5.1.8).
 
 The type of an additive expression on numeric operands is the promoted type of its operands.
 
@@ -3604,25 +3625,11 @@ The sum of a zero and a nonzero finite value is equal to the nonzero operand.
 
 The sum of two nonzero finite values of the same magnitude and opposite sign is positive zero.
 
-In the remaining cases, where neither an infinity, nor a zero, nor NaN is involved, and the operands have the same sign or have different magnitudes, the exact mathematical sum is computed. A floating-point value set is then chosen:
-
-If the addition expression is FP-strict (§15.4):
-
-If the type of the addition expression is float, then the float value set must be chosen.
-
-If the type of the addition expression is double, then the double value set must be chosen.
-
-If the addition expression is not FP-strict:
-
-If the type of the addition expression is float, then either the float value set or the float-extended-exponent value set may be chosen, at the whim of the implementation.
-
-If the type of the addition expression is double, then either the double value set or the double-extended-exponent value set may be chosen, at the whim of the implementation.
-
-Next, a value must be chosen from the chosen value set to represent the sum.
+In the remaining cases, where neither an infinity, nor a zero, nor NaN is involved, and the operands have the same sign or have different magnitudes, the exact mathematical sum is computed.
 
 If the magnitude of the sum is too large to represent, we say the operation overflows; the result is then an infinity of appropriate sign.
 
-Otherwise, the sum is rounded to the nearest value in the chosen value set using the round to nearest rounding policy (§4.2.4). The Java programming language requires support of gradual underflow.
+Otherwise, the sum is rounded to the nearest representable value using the round to nearest rounding policy (§15.4). The Java programming language requires support of gradual underflow.
 
 The binary - operator performs subtraction when applied to two operands of numeric type, producing the difference of its operands; the left-hand operand is the minuend and the right-hand operand is the subtrahend.
 
@@ -3696,13 +3703,11 @@ The type of each of the operands of a numerical comparison operator must be a ty
 
 Binary numeric promotion is performed on the operands (§5.6).
 
-Note that binary numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
+Note that binary numeric promotion may include unboxing conversion (§5.1.8).
 
 If the promoted type of the operands is int or long, then signed integer comparison is performed.
 
 If the promoted type is float or double, then floating-point comparison is performed.
-
-Comparison is carried out accurately on floating-point values, no matter what value sets their representing values were drawn from.
 
 The result of a floating-point comparison, as determined by the specification of the IEEE 754 standard, is:
 
@@ -3845,13 +3850,11 @@ In all cases, a!=b produces the same result as !(a==b).
 
 If the operands of an equality operator are both of numeric type, or one is of numeric type and the other is convertible (§5.1.8) to numeric type, binary numeric promotion is performed on the operands (§5.6).
 
-Note that binary numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
+Note that binary numeric promotion may include unboxing conversion (§5.1.8).
 
 If the promoted type of the operands is int or long, then an integer equality test is performed.
 
 If the promoted type is float or double, then a floating-point equality test is performed.
-
-Comparison is carried out accurately on floating-point values, no matter what value sets their representing values were drawn from.
 
 Floating-point equality testing is performed in accordance with the rules of the IEEE 754 standard:
 
@@ -4249,7 +4252,7 @@ If one of the operands is of type T, where T is Byte, Short, or Character, and t
 
 Otherwise, general numeric promotion (§5.6) is applied to the second and third operands, and the type of the conditional expression is the promoted type of the second and third operands.
 
-Note that numeric promotion performs value set conversion (§5.1.13) and may perform unboxing conversion (§5.1.8).
+Note that numeric promotion may include unboxing conversion (§5.1.8).
 
 15.25.3. Reference Conditional Expressions
 
@@ -4361,7 +4364,7 @@ This component is a variable; call its type SC. Also, let TC be the type of the 
 
 If TC is a primitive type, then SC is necessarily the same as TC.
 
-The value of the right-hand operand is converted to the type of the selected array component, is subjected to value set conversion (§5.1.13) to the appropriate standard value set (not an extended-exponent value set), and the result of the conversion is stored into the array component.
+The value of the right-hand operand is converted to the type of the selected array component, and the result of the conversion is stored into the array component.
 
 If TC is a reference type, then SC may not be the same as TC, but rather a type that extends or implements TC.
 
@@ -4381,7 +4384,7 @@ First, the left-hand operand is evaluated to produce a variable. If this evaluat
 
 Otherwise, the right-hand operand is evaluated. If this evaluation completes abruptly, then the assignment expression completes abruptly for the same reason and no assignment occurs.
 
-Otherwise, the value of the right-hand operand is converted to the type of the left-hand variable, is subjected to value set conversion (§5.1.13) to the appropriate standard value set (not an extended-exponent value set), and the result of the conversion is stored into the variable.
+Otherwise, the value of the right-hand operand is converted to the type of the left-hand variable, and the result of the conversion is stored into the variable.
 
 Example 15.26.1-1. Simple Assignment To An Array Component
 
@@ -4563,7 +4566,7 @@ Otherwise, the value of the left-hand operand is saved and then the right-hand o
 
 Otherwise, the saved value of the left-hand variable and the value of the right-hand operand are used to perform the binary operation indicated by the compound assignment operator. If this operation completes abruptly, then the assignment expression completes abruptly for the same reason and no assignment occurs.
 
-Otherwise, the result of the binary operation is converted to the type of the left-hand variable, subjected to value set conversion (§5.1.13) to the appropriate standard value set (not an extended-exponent value set), and the result of the conversion is stored into the variable.
+Otherwise, the result of the binary operation is converted to the type of the left-hand variable, and the result of the conversion is stored into the variable.
 
 If the left-hand operand expression is an array access expression (§15.10.3), then:
 
@@ -4587,7 +4590,7 @@ The saved value of the array component and the value of the right-hand operand a
 
 If this operation completes abruptly (the only possibility is an integer division by zero - see §15.17.2), then the assignment expression completes abruptly for the same reason and no assignment occurs.
 
-Otherwise, the result of the binary operation is converted to the type of the selected array component, subjected to value set conversion (§5.1.13) to the appropriate standard value set (not an extended-exponent value set), and the result of the conversion is stored into the array component.
+Otherwise, the result of the binary operation is converted to the type of the selected array component, and the result of the conversion is stored into the array component.
 
 If T is a reference type, then it must be String. Because class String is a final class, S must also be String.
 
@@ -4960,8 +4963,6 @@ It is a compile-time error if a formal parameter that is declared final is assig
 
 When the lambda expression is invoked (via a method invocation expression (§15.12)), the values of the actual argument expressions initialize newly created parameter variables, each of the declared or inferred type, before execution of the lambda body. The Identifier that appears in the LambdaParameter or directly in the LambdaParameterList or LambdaParameters may be used as a simple name in the lambda body to refer to the formal parameter.
 
-A lambda expression's formal parameter of type float always contains an element of the float value set (§4.2.3); similarly, a lambda expression's formal parameter of type double always contains an element of the double value set. It is not permitted for a lambda expression's formal parameter of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a lambda expression's formal parameter of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
-
 15.27.2. Lambda Body
 
 A lambda body is either a single expression or a block (§14.2). Like a method body, a lambda body describes code that will be executed whenever an invocation occurs.
@@ -5127,7 +5128,7 @@ For each non-static member method m of U, if the function type of U has a subsig
 
 A checked exception that can be thrown in the body of the lambda expression may cause a compile-time error, as specified in §11.2.3.
 
-The parameter types of explicitly typed lambdas are required to exactly match those of the function type. While it would be possible to be more flexible - allow boxing or contravariance, for example - this kind of generality seems unnecessary, and is inconsistent with the way overriding works in class declarations. A programmer ought to know exactly what function type is being targeted when writing a lambda expression, so he should thus know exactly what signature must be overridden. (In contrast, this is not the case for method references, and so more flexibility is allowed when they are used.) In addition, more flexibility with parameter types would add to the complexity of type inference and overload resolution.
+The parameter types of explicitly typed lambdas are required to exactly match those of the function type. While it would be possible to be more flexible - allow boxing or contravariance, for example - this kind of generality seems unnecessary, and is inconsistent with the way overriding works in class declarations. A programmer ought to know exactly what function type is being targeted when writing a lambda expression, so the programmer should thus know exactly what signature must be overridden. (This is not the case for method references, so more flexibility is allowed when they are used.) In addition, more flexibility with parameter types would add to the complexity of type inference and overload resolution.
 
 Note that while boxing is not allowed in a strict invocation context, boxing of lambda result expressions is always allowed - that is, the result expression appears in an assignment context, regardless of the context enclosing the lambda expression. However, if an explicitly typed lambda expression is an argument to an overloaded method, a method signature that avoids boxing or unboxing the lambda result is preferred by the most specific check (§15.12.2.5).
 
@@ -5218,7 +5219,7 @@ The result expressions of a switch expression are determined as follows:
 
 If the switch block consists of switch rules, then each switch rule is considered in turn:
 
-If the switch rule is of the form ... -> Expression then Expression is a result expression of the switch expression.
+If the switch rule is of the form ... -> Expression ; then Expression is a result expression of the switch expression.
 
 If the switch rule is of the form ... -> Block then every expression which is immediately contained in a yield statement in Block whose yield target is the given switch expression, is a result expression of the switch expression.
 
@@ -5311,8 +5312,6 @@ Simple names (§6.5.6.1) that refer to constant variables (§4.12.4).
 Qualified names (§6.5.6.2) of the form TypeName . Identifier that refer to constant variables (§4.12.4).
 
 Constant expressions of type String are always "interned" so as to share unique instances, using the method String.intern.
-
-A constant expression is always treated as FP-strict (§15.4), even if it occurs in a context where a non-constant expression would not be considered to be FP-strict.
 
 Constant expressions are used as case labels in switch statements and switch expressions (§14.11, §15.28) and have a special significance in assignment contexts (§5.2) and the initialization of a class or interface (§12.4.2). They may also govern the ability of a while, do, or for statement to complete normally (§14.22), and the type of a conditional operator ? : with numeric operands.
 

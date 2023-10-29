@@ -66,7 +66,7 @@ Fully qualified and canonical names (§6.7) are also discussed in this chapter.
 
 6.1. Declarations
 
-A declaration introduces an entity into a program and includes an identifier (§3.8) that can be used in a name to refer to this entity. The identifier is constrained to be a type identifier when the entity being introduced is a class, interface, or type parameter.
+A declaration introduces an entity into a program and includes an identifier (§3.8) that can be used in a name to refer to this entity. The identifier is constrained to avoid certain contextual keywords when the entity being introduced is a class, interface, or type parameter.
 
 A declared entity is one of the following:
 
@@ -146,7 +146,7 @@ The declaration of a generic class or interface (class C<T> ... or interface C<T
 
 When a reference to C occurs where genericity is unimportant, identified below as one of the non-generic contexts, the reference to C denotes the class or interface C. In other contexts, the reference to C denotes a type, or part of a type, introduced by C.
 
-The 14 non-generic contexts are as follows:
+The 15 non-generic contexts are as follows:
 
 In a uses or provides directive in a module declaration (§7.7.1)
 
@@ -155,6 +155,8 @@ In a single-type-import declaration (§7.5.1)
 To the left of the . in a single-static-import declaration (§7.5.3)
 
 To the left of the . in a static-import-on-demand declaration (§7.5.4)
+
+In a permits clause of a sealed class or interface declaration (§8.1.6, §9.1.4).
 
 To the left of the ( in a constructor declaration (§8.8)
 
@@ -176,9 +178,9 @@ In a throws clause of a method or constructor (§8.4.6, §8.8.5, §9.4)
 
 In an exception parameter declaration (§14.20)
 
-The first eleven non-generic contexts correspond to the first eleven syntactic contexts for a TypeName in §6.5.1. The twelfth non-generic context is where a qualified ExpressionName such as C.x may include a TypeName C to denote static member access. The common use of TypeName in these twelve contexts is significant: it indicates that these contexts involve a less-than-first-class use of a type. In contrast, the thirteenth and fourteenth non-generic contexts employ ClassType, indicating that throws and catch clauses use types in a first-class way, in line with, say, field declarations. The characterization of these two contexts as non-generic is due to the fact that an exception type cannot be parameterized.
+The first twelve non-generic contexts correspond to the first twelve syntactic contexts for a TypeName in §6.5.1. The thirteenth non-generic context is where a qualified ExpressionName such as C.x may include a TypeName C to denote static member access. The common use of TypeName in these thirteen contexts is significant: it indicates that these contexts involve a less-than-first-class use of a type. In contrast, the fourteenth and fifteenth non-generic contexts employ ClassType, indicating that throws and catch clauses use types in a first-class way, in line with, for example, field declarations. The characterization of these two contexts as non-generic is due to the fact that an exception type cannot be parameterized (§8.1.2).
 
-Note that the ClassType production allows annotations, so it is possible to annotate the use of a type in a throws or catch clause, whereas the TypeName production disallows annotations, so it is not possible to annotate the name of a type in, say, a single-type-import declaration.
+Note that the ClassType production allows annotations, so it is possible to annotate the use of a type in a throws or catch clause, whereas the TypeName production disallows annotations, so it is not possible to annotate the name of a type in, for example, a single-type-import declaration.
 
 Naming Conventions
 
@@ -1083,7 +1085,7 @@ The meaning of a name depends on the context in which it is used. The determinat
 
 First, context causes a name syntactically to fall into one of seven categories: ModuleName, PackageName, TypeName, ExpressionName, MethodName, PackageOrTypeName, or AmbiguousName.
 
-TypeName and MethodName are less expressive than the other five categories, because they are denoted with TypeIdentifier and UnqualifiedMethodIdentifier, respectively. The former excludes the character sequences var and yield (§3.8), and the latter excludes the character sequence yield.
+TypeName and MethodName are less expressive than the other five categories, because they are denoted with TypeIdentifier and UnqualifiedMethodIdentifier, respectively (§3.8).
 
 Second, a name that is initially classified by its context as an AmbiguousName or as a PackageOrTypeName is then reclassified to be a PackageName, TypeName, or ExpressionName.
 
@@ -1137,6 +1139,8 @@ In a single-type-import declaration (§7.5.1)
 To the left of the . in a single-static-import declaration (§7.5.3)
 
 To the left of the . in a static-import-on-demand declaration (§7.5.4)
+
+In a permits clause of a sealed class or interface declaration (§8.1.6, §9.1.4).
 
 To the left of the ( in a constructor declaration (§8.8)
 
@@ -1703,7 +1707,7 @@ The meaning of a name classified as a MethodName is determined as follows.
 
 6.5.7.1. Simple Method Names
 
-A simple method name appears in the context of a method invocation expression (§15.12). The simple method name consists of a single Identifier which specifies the name of the method to be invoked. The rules of method invocation require that the identifier denotes a method that is in scope at the point of the method invocation. The rules also prohibit (§15.12.3) a reference to an instance method occurring in a static context (§8.1.3), or in a nested class or interface other than an inner class of the class or interface which declares the instance method.
+A simple method name appears in the context of a method invocation expression (§15.12). The simple method name consists of a single UnqualifiedMethodIdentifier which specifies the name of the method to be invoked. The rules of method invocation require that the UnqualifiedMethodIdentifier denotes a method that is in scope at the point of the method invocation. The rules also prohibit (§15.12.3) a reference to an instance method occurring in a static context (§8.1.3), or in a nested class or interface other than an inner class of the class or interface which declares the instance method.
 
 Example 6.5.7.1-1. Simple Method Names
 

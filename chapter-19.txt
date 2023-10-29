@@ -13,7 +13,7 @@ any Unicode character that is a "Java letter"
 JavaLetterOrDigit:
 any Unicode character that is a "Java letter-or-digit"
 TypeIdentifier:
-Identifier but not var, yield, or record
+Identifier but not permits, record, sealed, var, or yield
 UnqualifiedMethodIdentifier:
 Identifier but not yield
 Literal:
@@ -157,11 +157,11 @@ NormalClassDeclaration
 EnumDeclaration
 RecordDeclaration
 NormalClassDeclaration:
-{ClassModifier} class TypeIdentifier [TypeParameters] [ClassExtends] [ClassImplements] ClassBody
+{ClassModifier} class TypeIdentifier [TypeParameters] [ClassExtends] [ClassImplements] [ClassPermits] ClassBody
 ClassModifier:
 (one of)
 Annotation public protected private
-abstract static final strictfp
+abstract static final sealed non-sealed strictfp
 TypeParameters:
 < TypeParameterList >
 TypeParameterList:
@@ -172,6 +172,8 @@ ClassImplements:
 implements InterfaceTypeList
 InterfaceTypeList:
 InterfaceType {, InterfaceType}
+ClassPermits:
+permits TypeName {, TypeName}
 ClassBody:
 { {ClassBodyDeclaration} }
 ClassBodyDeclaration:
@@ -320,13 +322,15 @@ InterfaceDeclaration:
 NormalInterfaceDeclaration
 AnnotationInterfaceDeclaration
 NormalInterfaceDeclaration:
-{InterfaceModifier} interface TypeIdentifier [TypeParameters] [InterfaceExtends] InterfaceBody
+{InterfaceModifier} interface TypeIdentifier [TypeParameters] [InterfaceExtends] [InterfacePermits] InterfaceBody
 InterfaceModifier:
 (one of)
 Annotation public protected private
-abstract static strictfp
+abstract static sealed non-sealed strictfp
 InterfaceExtends:
 extends InterfaceTypeList
+InterfacePermits:
+permits TypeName {, TypeName}
 InterfaceBody:
 { {InterfaceMemberDeclaration} }
 InterfaceMemberDeclaration:

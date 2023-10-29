@@ -6,7 +6,7 @@ Table of Contents
 4.2. Primitive Types and Values
 4.2.1. Integral Types and Values
 4.2.2. Integer Operations
-4.2.3. Floating-Point Types, Formats, and Values
+4.2.3. Floating-Point Types and Values
 4.2.4. Floating-Point Operations
 4.2.5. The boolean Type and boolean Values
 4.3. Reference Types and Values
@@ -84,7 +84,7 @@ The numeric types are the integral types and the floating-point types.
 
 The integral types are byte, short, int, and long, whose values are 8-bit, 16-bit, 32-bit and 64-bit signed two's-complement integers, respectively, and char, whose values are 16-bit unsigned integers representing UTF-16 code units (§3.1).
 
-The floating-point types are float, whose values include the 32-bit IEEE 754 binary32 floating-point numbers, and double, whose values include the 64-bit IEEE 754 binary64 floating-point numbers.
+The floating-point types are float, whose values exactly correspond to the 32-bit IEEE 754 binary32 floating-point numbers, and double, whose values exactly correspond to the 64-bit IEEE 754 binary64 floating-point numbers.
 
 The boolean type has exactly two values: true and false.
 
@@ -142,11 +142,11 @@ If an integer operator other than a shift operator has at least one operand of t
 
 Otherwise, the operation is carried out using 32-bit precision, and the result of the numerical operator is of type int. If either operand is not an int, it is first widened to type int by numeric promotion.
 
+The integer operators do not indicate overflow or underflow in any way.
+
 Any value of any integral type may be cast to or from any numeric type. There are no casts between integral types and the type boolean.
 
 See §4.2.5 for an idiom to convert integer expressions to boolean.
-
-The integer operators do not indicate overflow or underflow in any way.
 
 An integer operator can throw an exception (§11 (Exceptions)) for the following reasons:
 
@@ -179,7 +179,7 @@ and then encounters an ArithmeticException in the division by l - i, because l -
 
 
 
-4.2.3. Floating-Point Types, Formats, and Values
+4.2.3. Floating-Point Types and Values
 
 The floating-point types are float and double, which are conceptually associated with the 32-bit binary32 and 64-bit binary64 floating-point formats for IEEE 754 values and operations, as specified in the IEEE 754 Standard (§1.7).
 
@@ -187,41 +187,39 @@ In Java SE 15 and later, the Java programming language uses the 2019 version of 
 
 IEEE 754 includes not only positive and negative numbers that consist of a sign and magnitude, but also positive and negative zeros, positive and negative infinities, and special Not-a-Number values (hereafter abbreviated NaN). A NaN value is used to represent the result of certain invalid operations such as dividing zero by zero. NaN constants of both float and double type are predefined as Float.NaN and Double.NaN.
 
-Every implementation of the Java programming language is required to support two standard sets of floating-point values, called the float value set and the double value set. In addition, an implementation of the Java programming language may support either or both of two extended-exponent floating-point value sets, called the float-extended-exponent value set and the double-extended-exponent value set. These extended-exponent value sets may, under certain circumstances, be used instead of the standard value sets to represent the values of expressions of type float or double (§5.1.13, §15.4).
+The finite nonzero values of a floating-point type can all be expressed in the form s ⋅ m ⋅ 2(e - N + 1), where:
 
-The finite nonzero values of any floating-point value set can all be expressed in the form s ⋅ m ⋅ 2(e - N + 1), where s is +1 or -1, m is a positive integer less than 2N, and e is an integer between Emin = -(2K-1-2) and Emax = 2K-1-1, inclusive, and where N and K are parameters that depend on the value set. Some values can be represented in this form in more than one way; for example, supposing that a value v in a value set might be represented in this form using certain values for s, m, and e, then if it happened that m were even and e were less than 2K-1, one could halve m and increase e by 1 to produce a second representation for the same value v. A representation in this form is called normalized if m ≥ 2N-1; otherwise the representation is said to be subnormal. If a value in a value set cannot be represented in such a way that m ≥ 2N-1, then the value is said to be a subnormal value, because its magnitude is below the magnitude of the smallest normalized value.
+s is +1 or -1,
 
-The constraints on the parameters N and K (and on the derived parameters Emin and Emax) for the two required and two optional floating-point value sets are summarized in Table 4.2.3-A.
+m is a positive integer less than 2N,
 
-Table 4.2.3-A. Floating-point value set parameters
+e is an integer between Emin = -(2K-1-2) and Emax = 2K-1-1, inclusive, and
 
-Parameter	float	float-extended-exponent	double	double-extended-exponent
-N	24	24	53	53
-K	8	≥ 11	11	≥ 15
-Emax	+127	≥ +1023	+1023	≥ +16383
-Emin	-126	≤ -1022	-1022	≤ -16382
+N and K are parameters that depend on the type.
+
+Some values can be represented in this form in more than one way. For example, supposing that a value v of a floating-point type might be represented in this form using certain values for s, m, and e, then if it happened that m were even and e were less than 2K-1, one could halve m and increase e by 1 to produce a second representation for the same value v.
+
+A representation in this form is called normalized if m ≥ 2N-1; otherwise the representation is said to be subnormal. If a value of a floating-point type cannot be represented in such a way that m ≥ 2N-1, then the value is said to be a subnormal value, because its magnitude is below the magnitude of the smallest normalized value.
+
+The constraints on the parameters N and K (and on the derived parameters Emin and Emax) for float and double are summarized in Table 4.2.3-A.
+
+Table 4.2.3-A. Floating-point parameters
+
+Parameter	float	double
+N	24	53
+K	8	11
+Emax	+127	+1023
+Emin	-126	-1022
 
 
 
-Where one or both extended-exponent value sets are supported by an implementation, then for each supported extended-exponent value set there is a specific implementation-dependent constant K, whose value is constrained by Table 4.2.3-A; this value K in turn dictates the values for Emin and Emax.
+Except for NaN, floating-point values are ordered. Arranged from smallest to largest, they are negative infinity, negative finite nonzero values, positive and negative zero, positive finite nonzero values, and positive infinity.
 
-Each of the four value sets includes not only the finite nonzero values that are ascribed to it above, but also NaN values and the four values positive zero, negative zero, positive infinity, and negative infinity.
+IEEE 754 allows multiple distinct NaN values for each of its binary32 and binary64 floating-point formats. However, the Java SE Platform generally treats NaN values of a given floating-point type as though collapsed into a single canonical value, and hence this specification normally refers to an arbitrary NaN as though to a canonical value.
 
-Note that the constraints in Table 4.2.3-A are designed so that every element of the float value set is necessarily also an element of the float-extended-exponent value set, the double value set, and the double-extended-exponent value set. Likewise, each element of the double value set is necessarily also an element of the double-extended-exponent value set. Each extended-exponent value set has a larger range of exponent values than the corresponding standard value set, but does not have more precision.
+Under IEEE 754, a floating-point operation with non-NaN arguments may generate a NaN result. IEEE 754 specifies a set of NaN bit patterns, but does not mandate which particular NaN bit pattern is used to represent a NaN result; this is left to the hardware architecture. A programmer can create NaNs with different bit patterns to encode, for example, retrospective diagnostic information. These NaN values can be created with the Float.intBitsToFloat and Double.longBitsToDouble methods for float and double, respectively. Conversely, to inspect the bit patterns of NaN values, the Float.floatToRawIntBits and Double.doubleToRawLongBits methods can be used for float and double, respectively.
 
-The elements of the float value set are exactly the values that can be represented using the binary32 floating-point format defined by IEEE 754. The elements of the double value set are exactly the values that can be represented using the binary64 floating-point format defined by IEEE 754. Note, however, that the elements of the float-extended-exponent and double-extended-exponent value sets defined here do not correspond to the values that can be represented using, respectively, the binary32 extended and binary64 extended floating-point formats defined by IEEE 754.
-
-The float, float-extended-exponent, double, and double-extended-exponent value sets are not types. It is always correct for an implementation of the Java programming language to use an element of the float value set to represent a value of type float; however, it may be permissible in certain regions of code for an implementation to use an element of the float-extended-exponent value set instead. Similarly, it is always correct for an implementation to use an element of the double value set to represent a value of type double; however, it may be permissible in certain regions of code for an implementation to use an element of the double-extended-exponent value set instead.
-
-Except for NaN, floating-point values are ordered; arranged from smallest to largest, they are negative infinity, negative finite nonzero values, positive and negative zero, positive finite nonzero values, and positive infinity.
-
-IEEE 754 allows multiple distinct NaN values for each of its binary32 and binary64 floating-point formats. While each hardware architecture returns a particular bit pattern for NaN when a new NaN is generated, a programmer can also create NaNs with different bit patterns to encode, for example, retrospective diagnostic information.
-
-For the most part, the Java SE Platform treats NaN values of a given type as though collapsed into a single canonical value, and hence this specification normally refers to an arbitrary NaN as though to a canonical value.
-
-However, version 1.3 of the Java SE Platform introduced methods enabling the programmer to distinguish between NaN values: the Float.floatToRawIntBits and Double.doubleToRawLongBits methods. The interested reader is referred to the specifications for the Float and Double classes for more information.
-
-Positive zero and negative zero compare equal; thus the result of the expression 0.0==-0.0 is true and the result of 0.0>-0.0 is false. But other operations can distinguish positive and negative zero; for example, 1.0/0.0 has the value positive infinity, while the value of 1.0/-0.0 is negative infinity.
+Positive zero and negative zero compare equal, so the result of the expression 0.0==-0.0 is true and the result of 0.0>-0.0 is false. Other operations can distinguish positive and negative zero; for example, 1.0/0.0 has the value positive infinity, while the value of 1.0/-0.0 is negative infinity.
 
 NaN is unordered, so:
 
@@ -265,41 +263,17 @@ The string concatenation operator + (§15.18.1), which, when given a String oper
 
 Other useful constructors, methods, and constants are predefined in the classes Float, Double, and Math.
 
-If at least one of the operands to a binary operator is of floating-point type, then the operation is a floating-point operation, even if the other is integral.
+If at least one of the operands to a binary operator is of floating-point type, then the operation is a floating-point operation, even if the other operand is integral.
 
 If at least one of the operands to a numerical operator is of type double, then the operation is carried out using 64-bit floating-point arithmetic, and the result of the numerical operator is a value of type double. If the other operand is not a double, it is first widened (§5.1.5) to type double by numeric promotion (§5.6).
 
-Otherwise, the operation is carried out using 32-bit floating-point arithmetic, and the result of the numerical operator is a value of type float. (If the other operand is not a float, it is first widened to type float by numeric promotion.)
+Otherwise, at least one of the operands is of type float; the operation is carried out using 32-bit floating-point arithmetic, and the result of the numerical operator is a value of type float. If the other operand is not a float, it is first widened to type float by numeric promotion.
+
+Floating-point arithmetic is carried out in accordance with the rules of the IEEE 754 Standard, including for overflow and underflow (§15.4), with the exception of the remainder operator % (§15.17.3).
 
 Any value of a floating-point type may be cast to or from any numeric type. There are no casts between floating-point types and the type boolean.
 
 See §4.2.5 for an idiom to convert floating-point expressions to boolean.
-
-Operators on floating-point numbers behave as specified by IEEE 754, with the exception of certain operators described below. In particular, the Java programming language requires support of IEEE 754 subnormal floating-point numbers and gradual underflow, which make it easier to prove desirable properties of particular numerical algorithms. Floating-point operations do not "flush to zero" if the calculated result is a subnormal number.
-
-Floating-point arithmetic is an approximation to real arithmetic. While there are an infinite number of real numbers, a particular floating-point format only has a finite number of values. In the Java programming language, a rounding policy is a function used to map from a real number to a floating-point value in a given format. For real numbers in the representable range of a floating-point format, a continuous segment of the real number line is mapped to a single floating-point value. The real number whose value is numerically equal to a floating-point value is mapped to that floating-point value; for example, the real number 1.5 is mapped to the floating-point value 1.5 in a given format. The Java programming language defines two rounding policies, as follows:
-
-The round to nearest rounding policy applies to all floating-point operations except for (i) conversion to an integer value, and (ii) floating-point remainder. Under the round to nearest rounding policy, inexact results must be rounded to the representable value nearest to the infinitely precise result; if the two nearest representable values are equally near, then the value whose least significant bit is zero is chosen.
-
-The round to nearest rounding policy corresponds to the default rounding-direction attribute for binary arithmetic in IEEE 754, roundTiesToEven.
-
-The roundTiesToEven rounding-direction attribute was known as the "round to nearest" rounding mode in the 1985 version of the IEEE 754 Standard. The rounding policy in the Java programming language is named after this rounding mode.
-
-The round toward zero rounding policy applies to (i) conversion of a floating-point value to an integer value (§5.1.3), and (ii) floating-point remainder (§15.17.3). Under the round toward zero rounding policy, inexact results are rounded to the nearest representable value that is not greater in magnitude than the infinitely precise result. For conversion to integer, the round toward zero rounding policy is equivalent to truncation where fractional significand bits are discarded.
-
-The round toward zero rounding policy corresponds to the roundTowardZero rounding-direction attribute for binary arithmetic in IEEE 754.
-
-The roundTowardZero rounding-direction attribute was known as the "round toward zero" rounding mode in the 1985 version of the IEEE 754 Standard. The rounding policy in the Java programming language is named after this rounding mode.
-
-The Java programming language requires that floating-point arithmetic behave as if every floating-point operation rounds its floating-point result to the result precision. The rounding policy used for each floating-point operation is either round to nearest or round toward zero, as specified above.
-
-A floating-point operation that overflows produces a signed infinity.
-
-A floating-point operation that underflows produces a subnormal value or a signed zero.
-
-A floating-point operation that has no unique mathematically defined result produces NaN.
-
-All numeric operations with NaN as an operand produce NaN as a result.
 
 A floating-point operator can throw an exception (§11 (Exceptions)) for the following reasons:
 
@@ -1783,7 +1757,7 @@ The correspondence between compile-time types and run-time types is incomplete f
 
 At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
 
-See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 16 Edition for more details.
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 17 Edition for more details.
 
 Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile time. Specifically, all compile-time parameterizations of a given generic type (§8.1.2, §9.1.2) share a single run-time representation.
 

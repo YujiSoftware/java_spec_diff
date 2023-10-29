@@ -18,7 +18,6 @@ Table of Contents
 5.1.10. Capture Conversion
 5.1.11. String Conversion
 5.1.12. Forbidden Conversions
-5.1.13. Value Set Conversion
 5.2. Assignment Contexts
 5.3. Invocation Contexts
 5.4. String Contexts
@@ -71,8 +70,6 @@ Unchecked conversions
 Capture conversions
 
 String conversions
-
-Value set conversions
 
 There are six kinds of conversion contexts in which poly expressions may be influenced by context or implicit conversions may occur. Each kind of context has different rules for poly expression typing and allows conversions in some of the categories above but not others. The contexts are:
 
@@ -142,7 +139,7 @@ Math.sin(144.0)==-0.49102159389846934
 
 5.1. Kinds of Conversion
 
-Specific type conversions in the Java programming language are divided into 13 kinds.
+Specific type conversions in the Java programming language are divided into 12 kinds.
 
 5.1.1. Identity Conversion
 
@@ -170,19 +167,21 @@ A widening primitive conversion does not lose information about the overall magn
 
 from an integral type to another integral type
 
-from byte, short, or char to a floating point type
+from byte, short, or char to a floating-point type
 
 from int to double
 
-from float to double in a strictfp expression (§15.4)
+from float to double
 
-A widening primitive conversion from float to double that is not strictfp may lose information about the overall magnitude of the converted value.
-
-A widening primitive conversion from int to float, or from long to float, or from long to double, may result in loss of precision, that is, the result may lose some of the least significant bits of the value. In this case, the resulting floating-point value will be a correctly rounded version of the integer value, using the round to nearest rounding policy (§4.2.4).
+A widening primitive conversion from int to float, or from long to float, or from long to double, may result in loss of precision, that is, the result may lose some of the least significant bits of the value. In this case, the resulting floating-point value will be a correctly rounded version of the integer value, using the round to nearest rounding policy (§15.4).
 
 A widening conversion of a signed integer value to an integral type T simply sign-extends the two's-complement representation of the integer value to fill the wider format.
 
 A widening conversion of a char to an integral type T zero-extends the representation of the char value to fill the wider format.
+
+A widening conversion from int to float, or from long to float, or from int to double, or from long to double occurs as determined by the rules of IEEE 754 for converting from an integer format to a binary floating-point format.
+
+A widening conversion from float to double occurs as determined by the rules of IEEE 754 for converting between binary floating-point formats.
 
 Despite the fact that loss of precision may occur, a widening primitive conversion never results in a run-time exception (§11.1.1).
 
@@ -222,9 +221,7 @@ float to byte, short, char, int, or long
 
 double to byte, short, char, int, long, or float
 
-A narrowing primitive conversion may lose information about the overall magnitude of a numeric value and may also lose precision and range.
-
-A narrowing primitive conversion from double to float uses the round to nearest rounding policy (§4.2.4). This conversion can lose precision, but also lose range, resulting in a float zero from a nonzero double and a float infinity from a finite double. A double NaN is converted to a float NaN and a double infinity is converted to the same-signed float infinity.
+A narrowing primitive conversion may lose information about the overall magnitude of a numeric value, and may also lose precision and range.
 
 A narrowing conversion of a signed integer to an integral type T simply discards all but the n lowest order bits, where n is the number of bits used to represent type T. In addition to a possible loss of information about the magnitude of the numeric value, this may cause the sign of the resulting value to differ from the sign of the input value.
 
@@ -253,6 +250,8 @@ In the second step:
 If T is int or long, the result of the conversion is the result of the first step.
 
 If T is byte, char, or short, the result of the conversion is the result of a narrowing conversion to type T (§5.1.3) of the result of the first step.
+
+A narrowing conversion from double to float occurs as determined by the rules of IEEE 754 for converting between binary floating-point formats, using the round to nearest rounding policy (§15.4). This conversion can lose precision, but also lose range, resulting in a float zero from a nonzero double and a float infinity from a finite double. A double NaN is converted to a float NaN and a double infinity is converted to the same-signed float infinity.
 
 Despite the fact that overflow, underflow, or other loss of information may occur, a narrowing primitive conversion never results in a run-time exception (§11.1.1).
 
@@ -358,17 +357,7 @@ Using types from the java.util package as an example, no narrowing reference con
 
 One of the following cases applies:
 
-S and T are class types, and either |S| <: |T| or |T| <: |S|.
-
-S and T are interface types.
-
-S is a class type, T is an interface type, and S does not name a final class (§8.1.1).
-
-S is a class type, T is an interface type, and S names a final class that implements the interface named by T.
-
-S is an interface type, T is a class type, and T does not name a final class.
-
-S is an interface type, T is a class type, and T names a final class that implements the interface named by S.
+S is a class or interface type, and T is a class or interface type, and S names a class or interface that is not disjoint from the class or interface named by T. ("disjoint" is defined below.)
 
 S is the class type Object or the interface type java.io.Serializable or Cloneable (the only interfaces implemented by arrays (§10.8)), and T is an array type.
 
@@ -382,11 +371,54 @@ S is an intersection type S1 & ... & Sn, and for all i (1 ≤ i ≤ n), either a
 
 T is an intersection type T1 & ... & Tn, and for all i (1 ≤ i ≤ n), either a widening reference conversion or a narrowing reference conversion exists from S to Ti.
 
+A class or interface is disjoint from another class or interface if it can be determined statically that they have no instances in common (other than the null value). The rules for disjointess are as follows:
+
+A class named C is disjoint from an interface named I if (i) it is not the case that C <: I, and (ii) one of the following cases applies:
+
+C is final.
+
+C is sealed, and all of the permitted direct subclasses of C are disjoint from I.
+
+C is freely extensible (§8.1.1.2), and I is sealed, and C is disjoint from all of the permitted direct subclasses and subinterfaces of I.
+
+An interface named I is disjoint from a class named C if C is disjoint from I.
+
+A class named C is disjoint from another class named D if (i) it is not the case that C <: D, and (ii) it is not the case that D <: C.
+
+An interface named I is disjoint from another interface named J if (i) it is not that case that I <: J, and (ii) it is not the case that J <: I, and (iii) one of the following cases applies:
+
+I is sealed, and all of the permitted direct subclasses and subinterfaces of I are disjoint from J.
+
+J is sealed, and I is disjoint from all the permitted direct subclasses and subinterfaces of J.
+
+Whether a class is final has the most bearing on whether the class is disjoint from interfaces. Consider the following declarations:
+
+interface I   {}
+final class C {}
+
+
+As class C is final and does not implement I, there can be no instances of C that are also an instance of I, so C and I are disjoint. Therefore, there is no narrowing reference conversion from C to I.
+
+In contrast, consider the following declarations:
+
+interface J {}
+class D     {}
+
+
+Even though class D does not implement J, it is still possible for an instance of D to be an instance of J, for example, if the following declaration occurs:
+
+class E extends D implements J {}
+
+
+For this reason, D is not disjoint from J, and there is a narrowing reference conversion from D to J.
+
+The final clause above implies that two freely extensible interfaces (§9.1.1.4) are not disjoint.
+
 5.1.6.2. Checked and Unchecked Narrowing Reference Conversions
 
 A narrowing reference conversion is either checked or unchecked. These terms refer to the ability of the Java Virtual Machine to validate, or not, the type correctness of the conversion.
 
-If a narrowing reference conversion is unchecked, then the Java Virtual Machine will not be able to fully validate its type correctness, possibly leading to heap pollution (§4.12.2). To flag this to the programmer, an unchecked narrowing reference conversion causes a compile-time unchecked warning, unless suppressed by @SuppressWarnings (§9.6.4.5). In contrast, if a narrowing reference conversion is not unchecked, then it is checked; the Java Virtual Machine will be able to fully validate its type correctness, so no warning is given at compile time.
+If a narrowing reference conversion is unchecked, then the Java Virtual Machine will not be able to fully validate its type correctness, possibly leading to heap pollution (§4.12.2). To flag this to the programmer, an unchecked narrowing reference conversion causes a compile-time unchecked warning, unless suppressed by @SuppressWarnings (§9.6.4.5). Conversely, if a narrowing reference conversion is not unchecked, then it is checked; the Java Virtual Machine will be able to fully validate its type correctness, so no warning is given at compile time.
 
 The unchecked narrowing reference conversions are as follows:
 
@@ -406,9 +438,9 @@ All checked narrowing reference conversions require a validity check at run time
 
 Some unchecked narrowing reference conversions require a validity check at run time. This depends on whether the unchecked narrowing reference conversion is completely unchecked or partially unchecked. A partially unchecked narrowing reference conversion requires a validity check at run time, while a completely unchecked narrowing reference conversion does not.
 
-These terms refer to the compatibility of the types involved in the conversion when viewed as raw types. If the conversion is conceptually an "upcast", then the conversion is completely unchecked; no run time test is needed because the conversion is legal in the non-generic type system of the Java Virtual Machine. In contrast, if the conversion is conceptually a "downcast", then the conversion is partially unchecked; even in the non-generic type system of the Java Virtual Machine, a run time check is needed to test the compatibility of the (raw) types involved in the conversion.
+These terms refer to the compatibility of the types involved in the conversion when viewed as raw types. If the conversion is conceptually an "upcast", then the conversion is completely unchecked; no run time test is needed because the conversion is legal in the non-generic type system of the Java Virtual Machine. Conversely, if the conversion is conceptually a "downcast", then the conversion is partially unchecked; even in the non-generic type system of the Java Virtual Machine, a run time check is needed to test the compatibility of the (raw) types involved in the conversion.
 
-Using types from the java.util package as an example, a conversion from ArrayList<String> to Collection<T> is completely unchecked, because the (raw) type ArrayList is a subtype of the (raw) type Collection in the Java Virtual Machine. In contrast, a conversion from Collection<T> to ArrayList<String> is partially unchecked, because the (raw) type Collection is not a subtype of the (raw) type ArrayList in the Java Virtual Machine.
+Using types from the java.util package as an example, a conversion from ArrayList<String> to Collection<T> is completely unchecked, because the (raw) type ArrayList is a subtype of the (raw) type Collection in the Java Virtual Machine. Conversely, a conversion from Collection<T> to ArrayList<String> is partially unchecked, because the (raw) type Collection is not a subtype of the (raw) type ArrayList in the Java Virtual Machine.
 
 The categorization of an unchecked narrowing reference conversion is as follows:
 
@@ -685,26 +717,6 @@ The toString method is defined by the primordial class Object (§4.3.2). Many cl
 
 Any conversion that is not explicitly allowed is forbidden.
 
-5.1.13. Value Set Conversion
-
-Value set conversion is the process of mapping a floating-point value from one value set to another without changing its type.
-
-Within an expression that is not FP-strict (§15.4), value set conversion provides choices to an implementation of the Java programming language:
-
-If the value is an element of the float-extended-exponent value set, then the implementation may, at its option, map the value to the nearest element of the float value set. This conversion may result in overflow (in which case the value is replaced by an infinity of the same sign) or underflow (in which case the value may lose precision because it is replaced by a subnormal number or zero of the same sign).
-
-If the value is an element of the double-extended-exponent value set, then the implementation may, at its option, map the value to the nearest element of the double value set. This conversion may result in overflow (in which case the value is replaced by an infinity of the same sign) or underflow (in which case the value may lose precision because it is replaced by a subnormal number or zero of the same sign).
-
-Within an FP-strict expression (§15.4), value set conversion does not provide any choices; every implementation must behave in the same way:
-
-If the value is of type float and is not an element of the float value set, then the implementation must map the value to the nearest element of the float value set. This conversion may result in overflow or underflow.
-
-If the value is of type double and is not an element of the double value set, then the implementation must map the value to the nearest element of the double value set. This conversion may result in overflow or underflow.
-
-Within an FP-strict expression, mapping values from the float-extended-exponent value set or double-extended-exponent value set is necessary only when a method is invoked whose declaration is not FP-strict and the implementation has chosen to represent the result of the method invocation as an element of an extended-exponent value set.
-
-Whether in FP-strict code or code that is not FP-strict, value set conversion always leaves unchanged any value whose type is neither float nor double.
-
 5.2. Assignment Contexts
 
 Assignment contexts allow the value of an expression to be assigned (§15.26) to a variable; the type of the expression must be converted to the type of the variable.
@@ -759,12 +771,6 @@ Integer, Comparable<Integer>, Comparable, Comparable<String>
 The first three elements of the chain are related by widening reference conversion, while the last entry is derived from its predecessor by unchecked conversion. However, this is not a valid assignment conversion, because the chain contains two parameterized types, Comparable<Integer> and Comparable<String>, that are not subtypes.
 
 If the type of an expression can be converted to the type of a variable by assignment conversion, we say the expression (or its value) is assignable to the variable or, equivalently, that the type of the expression is assignment compatible with the type of the variable.
-
-If the type of the variable is float or double, then value set conversion (§5.1.13) is applied to the value v that is the result of the conversion(s):
-
-If v is of type float and is an element of the float-extended-exponent value set, then the implementation must map v to the nearest element of the float value set. This conversion may result in overflow or underflow.
-
-If v is of type double and is an element of the double-extended-exponent value set, then the implementation must map v to the nearest element of the double value set. This conversion may result in overflow or underflow.
 
 The only exceptions that may arise from conversions in an assignment context are:
 
@@ -970,12 +976,6 @@ A value of the null type (the null reference is the only such value) may be assi
 
 It is a compile-time error if the chain of conversions contains two parameterized types that are not in the subtype relation (§4.10).
 
-If the type of an argument expression is either float or double, then value set conversion (§5.1.13) is applied after the conversion(s):
-
-If an argument value of type float is an element of the float-extended-exponent value set, then the implementation must map the value to the nearest element of the float value set. This conversion may result in overflow or underflow.
-
-If an argument value of type double is an element of the double-extended-exponent value set, then the implementation must map the value to the nearest element of the double value set. This conversion may result in overflow or underflow.
-
 The only exceptions that may arise in an invocation context are:
 
 A ClassCastException if, after the type conversions above have been applied, the resulting value is an object which is not an instance of a subclass or subinterface of the erasure (§4.6) of the corresponding formal parameter type.
@@ -1046,8 +1046,6 @@ If the expression has the null type, then the expression may be cast to any refe
 If a casting context makes use of a narrowing reference conversion that is checked or partially unchecked (§5.1.6.2, §5.1.6.3), then a run time check will be performed on the class of the expression's value, possibly causing a ClassCastException. Otherwise, no run time check is performed.
 
 If an expression can be converted to a reference type by a casting conversion other than a narrowing reference conversion which is unchecked, we say the expression (or its value) is downcast compatible with the reference type.
-
-Value set conversion (§5.1.13) is applied after the type conversion.
 
 The following tables enumerate which conversions are used in certain casting contexts. Each conversion is signified by a symbol:
 
@@ -1286,8 +1284,6 @@ Otherwise, if any expression is of type byte, and every other expression is eith
 Otherwise, if any expression is of type char, and every other expression is either of type char or a constant expression of type int with a value that is representable in the type char, then the promoted type is char, and the int expressions undergo narrowing primitive conversion to char.
 
 Otherwise, the promoted type is int, and all the expressions that are not of type int undergo widening primitive conversion to int.
-
-After the conversion(s), if any, value set conversion (§5.1.13) is applied to each expression.
 
 Unary numeric promotion consists of applying numeric promotion to a single expression that occurs in a numeric arithmetic context or a numeric array context.
 

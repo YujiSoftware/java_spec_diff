@@ -7,7 +7,10 @@ Table of Contents
 13.3. Evolution of Packages and Modules
 13.4. Evolution of Classes
 13.4.1. abstract Classes
-13.4.2. final Classes
+13.4.2. sealed, non-sealed, and final Classes
+13.4.2.1. sealed Classes
+13.4.2.2. non-sealed Classes
+13.4.2.3. final Classes
 13.4.3. public Classes
 13.4.4. Superclasses and Superinterfaces
 13.4.5. Class Type Parameters
@@ -35,12 +38,13 @@ Table of Contents
 13.4.27. Evolution of Record Classes
 13.5. Evolution of Interfaces
 13.5.1. public Interfaces
-13.5.2. Superinterfaces
-13.5.3. Interface Members
-13.5.4. Interface Type Parameters
-13.5.5. Field Declarations
-13.5.6. Interface Method Declarations
-13.5.7. Evolution of Annotation Interfaces
+13.5.2. sealed and non-sealed Interfaces
+13.5.3. Superinterfaces
+13.5.4. Interface Members
+13.5.5. Interface Type Parameters
+13.5.6. Field Declarations
+13.5.7. Interface Method Declarations
+13.5.8. Annotation Interfaces
 
 Development tools for the Java programming language should support automatic recompilation as necessary whenever source code is available. Particular implementations may also store the source and binary representations of classes and interfaces in a versioning database and implement a ClassLoader that uses integrity mechanisms of the database to prevent linkage errors by providing binary-compatible versions of classes and interfaces to clients.
 
@@ -72,11 +76,11 @@ We encourage development systems to provide facilities that alert developers to 
 
 This chapter first specifies some properties that any binary format for the Java programming language must have (§13.1). It next defines binary compatibility, explaining what it is and what it is not (§13.2). It finally enumerates a large set of possible changes to packages (§13.3), classes (§13.4), and interfaces (§13.5), specifying which of these changes are guaranteed to preserve binary compatibility and which are not.
 
-Occasionally, references of the form: (JVMS §x.y) are used to indicate concepts from The Java Virtual Machine Specification, Java SE 16 Edition.
+Occasionally, references of the form: (JVMS §x.y) are used to indicate concepts from The Java Virtual Machine Specification, Java SE 17 Edition.
 
 13.1. The Form of a Binary
 
-Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 16 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
+Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 17 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
 
 A class file corresponding to a class or interface declaration must have certain properties. A number of these properties are specifically chosen to support source code transformations that preserve binary compatibility. The required properties are:
 
@@ -280,11 +284,36 @@ If a class that was not declared abstract is changed to be declared abstract, th
 
 Changing a class that is declared abstract to no longer be declared abstract does not break compatibility with pre-existing binaries.
 
-13.4.2. final Classes
+13.4.2. sealed, non-sealed, and final Classes
+13.4.2.1. sealed Classes
+
+If a class that was freely extensible (§8.1.1.2) is changed to be declared sealed, then an IncompatibleClassChangeError is thrown if a binary of a pre-existing subclass of this class is loaded and is not a permitted direct subclass of this class (§8.1.6); such a change is not recommended for widely distributed classes.
+
+Changing a class that was declared final to be declared sealed does not break compatibility with pre-existing binaries.
+
+Adding a class to the set of permitted direct subclasses of a sealed class will not break compatibility with pre-existing binaries.
+
+If a class is removed from the set of permitted direct subclasses of a sealed class, then an IncompatibleClassChangeError is thrown if the pre-existing binary of the removed class is loaded.
+
+Deleting the sealed modifier from a class that does not have a sealed direct superclass or a sealed direct superinterface does not break compatibility with pre-existing binaries.
+
+If a sealed class C did have a sealed direct superclass or a sealed direct superinterface, then deleting the sealed modifier would prevent C from being recompiled, as every class with a sealed direct superclass or a sealed direct superinterface must be either final, sealed, or non-sealed.
+
+13.4.2.2. non-sealed Classes
+
+Changing a class that was declared sealed to be declared non-sealed does not break compatibility with pre-existing binaries.
+
+Changing a class that was declared final to be declared non-sealed does not break compatibility with pre-existing binaries.
+
+A non-sealed class C must have a sealed direct superclass or a sealed direct superinterface (§8.1.1.2). Deleting the non-sealed modifier would prevent C from being recompiled, as every class with a sealed direct superclass or a sealed direct superinterface must be either final, sealed, or non-sealed.
+
+13.4.2.3. final Classes
 
 If a class that was not declared final is changed to be declared final, then an IncompatibleClassChangeError is thrown if a binary of a pre-existing subclass of this class is loaded, because final classes can have no subclasses; such a change is not recommended for widely distributed classes.
 
-Changing a class that is declared final to no longer be declared final does not break compatibility with pre-existing binaries.
+Deleting the final modifier from a class that does not have a sealed direct superclass or a sealed direct superinterface does not break compatibility with pre-existing binaries.
+
+If a final class C did have a sealed direct superclass or a sealed direct superinterface, then deleting the final modifier would prevent C from being recompiled, as every class with a sealed direct superclass or a sealed direct superinterface must be either final, sealed, or non-sealed (§8.1.1.2).
 
 13.4.3. public Classes
 
@@ -888,11 +917,27 @@ Changing an interface that is not declared public to be declared public does not
 
 If an interface that is declared public is changed to not be declared public, then an IllegalAccessError is thrown if a pre-existing binary is linked that needs but no longer has access to the interface type, so such a change is not recommended for widely distributed interfaces.
 
-13.5.2. Superinterfaces
+13.5.2. sealed and non-sealed Interfaces
+
+If an interface that was freely extensible (§9.1.1.4) is changed to be declared sealed, then an IncompatibleClassChangeError is thrown if a binary of a pre-existing subclass or subinterface of this interface is loaded and is not a permitted direct subclass or subinterface of this interface (§9.1.4); such a change is not recommended for widely distributed classes.
+
+Adding a class or interface to the set of permitted direct subclasses or subinterfaces, respectively, of a sealed interface will not break compatibility with pre-existing binaries.
+
+If a class or interface is removed from the set of permitted direct subclasses or subinterfaces of a sealed interface, then an IncompatibleClassChangeError is thrown if the pre-existing binary of the removed class or interface is loaded.
+
+Changing an interface that was declared sealed to be declared non-sealed does not break compatibility with pre-existing binaries.
+
+A non-sealed interface I must have a sealed direct superinterface. Deleting the non-sealed modifier would prevent I from being recompiled, as every interface with a sealed direct superinterface must be sealed or non-sealed.
+
+Deleting the sealed modifier from an interface that does not have a sealed direct superinterface does not break compatibility with pre-existing binaries.
+
+If a sealed interface I did have a sealed direct superinterface, then deleting the sealed modifier would prevent I from being recompiled, as every interface with a sealed direct superinterface must be sealed or non-sealed.
+
+13.5.3. Superinterfaces
 
 Changes to the interface hierarchy cause errors in the same way that changes to the class hierarchy do, as described in §13.4.4. In particular, changes that result in any previous superinterface of a class no longer being a superinterface can break compatibility with pre-existing binaries, resulting in a VerifyError.
 
-13.5.3. Interface Members
+13.5.4. Interface Members
 
 Adding an abstract, private, or static method to an interface does not break compatibility with pre-existing binaries.
 
@@ -900,7 +945,7 @@ Adding a field to a superinterface of C may hide a field inherited from a superc
 
 Deleting a member from an interface may cause linkage errors in pre-existing binaries.
 
-Example 13.5.3-1. Deleting An Interface Member
+Example 13.5.4-1. Deleting An Interface Member
 
 interface I { void hello(); }
 class Test implements I {
@@ -926,15 +971,15 @@ If I is recompiled but not Test, then running the new binary with the existing b
 
 
 
-13.5.4. Interface Type Parameters
+13.5.5. Interface Type Parameters
 
 The effects of changes to the type parameters of an interface are the same as those of analogous changes to the type parameters of a class.
 
-13.5.5. Field Declarations
+13.5.6. Field Declarations
 
 The considerations for changing field declarations in interfaces are the same as those for static final fields in classes, as described in §13.4.8 and §13.4.9.
 
-13.5.6. Interface Method Declarations
+13.5.7. Interface Method Declarations
 
 The considerations for changing method declarations in interfaces include those for changing methods in classes, as described in §13.4.7, §13.4.14, §13.4.15, §13.4.19, §13.4.21, §13.4.22, and §13.4.23.
 
@@ -942,7 +987,7 @@ Adding a default method, or changing a method from abstract to default, does not
 
 In other words, adding a default method is a binary-compatible change because it does not introduce errors at link time, even if it introduces errors at compile time or invocation time. In practice, the risk of accidental clashes occurring by introducing a default method are similar to those associated with adding a new method to a non-final class. In the event of a clash, adding a method to a class is unlikely to trigger a LinkageError, but an accidental override of the method in a child can lead to unpredictable method behavior. Both changes can cause errors at compile time.
 
-Example 13.5.6-1. Adding A Default Method
+Example 13.5.7-1. Adding A Default Method
 
 interface Painter {
     default void draw() {
@@ -977,7 +1022,7 @@ If Cowboy is recompiled but not CowboyArtist, then running the new binary with t
 
 
 
-13.5.7. Evolution of Annotation Interfaces
+13.5.8. Annotation Interfaces
 
 Annotation interfaces behave exactly like any other interface. Adding or deleting an element from an annotation interface is analogous to adding or deleting a method. There are important considerations governing other changes to annotation interfaces, such as making an annotation interface repeatable (§9.6.3), but these have no effect on the linkage of binaries by the Java Virtual Machine. Rather, such changes affect the behavior of reflective APIs in the Java SE Platform that reveal the presence of annotations in a program. The API specifications describe their behavior when various changes are made to the underlying annotation interfaces (§1.4).
 
