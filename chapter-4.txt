@@ -27,6 +27,7 @@ Table of Contents
 4.10.2. Subtyping among Class and Interface Types
 4.10.3. Subtyping among Array Types
 4.10.4. Least Upper Bound
+4.10.5. Type Projections
 4.11. Where Types Are Used
 4.12. Variables
 4.12.1. Variables of Primitive Type
@@ -403,12 +404,13 @@ ClassOrInterfaceType:
 ClassType
 InterfaceType
 ClassType:
-{Annotation} Identifier [TypeArguments]
-ClassOrInterfaceType . {Annotation} Identifier [TypeArguments]
+{Annotation} TypeIdentifier [TypeArguments]
+PackageName . {Annotation} TypeIdentifier [TypeArguments]
+ClassOrInterfaceType . {Annotation} TypeIdentifier [TypeArguments]
 InterfaceType:
 ClassType
 TypeVariable:
-{Annotation} Identifier
+{Annotation} TypeIdentifier
 ArrayType:
 PrimitiveType Dims
 ClassOrInterfaceType Dims
@@ -604,7 +606,7 @@ A type variable is an unqualified identifier used as a type in class, interface,
 A type variable is introduced by the declaration of a type parameter of a generic class, interface, method, or constructor (§8.1.2, §9.1.2, §8.4.4, §8.8.4).
 
 TypeParameter:
-{TypeParameterModifier} Identifier [TypeBound]
+{TypeParameterModifier} TypeIdentifier [TypeBound]
 TypeParameterModifier:
 Annotation
 TypeBound:
@@ -1253,6 +1255,64 @@ It is possible that the lub() function yields an infinite type. This is permissi
 
 The possibility of an infinite type stems from the recursive calls to lub(). Readers familiar with recursive types should note that an infinite type is not the same as a recursive type.
 
+4.10.5. Type Projections
+
+A synthetic type variable is a type variable introduced by the compiler during capture conversion (§5.1.10) or inference variable resolution (§18.4).
+
+It is sometimes necessary to find a close supertype of a type, where that supertype does not mention certain synthetic type variables. This is achieved with an upward projection applied to the type.
+
+Similarly, a downward projection may be applied to find a close subtype of a type, where that subtype does not mention certain synthetic type variables. Because such a type does not always exist, downward projection is a partial function.
+
+These operations take as input a set of type variables that should no longer be referenced, referred to as the restricted type variables. When the operations recur, the set of restricted type variables is implicitly passed on to the recursive application.
+
+The upward projection of a type T with respect to a set of restricted type variables is defined as follows:
+
+If T does not mention any restricted type variable, then the result is T.
+
+If T is a restricted type variable, then the result is the upward projection of the upper bound of T.
+
+If T is a parameterized class type or a parameterized interface type, G<A1,...,An>, then the result is G<A1',...,An'>, where, for 1 ≤ i ≤ n, Ai' is derived from Ai as follows:
+
+If Ai does not mention any restricted type variable, then Ai' = Ai.
+
+If Ai is a type that mentions a restricted type variable, then let U be the upward projection of Ai. Ai' is a wildcard, defined by three cases:
+
+If U is not Object, and if either the declared bound of the ith parameter of G, Bi, mentions a type parameter of G, or Bi is not a subtype of U, then Ai' is an upper-bounded wildcard, ? extends U.
+
+Otherwise, if the downward projection of Ai is L, then Ai' is a lower-bounded wildcard, ? super L.
+
+Otherwise, the downward projection of Ai is undefined and Ai' is an unbounded wildcard, ?.
+
+If Ai is an upper-bounded wildcard that mentions a restricted type variable, then let U be the upward projection of the wildcard bound. Ai' is an upper-bounded wildcard, ? extends U.
+
+If Ai is a lower-bounded wildcard that mentions a restricted type variable, then if the downward projection of the wildcard bound is L, then Ai' is a lower-bounded wildcard, ? super L; if the downward projection of the wildcard bound is undefined, then Ai' is an unbounded wildcard, ?.
+
+If T is an array type, S[], then the result is an array type whose component type is the upward projection of S.
+
+If T is an intersection type, then the result is an intersection type. For each element, S, of T, the result has as an element the upward projection of S.
+
+The downward projection of a type T with respect to a set of restricted type variables is a partial function, defined as follows:
+
+If T does not mention any restricted type variable, then the result is T.
+
+If T is a restricted type variable, then if T has a lower bound, and if the downward projection of that bound is L, the result is L; if T has no lower bound, or if the downward projection of that bound is undefined, then the result is undefined.
+
+If T is a parameterized class type or a parameterized interface type, G<A1,...,An>, then the result is G<A1',...,An'>, if, for 1 ≤ i ≤ n, a type argument Ai' can be derived from Ai as follows; if not, the result is undefined:
+
+If Ai is does not mention a restricted type variable, then Ai' = Ai.
+
+If Ai is a type that mentions a restricted type variable, then Ai' is undefined.
+
+If Ai is an upper-bounded wildcard that mentions a restricted type variable, then if the downward projection of the wildcard bound is U, then Ai' is an upper-bounded wildcard, ? extends U; if the downward projection of the wildcard bound is undefined, then Ai' is undefined.
+
+If Ai is a lower-bounded wildcard that mentions a restricted type variable, then let L be the upward projection of the wildcard bound. Ai' is a lower-bounded wildcard, ? super L.
+
+If T is an array type, S[], then if the downward projection of S is S', the result is S'[]; if the downward projection of S is undefined, then the result is undefined.
+
+If T is an intersection type, then if the downward projection is defined for each element of T, the result is an intersection type whose elements are the downward projections of the elements of T; if the downward projection is undefined for any element of T, then the result is undefined.
+
+Like lub (§4.10.4), upward projection and downward projection may produce infinite types, due to the recursion on type variable bounds.
+
 4.11. Where Types Are Used
 
 Types are used in most kinds of declaration and in certain kinds of expression. Specifically, there are 16 type contexts where types are used:
@@ -1702,7 +1762,7 @@ The correspondence between compile-time types and run-time types is incomplete f
 
 At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
 
-See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 9 Edition for more details.
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 10 Edition for more details.
 
 Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile time. Specifically, all compile-time parameterizations of a given generic type (§8.1.2, §9.1.2) share a single run-time representation.
 

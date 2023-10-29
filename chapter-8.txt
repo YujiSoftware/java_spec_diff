@@ -102,11 +102,11 @@ ClassDeclaration:
 NormalClassDeclaration
 EnumDeclaration
 NormalClassDeclaration:
-{ClassModifier} class Identifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
+{ClassModifier} class TypeIdentifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
 
 The rules in this section apply to all class declarations, including enum declarations. However, special rules apply to enum declarations with regard to class modifiers, inner classes, and superclasses; these rules are stated in §8.9.
 
-The Identifier in a class declaration specifies the name of the class.
+The TypeIdentifier in a class declaration specifies the name of the class.
 
 It is a compile-time error if a class has the same simple name as any of its enclosing classes or interfaces.
 
@@ -243,7 +243,7 @@ TypeParameter {, TypeParameter}
 The following productions from §4.4 are shown here for convenience:
 
 TypeParameter:
-{TypeParameterModifier} Identifier [TypeBound]
+{TypeParameterModifier} TypeIdentifier [TypeBound]
 TypeParameterModifier:
 Annotation
 TypeBound:
@@ -987,12 +987,13 @@ UnannClassOrInterfaceType:
 UnannClassType
 UnannInterfaceType
 UnannClassType:
-Identifier [TypeArguments]
-UnannClassOrInterfaceType . {Annotation} Identifier [TypeArguments]
+TypeIdentifier [TypeArguments]
+PackageName . {Annotation} TypeIdentifier [TypeArguments]
+UnannClassOrInterfaceType . {Annotation} TypeIdentifier [TypeArguments]
 UnannInterfaceType:
 UnannClassType
 UnannTypeVariable:
-Identifier
+TypeIdentifier
 UnannArrayType:
 UnannPrimitiveType Dims
 UnannClassOrInterfaceType Dims
@@ -1640,7 +1641,7 @@ It is a compile-time error for a method or constructor to declare two formal par
 
 It is a compile-time error if a formal parameter that is declared final is assigned to within the body of the method or constructor.
 
-A receiver parameter may appear only in the FormalParameterList of an instance method or an inner class's constructor; otherwise, a compile-time error occurs.
+A receiver parameter may appear only in the FormalParameterList of either an instance method, or a constructor of an inner class where the inner class is not declared in a static context (§8.1.3); otherwise, a compile-time error occurs.
 
 Where a receiver parameter is allowed, its type and name are specified as follows:
 
@@ -2753,7 +2754,7 @@ ConstructorDeclaration:
 ConstructorDeclarator:
 [TypeParameters] SimpleTypeName ( [FormalParameterList] )
 SimpleTypeName:
-Identifier
+TypeIdentifier
 
 The rules in this section apply to constructors in all class declarations, including enum declarations. However, special rules apply to enum declarations with regard to constructor modifiers, constructor bodies, and default constructors; these rules are stated in §8.9.2.
 
@@ -3135,7 +3136,7 @@ the public class PackageOnly can be instantiated only within the package just, i
 An enum declaration specifies a new enum type, a special kind of class type.
 
 EnumDeclaration:
-{ClassModifier} enum Identifier [Superinterfaces] EnumBody
+{ClassModifier} enum TypeIdentifier [Superinterfaces] EnumBody
 
 It is a compile-time error if an enum declaration has the modifier abstract or final.
 

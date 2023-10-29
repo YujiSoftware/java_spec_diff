@@ -12,6 +12,8 @@ JavaLetter:
 any Unicode character that is a "Java letter"
 JavaLetterOrDigit:
 any Unicode character that is a "Java letter-or-digit"
+TypeIdentifier:
+Identifier but not var
 Literal:
 IntegerLiteral
 FloatingPointLiteral
@@ -45,12 +47,13 @@ ClassOrInterfaceType:
 ClassType
 InterfaceType
 ClassType:
-{Annotation} Identifier [TypeArguments]
-ClassOrInterfaceType . {Annotation} Identifier [TypeArguments]
+{Annotation} TypeIdentifier [TypeArguments]
+PackageName . {Annotation} TypeIdentifier [TypeArguments]
+ClassOrInterfaceType . {Annotation} TypeIdentifier [TypeArguments]
 InterfaceType:
 ClassType
 TypeVariable:
-{Annotation} Identifier
+{Annotation} TypeIdentifier
 ArrayType:
 PrimitiveType Dims
 ClassOrInterfaceType Dims
@@ -58,7 +61,7 @@ TypeVariable Dims
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 TypeParameter:
-{TypeParameterModifier} Identifier [TypeBound]
+{TypeParameterModifier} TypeIdentifier [TypeBound]
 TypeParameterModifier:
 Annotation
 TypeBound:
@@ -88,8 +91,8 @@ PackageName:
 Identifier
 PackageName . Identifier
 TypeName:
-Identifier
-PackageOrTypeName . Identifier
+TypeIdentifier
+PackageOrTypeName . TypeIdentifier
 ExpressionName:
 Identifier
 AmbiguousName . Identifier
@@ -151,7 +154,7 @@ ClassDeclaration:
 NormalClassDeclaration
 EnumDeclaration
 NormalClassDeclaration:
-{ClassModifier} class Identifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
+{ClassModifier} class TypeIdentifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
 ClassModifier:
 (one of)
 Annotation public protected private
@@ -208,12 +211,13 @@ UnannClassOrInterfaceType:
 UnannClassType
 UnannInterfaceType
 UnannClassType:
-Identifier [TypeArguments]
-UnannClassOrInterfaceType . {Annotation} Identifier [TypeArguments]
+TypeIdentifier [TypeArguments]
+PackageName . {Annotation} TypeIdentifier [TypeArguments]
+UnannClassOrInterfaceType . {Annotation} TypeIdentifier [TypeArguments]
 UnannInterfaceType:
 UnannClassType
 UnannTypeVariable:
-Identifier
+TypeIdentifier
 UnannArrayType:
 UnannPrimitiveType Dims
 UnannClassOrInterfaceType Dims
@@ -271,7 +275,7 @@ Annotation public protected private
 ConstructorDeclarator:
 [TypeParameters] SimpleTypeName ( [FormalParameterList] )
 SimpleTypeName:
-Identifier
+TypeIdentifier
 ConstructorBody:
 { [ExplicitConstructorInvocation] [BlockStatements] }
 ExplicitConstructorInvocation:
@@ -280,7 +284,7 @@ ExplicitConstructorInvocation:
 ExpressionName . [TypeArguments] super ( [ArgumentList] ) ;
 Primary . [TypeArguments] super ( [ArgumentList] ) ;
 EnumDeclaration:
-{ClassModifier} enum Identifier [Superinterfaces] EnumBody
+{ClassModifier} enum TypeIdentifier [Superinterfaces] EnumBody
 EnumBody:
 { [EnumConstantList] [,] [EnumBodyDeclarations] }
 EnumConstantList:
@@ -298,7 +302,7 @@ InterfaceDeclaration:
 NormalInterfaceDeclaration
 AnnotationTypeDeclaration
 NormalInterfaceDeclaration:
-{InterfaceModifier} interface Identifier [TypeParameters] [ExtendsInterfaces] InterfaceBody
+{InterfaceModifier} interface TypeIdentifier [TypeParameters] [ExtendsInterfaces] InterfaceBody
 InterfaceModifier:
 (one of)
 Annotation public protected private
@@ -326,7 +330,7 @@ InterfaceMethodModifier:
 Annotation public private
 abstract default static strictfp
 AnnotationTypeDeclaration:
-{InterfaceModifier} @ interface Identifier AnnotationTypeBody
+{InterfaceModifier} @ interface TypeIdentifier AnnotationTypeBody
 AnnotationTypeBody:
 { {AnnotationTypeMemberDeclaration} }
 AnnotationTypeMemberDeclaration:
@@ -386,7 +390,10 @@ Statement
 LocalVariableDeclarationStatement:
 LocalVariableDeclaration ;
 LocalVariableDeclaration:
-{VariableModifier} UnannType VariableDeclaratorList
+{VariableModifier} LocalVariableType VariableDeclaratorList
+LocalVariableType:
+UnannType
+var
 Statement:
 StatementWithoutTrailingSubstatement
 LabeledStatement
@@ -476,9 +483,9 @@ StatementExpressionList
 StatementExpressionList:
 StatementExpression {, StatementExpression}
 EnhancedForStatement:
-for ( {VariableModifier} UnannType VariableDeclaratorId : Expression ) Statement
+for ( {VariableModifier} LocalVariableType VariableDeclaratorId : Expression ) Statement
 EnhancedForStatementNoShortIf:
-for ( {VariableModifier} UnannType VariableDeclaratorId : Expression ) StatementNoShortIf
+for ( {VariableModifier} LocalVariableType VariableDeclaratorId : Expression ) StatementNoShortIf
 BreakStatement:
 break [Identifier] ;
 ContinueStatement:
@@ -510,7 +517,7 @@ ResourceSpecification:
 ResourceList:
 Resource {; Resource}
 Resource:
-{VariableModifier} UnannType VariableDeclaratorId = Expression
+{VariableModifier} LocalVariableType Identifier = Expression
 VariableAccess
 
 Productions from §15 (Expressions)

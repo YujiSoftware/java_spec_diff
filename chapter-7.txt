@@ -325,7 +325,7 @@ If the type imported by the single-type-import declaration is declared in the co
 
 If a single-type-import declaration imports a type whose simple name is n, and the compilation unit also declares a top level type (§7.6) whose simple name is n, a compile-time error occurs.
 
-If a compilation unit contains both a single-type-import declaration that imports a type whose simple name is n, and a single-static-import declaration (§7.5.3) that imports a type whose simple name is n, a compile-time error occurs.
+If a compilation unit contains both a single-type-import declaration that imports a type whose simple name is n, and a single-static-import declaration (§7.5.3) that imports a type whose simple name is n, a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
 
 Example 7.5.1-1. Single-Type-Import
 
@@ -465,9 +465,11 @@ The Identifier must name at least one static member of the named type. It is a c
 
 It is permissible for one single-static-import declaration to import several fields or types with the same name, or several methods with the same name and signature. This occurs when the named type inherits multiple fields, member types, or methods, all with the same name, from its own supertypes.
 
+If two single-static-import declarations in the same compilation unit attempt to import types with the same simple name, then a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
+
 If a single-static-import declaration imports a type whose simple name is n, and the compilation unit also declares a top level type (§7.6) whose simple name is n, a compile-time error occurs.
 
-If a compilation unit contains both a single-static-import declaration that imports a type whose simple name is n, and a single-type-import declaration (§7.5.1) that imports a type whose simple name is n, a compile-time error occurs.
+If a compilation unit contains both a single-static-import declaration that imports a type whose simple name is n, and a single-type-import declaration (§7.5.1) that imports a type whose simple name is n, a compile-time error occurs, unless the two types are the same type, in which case the duplicate declaration is ignored.
 
 7.5.4. Static-Import-on-Demand Declarations
 
@@ -689,6 +691,8 @@ If the declaration of a module does not express a dependence on the java.base mo
 The requires keyword may be followed by the modifier transitive. This causes any module which requires the current module to have an implicitly declared dependence on the module specified by the requires transitive directive.
 
 The requires keyword may be followed by the modifier static. This specifies that the dependence, while mandatory at compile time, is optional at run time.
+
+If the declaration of a module expresses a dependence on the java.base module, and the module is not itself java.base, then it is a compile-time error if a modifier appears after the requires keyword.
 
 It is a compile-time error if more than one requires directive in a module declaration specifies the same module name.
 

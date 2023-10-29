@@ -50,7 +50,7 @@ Fully qualified and canonical names (§6.7) are also discussed in this chapter.
 
 6.1. Declarations
 
-A declaration introduces an entity into a program and includes an identifier (§3.8) that can be used in a name to refer to this entity.
+A declaration introduces an entity into a program and includes an identifier (§3.8) that can be used in a name to refer to this entity. The identifier is constrained to be a type identifier when the entity being introduced is a class, interface, or type parameter.
 
 A declared entity is one of the following:
 
@@ -728,6 +728,8 @@ The meaning of a name depends on the context in which it is used. The determinat
 
 First, context causes a name syntactically to fall into one of seven categories: ModuleName, PackageName, TypeName, ExpressionName, MethodName, PackageOrTypeName, or AmbiguousName.
 
+TypeName is less expressive than the other six categories, because it is denoted with TypeIdentifier, which excludes the character sequence var (§3.8).
+
 Second, a name that is initially classified by its context as an AmbiguousName or as a PackageOrTypeName is then reclassified to be a PackageName, TypeName, or ExpressionName.
 
 Third, the resulting category then dictates the final determination of the meaning of the name (or a compile-time error if the name has no meaning).
@@ -739,8 +741,8 @@ PackageName:
 Identifier
 PackageName . Identifier
 TypeName:
-Identifier
-PackageOrTypeName . Identifier
+TypeIdentifier
+PackageOrTypeName . TypeIdentifier
 PackageOrTypeName:
 Identifier
 PackageOrTypeName . Identifier
@@ -894,9 +896,9 @@ If the Identifier appears within the scope (§6.3) of a local variable declarati
 
 Otherwise, if a field of that name is declared in the compilation unit (§7.3) containing the Identifier by a single-static-import declaration (§7.5.3), or by a static-import-on-demand declaration (§7.5.4) then the AmbiguousName is reclassified as an ExpressionName.
 
-Otherwise, if the Identifier appears within the scope (§6.3) of a top level class (§8 (Classes)) or interface type declaration (§9 (Interfaces)), a local class declaration (§14.3) or member type declaration (§8.5, §9.5) with that name, then the AmbiguousName is reclassified as a TypeName.
+Otherwise, if the Identifier is a valid TypeIdentifier and appears within the scope (§6.3) of a top level class (§8 (Classes)) or interface type declaration (§9 (Interfaces)), a local class declaration (§14.3) or member type declaration (§8.5, §9.5) with that name, then the AmbiguousName is reclassified as a TypeName.
 
-Otherwise, if a type of that name is declared in the compilation unit (§7.3) containing the Identifier, either by a single-type-import declaration (§7.5.1), or by a type-import-on-demand declaration (§7.5.2), or by a single-static-import declaration (§7.5.3), or by a static-import-on-demand declaration (§7.5.4), then the AmbiguousName is reclassified as a TypeName.
+Otherwise, if the Identifier is a valid TypeIdentifier and a type of that name is declared in the compilation unit (§7.3) containing the Identifier, either by a single-type-import declaration (§7.5.1), or by a type-import-on-demand declaration (§7.5.2), or by a single-static-import declaration (§7.5.3), or by a static-import-on-demand declaration (§7.5.4), then the AmbiguousName is reclassified as a TypeName.
 
 Otherwise, the AmbiguousName is reclassified as a PackageName. A later step determines whether or not a package of that name actually exists.
 
@@ -904,7 +906,7 @@ If the AmbiguousName is a qualified name, consisting of a name, a ".", and an Id
 
 If the name to the left of the "." is reclassified as a PackageName, then:
 
-If there is a package whose name is the name to the left of the "." and that package contains a declaration of a type whose name is the same as the Identifier, then this AmbiguousName is reclassified as a TypeName.
+If the Identifier is a valid TypeIdentifier, and there is a package whose name is the name to the left of the ".", and that package contains a declaration of a type whose name is the same as the Identifier, then this AmbiguousName is reclassified as a TypeName.
 
 Otherwise, this AmbiguousName is reclassified as a PackageName. A later step determines whether or not a package of that name actually exists.
 
@@ -912,11 +914,13 @@ If the name to the left of the "." is reclassified as a TypeName, then:
 
 If the Identifier is the name of a method or field of the type denoted by TypeName, then this AmbiguousName is reclassified as an ExpressionName.
 
-Otherwise, if the Identifier is the name of a member type of the type denoted by TypeName, then this AmbiguousName is reclassified as a TypeName.
+Otherwise, if the Identifier is a valid TypeIdentifier and is the name of a member type of the type denoted by TypeName, then this AmbiguousName is reclassified as a TypeName.
 
 Otherwise, a compile-time error occurs.
 
 If the name to the left of the "." is reclassified as an ExpressionName, then this AmbiguousName is reclassified as an ExpressionName. A later step determines whether or not a member with the name Identifier actually exists.
+
+The requirement that a potential type name be "a valid TypeIdentifier" prevents treating var as a type name. It is usually redundant, because the rules for declarations already prevent the introduction of types named var. However, in some cases, a compiler may find a binary class named var, and we want to be clear that such classes can never be named. The simplest solution is to consistently check for a valid TypeIdentifier.
 
 Example 6.5.2-1. Reclassification of Contextually Ambiguous Names
 
@@ -976,13 +980,13 @@ If Q.Id does not name a package that is uniquely visible to the current module (
 6.5.4. Meaning of PackageOrTypeNames
 6.5.4.1. Simple PackageOrTypeNames
 
-If the PackageOrTypeName, Q, occurs in the scope of a type named Q, then the PackageOrTypeName is reclassified as a TypeName.
+If the PackageOrTypeName, Q, is a valid TypeIdentifier and occurs in the scope of a type named Q, then the PackageOrTypeName is reclassified as a TypeName.
 
 Otherwise, the PackageOrTypeName is reclassified as a PackageName. The meaning of the PackageOrTypeName is the meaning of the reclassified name.
 
 6.5.4.2. Qualified PackageOrTypeNames
 
-Given a qualified PackageOrTypeName of the form Q.Id, if the type or package denoted by Q has a member type named Id, then the qualified PackageOrTypeName name is reclassified as a TypeName.
+Given a qualified PackageOrTypeName of the form Q.Id, if Id is a valid TypeIdentifier and the type or package denoted by Q has a member type named Id, then the qualified PackageOrTypeName name is reclassified as a TypeName.
 
 Otherwise, it is reclassified as a PackageName. The meaning of the qualified PackageOrTypeName is the meaning of the reclassified name.
 

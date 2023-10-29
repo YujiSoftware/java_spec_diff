@@ -100,7 +100,7 @@ A very long right-hand side may be continued on a second line by clearly indenti
 For example, the syntactic grammar contains this production:
 
 NormalClassDeclaration:
-{ClassModifier} class Identifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
+{ClassModifier} class TypeIdentifier [TypeParameters] [Superclass] [Superinterfaces] ClassBody
 
 which defines one right-hand side for the nonterminal NormalClassDeclaration.
 

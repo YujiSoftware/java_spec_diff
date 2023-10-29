@@ -237,7 +237,7 @@ Letters and digits may be drawn from the entire Unicode character set, which sup
 
 An identifier cannot have the same spelling (Unicode character sequence) as a keyword (§3.9), boolean literal (§3.10.3), or the null literal (§3.10.7), or a compile-time error occurs.
 
-Two identifiers are the same only if they are identical, that is, have the same Unicode character for each letter or digit. Identifiers that have the same external appearance may yet be different.
+Two identifiers are the same only if, after ignoring characters that are ignorable, the identifiers have the same Unicode character for each letter or digit. An ignorable character is a character for which the method Character.isIdentifierIgnorable(int) returns true. Identifiers that have the same external appearance may yet be different.
 
 For example, the identifiers consisting of the single letters LATIN CAPITAL LETTER A (A, \u0041), LATIN SMALL LETTER A (a, \u0061), GREEK CAPITAL LETTER ALPHA (A, \u0391), CYRILLIC SMALL LETTER A (a, \u0430) and MATHEMATICAL BOLD ITALIC SMALL A (a, \ud835\udc82) are all different.
 
@@ -254,6 +254,13 @@ i3
 MAX_VALUE
 
 isLetterOrDigit
+
+A type identifier is an identifier that is not the character sequence var.
+
+TypeIdentifier:
+Identifier but not var
+
+This special kind of identifier is used in certain contexts involving the declaration or use of types. For example, the name of a class must be a TypeIdentifier, so it is illegal to declare a class named var (§8.1).
 
 3.9. Keywords
 
@@ -276,9 +283,15 @@ _ (underscore)
 
 The keywords const and goto are reserved, even though they are not currently used. This may allow a Java compiler to produce better error messages if these C++ keywords incorrectly appear in programs.
 
-While true and false might appear to be keywords, they are technically boolean literals (§3.10.3). Similarly, while null might appear to be a keyword, it is technically the null literal (§3.10.7).
+A variety of character sequences are sometimes assumed, incorrectly, to be keywords:
 
-A further ten character sequences are restricted keywords: open, module, requires, transitive, exports, opens, to, uses, provides, and with. These character sequences are tokenized as keywords solely where they appear as terminals in the ModuleDeclaration and ModuleDirective productions (§7.7). They are tokenized as identifiers everywhere else, for compatibility with programs written prior to Java SE 9. There is one exception: immediately to the right of the character sequence requires in the ModuleDirective production, the character sequence transitive is tokenized as a keyword unless it is followed by a separator, in which case it is tokenized as an identifier.
+true and false are not keywords, but rather boolean literals (§3.10.3).
+
+null is not a keyword, but rather the null literal (§3.10.7).
+
+var is not a keyword, but rather an identifier with special meaning as the type of a local variable declaration (§14.4, §14.14.1, §14.14.2, §14.20.3).
+
+A further ten character sequences are restricted keywords: open, module, requires, transitive, exports, opens, to, uses, provides, and with. These character sequences are tokenized as keywords solely where they appear as terminals in the ModuleDeclaration, ModuleDirective, and RequiresModifier productions (§7.7). They are tokenized as identifiers everywhere else, for compatibility with programs written before the introduction of restricted keywords. There is one exception: immediately to the right of the character sequence requires in the ModuleDirective production, the character sequence transitive is tokenized as a keyword unless it is followed by a separator, in which case it is tokenized as an identifier.
 
 3.10. Literals
 

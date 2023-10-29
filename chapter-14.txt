@@ -160,9 +160,12 @@ A local variable declaration statement declares one or more local variable names
 LocalVariableDeclarationStatement:
 LocalVariableDeclaration ;
 LocalVariableDeclaration:
-{VariableModifier} UnannType VariableDeclaratorList
+{VariableModifier} LocalVariableType VariableDeclaratorList
+LocalVariableType:
+UnannType
+var
 
-See §8.3 for UnannType. The following productions from §4.3, §8.4.1, and §8.3 are shown here for convenience:
+See §8.3 for UnannType. The following productions from §4.3, §8.3, and §8.4.1 are shown here for convenience:
 
 VariableModifier:
 Annotation
@@ -181,11 +184,41 @@ ArrayInitializer
 
 Every local variable declaration statement is immediately contained by a block. Local variable declaration statements may be intermixed freely with other kinds of statements in the block.
 
-Apart from local variable declaration statements, a local variable declaration can appear in the header of a for statement (§14.14) or try-with-resources statement (§14.20.3). In these cases, it is executed in the same manner as if it were part of a local variable declaration statement.
+Apart from local variable declaration statements, a local variable can be declared by the header of a basic for statement (§14.14.1), an enhanced for statement (§14.14.2), or a try-with-resources statement (§14.20.3).
 
 The rules for annotation modifiers on a local variable declaration are specified in §9.7.4 and §9.7.5.
 
 It is a compile-time error if final appears more than once as a modifier for a local variable declaration.
+
+It is a compile-time error if the LocalVariableType is var and any of the following are true:
+
+More than one VariableDeclarator is listed.
+
+The VariableDeclaratorId has one or more bracket pairs.
+
+The VariableDeclarator lacks an initializer.
+
+The initializer of the VariableDeclarator is an ArrayInitializer.
+
+The initializer of the VariableDeclarator contains a reference to the variable.
+
+Example 14.4-1. Local Variables Declared With var
+
+The following code illustrates these rules restricting the use of var:
+
+
+var a = 1;            // Legal
+var b = 2, c = 3.0;   // Illegal: multiple declarators
+var d[] = new int[4]; // Illegal: extra bracket pairs
+var e;                // Illegal: no initializer
+var f = { 6 };        // Illegal: array initializer
+var g = (g = 7);      // Illegal: self reference in initializer
+
+
+
+These restrictions help to avoid confusion about the type being represented by var.
+
+
 
 14.4.1. Local Variable Declarators and Types
 
@@ -193,7 +226,43 @@ Each declarator in a local variable declaration declares one local variable, who
 
 If the optional keyword final appears at the start of the declaration, the variable being declared is a final variable (§4.12.4).
 
-The declared type of a local variable is denoted by UnannType if no bracket pairs appear in UnannType and VariableDeclaratorId, and is specified by §10.2 otherwise.
+The type of a local variable is determined as follows:
+
+If LocalVariableType is an UnannType, and no bracket pairs appear in UnannType or VariableDeclaratorId, then UnannType denotes the type of the local variable.
+
+If LocalVariableType is an UnannType, and bracket pairs appear in UnannType or VariableDeclaratorId, then the type of the local variable is specified by §10.2.
+
+If LocalVariableType is var, then let T be the type of the initializer expression when treated as if it did not appear in an assignment context, and were thus a standalone expression (§15.2). The type of the local variable is the upward projection of T with respect to all synthetic type variables mentioned by T (§4.10.5).
+
+It is a compile-time error if T is the null type.
+
+Because the initializer is treated as if it did not appear in an assignment context, an error occurs if it is a lambda expression (§15.27) or a method reference expression (§15.13).
+
+Example 14.4.1-1. Type of Local Variables Declared With var
+
+The following code illustrates the typing of variables declared with var:
+
+
+var a = 1;                // a has type 'int'
+var b = java.util.List.of(1, 2);  // b has type 'List<Integer>'
+var c = "x".getClass();   // c has type 'Class<? extends String>' 
+                          // (see JLS 15.12.2.6)
+var d = new Object() {};  // d has the type of the anonymous class
+var e = (CharSequence & Comparable<String>) "x";
+                          // e has type CharSequence & Comparable<String>
+var f = () -> "hello";    // Illegal: lambda not in an assignment context
+var g = null;             // Illegal: null type
+
+
+
+Note that some variables declared with var cannot be declared with an explicit type, because the type of the variable is not denotable.
+
+
+
+
+Upward projection is applied to the type of the initializer when determining the type of the variable. If the type of the initializer contains capture variables, this projection maps the type of the initializer to a supertype that does not contain capture variables.
+
+While it would be possible to allow the type of the variable to mention capture variables, by projecting them away we enforce an attractive invariant that the scope of a capture variable is never larger than the statement containing the expression whose type is captured. Informally, capture variables cannot "leak" into subsequent statements.
 
 A local variable of type float always contains a value that is an element of the float value set (§4.2.3); similarly, a local variable of type double always contains a value that is an element of the double value set. It is not permitted for a local variable of type float to contain an element of the float-extended-exponent value set that is not also an element of the float value set, nor for a local variable of type double to contain an element of the double-extended-exponent value set that is not also an element of the double value set.
 
@@ -864,27 +933,50 @@ Note that the case of abrupt completion because of a break with a label is handl
 The enhanced for statement has the form:
 
 EnhancedForStatement:
-for ( {VariableModifier} UnannType VariableDeclaratorId : Expression ) Statement
+for ( {VariableModifier} LocalVariableType VariableDeclaratorId : Expression ) Statement
 EnhancedForStatementNoShortIf:
-for ( {VariableModifier} UnannType VariableDeclaratorId : Expression ) StatementNoShortIf
+for ( {VariableModifier} LocalVariableType VariableDeclaratorId : Expression ) StatementNoShortIf
 
-See §8.3 for UnannType. The following productions from §4.3, §8.4.1, and §8.3 are shown here for convenience:
+The following productions from §4.3, §8.3, §8.4.1, and §14.4 are shown here for convenience:
 
 VariableModifier:
 Annotation
 final
+LocalVariableType:
+UnannType
+var
 VariableDeclaratorId:
 Identifier [Dims]
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-The type of the Expression must be Iterable or an array type (§10.1), or a compile-time error occurs.
+The header of the enhanced for statement declares a local variable, whose name is the identifier given by VariableDeclaratorId.
 
-The declared type of the local variable in the header of the enhanced for statement is denoted by UnannType if no bracket pairs appear in UnannType and VariableDeclaratorId, and is specified by §10.2 otherwise.
+If the keyword final appears at the start of the declaration, the variable being declared is a final variable (§4.12.4).
 
-The scope and shadowing of the local variable declared in the header of an enhanced for statement is specified in §6.3 and §6.4.
+It is a compile-time error if the LocalVariableType is var and the VariableDeclaratorId has one or more bracket pairs.
 
-The meaning of the enhanced for statement is given by translation into a basic for statement, as follows:
+The type of the Expression must be a subtype of the raw type Iterable or an array type (§10.1), or a compile-time error occurs.
+
+The type of the local variable is determined as follows:
+
+If LocalVariableType is an UnannType, and no bracket pairs appear in UnannType or VariableDeclaratorId, then UnannType denotes the type of the local variable.
+
+If LocalVariableType is an UnannType, and bracket pairs appear in UnannType or VariableDeclaratorId, then the type of the local variable is specified by §10.2.
+
+If LocalVariableType is var, then let T be derived from the type of the Expression, as follows:
+
+If the Expression has an array type, then T is the component type of the array type.
+
+Otherwise, if the Expression has a type that is a subtype of Iterable<X>, for some type X, then T is X.
+
+Otherwise, the Expression has a type that is a subtype of the raw type Iterable, and T is Object.
+
+The type of the local variable is the upward projection of T with respect to all synthetic type variables mentioned by T (§4.10.5).
+
+The scope and shadowing of the local variable is specified in §6.3 and §6.4.
+
+When an enhanced for statement is executed, the local variable is initialized, on each iteration of the loop, to successive elements of the array or Iterable produced by the expression. The precise meaning of the enhanced for statement is given by translation into a basic for statement, as follows:
 
 If the type of Expression is a subtype of Iterable, then the translation is as follows.
 
@@ -1470,7 +1562,7 @@ The problem with mandating a backtrace is that an exception can be created at on
 
 14.20.3. try-with-resources
 
-A try-with-resources statement is parameterized with variables (known as resources) that are initialized before execution of the try block and closed automatically, in the reverse order from which they were initialized, after execution of the try block. catch clauses and a finally clause are often unnecessary when resources are closed automatically.
+A try-with-resources statement is parameterized with local variables (known as resources) that are initialized before execution of the try block and closed automatically, in the reverse order from which they were initialized, after execution of the try block. catch clauses and a finally clause are often unnecessary when resources are closed automatically.
 
 TryWithResourcesStatement:
 try ResourceSpecification Block [Catches] [Finally]
@@ -1479,21 +1571,20 @@ ResourceSpecification:
 ResourceList:
 Resource {; Resource}
 Resource:
-{VariableModifier} UnannType VariableDeclaratorId = Expression
+{VariableModifier} LocalVariableType Identifier = Expression
 VariableAccess
 VariableAccess:
 ExpressionName
 FieldAccess
 
-See §8.3 for UnannType. The following productions from §4.3, §8.3, and §8.4.1 are shown here for convenience:
+The following productions from §8.4.1 and §14.4 are shown here for convenience:
 
 VariableModifier:
 Annotation
 final
-VariableDeclaratorId:
-Identifier [Dims]
-Dims:
-{Annotation} [ ] {{Annotation} [ ]}
+LocalVariableType:
+UnannType
+var
 
 A resource specification uses variables to denote resources for the try statement, either by declaring local variables with initializer expressions or by referring to suitable existing variables. An existing variable is referred to by either an expression name (§6.5.6) or a field access expression (§15.11).
 
@@ -1504,6 +1595,16 @@ It is a compile-time error if final appears more than once as a modifier for eac
 A variable declared in a resource specification is implicitly declared final if it is not explicitly declared final (§4.12.4).
 
 A resource denoted by an expression name or field access expression must be a final or effectively final variable that is definitely assigned before the try-with-resources statement (§16 (Definite Assignment)), or a compile-time error occurs.
+
+It is a compile-time error if the LocalVariableType of a variable declared in a resource specification is var and the initializer expression contains a reference to the variable.
+
+The type of a variable declared in a resource specification is determined as follows:
+
+If LocalVariableType is an UnannType, then UnannType denotes the type of the local variable.
+
+If LocalVariableType is var, then let T be the type of the initializer expression when treated as if it did not appear in an assignment context, and were thus a standalone expression (§15.2). The type of the local variable is the upward projection of T with respect to all synthetic type variables mentioned by T (§4.10.5).
+
+It is a compile-time error if T is the null type.
 
 The type of a variable declared or referred to as a resource in a resource specification must be a subtype of AutoCloseable, or a compile-time error occurs.
 

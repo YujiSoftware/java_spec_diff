@@ -69,9 +69,9 @@ InterfaceDeclaration:
 NormalInterfaceDeclaration
 AnnotationTypeDeclaration
 NormalInterfaceDeclaration:
-{InterfaceModifier} interface Identifier [TypeParameters] [ExtendsInterfaces] InterfaceBody
+{InterfaceModifier} interface TypeIdentifier [TypeParameters] [ExtendsInterfaces] InterfaceBody
 
-The Identifier in an interface declaration specifies the name of the interface.
+The TypeIdentifier in an interface declaration specifies the name of the interface.
 
 It is a compile-time error if an interface has the same simple name as any of its enclosing classes or interfaces.
 
@@ -123,7 +123,7 @@ TypeParameters:
 TypeParameterList:
 TypeParameter {, TypeParameter}
 TypeParameter:
-{TypeParameterModifier} Identifier [TypeBound]
+{TypeParameterModifier} TypeIdentifier [TypeBound]
 TypeParameterModifier:
 Annotation
 TypeBound:
@@ -528,13 +528,13 @@ There might be several paths by which the same member type declaration is inheri
 An annotation type declaration specifies a new annotation type, a special kind of interface type. To distinguish an annotation type declaration from a normal interface declaration, the keyword interface is preceded by an at-sign (@).
 
 AnnotationTypeDeclaration:
-{InterfaceModifier} @ interface Identifier AnnotationTypeBody
+{InterfaceModifier} @ interface TypeIdentifier AnnotationTypeBody
 
 Note that the at-sign (@) and the keyword interface are distinct tokens. It is possible to separate them with whitespace, but this is discouraged as a matter of style.
 
 The rules for annotation modifiers on an annotation type declaration are specified in §9.7.4 and §9.7.5.
 
-The Identifier in an annotation type declaration specifies the name of the annotation type.
+The TypeIdentifier in an annotation type declaration specifies the name of the annotation type.
 
 It is a compile-time error if an annotation type has the same simple name as any of its enclosing classes or interfaces.
 
@@ -576,7 +576,7 @@ By virtue of the AnnotationTypeElementDeclaration production, a method declarati
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 9.
+By virtue of the AnnotationTypeElementModifier production, a method declaration in an annotation type declaration cannot be default or static. Thus, an annotation type cannot declare the same variety of methods as a normal interface type. Note that it is still possible for an annotation type to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 10.
 
 By convention, the only AnnotationTypeElementModifiers that should be present on an annotation type element are annotations.
 
@@ -1361,17 +1361,17 @@ If the annotation's type is applicable in type contexts, and not in the declarat
 
 If the annotation's type is applicable in the declaration context corresponding to the declaration and in type contexts, then the annotation is deemed to apply to both the declaration and the type which is closest to the annotation.
 
-In the second and third cases above, the type which is closest to the annotation is the type written in source code for the declared entity; if that type is an array type, then the element type is deemed to be closest to the annotation.
+In the second and third cases above, the type which is closest to the annotation is determined as follows:
+
+If the annotation appears before a void method declaration or a local variable declaration that uses var (§14.4, §14.14.2, §14.20.3), then there is no closest type. If the annotation's type is deemed to apply only to the type which is closest to the annotation, a compile-time error occurs.
+
+If the annotation appears before a constructor declaration, then the closest type is the type of the newly constructed object. The type of the newly constructed object is the fully qualified name of the type immediately enclosing the constructor declaration. Within that fully qualified name, the annotation applies to the simple type name indicated by the constructor declaration.
+
+In all other cases, the closest type is the type written in source code for the declared entity; if that type is an array type, then the element type is deemed to be closest to the annotation.
 
 For example, in the field declaration @Foo public static String f;, the type which is closest to @Foo is String. (If the type of the field declaration had been written as java.lang.String, then java.lang.String would be the type closest to @Foo, and later rules would prohibit a type annotation from applying to the package name java.) In the generic method declaration @Foo <T> int[] m() {...}, the type written for the declared entity is int[], so @Foo applies to the element type int.
 
-Local variable declarations are similar to formal parameter declarations of lambda expressions, in that both allow declaration annotations and type annotations in source code, but only the type annotations can be stored in the class file.
-
-There are two special cases involving method/constructor declarations:
-
-If an annotation appears before a constructor declaration and is deemed to apply to the type which is closest to the annotation, that type is the type of the newly constructed object. The type of the newly constructed object is the fully qualified name of the type immediately enclosing the constructor declaration. Within that fully qualified name, the annotation applies to the simple type name indicated by the constructor declaration.
-
-If an annotation appears before a void method declaration and is deemed to apply only to the type which is closest to the annotation, a compile-time error occurs.
+Local variable declarations which do not use var are similar to formal parameter declarations of lambda expressions, in that both allow declaration annotations and type annotations in source code, but only the type annotations can be stored in the class file.
 
 It is a compile-time error if an annotation of type T is syntactically a modifier for:
 
