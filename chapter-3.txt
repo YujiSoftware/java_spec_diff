@@ -327,7 +327,7 @@ The keywords const and goto are reserved, even though they are not currently use
 
 The keyword strictfp is obsolete and should not be used in new code.
 
-The keyword _ (underscore) is reserved for possible future use in parameter declarations.
+The keyword _ (underscore) may be used in certain declarations in place of an identifier (§6.1).
 
 true and false are not keywords, but rather boolean literals (§3.10.3).
 

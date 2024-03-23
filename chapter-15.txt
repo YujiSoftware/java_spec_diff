@@ -258,7 +258,7 @@ Strict evaluation provides predictable results, but caused performance problems 
 
 For compatibility, Java 1.2 allowed the programmer to forbid an implementation from using the extended-exponent value sets. The programmer expressed this by placing the strictfp modifier on the declaration of a class, interface, or method. strictfp constrained the floating-point semantics of any enclosed expressions to use the float value set for float expressions and the double value set for double expressions, ensuring the results of such expressions were fully predictable. Code modified by strictfp thus had the same floating-point semantics as specified in Java 1.0 and 1.1.
 
-In Java SE 17 and later, the Java SE Platform always requires strict evaluation of floating-point expressions. Newer members of the processor families that had performance problems implementing strict evaluation no longer have that difficulty. This specification no longer associates float and double with the four value sets described above, and the strictfp modifier no longer affects the evaluation of floating-point expressions. For compatibility, strictfp remains a keyword in Java SE 21 (§3.8) and continues to have restrictions on its use (§8.4.3, §9.4), although Java compilers are encouraged to warn the programmer about its obsolete status. Future versions of the Java programming language may redefine or remove the strictfp keyword.
+In Java SE 17 and later, the Java SE Platform always requires strict evaluation of floating-point expressions. Newer members of the processor families that had performance problems implementing strict evaluation no longer have that difficulty. This specification no longer associates float and double with the four value sets described above, and the strictfp modifier no longer affects the evaluation of floating-point expressions. For compatibility, strictfp remains a keyword in Java SE 22 (§3.8) and continues to have restrictions on its use (§8.4.3, §9.4), although Java compilers are encouraged to warn the programmer about its obsolete status. Future versions of the Java programming language may redefine or remove the strictfp keyword.
 
 15.5. Expressions and Run-Time Checks
 
@@ -681,7 +681,7 @@ The keyword this is also used in explicit constructor invocation statements (§8
 
 It is a compile-time error if a this expression occurs in a static context (§8.1.3).
 
-Let C by the innermost enclosing class or interface declaration of a this expression. If C is generic, with type parameters F1,...,Fn, the type of this is C<F1,...,Fn>. Otherwise, the type of this is C.
+Let C be the innermost enclosing class or interface declaration of a this expression. If C is generic, with type parameters F1,...,Fn, the type of this is C<F1,...,Fn>. Otherwise, the type of this is C.
 
 At run time, the class of the actual object referred to may be C or a subclass of C (§8.1.5.
 
@@ -2521,7 +2521,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 21 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 22 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2551,7 +2551,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 21 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 22 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 
@@ -4886,24 +4886,33 @@ There is a precedent for ambiguity resolution involving casts, which essentially
 
 15.27.1. Lambda Parameters
 
-The formal parameters of a lambda expression, if any, are specified by either a parenthesized list of comma-separated parameter specifiers or a parenthesized list of comma-separated identifiers. In a list of parameter specifiers, each parameter specifier consists of optional modifiers, then a type (or var), then an identifier that specifies the name of the parameter. In a list of identifiers, each identifier specifies the name of the parameter.
+The formal parameters of a lambda expression, if any, are specified by either a parenthesized list of comma-separated normal parameter specifiers, or a parenthesized list of comma-separated concise parameter specifiers, or a single concise parameter specifier without parentheses.
+
+Thus, if the lambda expression has exactly one formal parameter, it may be specified by the singleton list (int x) or (x), or by eliding the parentheses altogether, as x.
+
+A normal parameter specifier consists of optional modifiers, a type (or var), and either an identifier or the keyword _ (underscore). If an identifier is present, it specifies the name of the formal parameter. If the keyword _ is present, the formal parameter cannot be referred to by name.
+
+A concise parameter specifier consists of an identifier or the keyword _. If an identifier is present, it specifies the name of the formal parameter. If the keyword _ is present, the formal parameter cannot be referred to by name.
+
+A formal parameter of a lambda expression that cannot be referred to by name is called an unnamed lambda parameter.
 
 If a lambda expression has no formal parameters, then an empty pair of parentheses appears before the -> and the lambda body.
 
-If a lambda expression has exactly one formal parameter, and the parameter is specified by an identifier instead of a parameter specifier, then the parentheses around the identifier may be elided.
-
 LambdaParameters:
 ( [LambdaParameterList] )
-Identifier
+ConciseLambdaParameter
 LambdaParameterList:
-LambdaParameter {, LambdaParameter}
-Identifier {, Identifier}
-LambdaParameter:
+NormalLambdaParameter {, NormalLambdaParameter}
+ConciseLambdaParameter {, ConciseLambdaParameter}
+NormalLambdaParameter:
 {VariableModifier} LambdaParameterType VariableDeclaratorId
 VariableArityParameter
 LambdaParameterType:
 UnannType
 var
+ConciseLambdaParameter:
+Identifier
+_
 
 The following productions from §8.4.1, §8.3, and §4.3 are shown here for convenience:
 
@@ -4914,18 +4923,19 @@ Annotation
 final
 VariableDeclaratorId:
 Identifier [Dims]
+_
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-A formal parameter of a lambda expression may be declared final, or annotated, only if specified by a parameter specifier. If a formal parameter is specified by an identifier instead, then the formal parameter is not final and has no annotations.
+A formal parameter of a lambda expression may be declared final, or annotated, only if specified by a normal parameter specifier. If a formal parameter is specified by a concise formal specifier instead, then the formal parameter is not final and has no annotations.
 
-A formal parameter of a lambda expression may be a variable arity parameter, indicated by an ellipsis following the type in a parameter specifier. At most one variable arity parameter is permitted for a lambda expression. It is a compile-time error if a variable arity parameter appears anywhere in the list of parameter specifiers except the last position.
+A formal parameter of a lambda expression may be a variable arity parameter, indicated by an ellipsis following the type in a normal parameter specifier. At most one variable arity parameter is permitted for a lambda expression. It is a compile-time error if a variable arity parameter appears anywhere in the list of normal parameter specifiers except the last position.
 
 Each formal parameter of a lambda expression has either an inferred type or a declared type:
 
-If a formal parameter is specified either by a parameter specifier that uses var, or by an identifier instead of a parameter specifier, then the formal parameter has an inferred type. The type is inferred from the functional interface type targeted by the lambda expression (§15.27.3).
+If a formal parameter is specified either by a normal parameter specifier that uses var, or by a concise parameter specifier, then the formal parameter has an inferred type. The type is inferred from the functional interface type targeted by the lambda expression (§15.27.3).
 
-If a formal parameter is specified by a parameter specifier that does not use var, then the formal parameter has a declared type. The declared type is determined as follows:
+If a formal parameter is specified by a normal parameter specifier that does not use var, then the formal parameter has a declared type. The declared type is determined as follows:
 
 If the formal parameter is not a variable arity parameter, then the declared type is denoted by UnannType if no bracket pairs appear in UnannType and VariableDeclaratorId, and specified by §10.2 otherwise.
 
@@ -4959,11 +4969,11 @@ References to a formal parameter from a nested class or interface, or a nested l
 
 It is a compile-time error for a lambda expression to declare two formal parameters with the same name. (That is, their declarations mention the same Identifier.)
 
-In Java SE 8, the use of _ as the name of a lambda parameter was forbidden, and its use discouraged as the name for other kinds of variable (§4.12.3). As of Java SE 9, _ is a keyword (§3.9) so it cannot be used as a variable name in any context.
+Note that, in contrast, it is possible for a lambda expression to declare more than one unnamed lambda parameter, such as (_, _) -> BODY or (String _, int _) -> BODY.
 
 It is a compile-time error if a formal parameter that is declared final is assigned to within the body of the lambda expression.
 
-When the lambda expression is invoked (via a method invocation expression (§15.12)), the values of the actual argument expressions initialize newly created parameter variables, each of the declared or inferred type, before execution of the lambda body. The Identifier that appears in the LambdaParameter or directly in the LambdaParameterList or LambdaParameters may be used as a simple name in the lambda body to refer to the formal parameter.
+When the lambda expression is invoked (via a method invocation expression (§15.12)), the values of the actual argument expressions initialize newly created parameter variables, each of the declared or inferred type, before execution of the lambda body. An Identifier that appears in the NormalLambdaParameter or ConciseLambdaParameter may be used as a simple name in the lambda body to refer to the formal parameter.
 
 15.27.2. Lambda Body
 
@@ -4973,7 +4983,7 @@ LambdaBody:
 Expression
 Block
 
-Unlike code appearing in anonymous class declarations, the meaning of names and the this and super keywords appearing in a lambda body, along with the accessibility of referenced declarations, are the same as in the surrounding context (except that lambda parameters introduce new names).
+Unlike code appearing in anonymous class declarations, the meaning of names and the this and super keywords appearing in a lambda body, along with the accessibility of referenced declarations, are the same as in the surrounding context (except that lambda parameters may introduce new names).
 
 The transparency of this (both explicit and implicit) in the body of a lambda expression - that is, treating it the same as in the surrounding context - allows more flexibility for implementations, and prevents the meaning of unqualified names in the body from being dependent on overload resolution.
 
@@ -5199,7 +5209,7 @@ SwitchLabel : {SwitchLabel :} BlockStatements
 SwitchLabel:
 case CaseConstant {, CaseConstant}
 case null [, default]
-case CasePattern [Guard]
+case CasePattern {, CasePattern} [Guard]
 default
 CaseConstant:
 ConditionalExpression

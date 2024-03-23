@@ -67,9 +67,7 @@ Fully qualified and canonical names (§6.7) are also discussed in this chapter.
 
 6.1. Declarations
 
-A declaration introduces an entity into a program and includes an identifier (§3.8) that can be used in a name to refer to this entity. The identifier is constrained to avoid certain contextual keywords when the entity being introduced is a class, interface, or type parameter.
-
-A declared entity is one of the following:
+A declaration introduces one of the following entities into a program:
 
 A module, declared in a module declaration (§7.7)
 
@@ -142,6 +140,24 @@ A local class declared by an record declaration
 A local interface declared by a normal interface declaration
 
 Constructors (§8.8, §8.10.4) are also introduced by declarations, but use the name of the class in which they are declared rather than introducing a new name.
+
+A declaration commonly includes an identifier (§3.8) that can be used in a name to refer to the declared entity. The identifier is constrained to avoid certain contextual keywords when the entity being introduced is a class, interface, or type parameter.
+
+If a declaration does not include an identifier, but instead includes the keyword _ (underscore), then the entity cannot be referred to by name. The following kinds of entity may be declared using an underscore:
+
+A local variable, one of the following:
+
+A local variable declared by a local variable declaration statement (§14.4.2)
+
+A local variable declared by a for statement or a try-with-resources statement (§14.14, §14.20.3)
+
+A local variable declared by a pattern (§14.30.1)
+
+An exception parameter of an exception handler declared in a catch clause of a try statement (§14.20)
+
+A formal parameter of a lambda expression (§15.27.1)
+
+A local variable, exception parameter, or lambda parameter that is declared using an underscore is called an unnamed local variable, unnamed exception parameter, or unnamed lambda parameter, respectively.
 
 The declaration of a generic class or interface (class C<T> ... or interface C<T> ...) introduces both a class named C and a family of types: the raw type C, the parameterized type C<Foo>, the parameterized type C<Bar>, etc.
 

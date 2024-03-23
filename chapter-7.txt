@@ -176,7 +176,7 @@ A package declaration (§7.4), giving the fully qualified name (§6.7) of the pa
 
 A compilation unit that has no package declaration is part of an unnamed package (§7.4.2).
 
-import declarations (§7.5) that allow classes and interface from other packages, and static members of classes and interfaces, to be referred to using their simple names.
+import declarations (§7.5) that allow classes and interfaces from other packages, and static members of classes and interfaces, to be referred to using their simple names.
 
 Top level declarations of classes and interfaces (§7.6).
 

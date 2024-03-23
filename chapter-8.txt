@@ -236,7 +236,7 @@ public final class Math {
 
 8.1.1.2. sealed, non-sealed, and final Classes
 
-A class can be declared sealed if all its direct subclasses are known when the class is declared (§8.1.6), and no other direct subclasses are desired or required .
+A class can be declared sealed if all its direct subclasses are known when the class is declared (§8.1.6), and no other direct subclasses are desired or required.
 
 Explicit and exhaustive control over a class's direct subclasses is useful when the class hierarchy is used to model the kinds of values in a domain, rather than as a mechanism for code inheritance and reuse. The direct subclasses may themselves be declared sealed in order to further control the class hierarchy.
 
@@ -1140,6 +1140,7 @@ VariableDeclarator:
 VariableDeclaratorId [= VariableInitializer]
 VariableDeclaratorId:
 Identifier [Dims]
+_
 VariableInitializer:
 Expression
 ArrayInitializer
@@ -1174,7 +1175,7 @@ The following production from §4.3 is shown here for convenience:
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-Each declarator in a FieldDeclaration declares one field. The Identifier in a declarator may be used in a name to refer to the field.
+Each declarator in a FieldDeclaration declares one field. The declarator must include an Identifier, or a compile-time error occurs. The Identifier may be used in a name to refer to the field.
 
 More than one field may be declared in a single FieldDeclaration by using more than one declarator; the FieldModifiers and UnannType apply to all the declarators in the declaration.
 
@@ -1791,6 +1792,7 @@ The following productions from §8.3 and §4.3 are shown here for convenience:
 
 VariableDeclaratorId:
 Identifier [Dims]
+_
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
@@ -1807,6 +1809,8 @@ It is a compile-time error if final appears more than once as a modifier for a f
 The scope and shadowing of a formal parameter is specified in §6.3 and §6.4.
 
 References to a formal parameter from a nested class or interface, or a lambda expression, are restricted, as specified in §6.5.6.1.
+
+Every declaration of a formal parameter of a method or constructor must include an Identifier, otherwise a compile-time error occurs.
 
 It is a compile-time error for a method or constructor to declare two formal parameters with the same name. (That is, their declarations mention the same Identifier.)
 
@@ -2313,6 +2317,8 @@ No method declared in C has a signature that is a subsignature (§8.4.2) of the 
 No concrete method inherited by C from its direct superclass type has a signature that is a subsignature of the signature of m as a member of D.
 
 There exists no method m' that is a member of the direct superclass type or a direct superinterface type of C, D' (m distinct from m', D distinct from D'), such that m' overrides from the class or interface of D' the declaration of the method m (§8.4.8.1, §9.4.1.1).
+
+Inheritance for interfaces is defined in §9.1.3.
 
 A class does not inherit private or static methods from its superinterface types.
 
@@ -3759,6 +3765,8 @@ A record component may be a variable arity record component, indicated by an ell
 The rules concerning annotation modifiers for a record component are specified in §9.7.4 and §9.7.5.
 
 Annotations on a record component are available via reflection if their annotation interfaces are applicable in the record component context (§9.6.4.1). Independently, annotations on a record component are propagated to the declarations of members and constructors of the record class if their annotation interfaces are applicable in other contexts (§8.10.3, §8.10.4).
+
+Every declaration of a record component must include an Identifier, otherwise a compile-time error occurs.
 
 It is a compile-time error for a record declaration to have a record component with the name clone, finalize, getClass, hashCode, notify, notifyAll, toString, or wait.
 

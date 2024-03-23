@@ -199,6 +199,7 @@ VariableDeclarator:
 VariableDeclaratorId [= VariableInitializer]
 VariableDeclaratorId:
 Identifier [Dims]
+_
 VariableInitializer:
 Expression
 ArrayInitializer
@@ -485,7 +486,7 @@ SwitchLabel : {SwitchLabel :} BlockStatements
 SwitchLabel:
 case CaseConstant {, CaseConstant}
 case null [, default]
-case CasePattern [Guard]
+case CasePattern {, CasePattern} [Guard]
 default
 CaseConstant:
 ConditionalExpression
@@ -561,9 +562,14 @@ RecordPattern
 TypePattern:
 LocalVariableDeclaration
 RecordPattern:
-ReferenceType ( [PatternList] )
-PatternList:
-Pattern {, Pattern }
+ReferenceType ( [ComponentPatternList] )
+ComponentPatternList:
+ComponentPattern {, ComponentPattern }
+ComponentPattern:
+Pattern
+MatchAllPattern
+MatchAllPattern:
+_
 
 Productions from §15 (Expressions)
 
@@ -642,16 +648,19 @@ LambdaExpression:
 LambdaParameters -> LambdaBody
 LambdaParameters:
 ( [LambdaParameterList] )
-Identifier
+ConciseLambdaParameter
 LambdaParameterList:
-LambdaParameter {, LambdaParameter}
-Identifier {, Identifier}
-LambdaParameter:
+NormalLambdaParameter {, NormalLambdaParameter}
+ConciseLambdaParameter {, ConciseLambdaParameter}
+NormalLambdaParameter:
 {VariableModifier} LambdaParameterType VariableDeclaratorId
 VariableArityParameter
 LambdaParameterType:
 UnannType
 var
+ConciseLambdaParameter:
+Identifier
+_
 LambdaBody:
 Expression
 Block

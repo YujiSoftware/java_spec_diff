@@ -219,6 +219,7 @@ VariableDeclarator:
 VariableDeclaratorId [= VariableInitializer]
 VariableDeclaratorId:
 Identifier [Dims]
+_
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 VariableInitializer:
@@ -242,6 +243,12 @@ The rules concerning annotation modifiers for a local variable declaration are s
 If the keyword final appears as a modifier for a local variable declaration, then the local variable is a final variable (§4.12.4).
 
 It is a compile-time error if final appears more than once as a modifier for a local variable declaration.
+
+It is a compile-time error if a local variable declaration that (i) does not include an Identifier and (ii) does not have an initializer, appears in any of the following locations:
+
+a local variable declaration statement in a block (§14.4.2)
+
+the header of a basic for statement (§14.14.1)
 
 It is a compile-time error if the LocalVariableType is var and any of the following are true:
 
@@ -275,7 +282,7 @@ These restrictions help to avoid confusion about the type being represented by v
 
 14.4.1. Local Variable Declarators and Types
 
-Each declarator in a local variable declaration declares one local variable, whose name is the Identifier that appears in the declarator.
+Each declarator in a local variable declaration declares one local variable. If the declarator includes an Identifier then this is the name of the local variable, otherwise the local variable is unnamed (§6.1).
 
 If the optional keyword final appears at the start of the declaration, the variable being declared is a final variable (§4.12.4).
 
@@ -648,7 +655,7 @@ SwitchLabel : {SwitchLabel :} BlockStatements
 SwitchLabel:
 case CaseConstant {, CaseConstant}
 case null [, default]
-case CasePattern [Guard]
+case CasePattern {, CasePattern} [Guard]
 default
 CaseConstant:
 ConditionalExpression
@@ -665,13 +672,51 @@ Switch labeled statement groups, which use : to introduce switch labeled block s
 
 Every switch rule and switch labeled statement group starts with a switch label, which is either a case label or a default label. Multiple switch labels are permitted for a switch labeled statement group.
 
-A case label consists of either a list of case constants, a null literal, or a case pattern.
+A case label has either a (non-empty) list of case constants, a null literal, or a (non-empty) list of case patterns.
 
 Every case constant must be either a constant expression (§15.29), or the name of an enum constant (§8.9.1), otherwise a compile-time error occurs.
 
 A case label with a null literal may have an optional default.
 
-A case label with a case pattern may have an optional when expression, known as a guard, which represents a further test on values that match the pattern. A case label is said to be unguarded if either (i) it has no guard, or (ii) it has a guard that is a constant expression (§15.29) with value true; and guarded otherwise.
+A case label with case patterns may have an optional when expression, known as a guard, which represents a further test on values that match the patterns. A case label is said to be unguarded if either (i) it has no guard, or (ii) it has a guard that is a constant expression (§15.29) with value true; and guarded otherwise.
+
+It is a compile-time error for a case label to have more than one case pattern and declare any pattern variables (other than those declared by a guard associated with the case label).
+
+If a case label with more than one case pattern could declare pattern variables, then it would not be clear which variables would be initialized if the case label were to apply. For example:
+
+
+Object obj = ...;
+switch (obj) { 
+  case Integer i, Boolean b -> { 
+    ...       // Error! Is i or b initialized?
+  } 
+  ... 
+}
+
+
+Even if only one of the case patterns declares a pattern variable, it would still not be clear whether the variable was initialized or not; for example:
+
+
+Object obj = ...;
+switch (obj) { 
+  case Integer i, Boolean _ -> { 
+    ...       // Error! Is i initialized?
+  } 
+  ... 
+}
+
+
+The following does not result in a compile-time error:
+
+
+Object obj = ...;
+switch (obj) { 
+  case Integer _, Boolean _ -> { 
+    ...       // Matches both an Integer and a Boolean
+  } 
+  ... 
+}
+
 
 Switch labels and their case constants, null literals, and case patterns are said to be associated with the switch block.
 
@@ -760,6 +805,19 @@ switch (j) {
 }
     
 
+A case label with more than one case pattern is dominated if any one of these patterns is dominated by a pattern that appears as a case pattern in a preceding unguarded case label, and so the following results in a compile-time error (as the type pattern Integer _ is dominated by the type pattern Number _):
+
+
+    Object obj = ...
+    switch (obj) {
+      case Number _ ->
+        System.out.println("A Number");
+      case Integer _, String _ ->       // Error - dominated!
+        System.out.println("An Integer or a String");
+      ...
+    }  
+    
+
 A case label with a case constant c is dominated if one of the following holds:
 
 c is a constant expression of a primitive type S, and there is a preceding case label in the switch block with an unguarded case pattern p, where p is unconditional for the wrapper class of S.
@@ -784,9 +842,11 @@ A default label or a case null, default label is dominated if there is a precedi
 
 A case label with a case pattern that is unconditional for the type of the selector expression will, as the name suggests, match every value and so behave like a default label. A switch block can not have more than one switch label that acts like a default.
 
+It is a compile-time error if there is a case label with n (n>1) case patterns p1, ..., pn in a switch block where one of the patterns pi (1≤i<n) dominates another of the patterns pj (i<j≤n).
+
 It is a compile-time error if any of the following holds:
 
-There is a default label in the switch block that precedes a case label with a case pattern.
+There is a default label in the switch block that precedes a case label with case patterns.
 
 There is a default label in the switch block that precedes a case label with a null literal.
 
@@ -794,7 +854,7 @@ There is a case null, default label in the switch block followed by any other sw
 
 If used, a default label should come last in a switch block.
 
-For compatibility reasons, a default label may appear before case labels that do not have a null literal or a case pattern.
+For compatibility reasons, a default label may appear before case labels that do not have a null literal or case patterns.
 
 
 int i = ...;
@@ -808,7 +868,7 @@ switch(i) {
 
 If used, a case null, default label should come last in a switch block.
 
-It is a compile-time error if, in a switch block that consists of switch labeled statement groups, a statement is labeled with a case pattern that declares one or more pattern variables, and either:
+It is a compile-time error if, in a switch block that consists of switch labeled statement groups, a statement is labeled with a case label that declares one or more pattern variables (§6.3.3), and either:
 
 An immediately preceding statement in the switch block can complete normally (§14.22), or
 
@@ -988,7 +1048,7 @@ A non-empty set of patterns EP is equivalent to a single pattern ep if one of th
 
 EP consists of type patterns whose types all have the same erasure T, and ep is a type pattern of type T.
 
-EP consists of record patterns whose types all erase to the same record class R with k (k≥1) components and for every record component the set containing the corresponding component patterns from the record patterns is equivalent to a single pattern qj (1≤j≤k), and ep is the record pattern of type R with a pattern list consisting of the component patterns q1,...qk.
+EP consists of record patterns whose types all erase to the same record class R with k (k≥1) components and for every record component the set containing the corresponding component patterns from the record patterns is equivalent to a single pattern qj (1≤j≤k), and ep is the record pattern of type R with a component pattern list consisting of the component patterns q1,...qk.
 
 Ordinarily record patterns match only a subset of the values of the record type. However, a number of record patterns in a switch block can combine to actually match all of the values of the record type. For example:
 
@@ -1046,17 +1106,19 @@ A case label with a case constant c applies to a value that is of type char, byt
 
 Equality is defined in terms of the == operator unless the value is a String, in which case equality is defined in terms of the equals method of class String.
 
-Determining that a case label with a case pattern p applies to a value proceeds first by checking if the value matches the pattern p (§14.30.2).
+Determining that a case label with case patterns p1, ..., pn (n≥1) applies to a value proceeds by finding the first (if any) case pattern pi (1≤i≤n) that applies to the value.
 
-If pattern matching completes abruptly then the process of determining which switch label applies completes abruptly for the same reason.
+Determining that a case pattern applies to a value proceeds first by checking the value matches the pattern (§14.30.2). Then:
 
-If pattern matching succeeds and the case label is unguarded then this case label applies.
+If pattern matching completes abruptly then the whole process of determining which switch label applies completes abruptly for the same reason.
+
+If pattern matching succeeds and the case label is unguarded then this case pattern applies.
 
 If pattern matching succeeds and the case label is guarded, then the guard is evaluated. If the result is of type Boolean, it is subjected to unboxing conversion (§5.1.8).
 
-If evaluation of the guard or the subsequent unboxing conversion (if any) completes abruptly for some reason, the process of determining which switch label applies completes abruptly for the same reason.
+If evaluation of the guard or the subsequent unboxing conversion (if any) completes abruptly for some reason, then the whole process of determining which switch label applies completes abruptly for the same reason.
 
-Otherwise, if the resulting value is true then the case label applies.
+Otherwise, if the resulting value is true then the case pattern applies.
 
 A case null, default label applies to every value.
 
@@ -1501,12 +1563,13 @@ VariableDeclarator:
 VariableDeclaratorId [= VariableInitializer]
 VariableDeclaratorId:
 Identifier [Dims]
+_
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
 The type of the Expression must be an array type (§10.1) or a subtype of the raw type Iterable, or a compile-time error occurs.
 
-The header of the enhanced for statement declares a local variable whose name is the identifier given by VariableDeclaratorId. When the enhanced for statement is executed, the local variable is initialized, on each iteration of the loop, to successive elements of the Iterable or the array produced by the expression.
+The header of the enhanced for statement either declares a local variable whose name is the identifier given by VariableDeclaratorId, or declares an unnamed local variable (§6.3). When the enhanced for statement is executed, the local variable is initialized, on each iteration of the loop, to successive elements of the Iterable or the array produced by the expression.
 
 The rules for a local variable declared in the header of an enhanced for statement are specified in §14.4, disregarding any rules in that section which apply when the LocalVariableType is var. In addition, all of the following must be true, or a compile-time error occurs:
 
@@ -1541,7 +1604,7 @@ The precise meaning of the enhanced for statement is given by translation into a
 If the type of Expression is a subtype of Iterable, then the basic for statement has this form:
 
 for (I #i = Expression.iterator(); #i.hasNext(); ) {
-    {VariableModifier} T Identifier = (TargetType) #i.next();
+    {VariableModifier} T VarDeclId = (TargetType) #i.next();
     Statement
 }
 
@@ -1557,12 +1620,14 @@ T is the type of the local variable as determined above.
 
 If T is a reference type, then TargetType is T. Otherwise, TargetType is the upper bound of the capture conversion (§5.1.10) of the type argument of I, or Object if I is raw.
 
+If the declaration of a local variable in the header includes an identifier then VarDeclId is defined to be Identifier as given in the header; otherwise VarDeclId is defined to be _ (underscore).
+
 Otherwise, the Expression necessarily has an array type, S[], and the basic for statement has this form:
 
 S[] #a = Expression;
 L1: L2: ... Lm:
 for (int #i = 0; #i < #a.length; #i++) {
-    {VariableModifier} T Identifier = #a[#i];
+    {VariableModifier} T VarDeclId = #a[#i];
     Statement
 }
 
@@ -1575,6 +1640,8 @@ L1 ... Lm is the (possibly empty) sequence of labels immediately preceding the e
 {VariableModifier} is as given in the header of the enhanced for statement.
 
 T is the type of the local variable as determined above.
+
+If the declaration of a local variable in the header includes an identifier then VarDeclId is defined to be Identifier as given in the header; otherwise VarDeclId is defined to be _ (underscore).
 
 For example, this code:
 
@@ -1932,6 +1999,7 @@ Annotation
 final
 VariableDeclaratorId:
 Identifier [Dims]
+_
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
@@ -2164,6 +2232,7 @@ VariableDeclarator:
 VariableDeclaratorId [= VariableInitializer]
 VariableDeclaratorId:
 Identifier [Dims]
+_
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 VariableInitializer:
@@ -2191,6 +2260,8 @@ The type of a local variable declared in a resource specification is specified i
 The type of a local variable declared in a resource specification, or the type of an existing variable referred to in a resource specification, must be a subtype of AutoCloseable, or a compile-time error occurs.
 
 It is a compile-time error for a resource specification to declare two local variables with the same name.
+
+Note that a resource specification may declare more than one unnamed local variable (§6.1).
 
 Resources are final, in that:
 
@@ -2225,7 +2296,7 @@ T is the type of the variable denoted by VariableAccess and #r is an automatical
 
 The meaning of a basic try-with-resources statement of the form:
 
-try ({VariableModifier} R Identifier = Expression ...)
+try ({VariableModifier} R VariableDeclaratorId = Expression ...)
     Block
 
 
@@ -2257,6 +2328,8 @@ is given by the following translation to a local variable declaration and a try-
 
 
 {VariableModifierNoFinal} is defined as {VariableModifier} without final, if present.
+
+If VariableDeclaratorId is an identifier then Identifier is defined to be that identifier, otherwise Identifier is defined to be an automatically generated identifier that is distinct from any other identifiers (automatically generated or otherwise) that are in scope at the point where the try-with-resources statement occurs.
 
 #t, #primaryExc, and #suppressedExc are automatically generated identifiers that are distinct from any other identifiers (automatically generated or otherwise) that are in scope at the point where the try-with-resources statement occurs.
 
@@ -2646,9 +2719,14 @@ RecordPattern
 TypePattern:
 LocalVariableDeclaration
 RecordPattern:
-ReferenceType ( [PatternList] )
-PatternList:
-Pattern {, Pattern }
+ReferenceType ( [ComponentPatternList] )
+ComponentPatternList:
+ComponentPattern {, ComponentPattern }
+ComponentPattern:
+Pattern
+MatchAllPattern
+MatchAllPattern:
+_
 
 The following productions from §4.3, §8.3, §8.4.1, and §14.4 are shown here for convenience:
 
@@ -2666,14 +2744,15 @@ VariableDeclarator:
 VariableDeclaratorId [= VariableInitializer]
 VariableDeclaratorId:
 Identifier [Dims]
+_
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
 See §8.3 for UnannType.
 
-A pattern is nested in a record pattern if (1) it appears directly in the pattern list of the record pattern, or (2) it is nested in a record pattern that appears directly in the pattern list of the record pattern. A pattern is top level if it is not nested in a record pattern.
+A pattern is nested in a record pattern if (1) it appears directly in the component pattern list of the record pattern, or (2) it is nested in a record pattern that appears directly in the component pattern list of the record pattern. A pattern is top level if it is not nested in a record pattern.
 
-A type pattern declares one local variable, known as a pattern variable. The Identifier in the local variable declaration specifies the name of the pattern variable.
+A type pattern declares one local variable, known as a pattern variable. If the declaration includes an identifier then this specifies the name of the pattern variable, otherwise the pattern variable is called an unnamed pattern variable.
 
 The rules for a local variable declared in a type pattern are specified in §14.4. In addition, all of the following must be true, or a compile-time error occurs:
 
@@ -2691,7 +2770,7 @@ The type of a pattern variable declared in a nested type pattern is determined a
 
 If the LocalVariableType is UnannType then the type of the pattern variable is denoted by UnannType.
 
-If the LocalVariableType is var then the type pattern must appear directly in the pattern list of a record pattern, or a compile-time error occurs.
+If the LocalVariableType is var then the type pattern must appear directly in the component pattern list of a record pattern, or a compile-time error occurs.
 
 Let R be the type of the record pattern, and let T be the type of the corresponding component field in R (§8.10.3). The type of the pattern variable is the upward projection of T with respect to all synthetic type variables mentioned by T.
 
@@ -2703,11 +2782,11 @@ record R<T>(ArrayList<T> a){}
 
 Given the record pattern R<String>(var b), the type of the pattern variable b is ArrayList<String>.
 
-A type pattern is said to be null matching if it is appears directly in the pattern list of a record pattern with type R, where the corresponding record component of R has type U, and the type pattern is unconditional for the type U (§14.30.3).
+A type pattern is said to be null matching if it is appears directly in the component pattern list of a record pattern with type R, where the corresponding record component of R has type U, and the type pattern is unconditional for the type U (§14.30.3).
 
 Note that this compile-time property of type patterns is used in the run-time process of pattern matching (§14.30.2), so it is associated with the type pattern for use at run time.
 
-A record pattern consists of a ReferenceType and a pattern list. The patterns appearing directly in the pattern list, if any, are called the component patterns of the record pattern. If ReferenceType is not a record class type (§8.10) then a compile-time error occurs.
+A record pattern consists of a ReferenceType and a component pattern list containing component patterns, if any. If ReferenceType is not a record class type (§8.10) then a compile-time error occurs.
 
 If the ReferenceType is a raw type, then the type of the record pattern is inferred, as described in §18.5.5. It is a compile-time error if no type can be inferred for the record pattern.
 
@@ -2717,11 +2796,17 @@ Future versions of the Java Programming Language may lift this restriction on an
 
 Otherwise, the type of the record pattern is ReferenceType.
 
-The length of the record pattern's pattern list must be the same as the length of the record component list in the declaration of the record class named by ReferenceType otherwise a compile-time error occurs.
+The length of the record pattern's component pattern list must be the same as the length of the record component list in the declaration of the record class named by ReferenceType otherwise a compile-time error occurs.
 
-A record pattern does not directly declare any pattern variables itself, but may contain declarations of pattern variables in the pattern list.
+A record pattern does not directly declare any pattern variables itself, but may contain declarations of pattern variables in the component pattern list.
 
 It is a compile-time error if a record pattern contains more than one declaration of a pattern variable with the same name.
+
+The match-all pattern is a special pattern that declares no pattern variables and can only appear directly in the component pattern list of a record pattern r.
+
+Let R be the type of the record pattern r, and let T be the type of the corresponding component field in R (§8.10.3). The type of the match-all pattern is the upward projection of T with respect to all synthetic type variables mentioned by T.
+
+It can be seen that a match-all pattern is equivalent to a nested type pattern that declares an unnamed pattern variable and whose LocalVariableType is var.
 
 14.30.2. Pattern Matching
 
@@ -2737,7 +2822,7 @@ If the null reference matches, then the pattern variable declared by the type pa
 
 If the null reference does not match, then the pattern variable declared by the type pattern is not initialized.
 
-A value v that is not the null reference matches a type pattern of type T if v can be cast to T without raising a ClassCastException; and does not match otherwise.
+A value v that is not the null reference matches a type pattern of type T if v can be converted by testing conversion (§5.7) to the target type T without raising a ClassCastException; and does not match otherwise.
 
 If v matches, then the pattern variable declared by the type pattern is initialized to v.
 
@@ -2747,27 +2832,33 @@ The null reference does not match a record pattern.
 
 In this case, any pattern variables appearing in declarations contained in the record pattern are not initialized.
 
-A value v that is not the null reference matches a record pattern with type R and pattern list L if (i) v can be cast to R without raising a ClassCastException; and (ii) each record component of v matches the corresponding component pattern in L; and does not match otherwise.
+A value v that is not the null reference matches a record pattern with type R and component pattern list L if (i) v can be converted by testing conversion (§5.7) to the target type R without raising a ClassCastException; and (ii) each record component of v matches the corresponding component pattern in L; and does not match otherwise.
 
 Each record component of v is determined by invoking the accessor method of v corresponding to that component. If execution of the invocation of the accessor method completes abruptly for reason S, then pattern matching completes abruptly by throwing a MatchException with cause S.
 
-A pattern variable declared by a pattern appearing in the pattern list of a record pattern is initialized only if all the patterns in the list match.
+A pattern variable declared by a pattern appearing in the component pattern list of a record pattern is initialized only if all the patterns in the list match.
+
+Every value matches a match-all pattern.
 
 14.30.3. Properties of Patterns
 
 A pattern p is said to be applicable at a type T if one of the following rules apply:
 
-A type pattern that declares a pattern variable of a reference type U is applicable at a reference type T if T is checked cast convertible to U (§5.5).
+A type pattern that declares a pattern variable of a reference type U is applicable at a reference type T if there is a testing conversion (§5.7) from type T to type U.
 
 A type pattern that declares a pattern variable of a primitive type P is applicable at the type P.
 
-A record pattern with type R and pattern list L is applicable at type T if (i) T is checked cast convertible to R, and (ii) for every component pattern p appearing in L, if any, p is applicable at the type of the corresponding component field in R.
+A record pattern with type R and pattern list L is applicable at type T if (i) there is a testing conversion (§5.7) from type T to type R, and (ii) for every component pattern p appearing in L, if any, p is applicable at the type of the corresponding component field in R.
 
-A pattern p is said to be unconditional for a type T if every value of type T will match p, and so the testing aspect of pattern matching could be elided. It is defined as follows:
+A match-all pattern is applicable at every type T.
+
+A pattern p is said to be unconditional for a type T if it can be determined at compile time that every value of type T will match p, and so the run time, testing aspect of pattern matching could be elided. It is defined as follows:
 
 A type pattern that declares a pattern variable of a reference type S is unconditional for a reference type T if the erasure of T is a subtype of the erasure of S.
 
 A type pattern that declares a pattern variable of a primitive type P is unconditional for the type P.
+
+A match-all pattern is unconditional for every type T.
 
 Note that no record pattern is unconditional because the null reference does not match any record pattern.
 
@@ -2777,4 +2868,6 @@ A pattern p dominates a type pattern that declares a pattern variable of type T 
 
 A pattern p dominates a record pattern with type R if p is unconditional for R.
 
-A record pattern with type R and pattern list L dominates another record pattern with type S and pattern list M if (i) R and S name the same record class, and (ii) every component pattern, if any, in L dominates the corresponding component pattern in M.
+A record pattern with type R and component pattern list L dominates another record pattern with type S and component pattern list M if (i) R and S name the same record class, and (ii) every component pattern, if any, in L dominates the corresponding component pattern in M.
+
+A pattern p dominates a match-all pattern with type T if p is unconditional for T.

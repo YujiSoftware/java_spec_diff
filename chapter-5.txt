@@ -23,6 +23,7 @@ Table of Contents
 5.4. String Contexts
 5.5. Casting Contexts
 5.6. Numeric Contexts
+5.7. Testing Contexts
 
 Every expression written in the Java programming language either produces no result (§15.1) or has a type that can be deduced at compile time (§15.3). When an expression appears in most contexts, it must be compatible with a type expected in that context; this type is called the target type. For convenience, compatibility of an expression with its surrounding context is facilitated in two ways:
 
@@ -71,7 +72,7 @@ Capture conversions
 
 String conversions
 
-There are six kinds of conversion contexts in which poly expressions may be influenced by context or implicit conversions may occur. Each kind of context has different rules for poly expression typing and allows conversions in some of the categories above but not others. The contexts are:
+There are seven kinds of conversion contexts in which poly expressions may be influenced by context or implicit conversions may occur. Each kind of context has different rules for poly expression typing and allows conversions in some of the categories above but not others. The contexts are:
 
 Assignment contexts (§5.2, §15.26), in which an expression's value is bound to a named variable. Primitive and reference types are subject to widening, values may be boxed or unboxed, and some primitive constant expressions may be subject to narrowing. An unchecked conversion may also occur.
 
@@ -84,6 +85,8 @@ String contexts (§5.4, §15.18.1), in which a value of any type is converted to
 Casting contexts (§5.5), in which an expression's value is converted to a type explicitly specified by a cast operator (§15.16). Casting contexts are more inclusive than assignment or loose invocation contexts, allowing any specific conversion other than a string conversion, but certain casts to a reference type are checked for correctness at run time.
 
 Numeric contexts (§5.6), in which the operands of a numeric operator or some other expressions that operate on numbers may be widened to a common type.
+
+Testing contexts (§5.7), in which an expression's value is converted to a type explicitly specified by a pattern (§14.30). Testing contexts are more inclusive than assignment or loose invocation contexts, but not as inclusive as casting contexts.
 
 The term "conversion" is also used to describe, without being specific, any conversions allowed in a particular context. For example, we say that an expression that is the initializer of a local variable is subject to "assignment conversion", meaning that a specific conversion will be implicitly chosen for that expression according to the rules for the assignment context. As another example, we say that an expression undergoes "casting conversion" to mean that the expression's type will be converted as permitted in a casting context.
 
@@ -1045,10 +1048,6 @@ If the expression has the null type, then the expression may be cast to any refe
 
 If a casting context makes use of a narrowing reference conversion that is checked or partially unchecked (§5.1.6.2, §5.1.6.3), then a run time check will be performed on the class of the expression's value, possibly causing a ClassCastException. Otherwise, no run time check is performed.
 
-If an expression can be converted to a reference type by a casting conversion other than a narrowing reference conversion which is unchecked, we say the expression (or its value) is checked cast compatible with the reference type.
-
-If an expression of reference type S is checked cast compatible with another reference type T, we say that the type S is checked cast convertible to type T.
-
 The following tables enumerate which conversions are used in certain casting contexts. Each conversion is signified by a symbol:
 
 - signifies no conversion allowed
@@ -1357,3 +1356,23 @@ This program produces the output:
 The example converts the ASCII character G to the ASCII control-G (BEL), by masking off all but the low 5 bits of the character. The 7 is the numeric value of this control character.
 
 
+
+5.7. Testing Contexts
+
+Testing contexts allow the operand of a pattern match operator (§15.20.2), or the selector expression of a switch expression or statement that has at least one pattern case label associated with its switch block (§14.11.1) to be converted to a type as part of the process of pattern matching. As pattern matching is an inherently conditional process (§14.30.2), it is expected that a testing context will make use of conversions that may fail at run time.
+
+Testing contexts use similar conversions for reference types as casting contexts except that they do not permit narrowing reference conversions that are unchecked (§5.1.6.2).
+
+If the expression is of a primitive type, then a testing context allows the use of an identity conversion (§5.1.1).
+
+If the expression is of a reference type, then a testing context allows the use of one of the following:
+
+an identity conversion (§5.1.1)
+
+a widening reference conversion (§5.1.5)
+
+a narrowing reference conversion that is checked (§5.1.6.2)
+
+If the expression has the null type, then the expression may be converted to any reference type.
+
+If a testing context makes use of a narrowing reference conversion, then a run time check will be performed on the class of the expression's value, possibly causing a ClassCastException. Otherwise, no run time check is performed.
