@@ -78,7 +78,7 @@ This chapter first specifies some properties that any binary format for the Java
 
 13.1. The Form of a Binary
 
-Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 22 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
+Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 23 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
 
 A class file corresponding to a class or interface declaration must have certain properties. A number of these properties are specifically chosen to support source code transformations that preserve binary compatibility. The required properties are:
 
