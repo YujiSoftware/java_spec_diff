@@ -626,7 +626,7 @@ V is definitely assigned after the assert statement iff V is definitely assigned
 
 V is definitely unassigned after the assert statement iff V is definitely unassigned before the assert statement and V is definitely unassigned after e1 when true.
 
-The following rule applies to a statement assert e1 : e2 :
+The following rule applies to a statement assert e1 : e2:
 
 V is [un]assigned before e2 iff V is [un]assigned after e1 when false.
 

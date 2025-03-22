@@ -92,7 +92,7 @@ The term "conversion" is also used to describe, without being specific, any conv
 
 Example 5.0-2. Conversions In Various Contexts
 
-class Test {			
+class Test {
     public static void main(String[] args) {
         // Casting conversion (5.5) of a float literal to
         // type int. Without the cast operator, this would
@@ -842,9 +842,9 @@ class Test {
     public static void main(String[] args) {
         // Assignments to variables of class type:
         Point p = new Point();
-        p = new Point3D(); 
+        p = new Point3D();
           // OK because Point3D is a subclass of Point
-        Point3D p3d = p; 
+        Point3D p3d = p;
           // Error: will require a cast because a Point
           // might not be a Point3D (even though it is,
           // dynamically, in this example.)
@@ -864,7 +864,7 @@ class Test {
         a = b;
           // Error: these are not arrays of the same primitive type
         Point3D[] p3da = new Point3D[3];
-        Point[] pa = p3da; 
+        Point[] pa = p3da;
           // OK: since we can assign a Point3D to a Point
         p3da = pa;
           // Error: (cast needed) since a Point
@@ -936,7 +936,7 @@ The value of cpvec can be assigned to pvec, because any reference that could be 
 
 The value of pvec cannot be assigned to cpvec, because not every reference that could be the value of an expression of type Point can correctly be the value of a variable of type ColoredPoint. If the value of pvec at run time were a reference to an instance of Point[], and the assignment to cpvec were allowed, a simple reference to a component of cpvec, say, cpvec[0], could return a Point, and a Point is not a ColoredPoint. Thus to allow such an assignment would allow a violation of the type system. A cast may be used (§5.5, §15.16) to ensure that pvec references a ColoredPoint[]:
 
-      cpvec = (ColoredPoint[])pvec;  // OK, but may throw an 
+      cpvec = (ColoredPoint[])pvec;  // OK, but may throw an
                                // exception at run time
     
 
@@ -1047,6 +1047,10 @@ an unboxing conversion followed by a widening primitive conversion
 If the expression has the null type, then the expression may be cast to any reference type.
 
 If a casting context makes use of a narrowing reference conversion that is checked or partially unchecked (§5.1.6.2, §5.1.6.3), then a run time check will be performed on the class of the expression's value, possibly causing a ClassCastException. Otherwise, no run time check is performed.
+
+If an expression can be converted to a reference type by a casting conversion other than a narrowing reference conversion that is unchecked, we say the expression (or its value) is checked cast compatible with the reference type.
+
+If an expression of reference type S is checked cast compatible with another reference type T, we say that the type S is checked cast convertible to type T.
 
 The following tables enumerate which conversions are used in certain casting contexts. Each conversion is signified by a symbol:
 
@@ -1333,13 +1337,13 @@ class Test {
         // First int*float is promoted to float*float, then
         // float==double is promoted to double==double:
         if (i * f == d) System.out.println("oops");
-		
+
         // A char&byte is promoted to int&int:
         byte b = 0x1f;
         char c = 'G';
         int control = c & b;
         System.out.println(Integer.toHexString(control));
-		
+
         // Here int:float is promoted to float:float:
         f = (b==0) ? i : 4.0f;
         System.out.println(1.0/f);

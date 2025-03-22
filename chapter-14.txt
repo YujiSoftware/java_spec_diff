@@ -309,7 +309,7 @@ The following code illustrates the typing of variables declared with var:
 
 var a = 1;                // a has type 'int'
 var b = java.util.List.of(1, 2);  // b has type 'List<Integer>'
-var c = "x".getClass();   // c has type 'Class<? extends String>' 
+var c = "x".getClass();   // c has type 'Class<? extends String>'
                           // (see JLS 15.12.2.6)
 var d = new Object() {};  // d has the type of the anonymous class
 var e = (CharSequence & Comparable<String>) "x";
@@ -457,7 +457,7 @@ class Test {
             while (n-- != 0) {
                 if (v1[j++] != v2[k++])
                     continue i;
-            } 
+            }
             return i - offset;
         }
         return -1;
@@ -566,13 +566,13 @@ This rule is motivated by a case that demands special treatment. Recall that the
 
 public class Foo {
     public static void main(String[] args) {
-        Baz.testAsserts(); 
+        Baz.testAsserts();
         // Will execute after Baz is initialized.
     }
 }
 class Bar {
     static {
-        Baz.testAsserts(); 
+        Baz.testAsserts();
         // Will execute before Baz is initialized!
     }
 }
@@ -580,8 +580,8 @@ class Baz extends Bar {
     static void testAsserts() {
         boolean enabled = false;
         assert  enabled = true;
-        System.out.println("Asserts " + 
-			   (enabled ? "enabled" : "disabled"));
+        System.out.println("Asserts " +
+                           (enabled ? "enabled" : "disabled"));
     }
 }
 
@@ -686,11 +686,11 @@ If a case label with more than one case pattern could declare pattern variables,
 
 
 Object obj = ...;
-switch (obj) { 
-  case Integer i, Boolean b -> { 
+switch (obj) {
+  case Integer i, Boolean b -> {
     ...       // Error! Is i or b initialized?
-  } 
-  ... 
+  }
+  ...
 }
 
 
@@ -698,11 +698,11 @@ Even if only one of the case patterns declares a pattern variable, it would stil
 
 
 Object obj = ...;
-switch (obj) { 
-  case Integer i, Boolean _ -> { 
+switch (obj) {
+  case Integer i, Boolean _ -> {
     ...       // Error! Is i initialized?
-  } 
-  ... 
+  }
+  ...
 }
 
 
@@ -710,11 +710,11 @@ The following does not result in a compile-time error:
 
 
 Object obj = ...;
-switch (obj) { 
-  case Integer _, Boolean _ -> { 
+switch (obj) {
+  case Integer _, Boolean _ -> {
     ...       // Matches both an Integer and a Boolean
-  } 
-  ... 
+  }
+  ...
 }
 
 
@@ -815,7 +815,7 @@ A case label with more than one case pattern is dominated if any one of these pa
       case Integer _, String _ ->       // Error - dominated!
         System.out.println("An Integer or a String");
       ...
-    }  
+    }
     
 
 A case label with a case constant c is dominated if one of the following holds:
@@ -976,7 +976,7 @@ static int testEnumExhaustive(E e) {
       case H -> 2;    // No default required!
   };
 }
-    
+
     
 
 The type T names an abstract sealed class or sealed interface C and for every permitted direct subclass or subinterface D of C, one of the following two conditions holds:
@@ -987,7 +987,6 @@ There is a type U that both names D and is a subtype of T, and P covers U.
 
 A default label is permitted, but not required, in the case where the switch block exhausts all the permitted direct subclasses and subinterfaces of an abstract sealed class or sealed interface. For example:
 
- 
 
 sealed interface I permits A, B, C {}
 final class A   implements I {}
@@ -1297,7 +1296,7 @@ class TwoMany {
         howMany(3);
         howManyAgain(1);
         howManyAgain(2);
-        howManyAgain(3);	
+        howManyAgain(3);
     }
 }
 

@@ -693,7 +693,7 @@ It is a compile-time error for a line terminator (§3.4) to appear after the ope
 
 The characters CR and LF are never an InputCharacter; each is recognized as constituting a LineTerminator, so may not appear in a character literal, even in the escape sequence \ LineTerminator.
 
-The character represented a character literal is the content of the character literal with any escape sequence interpreted, as if by execution of String.translateEscapes on the content.
+The character represented by a character literal is the content of the character literal with any escape sequence interpreted, as if by execution of String.translateEscapes on the content.
 
 Character literals can only represent UTF-16 code units (§3.1), i.e., they are limited to values from \u0000 to \uffff. Supplementary characters must be represented either as a surrogate pair within a char sequence, or as an integer, depending on the API they are used with.
 
@@ -896,21 +896,21 @@ class Test {
         String salutation = """
                             Hi,
                              "Bob"
-                            """;        
+                            """;
 
         // The empty string (zero length)
         String empty = """
-                       """;      
+                       """;
 
         // The two characters " LF
         String quote = """
                        "
-                       """; 
+                       """;
 
         // The two characters \ LF
         String backslash = """
                            \\
-                           """;  
+                           """;
     }
 }
 

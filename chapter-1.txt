@@ -16,7 +16,7 @@ The Java programming language is strongly and statically typed. This specificati
 
 The Java programming language is a relatively high-level language, in that details of the machine representation are not available through the language. It includes automatic storage management, typically using a garbage collector, to avoid the safety problems of explicit deallocation (as in C's free or C++'s delete). High-performance garbage-collected implementations can have bounded pauses to support systems programming and real-time applications. The language does not include any unsafe constructs, such as array accesses without index checking, since such unsafe constructs would cause a program to behave in an unspecified way.
 
-The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 23 Edition.
+The Java programming language is normally compiled to the bytecode instruction set and binary format defined in The Java Virtual Machine Specification, Java SE 24 Edition.
 
 1.1. Organization of the Specification
 
@@ -111,7 +111,7 @@ Hello, world.
 
 Throughout this specification, we refer to classes and interfaces drawn from the Java SE Platform API. Whenever we refer to a class or interface (other than those declared in an example) using a single identifier N, the intended reference is to the class or interface named N in the package java.lang. We use the canonical name (§6.7) for classes or interfaces from packages other than java.lang.
 
-A cross-reference within this specification is shown as (§x.y). Occasionally, we refer to concepts in the The Java Virtual Machine Specification, Java SE 23 Edition via cross-references of the form (JVMS §x.y).
+A cross-reference within this specification is shown as (§x.y). Occasionally, we refer to concepts in the The Java Virtual Machine Specification, Java SE 24 Edition via cross-references of the form (JVMS §x.y).
 
 Non-normative text, designed to clarify the normative text of this specification, is given in smaller, indented text.
 
@@ -143,7 +143,7 @@ The preview features defined by a given release of the Java SE Platform are enum
 
 Preview language features are specified in standalone documents that indicate changes ("diffs") to The Java® Language Specification for that release. The specifications of preview language features are incorporated into The Java® Language Specification by reference, and made a part thereof, if and only if preview features are enabled at compile time.
 
-Java SE 23 defines four preview language features: Flexible Constructor Bodies; Implicitly Declared Classes and Instance main Methods; Module Import Declarations; and Primitive Types in Patterns, instanceof, and switch. The standalone documents which specify these preview features are available at the Oracle web site which hosts The Java® Language Specification: https://docs.oracle.com/javase/specs/.
+Java SE 24 defines four preview language features: Flexible Constructor Bodies; Simple Source Files and Instance main Methods; Module Import Declarations; and Primitive Types in Patterns, instanceof, and switch. The standalone documents which specify these preview features are available at the web site which hosts this edition of The Java® Language Specification.
 
 Preview APIs are specified within the Java SE API Specification for that release.
 
@@ -214,4 +214,4 @@ Mitchell, James G., William Maybury, and Richard Sweet. The Mesa Programming Lan
 
 Stroustrup, Bjarne. The C++ Programming Language, 2nd ed. Addison-Wesley, Reading, Massachusetts, 1991, reprinted with corrections January 1994, ISBN 0-201-53992-6.
 
-Unicode Consortium, The. The Unicode Standard, Version 15.1.0. South San Francisco, CA: The Unicode Consortium, 2023. ISBN 978-1-936213-33-7.
+Unicode Consortium, The. The Unicode Standard, Version 16.0.0. South San Francisco: The Unicode Consortium, 2024. ISBN 978-1-936213-34-4.

@@ -236,7 +236,7 @@ package p;
 
 sealed interface I permits C, D, p.C {}  // error
 
-non-sealed class C implements I {}  
+non-sealed class C implements I {}
 non-sealed class D implements I {}
 
 
@@ -684,7 +684,7 @@ The following production from §4.3 is shown here for convenience:
 Dims:
 {Annotation} [ ] {{Annotation} [ ]}
 
-By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 23.
+By virtue of the grammar above, a method declaration in an annotation interface declaration cannot have formal parameters, type parameters, or a throws clause; and cannot be private, default, or static. Thus, an annotation interface cannot have the same variety of methods as a normal interface. Note that it is still possible for an annotation interface to inherit a default method from its implicit superinterface, java.lang.annotation.Annotation, though no such default method exists as of Java SE 24.
 
 By convention, the only modifiers that should be present on the declaration of an annotation interface element are annotations.
 
@@ -755,8 +755,8 @@ Example 9.6.1-2. Marker Annotation Interface Declaration
 The following annotation interface declaration defines a marker annotation interface:
 
 /**
- * An annotation with this type indicates that the 
- * specification of the annotated API element is 
+ * An annotation with this type indicates that the
+ * specification of the annotated API element is
  * preliminary and subject to change.
  */
 @interface Preliminary {}
@@ -805,8 +805,8 @@ The following annotation interface declaration contains an element whose type is
     Name value();
 }
 /**
- * A person's name.  This annotation interface is not 
- * designed to be used directly to annotate program elements, 
+ * A person's name.  This annotation interface is not
+ * designed to be used directly to annotate program elements,
  * but to define elements of other annotation interfaces.
  */
 @interface Name {
@@ -853,9 +853,9 @@ Example 9.6.2-1. Annotation Interface Declaration With Default Values
 Here is a refinement of the RequestForEnhancement annotation interface from §9.6.1:
 
 @interface RequestForEnhancement {
-    int    id();       // No default - must be specified in 
+    int    id();       // No default - must be specified in
                        // each annotation
-    String synopsis(); // No default - must be specified in 
+    String synopsis(); // No default - must be specified in
                        // each annotation
     String engineer()  default "[unassigned]";
     String date()      default "[unimplemented]";
@@ -1567,7 +1567,7 @@ class A {
     static class B {}
 }
 
-@Foo A.B x;  // Illegal 
+@Foo A.B x;  // Illegal
 
 
 
@@ -1582,7 +1582,7 @@ class Test {
         class D {}
     }
 
-    @Foo C.D x;  // Legal 
+    @Foo C.D x;  // Legal
 }
 
 
@@ -1926,7 +1926,7 @@ is:
 
 The function type of a functional interface is defined nondeterministically: while the signatures in M are "the same", they may be syntactically different (HashMap.Entry and Map.Entry, for example); the return type may be a subtype of every other return type, but there may be other return types that are also subtypes (List<?> and List<? extends Object>, for example); and the order of thrown types is unspecified. These distinctions are subtle, but they can sometimes be important. However, function types are not used in the Java programming language in such a way that the nondeterminism matters. Note that the return type and throws clause of a "most specific method" are also defined nondeterministically when there are multiple abstract methods (§15.12.2.5).
 
-When a generic functional interface is parameterized by wildcards, there are many different instantiations that could satisfy the wildcard and produce different function types. For example, each of Predicate<Integer> (function type Integer -> boolean), Predicate<Number> (function type Number -> boolean), and Predicate<Object> (function type Object -> boolean) is a Predicate<? super Integer>. Sometimes, it is possible to known from the context, such as the parameter types of a lambda expression, which function type is intended (§15.27.3). Other times, it is necessary to pick one; in these circumstances, the bounds are used. (This simple strategy cannot guarantee that the resulting type will satisfy certain complex bounds, so not all complex cases are supported.)
+When a generic functional interface is parameterized by wildcards, there are many different instantiations that could satisfy the wildcard and produce different function types. For example, each of Predicate<Integer> (function type Integer -> boolean), Predicate<Number> (function type Number -> boolean), and Predicate<Object> (function type Object -> boolean) is a Predicate<? super Integer>. Sometimes, it is possible to know from the context, such as the parameter types of a lambda expression, which function type is intended (§15.27.3). Other times, it is necessary to pick one; in these circumstances, the bounds are used. (This simple strategy cannot guarantee that the resulting type will satisfy certain complex bounds, so not all complex cases are supported.)
 
 Example 9.9-2. Generic Function Types
 

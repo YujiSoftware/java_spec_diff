@@ -328,10 +328,10 @@ interface ConvertibleTo<T> {
     T convert();
 }
 class ReprChange<T extends ConvertibleTo<S>,
-                 S extends ConvertibleTo<T>> { 
-    T t; 
-    void set(S s) { t = s.convert();    } 
-    S get()       { return t.convert(); } 
+                 S extends ConvertibleTo<T>> {
+    T t;
+    void set(S s) { t = s.convert();    }
+    S get()       { return t.convert(); }
 }
 
 
@@ -339,25 +339,25 @@ class ReprChange<T extends ConvertibleTo<S>,
 
 Example 8.1.2-2. Nested Generic Classes
 
-class Seq<T> { 
+class Seq<T> {
     T      head;
     Seq<T> tail;
 
-    Seq() { this(null, null); } 
+    Seq() { this(null, null); }
     Seq(T head, Seq<T> tail) {
         this.head = head;
         this.tail = tail;
     }
     boolean isEmpty() { return tail == null; }
 
-    class Zipper<S> { 
-        Seq<Pair<T,S>> zip(Seq<S> that) { 
+    class Zipper<S> {
+        Seq<Pair<T,S>> zip(Seq<S> that) {
             if (isEmpty() || that.isEmpty()) {
-                return new Seq<Pair<T,S>>(); 
+                return new Seq<Pair<T,S>>();
             } else {
                 Seq<T>.Zipper<S> tailZipper =
                     tail.new Zipper<S>();
-                return new Seq<Pair<T,S>>( 
+                return new Seq<Pair<T,S>>(
                     new Pair<T,S>(head, that.head),
                     tailZipper.zip(that.tail));
             }
@@ -441,11 +441,11 @@ class Outer {
         static class VeryNestedButNotInner
             extends NestedButNotInner {}
     }
-    
+
     static class NestedButNotInner {
         int z = Inner.x;
     }
-    
+
     interface NeverInner {}  // Implicitly static, so never inner
 }
 
@@ -855,7 +855,7 @@ package p;
 
 sealed class A     permits B, C, p.B {}  // error
 
-non-sealed class B extends A {}  
+non-sealed class B extends A {}
 non-sealed class C extends A {}
 
 
@@ -1103,8 +1103,8 @@ class Point3d extends points.Point {
     }
 }
 public class OnePoint {
-    public static points.Point getOne() { 
-        return new Point3d(); 
+    public static points.Point getOne() {
+        return new Point3d();
     }
 }
 
@@ -1429,7 +1429,7 @@ class Test extends Point {
     public static void main(String[] args) {
         Test sample = new Test();
         sample.printBoth();
-        System.out.println(sample.x + " " +	((Point)sample).x);
+        System.out.println(sample.x + " " + ((Point)sample).x);
     }
 }
 
@@ -1633,7 +1633,7 @@ even though the constructor for Test2 (§8.8) refers to the field k that is decl
 The restrictions above are designed to catch, at compile time, circular or otherwise malformed initializations. Thus, both:
 
 class Z {
-    static int i = j + 2; 
+    static int i = j + 2;
     static int j = 4;
 }
 
@@ -1681,7 +1681,7 @@ class UseBeforeDeclaration {
         int z = UseBeforeDeclaration.x * 2;
           // ok - not accessed via simple name
 
-        Object o = new Object() { 
+        Object o = new Object() {
             void foo() { x++; }
               // ok - occurs in a different class
             { x++; }
@@ -1703,7 +1703,7 @@ class UseBeforeDeclaration {
         int l = this.j * 3;
           // ok - not accessed via simple name
 
-        Object o = new Object() { 
+        Object o = new Object() {
             void foo(){ j++; }
               // ok - occurs in a different class
             { j = j + 1; }
@@ -1718,14 +1718,14 @@ class UseBeforeDeclaration {
 
     static int u =
         (new Object() { int bar() { return x; } }).bar();
-	    // ok - occurs in a different class
+        // ok - occurs in a different class
 
     static int x;
 
     int m = j = 4;
       // ok - j at left hand side of assignment
     int o =
-        (new Object() { int bar() { return j; } }).bar(); 
+        (new Object() { int bar() { return j; } }).bar();
         // ok - occurs in a different class
     int j;
 }
@@ -1840,7 +1840,7 @@ class Test {
       // OK: receiver parameter in an instance method
 
     static void n(Test this) {}
-      // Illegal: receiver parameter in a static method                         
+      // Illegal: receiver parameter in a static method
 
     class A {
         A(Test Test.this) {}
@@ -1849,17 +1849,17 @@ class Test {
           // of A being constructed.
 
         void m(A this) {}
-          // OK: the receiver parameter represents the instance 
+          // OK: the receiver parameter represents the instance
           // of A for which A.m() is invoked.
 
         class B {
             B(Test.A A.this) {}
-              // OK: the receiver parameter represents the instance 
-              // of A which immediately encloses the instance of B 
+              // OK: the receiver parameter represents the instance
+              // of A which immediately encloses the instance of B
               // being constructed.
 
             void m(Test.A.B this) {}
-              // OK: the receiver parameter represents the instance 
+              // OK: the receiver parameter represents the instance
               // of B for which B.m() is invoked.
         }
     }
@@ -2242,11 +2242,11 @@ Example 8.4.6-1. Type Variables as Thrown Exception Types
 
 import java.io.FileNotFoundException;
 
-interface PrivilegedExceptionAction<E extends Exception> { 
+interface PrivilegedExceptionAction<E extends Exception> {
     void run() throws E;
-} 
+}
 class AccessController {
-    public static <E extends Exception> 
+    public static <E extends Exception>
     Object doPrivileged(PrivilegedExceptionAction<E> action) throws E {
         action.run();
         return "success";
@@ -2259,8 +2259,8 @@ class Test {
               new PrivilegedExceptionAction<FileNotFoundException>() {
                   public void run() throws FileNotFoundException {
                       // ... delete a file ...
-                  } 
-              }); 
+                  }
+              });
         } catch (FileNotFoundException f) { /* Do something */ }
     }
 }
@@ -2334,7 +2334,7 @@ interface I2 {
     int foo();
 }
 
-abstract class Test implements I1, I2 {} 
+abstract class Test implements I1, I2 {}
 
 
 Here, the abstract class Test inherits the abstract method foo from interface I1 and also the abstract method foo from interface I2. The key question in determining the inheritance of foo from I1 is: does the method foo in I2 override "from I2" (§9.4.1.1) the method foo in I1? No, because I1 and I2 are not subinterfaces of each other. Thus, from the viewpoint of class Test, the inheritance of foo from I1 is unfettered; similarly for the inheritance of foo from I2. Per §8.4.8.4, class Test can inherit both foo methods; obviously it must be declared abstract, or else override both abstract foo methods with a concrete method.
@@ -2575,15 +2575,15 @@ Example 8.4.8.3-1. Covariant Return Types
 
 The following declarations are legal in the Java programming language from Java SE 5.0 onwards:
 
-class C implements Cloneable { 
+class C implements Cloneable {
     C copy() throws CloneNotSupportedException {
         return (C)clone();
-    } 
+    }
 }
-class D extends C implements Cloneable { 
+class D extends C implements Cloneable {
     D copy() throws CloneNotSupportedException {
         return (D)clone();
-    } 
+    }
 }
 
 
@@ -2599,7 +2599,7 @@ Consider:
 
 class StringSorter {
     // turns a collection of strings into a sorted list
-    List toList(Collection c) {...} 
+    List toList(Collection c) {...}
 }
 
 
@@ -2932,7 +2932,7 @@ It is a compile-time error if a static initializer cannot complete normally (§1
 
 It is a compile-time error if a return statement (§14.17) appears anywhere within a static initializer.
 
-A static initializer introduces a static context (§8.1.3, which limits the use of constructs that refer to the current object. Notably, the keywords this and super are prohibited in a static context (§15.8.3, §15.11.2), as are unqualified references to instance variables, instance methods, and type parameters of lexically enclosing declarations (§6.5.5.1, §6.5.6.1, §15.12.3).
+A static initializer introduces a static context (§8.1.3), which limits the use of constructs that refer to the current object. Notably, the keywords this and super are prohibited in a static context (§15.8.3, §15.11.2), as are unqualified references to instance variables, instance methods, and type parameters of lexically enclosing declarations (§6.5.5.1, §6.5.6.1, §15.12.3).
 
 Restrictions on how a static initializer may refer to class variables, even when the class variables are in scope, are specified in §8.3.3.
 
@@ -3118,6 +3118,8 @@ If S is an inner member class, but S is not a member of a class enclosing C, the
 Otherwise, let O be the innermost enclosing class of C of which S is a member. C must be an inner class of O (§8.1.3), or a compile-time error occurs.
 
 If S is an inner local class, and S does not occur in a static context, let O be the immediately enclosing class or interface declaration of S. C must be an inner class of O, or a compile-time error occurs.
+
+If S is a inner local class whose declaration occurs in a static context, then let N be the nearest static method declaration, static field declaration, or static initializer that encloses the declaration of S. If N is not the nearest static method declaration, static field declaration, or static initializer that encloses the superclass constructor invocation, then a compile-time error occurs.
 
 If a superclass constructor invocation statement is qualified, then:
 
@@ -3869,7 +3871,7 @@ public class Test {
     interface Logging {
         default void logAction() {
             System.out.println("Logged");
-        }	
+        }
     }
 
     record Point(int i, int j) implements Logging {}
@@ -3926,7 +3928,7 @@ record SmallPoint(int x, int y) {
         SmallPoint p1 = new SmallPoint(200,300);
         SmallPoint p2 = new SmallPoint(200,300);
         System.out.println(p1.equals(p2));  // prints true
-	
+
         SmallPoint p3 = new SmallPoint(p1.x(), p1.y());
         System.out.println(p1.equals(p3));  // prints false
     }
@@ -4054,7 +4056,7 @@ record Rational(int num, int denom) {
         if (b == 0) return Math.abs(a);
         else return gcd(b, a % b);
     }
-   
+
     Rational {
         int gcd = gcd(num, denom);
         num    /= gcd;

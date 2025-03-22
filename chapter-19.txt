@@ -556,6 +556,9 @@ Resource {; Resource}
 Resource:
 LocalVariableDeclaration
 VariableAccess
+VariableAccess:
+ExpressionName
+FieldAccess
 Pattern:
 TypePattern
 RecordPattern
@@ -757,5 +760,3 @@ CastExpression:
 
 SwitchExpression:
 switch ( Expression ) SwitchBlock
-ConstantExpression:
-Expression

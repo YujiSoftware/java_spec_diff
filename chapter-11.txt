@@ -211,7 +211,7 @@ class StaticallyThrownExceptionsIncludeSubtypes {
         try {
             throw new FileNotFoundException();
         } catch (IOException ioe) {
-            // "catch IOException" catches IOException 
+            // "catch IOException" catches IOException
             // and any subtype.
         }
 
@@ -225,7 +225,7 @@ class StaticallyThrownExceptionsIncludeSubtypes {
         } catch (IOException ioe) {
             // Legal, but compilers are encouraged to give
             // warnings as of Java SE 7, because all subtypes of
-            // IOException that the try block "can throw" have 
+            // IOException that the try block "can throw" have
             // already been caught by the prior catch clause.
         }
 
@@ -236,7 +236,7 @@ class StaticallyThrownExceptionsIncludeSubtypes {
               // that m "can throw" a subtype or supertype of
               // IOException (e.g. Exception).
         } catch (FileNotFoundException fnfe) {
-            // Legal, because the dynamic type of the exception 
+            // Legal, because the dynamic type of the exception
             // might be FileNotFoundException.
         } catch (IOException ioe) {
             // Legal, because the dynamic type of the exception

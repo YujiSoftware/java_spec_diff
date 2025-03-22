@@ -437,11 +437,11 @@ class Point {
     Point() { System.out.println("default"); }
     Point(int x, int y) { this.x = x; this.y = y; }
 
-    /* A Point instance is explicitly created at 
+    /* A Point instance is explicitly created at
        class initialization time: */
     static Point origin = new Point(0,0);
 
-    /* A String can be implicitly created 
+    /* A String can be implicitly created
        by a + operator: */
     public String toString() { return "(" + x + "," + y + ")"; }
 }
@@ -457,15 +457,15 @@ class Test {
             System.out.println(e);
         }
 
-        /* An array is implicitly created 
+        /* An array is implicitly created
            by an array initializer: */
         Point[] a = { new Point(0,0), new Point(1,1) };
 
-        /* Strings are implicitly created 
+        /* Strings are implicitly created
            by + operators: */
         System.out.println("p: " + p);
         System.out.println("a: { " + a[0] + ", " + a[1] + " }");
-    
+
         /* An array is explicitly created
            by an array creation expression: */
         String[] sa = new String[2];
@@ -626,12 +626,12 @@ Example 4.4-1. Members of a Type Variable
 
 package TypeVarMembers;
 
-class C { 
+class C {
     public    void mCPublic()    {}
-    protected void mCProtected() {} 
+    protected void mCProtected() {}
               void mCPackage()   {}
-    private   void mCPrivate()   {} 
-} 
+    private   void mCPrivate()   {}
+}
 
 interface I {
     void mI();
@@ -642,13 +642,13 @@ class CT extends C implements I {
 }
 
 class Test {
-    <T extends C & I> void test(T t) { 	
+    <T extends C & I> void test(T t) {
         t.mI();           // OK
-        t.mCPublic();     // OK 
-        t.mCProtected();  // OK 
+        t.mCPublic();     // OK
+        t.mCProtected();  // OK
         t.mCPackage();    // OK
         t.mCPrivate();    // Compile-time error
-    } 
+    }
 }
 
 
@@ -1012,13 +1012,13 @@ abstract class RawMembers<T> extends NonGeneric
 
     public static void main(String[] args) {
         RawMembers rw = null;
-        
+
         Collection<Number> cn = rw.myNumbers();
                                  // OK
-        
+
         Iterator<String> is   = rw.iterator();
                                  // Unchecked warning
-        
+
         Collection<NonGeneric> cnn = rw.cng;
                                       // OK, static member
     }
@@ -1458,7 +1458,7 @@ class MiscMath<T extends Number> {
         for (Number n : na) cn.add(n);
         return cn;
     }
-    <S> void loop(S s) { this.<S>loop(s); }  
+    <S> void loop(S s) { this.<S>loop(s); }
 }
 
 
@@ -1767,7 +1767,7 @@ The correspondence between compile-time types and run-time types is incomplete f
 
 At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
 
-See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 23 Edition for more details.
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 24 Edition for more details.
 
 Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile time. Specifically, all compile-time parameterizations of a given generic type (§8.1.2, §9.1.2) share a single run-time representation.
 

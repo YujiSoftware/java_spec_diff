@@ -77,7 +77,7 @@ For example, there is no special access relationship between a package named oli
 
 Each host system determines how modules, packages, and compilation units are created and stored.
 
-Each host system determines which compilation units are observable in a particular compilation (§7.3). Each host system also determines which observable compilation units are associated with a module. The observability of compilation units associated with a module determines which modules are observable (§7.7.3) and which packages are visible within those modules (§7.4.3).
+Each host system determines which compilation units are observable in a particular compilation (§7.3). Each host system also determines which observable compilation units are associated with a module. The observability of compilation units associated with a module determines which modules are observable (§7.7.6) and which packages are visible within those modules (§7.4.3).
 
 The host system is free to determine that a compilation unit which contains a module declaration is not, in fact, observable, and thus is not associated with the module declared therein. This enables a compiler to choose which directory on a modulesourcepath is "really" the embodiment of a given module. However, if the host system determines that a compilation unit which contains a module declaration is observable, then §7.4.3 mandates that the compilation unit must be associated with the module declared therein, and not with any other module.
 
@@ -669,7 +669,7 @@ open module com.example.foo {
     requires java.logging;
 
     requires transitive com.example.foo.network;
- 
+
     exports com.example.foo.bar;
     exports com.example.foo.internal to com.example.foo.probe;
 
@@ -691,6 +691,8 @@ If the declaration of a module does not express a dependence on the java.base mo
 The requires keyword may be followed by the modifier transitive. This causes any module which requires the current module to have an implicitly declared dependence on the module specified by the requires transitive directive.
 
 The requires keyword may be followed by the modifier static. This specifies that the dependence, while mandatory at compile time, is optional at run time.
+
+It is a compile-time error if the same modifier appears more than once following the requires keyword.
 
 If the declaration of a module expresses a dependence on the java.base module, and the module is not itself java.base, then it is a compile-time error if a modifier appears after the requires keyword.
 

@@ -565,7 +565,7 @@ Since this program is correctly synchronized, the only behaviors we can allow ar
 r1 = x;  // sees write of x = 1
 y = 1;
 r2 = y;  // sees write of y = 1
-x = 1; 
+x = 1;
 
 
 This result is happens-before consistent: there is no happens-before relationship that prevents it from occurring. However, it is clearly not acceptable: there is no sequentially consistent execution that would result in this behavior. The fact that we allow a read to see a write that comes later in the execution order can sometimes thus result in unacceptable behaviors.
@@ -632,26 +632,26 @@ Example 17.5-1. final Fields In The Java Memory Model
 
 The program below illustrates how final fields compare to normal fields.
 
-class FinalFieldExample { 
+class FinalFieldExample {
     final int x;
-    int y; 
+    int y;
     static FinalFieldExample f;
 
     public FinalFieldExample() {
-        x = 3; 
-        y = 4; 
-    } 
+        x = 3;
+        y = 4;
+    }
 
     static void writer() {
         f = new FinalFieldExample();
-    } 
+    }
 
     static void reader() {
         if (f != null) {
-            int i = f.x;  // guaranteed to see 3  
+            int i = f.x;  // guaranteed to see 3
             int j = f.y;  // could see 0
-        } 
-    } 
+        }
+    }
 }
 
 
@@ -671,7 +671,7 @@ Global.s = "/tmp/usr".substring(4);
 
 while another thread (thread 2) executes
 
-String myS = Global.s; 
+String myS = Global.s;
 if (myS.equals("/tmp"))System.out.println(myS);
 
 
@@ -719,24 +719,24 @@ Example 17.5.3-1. Aggressive Optimization of final Fields
 
 class A {
     final int x;
-    A() { 
-        x = 1; 
-    } 
-
-    int f() { 
-        return d(this,this); 
-    } 
-
-    int d(A a1, A a2) { 
-        int i = a1.x; 
-        g(a1); 
-        int j = a2.x; 
-        return j - i; 
+    A() {
+        x = 1;
     }
 
-    static void g(A a) { 
-        // uses reflection to change a.x to 2 
-    } 
+    int f() {
+        return d(this,this);
+    }
+
+    int d(A a1, A a2) {
+        int i = a1.x;
+        g(a1);
+        int j = a2.x;
+        return j - i;
+    }
+
+    static void g(A a) {
+        // uses reflection to change a.x to 2
+    }
 }
 
 
@@ -769,36 +769,36 @@ Example 17.6-1. Detection of Word Tearing
 
 The following program is a test case to detect word tearing:
 
-public class WordTearing extends Thread { 
+public class WordTearing extends Thread {
     static final int LENGTH = 8;
-    static final int ITERS  = 1000000; 
-    static byte[] counts    = new byte[LENGTH]; 
-    static Thread[] threads = new Thread[LENGTH]; 
+    static final int ITERS  = 1000000;
+    static byte[] counts    = new byte[LENGTH];
+    static Thread[] threads = new Thread[LENGTH];
 
-    final int id; 
-    WordTearing(int i) { 
-        id = i; 
+    final int id;
+    WordTearing(int i) {
+        id = i;
     }
 
-    public void run() { 
-        byte v = 0; 
-        for (int i = 0; i < ITERS; i++) { 
-            byte v2 = counts[id]; 
-            if (v != v2) { 
-                System.err.println("Word-Tearing found: " + 
+    public void run() {
+        byte v = 0;
+        for (int i = 0; i < ITERS; i++) {
+            byte v2 = counts[id];
+            if (v != v2) {
+                System.err.println("Word-Tearing found: " +
                               "counts[" + id + "] = "+ v2 +
-                              ", should be " + v); 
-                return; 
-            } 
-            v++; 
-            counts[id] = v; 
-        } 
+                              ", should be " + v);
+                return;
+            }
+            v++;
+            counts[id] = v;
+        }
     }
 
-    public static void main(String[] args) { 
-        for (int i = 0; i < LENGTH; ++i) 
-            (threads[i] = new WordTearing(i)).start(); 
-    } 
+    public static void main(String[] args) {
+        for (int i = 0; i < LENGTH; ++i)
+            (threads[i] = new WordTearing(i)).start();
+    }
 }
 
 
