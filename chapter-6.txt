@@ -73,11 +73,11 @@ A module, declared in a module declaration (§7.7)
 
 A package, declared in a package declaration (§7.4)
 
-An imported class or interface, declared in a single-type-import declaration or a type-import-on-demand declaration (§7.5.1, §7.5.2)
+An imported class or interface, declared in a single-type-import declaration, a type-import-on-demand declaration, or a single-module-import declaration (§7.5.1, §7.5.2, §7.5.5)
 
 An imported static member, declared in a single-static-import declaration or a static-import-on-demand declaration (§7.5.3, §7.5.4)
 
-A class, declared by a normal class declaration (§8.1), an enum declaration (§8.9), or a record declaration (§8.10)
+A class, declared by a normal class declaration (§8.1), an enum declaration (§8.9), a record declaration (§8.10), or implicitly by a compact compilation unit (§7.3)
 
 An interface, declared by a normal interface declaration (§9.1) or an annotation interface declaration (§9.6).
 
@@ -433,11 +433,13 @@ The declaration of a subpackage is never in scope.
 
 The package java is always in scope.
 
-The scope of a class or interface imported by a single-type-import declaration (§7.5.1) or a type-import-on-demand declaration (§7.5.2) is the module declaration (§7.7) and all the class and interface declarations (§8.1, §9.1) of the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
+The scope of a class or interface imported by a single-type-import declaration (§7.5.1), a type-import-on-demand declaration (§7.5.2), or a single-module-import declaration (§7.5.5) is the module declaration (§7.7) and all the class and interface declarations (§8.1, §9.1) of the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
 
 The scope of a member imported by a single-static-import declaration (§7.5.3) or a static-import-on-demand declaration (§7.5.4) is the module declaration and all the class and interface declarations of the compilation unit in which the import declaration appears, as well as any annotations on the module declaration or package declaration of the compilation unit.
 
-The scope of a top level class or interface (§7.6) is all class and interface declarations in the package in which the top level class or interface is declared.
+The scope of a top level class or interface (§7.6) declared in an ordinary compilation unit is all the class and interface declarations in the package in which the top level class or interface is declared.
+
+The scope of the implicit declaration of a top level class in a compact compilation unit (§7.3) is empty; the class is never in scope.
 
 The scope of a declaration of a member m declared in or inherited by a class or interface C (§8.2, §9.2) is the entire body of C, including any nested class or interface declarations. If C is a record class, then the scope of m additionally includes the header of the record declaration of C.
 
@@ -949,9 +951,13 @@ A declaration d of a method named n shadows the declarations of any other method
 
 A package declaration never shadows any other declaration.
 
-A type-import-on-demand declaration never causes any other declaration to be shadowed.
+A type-import-on-demand declaration d in a compilation unit c of package p that imports a type named n shadows, throughout c, the declarations of any type named n imported by a single-module-import declaration in c.
 
-A static-import-on-demand declaration never causes any other declaration to be shadowed.
+In particular, as all compilation units are treated as if they contain the implicit declaration import java.lang.*; (§7.3), this means that the declaration of a type imported by a single-module-import declaration with the same name as one imported from the package java.lang is always shadowed.
+
+A static-import-on-demand declaration d in a compilation unit c of package p that imports a type named n shadows, throughout c, the declarations of any type named n imported by a single-module-import declaration in c.
+
+A single-module-import declaration never causes any other declaration to be shadowed.
 
 A single-type-import declaration d in a compilation unit c of package p that imports a type named n shadows, throughout c, the declarations of:
 
@@ -960,6 +966,8 @@ any top level type named n declared in another compilation unit of p
 any type named n imported by a type-import-on-demand declaration in c
 
 any type named n imported by a static-import-on-demand declaration in c
+
+any type named n imported by a single-module-import declaration in c
 
 A single-static-import declaration d in a compilation unit c of package p that imports a field named n shadows the declaration of any static field named n imported by a static-import-on-demand declaration in c, throughout c.
 
@@ -971,7 +979,9 @@ any static type named n imported by a static-import-on-demand declaration in c;
 
 any top level type (§7.6) named n declared in another compilation unit (§7.3) of p;
 
-any type named n imported by a type-import-on-demand declaration (§7.5.2) in c.
+any type named n imported by a type-import-on-demand declaration (§7.5.2) in c;
+
+any type named n imported by a single-module-import declaration (§7.5.5) in c.
 
 Example 6.4.1-1. Shadowing of a Field Declaration by a Local Variable Declaration
 
@@ -1135,6 +1145,8 @@ In a requires directive in a module declaration (§7.7.1)
 
 To the right of to in an exports or opens directive in a module declaration (§7.7.2)
 
+To the right of module in a single-module-import declaration (§7.5.5)
+
 A name is syntactically classified as a PackageName in these contexts:
 
 To the right of exports or opens in a module declaration
@@ -1193,7 +1205,7 @@ A type in an exception parameter declaration (§14.20)
 
 The type in a record component declaration of a record class (§8.10.1)
 
-In an explicit type argument list to an explicit constructor invocation statement or class instance creation expression or method invocation expression (§8.8.7.1, §15.9, §15.12)
+In an explicit type argument list to a constructor invocation or class instance creation expression or method invocation expression (§8.8.7.1, §15.9, §15.12)
 
 In an unqualified class instance creation expression, either as the class type to be instantiated (§15.9) or as the direct superclass or direct superinterface of an anonymous class to be instantiated (§15.9.5)
 
@@ -1463,15 +1475,19 @@ Otherwise, if there is exactly one declaration denoting either a local variable,
 
 Otherwise, a compile-time error occurs.
 
-If the declaration denotes an instance variable of a class C (§8.3.1.1), then both of the following must be true, or a compile-time error occurs:
+If the declaration denotes an instance variable of a class C (§8.3.1.1), then all of the following must be true, or a compile-time error occurs:
 
 The expression name does not occur in a static context (§8.1.3).
+
+If the expression name occurs in an early construction context of C (§8.8.7), then it is the left-hand operand of a simple assignment expression (§15.26), the declaration of the named variable lacks an initializer, and the simple assignment expression is not enclosed in a lambda expression or inner class declaration that is contained in the early construction context of C.
+
+The expression name does not occur in an early construction context of a subclass of C.
 
 If the expression name appears in a nested class or interface declaration of C, then the immediately enclosing class or interface declaration of the expression name is an inner class of C.
 
 For example, the expression name must not appear in the body of a static method declared by C, nor in the body of an instance method of a static class nested within C.
 
-If the declaration denotes a local variable, formal parameter, or exception parameter, let X be the innermost method declaration, constructor declaration, instance initializer, static initializer, field declaration, or explicit constructor invocation statement which encloses the local variable or parameter declaration. If the expression name appears directly or indirectly in the body of a local class, local interface, or anonymous class D declared directly in X, then both of the following must be true, or a compile-time error occurs:
+If the declaration denotes a local variable, formal parameter, or exception parameter, let X be the innermost method declaration, constructor declaration, instance initializer, static initializer, field declaration, or constructor invocation which encloses the local variable or parameter declaration. If the expression name appears directly or indirectly in the body of a local class, local interface, or anonymous class D declared directly in X, then both of the following must be true, or a compile-time error occurs:
 
 The expression name does not occur in a static context.
 
@@ -1726,7 +1742,7 @@ The meaning of a name classified as a MethodName is determined as follows.
 
 6.5.7.1. Simple Method Names
 
-A simple method name appears in the context of a method invocation expression (§15.12). The simple method name consists of a single UnqualifiedMethodIdentifier which specifies the name of the method to be invoked. The rules of method invocation require that the UnqualifiedMethodIdentifier denotes a method that is in scope at the point of the method invocation. The rules also prohibit (§15.12.3) a reference to an instance method occurring in a static context (§8.1.3), or in a nested class or interface other than an inner class of the class or interface which declares the instance method.
+A simple method name appears in the context of a method invocation expression (§15.12). The simple method name consists of a single UnqualifiedMethodIdentifier which specifies the name of the method to be invoked. The rules of method invocation require that the UnqualifiedMethodIdentifier denotes a method that is in scope at the point of the method invocation. The rules also prohibit (§15.12.3) a reference to an instance method occurring in a static context (§8.1.3), or in a nested class or interface other than an inner class of the class or interface which declares the instance method, or in an early construction context (§8.8.7) of a class where the instance method is a member.
 
 Example 6.5.7.1-1. Simple Method Names
 
@@ -1779,7 +1795,7 @@ Some obvious expressions are "missing" from context classification in §6.5.1: f
 
 In addition, many statements and expressions allow the use of types that are not expressed exclusively with type names. For example, a class declaration may use a parameterized type (§4.5) to denote the superclass type. Because a parameterized type is not a qualified type name, it is necessary for the class declaration to explicitly perform access control for the denoted superclass. Consequently, of the statements and expressions that provide contexts in §6.5.1 to classify a TypeName, most perform their own access control checks.
 
-Beyond access to members of a package, class, interface, or type parameter, there is the matter of access to constructors of a class. Access control must be checked when a constructor is invoked explicitly or implicitly. Consequently, access control is checked by an explicit constructor invocation statement (§8.8.7.1) and by a class instance creation expression (§15.9.3). Such checks are necessary because §6.5.1 has no mention of explicit constructor invocation statements (as they refer to constructors indirectly, rather than via names) and is unaware of the distinction between the class denoted by an unqualified class instance creation expression and a constructor of that class. Also, constructors do not have qualified names, so we cannot rely on access control being checked during classification of qualified type names.
+Beyond access to members of a package, class, interface, or type parameter, there is the matter of access to constructors of a class. Access control must be checked when a constructor is invoked explicitly or implicitly. Consequently, access control is checked by a constructor invocation (§8.8.7.1) and by a class instance creation expression (§15.9.3). Such checks are necessary because §6.5.1 has no mention of constructor invocation (as they refer to constructors indirectly, rather than via names) and is unaware of the distinction between the class denoted by an unqualified class instance creation expression and a constructor of that class. Also, constructors do not have qualified names, so we cannot rely on access control being checked during classification of qualified type names.
 
 Accessibility affects inheritance of class members (§8.2), including hiding and method overriding (§8.4.8.1).
 
@@ -2061,6 +2077,8 @@ The fully qualified name of a named package that is not a subpackage of a named 
 The fully qualified name of a named package that is a subpackage of another named package consists of the fully qualified name of the containing package, followed by ".", followed by the simple (member) name of the subpackage.
 
 The fully qualified name of a top level class or top level interface that is declared in an unnamed package is the simple name of the class or interface.
+
+In particular, this means that a top level class that is implicitly declared by a compact compilation unit (§7.3) has a fully qualified name, which is the simple name determined by the host system (§8.1.8).
 
 The fully qualified name of a top level class or top level interface that is declared in a named package consists of the fully qualified name of the package, followed by ".", followed by the simple name of the class or interface.
 

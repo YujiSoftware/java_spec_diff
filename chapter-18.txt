@@ -781,7 +781,7 @@ If ei is a switch expression, these rules are applied recursively to each of its
 
 While C is not empty, the following process is repeated, starting with the bound set B3 and accumulating new bounds into a "current" bound set, ultimately producing a new bound set, B4:
 
-A subset of constraints is selected in C, satisfying the property that, for each constraint, no input variable can influence an output variable of another constraint in C. The terms input variable and output variable are defined below. An inference variable α can influence an inference variable β if α depends on the resolution of β (§18.4), or vice versa; or if there exists a third inference variable γ such that α can influence γ and γ can influence β.
+A subset of constraints is selected in C, satisfying the property that, for each constraint, no input variable can influence an output variable of any other constraint in C. The terms input variable and output variable are defined below. An inference variable α can influence an inference variable β if α depends on the resolution of β (§18.4), or vice versa; or if there exists a third inference variable γ such that α can influence γ and γ can influence β.
 
 If this subset is empty, then there is a cycle (or cycles) in the graph of dependencies between constraints. In this case, the constraints in C that participate in a dependency cycle (or cycles) and do not depend on any constraints outside of the cycle (or cycles) are considered. A single constraint is selected from these considered constraints, as follows:
 

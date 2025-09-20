@@ -112,6 +112,7 @@ Productions from §7 (Packages and Modules)
 
 CompilationUnit:
 OrdinaryCompilationUnit
+CompactCompilationUnit
 ModularCompilationUnit
 OrdinaryCompilationUnit:
 [PackageDeclaration] {ImportDeclaration} {TopLevelClassOrInterfaceDeclaration}
@@ -126,6 +127,7 @@ SingleTypeImportDeclaration
 TypeImportOnDemandDeclaration
 SingleStaticImportDeclaration
 StaticImportOnDemandDeclaration
+SingleModuleImportDeclaration
 SingleTypeImportDeclaration:
 import TypeName ;
 TypeImportOnDemandDeclaration:
@@ -278,8 +280,9 @@ ConstructorDeclarator:
 SimpleTypeName:
 TypeIdentifier
 ConstructorBody:
-{ [ExplicitConstructorInvocation] [BlockStatements] }
-ExplicitConstructorInvocation:
+{ [BlockStatements] ConstructorInvocation [BlockStatements] }
+{ [BlockStatements] }
+ConstructorInvocation:
 [TypeArguments] this ( [ArgumentList] ) ;
 [TypeArguments] super ( [ArgumentList] ) ;
 ExpressionName . [TypeArguments] super ( [ArgumentList] ) ;

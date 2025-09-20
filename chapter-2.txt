@@ -146,4 +146,4 @@ Finally, a few nonterminals are defined by a narrative phrase in roman type wher
 For example:
 
 RawInputCharacter:
-any Unicode character
+any Unicode character representable in UTF-16

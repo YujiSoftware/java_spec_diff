@@ -80,7 +80,7 @@ HexDigit:
 (one of)
 0 1 2 3 4 5 6 7 8 9 a b c d e f A B C D E F
 RawInputCharacter:
-any Unicode character
+any Unicode character representable in UTF-16
 
 The \, u, and hexadecimal digits here are all ASCII characters.
 
@@ -337,7 +337,9 @@ During the reduction of input characters to input elements (§3.5), a sequence o
 
 The sequence is recognized as a terminal specified in a suitable context of the syntactic grammar (§2.3), as follows:
 
-For module and open, when recognized as a terminal in a ModuleDeclaration (§7.7).
+For module, when recognized as a terminal in a SingleModuleImportDeclaration (§7.5.5), or a ModuleDeclaration (§7.7).
+
+For open, when recognized as a terminal in a ModuleDeclaration (§7.7).
 
 For exports, opens, provides, requires, to, uses, and with, when recognized as a terminal in a ModuleDirective.
 
@@ -695,7 +697,7 @@ The characters CR and LF are never an InputCharacter; each is recognized as cons
 
 The character represented by a character literal is the content of the character literal with any escape sequence interpreted, as if by execution of String.translateEscapes on the content.
 
-Character literals can only represent UTF-16 code units (§3.1), i.e., they are limited to values from \u0000 to \uffff. Supplementary characters must be represented either as a surrogate pair within a char sequence, or as an integer, depending on the API they are used with.
+Character literals can only represent UTF-16 code units (§3.1), i.e., they are limited to values from \u0000 to \uffff. It is a compile-time error to attempt to represent a supplementary character in a character literal. Supplementary characters must be represented either as a surrogate pair within a char sequence, or as an integer, depending on the API they are used with.
 
 The following are examples of char literals:
 
@@ -841,7 +843,7 @@ RawInputCharacter
 UnicodeEscape:
 \ UnicodeMarker HexDigit HexDigit HexDigit HexDigit
 RawInputCharacter:
-any Unicode character
+any Unicode character representable in UTF-16
 
 A text block is always of type String (§4.3.3).
 

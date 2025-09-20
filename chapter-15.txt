@@ -258,7 +258,7 @@ Strict evaluation provides predictable results, but caused performance problems 
 
 For compatibility, Java 1.2 allowed the programmer to forbid an implementation from using the extended-exponent value sets. The programmer expressed this by placing the strictfp modifier on the declaration of a class, interface, or method. strictfp constrained the floating-point semantics of any enclosed expressions to use the float value set for float expressions and the double value set for double expressions, ensuring the results of such expressions were fully predictable. Code modified by strictfp thus had the same floating-point semantics as specified in Java 1.0 and 1.1.
 
-In Java SE 17 and later, the Java SE Platform always requires strict evaluation of floating-point expressions. Newer members of the processor families that had performance problems implementing strict evaluation no longer have that difficulty. This specification no longer associates float and double with the four value sets described above, and the strictfp modifier no longer affects the evaluation of floating-point expressions. For compatibility, strictfp remains a keyword in Java SE 24 (§3.8) and continues to have restrictions on its use (§8.4.3, §9.4), although Java compilers are encouraged to warn the programmer about its obsolete status. Future versions of the Java programming language may redefine or remove the strictfp keyword.
+In Java SE 17 and later, the Java SE Platform always requires strict evaluation of floating-point expressions. Newer members of the processor families that had performance problems implementing strict evaluation no longer have that difficulty. This specification no longer associates float and double with the four value sets described above, and the strictfp modifier no longer affects the evaluation of floating-point expressions. For compatibility, strictfp remains a keyword in Java SE 25 (§3.8) and continues to have restrictions on its use (§8.4.3, §9.4), although Java compilers are encouraged to warn the programmer about its obsolete status. Future versions of the Java programming language may redefine or remove the strictfp keyword.
 
 15.5. Expressions and Run-Time Checks
 
@@ -677,11 +677,15 @@ in the body of an instance method of an interface, that is, a default method or 
 
 When used as an expression, the keyword this denotes a value that is a reference either to the object for which the instance method was invoked (§15.12), or to the object being constructed. The value denoted by this in a lambda body (§15.27.2) is the same as the value denoted by this in the surrounding context.
 
-The keyword this is also used in explicit constructor invocation statements (§8.8.7.1), and to denote the receiver parameter of a method or constructor (§8.4).
+The keyword this is also used in constructor invocations (§8.8.7.1), and to denote the receiver parameter of a method or constructor (§8.4).
 
 It is a compile-time error if a this expression occurs in a static context (§8.1.3).
 
-Let C be the innermost enclosing class or interface declaration of a this expression. If C is generic, with type parameters F1,...,Fn, the type of this is C<F1,...,Fn>. Otherwise, the type of this is C.
+Let C be the innermost enclosing class or interface declaration of a this expression.
+
+It is a compile-time error if a this expression occurs in an early construction context (§8.8.7) of C, unless it appears as the qualifier of a field access expression (§15.11) that is the left-hand operand of a simple assignment expression (§15.26), and the simple assignment expression is not enclosed in a lambda expression or inner class declaration that is contained in the early construction context of C.
+
+If C is generic, with type parameters F1,...,Fn, the type of this is C<F1,...,Fn>. Otherwise, the type of this is C.
 
 At run time, the class of the actual object referred to may be C or a subclass of C (§8.1.5).
 
@@ -717,6 +721,8 @@ The value of a qualified this expression TypeName.this is the n'th lexically enc
 If TypeName denotes a generic class, with type parameters F1,...,Fn, the type of the qualified this expression is TypeName<F1,...,Fn>. Otherwise, the type of the qualified this expression is TypeName.
 
 It is a compile-time error if a qualified this expression occurs in a static context (§8.1.3).
+
+It is a compile-time error if a qualified this expression occurs in an early construction context (§8.8.7) of the class named by TypeName, unless it appears as the qualifier of a field access expression (§15.11) that is the left-hand operand of a simple assignment expression (§15.26), and the simple assignment expression is not enclosed in a lambda expression or inner class declaration that is contained in the early construction context of the class named by TypeName.
 
 It is a compile-time error if the class or interface whose declaration immediately encloses a qualified this expression is not an inner class of TypeName or TypeName itself.
 
@@ -863,6 +869,8 @@ Otherwise, let O be the innermost enclosing class declaration of which C is a me
 
 If U is not an inner class of O or O itself, then a compile-time error occurs.
 
+If the class instance creation expression occurs in the early construction context (§8.8.7) of O, then a compile-time error occurs.
+
 Let n be an integer such that O is the n'th lexically enclosing class or interface declaration of U.
 
 The immediately enclosing instance of i is the n'th lexically enclosing instance of this.
@@ -896,6 +904,8 @@ Otherwise, if S is not a member of any class whose declaration encloses the clas
 Otherwise, let O be the innermost enclosing class declaration of which S is a member, and let U be the immediately enclosing class or interface declaration of the class instance creation expression.
 
 If U is not an inner class of O or O itself, then a compile-time error occurs.
+
+If the class instance creation expression occurs in the early construction context of O, then a compile-time error occurs.
 
 Let n be an integer such that O is the n'th lexically enclosing class or interface declaration of U.
 
@@ -1025,7 +1035,7 @@ The new object contains new instances of all the fields declared in the specifie
 
 Next, the actual arguments to the constructor are evaluated, left-to-right. If any of the argument evaluations completes abruptly, any argument expressions to its right are not evaluated, and the class instance creation expression completes abruptly for the same reason.
 
-Next, the selected constructor of the specified class is invoked. This results in invoking at least one constructor for each superclass of the class. This process can be directed by explicit constructor invocation statements (§8.8.7.1) and is specified in detail in §12.5.
+Next, the selected constructor of the specified class is invoked. This results in invoking at least one constructor for each superclass of the class. This process can be directed by explicit constructor invocations (§8.8.7.1) and is specified in detail in §12.5.
 
 The value of a class instance creation expression is a reference to the newly created object of the specified class. Every time the expression is evaluated, a fresh object is created.
 
@@ -1114,7 +1124,7 @@ The actual arguments to the class instance creation expression are used to deter
 
 The anonymous constructor body consists of an explicit constructor invocation of the form o.super(...), where o is the first formal parameter of the anonymous constructor, and the actual arguments are the subsequent formal parameters of the constructor, in the order they were declared. The superclass constructor to be invoked is x.
 
-In all cases, the throws clause of an anonymous constructor lists all the checked exceptions thrown by the explicit constructor invocation statement contained in the anonymous constructor, as specified in §15.9.3, and all checked exceptions thrown by any instance initializers or instance variable initializers of the anonymous class.
+In all cases, the throws clause of an anonymous constructor lists all the checked exceptions thrown by the explicit constructor invocation contained in the anonymous constructor, as specified in §15.9.3, and all checked exceptions thrown by any instance initializers or instance variable initializers of the anonymous class.
 
 Note that it is possible for the signature of the anonymous constructor to refer to an inaccessible type (for example, if such a type occurred in the signature of the superclass constructor x). This does not, in itself, cause any errors at either compile-time or run-time.
 
@@ -1595,7 +1605,7 @@ The form T.super.Identifier refers to the field named Identifier of the lexicall
 
 The forms using the keyword super may be used in the locations within a class declaration that allow the keyword this as an expression (§15.8.3).
 
-It is a compile-time error if a field access expression using the keyword super appears in a static context (§8.1.3).
+It is a compile-time error if a field access expression using the keyword super occurs in a static context (§8.1.3) or in an early construction context (§8.8.7) of the current class.
 
 For a field access expression of the form super.Identifier:
 
@@ -2300,7 +2310,7 @@ If the form is MethodName - that is, just an Identifier - and the compile-time d
 
 It is a compile-time error if the method invocation occurs in a static context (§8.1.3).
 
-Otherwise, let T be the class or interface to search (§15.12.1). It is a compile-time error if the innermost enclosing class or interface declaration of the method invocation is neither T nor an inner class of T.
+Otherwise, let T be the class or interface to search (§15.12.1). It is a compile-time error if either the method invocation occurs in an early construction context (§8.8.7) of class T, or the innermost enclosing class or interface declaration of the method invocation is neither T nor an inner class of T.
 
 If the form is TypeName . [TypeArguments] Identifier, then the compile-time declaration must be static, or a compile-time error occurs.
 
@@ -2310,13 +2320,13 @@ If the form is super . [TypeArguments] Identifier, then:
 
 It is a compile-time error if the compile-time declaration is abstract.
 
-It is a compile-time error if the method invocation occurs in a static context.
+It is a compile-time error if the method invocation occurs in a static context or in an early construction context of the current class.
 
 If the form is TypeName . super . [TypeArguments] Identifier, then:
 
 It is a compile-time error if the compile-time declaration is abstract.
 
-It is a compile-time error if the method invocation occurs in a static context.
+It is a compile-time error if the method invocation occurs in a static context or in an early construction context of the current class.
 
 If TypeName denotes a class C, then if the class or interface declaration immediately enclosing the method invocation is not C or an inner class of C, a compile-time error occurs.
 
@@ -2525,7 +2535,7 @@ Otherwise, an instance method is to be invoked and there is a target reference. 
 
 If the invocation mode is super, overriding is not allowed. Method m of class or interface C is the one to be invoked. If m is abstract, an AbstractMethodError is thrown.
 
-Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 24 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
+Otherwise, if the invocation mode is virtual, and Q and m jointly indicate a signature polymorphic method (§15.12.3), then the target object is an instance of java.lang.invoke.MethodHandle or java.lang.invoke.VarHandle. The target object encapsulates state which is matched against the information associated with the method invocation at compile time. Details of this matching are given in The Java Virtual Machine Specification, Java SE 25 Edition and the Java SE Platform API. If matching succeeds, then either the method referenced by the java.lang.invoke.MethodHandle instance is directly and immediately invoked, or the variable represented by the java.lang.invoke.VarHandle instance is directly and immediately accessed, and in either case the procedure in §15.12.4.5 is not executed. If matching fails, then a java.lang.invoke.WrongMethodTypeException is thrown.
 
 Otherwise, the invocation mode is interface or virtual.
 
@@ -2555,7 +2565,7 @@ If the method to be invoked is default, and more than one default method appears
 
 If the invocation mode is interface and the method to be invoked is neither public nor private, an IllegalAccessError is thrown.
 
-The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 24 Edition.
+The above procedure (if it terminates without error) will find a non-abstract, accessible method to invoke, provided that all classes and interfaces in the program have been consistently compiled. However, if this is not the case, then various errors may occur, as specified above; additional details about the behavior of the Java Virtual Machine under these circumstances are given by The Java Virtual Machine Specification, Java SE 25 Edition.
 
 The dynamic lookup process, while described here explicitly, will often be implemented implicitly, for example as a side-effect of the construction and use of per-class method dispatch tables, or the construction of other per-class structures used for efficient dispatch.
 
@@ -2737,7 +2747,7 @@ If TypeName denotes an interface, I, then let E be the class or interface declar
 
 If TypeName denotes a type variable, then a compile-time error occurs.
 
-If a method reference expression has the form super :: [TypeArguments] Identifier or TypeName . super :: [TypeArguments] Identifier, it is a compile-time error if the expression occurs in a static context (§8.1.3).
+If a method reference expression has the form super :: [TypeArguments] Identifier or TypeName . super :: [TypeArguments] Identifier, it is a compile-time error if the expression occurs in a static context (§8.1.3) or in an early construction context (§8.8.7) of the current class.
 
 If a method reference expression has the form ClassType :: [TypeArguments] new, then:
 
@@ -2874,7 +2884,7 @@ It is a compile-time error if a method reference expression has the form Referen
 
 It is a compile-time error if the method reference expression has the form super :: [TypeArguments] Identifier or TypeName . super :: [TypeArguments] Identifier, and the compile-time declaration is abstract.
 
-It is a compile-time error if the method reference expression has the form super :: [TypeArguments] Identifier or TypeName . super :: [TypeArguments] Identifier, and the method reference expression occurs in a static context (§8.1.3).
+It is a compile-time error if the method reference expression has the form super :: [TypeArguments] Identifier or TypeName . super :: [TypeArguments] Identifier, and the method reference expression occurs in a static context (§8.1.3) or in an early construction context (§8.8.7) of the current class.
 
 It is a compile-time error if the method reference expression has the form TypeName . super :: [TypeArguments] Identifier, and TypeName denotes a class C, and the immediately enclosing class or interface declaration of the method reference expression is not C or an inner class of C.
 

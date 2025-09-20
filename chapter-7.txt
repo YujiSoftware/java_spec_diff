@@ -14,6 +14,7 @@ Table of Contents
 7.5.2. Type-Import-on-Demand Declarations
 7.5.3. Single-Static-Import Declarations
 7.5.4. Static-Import-on-Demand Declarations
+7.5.5. Single-Module-Import Declarations
 7.6. Top Level Class and Interface Declarations
 7.7. Module Declarations
 7.7.1. Dependences
@@ -164,9 +165,17 @@ CompilationUnit is the goal symbol (§2.1) for the syntactic grammar (§2.3) of 
 
 CompilationUnit:
 OrdinaryCompilationUnit
+CompactCompilationUnit
 ModularCompilationUnit
 OrdinaryCompilationUnit:
 [PackageDeclaration] {ImportDeclaration} {TopLevelClassOrInterfaceDeclaration}
+CompactCompilationUnit:
+{ImportDeclaration} {ClassMemberDeclarationNoMethod} MethodDeclaration {ClassMemberDeclaration}
+ClassMemberDeclarationNoMethod:
+FieldDeclaration
+ClassDeclaration
+InterfaceDeclaration
+;
 ModularCompilationUnit:
 {ImportDeclaration} ModuleDeclaration
 
@@ -180,9 +189,32 @@ import declarations (§7.5) that allow classes and interfaces from other package
 
 Top level declarations of classes and interfaces (§7.6).
 
+A compact compilation unit consists of a non-empty sequence of class member declarations, at least one of which must be a method declaration (§8.4), optionally preceded by import declarations. Declarations of methods, fields, classes, and interfaces are permitted in any order after the import declarations (if any), as they would be in a class body (§8.1.7).
+
+This means that the following compilation unit is unambiguously an ordinary compilation unit:
+
+
+import java.util.Vector;
+class Test { ... }
+
+
+
+whereas the following is unambiguously a compact compilation unit:
+
+
+import java.util.Vector;
+static void main(){ ... }
+class Test { ... }
+
+
+
+A compact compilation unit implicitly declares a top level class (§7.6) whose members are the methods, fields, classes, and interfaces declared in the compact compilation unit. The details of the class are specified in §8.1.8.
+
 A modular compilation unit consists of a module declaration (§7.7), optionally preceded by import declarations. The import declarations allow classes and interfaces from packages in this module and other modules, as well as static members of classes and interfaces, to be referred to using their simple names within the module declaration.
 
 Every compilation unit implicitly imports every public class or interface declared in the predefined package java.lang, as if the declaration import java.lang.*; appeared at the beginning of each compilation unit immediately after any package declaration. As a result, the names of all those classes and interfaces are available as simple names in every compilation unit.
+
+Every compact compilation unit implicitly imports all the public top level classes and interfaces of the packages exported by the module java.base, as if the declaration import module java.base; appeared at the beginning of each compact compilation unit (§7.5.5). As a result, the names of all those classes and interfaces are available as simple names in every compact compilation unit.
 
 The host system determines which compilation units are observable, except for the compilation units in the predefined package java and its subpackages lang and io, which are all always observable.
 
@@ -231,7 +263,7 @@ It is recommended that package-info.java, if it is present, take the place of pa
 
 7.4.2. Unnamed Packages
 
-An ordinary compilation unit that has no package declaration, but has at least one other kind of declaration, is part of an unnamed package.
+A compact compilation unit, or an ordinary compilation unit that has no package declaration but has at least one other kind of declaration, is part of an unnamed package.
 
 Unnamed packages are provided by the Java SE Platform principally for convenience when developing small or temporary applications or when just beginning development.
 
@@ -293,6 +325,7 @@ SingleTypeImportDeclaration
 TypeImportOnDemandDeclaration
 SingleStaticImportDeclaration
 StaticImportOnDemandDeclaration
+SingleModuleImportDeclaration
 
 A single-type-import declaration (§7.5.1) imports a single named class or interface, by mentioning its canonical name (§6.7).
 
@@ -301,6 +334,8 @@ A type-import-on-demand declaration (§7.5.2) imports all the accessible classes
 A single-static-import declaration (§7.5.3) imports all accessible static members with a given name from a class or interface, by giving its canonical name.
 
 A static-import-on-demand declaration (§7.5.4) imports all accessible static members of a named class or interface as needed, by mentioning the canonical name of the class or interface.
+
+A single-module-import declaration (§7.5.5) imports all the accessible classes and interfaces of the packages exported by a named module, as needed.
 
 The scope and shadowing of a class, interface, or member imported by these declarations is specified in §6.3 and §6.4.
 
@@ -492,6 +527,201 @@ It is permissible for one static-import-on-demand declaration to import several 
 
 If a compilation unit contains both a static-import-on-demand declaration and a type-import-on-demand declaration (§7.5.2) that name the same class or interface, the effect is as if the static member classes and interfaces of that class or interface (§8.5, §9.5) are imported only once.
 
+7.5.5. Single-Module-Import Declarations
+
+A single-module-import declaration allows all public top level classes and interfaces of the packages exported by a named module to be imported as needed.
+
+SingleModuleImportDeclaration:
+import module ModuleName ;
+
+A single-module-import declaration imports, on demand, all the public top level classes and interfaces in the following packages:
+
+The packages exported by the module ModuleName to the current module.
+
+The packages exported by the modules that are read by the current module due to reading the module ModuleName. This allows a program to use the API of a module, which might refer to classes and interfaces from other modules, without having to import all those other modules.
+
+It is a compile-time error if the module ModuleName is not read by the current module (§7.3).
+
+The modules read by the current module are given by the result of resolution, as described in the java.lang.module package specification (§7.3).
+
+Two or more single-module-import declarations in the same compilation unit may name the same module. All but one of these declarations are considered redundant; the effect is as if that module was imported only once.
+
+A single-module-import declaration can be used in any source file. It is not required for the source file to be part of a module. For example, modules java.base and java.sql are part of the standard Java runtime, so they can be imported by programs which are not themselves developed as modules.
+
+It is sometimes useful to import a module that does not export any packages. This is because the module may transitively require other modules that do export packages. For example, the java.se module does not export any packages, but it requires a number of modules transitively, so the effect of the single-module-import declaration import module java.se; is to import the packages which are exported by those modules (and so on, recursively).
+
+Example 7.5.5-1. Single-Module-Import in Ordinary Compilation Units
+
+Modules allow a set of packages to be grouped together for reuse under a single name, and the exported packages of a module are intended to form a cohesive and coherent API. Single-module-import declarations allow the developer to import all the packages exported by a module in one go, simplifying the reuse of modular libraries. For example:
+
+
+import module java.xml;
+
+
+
+causes the simple names of the public top level classes and interfaces declared in all packages exported by module java.xml to be available within the class and interface declarations of the compilation unit. Thus, the simple name XPath refers to the interface XPath of the package javax.xml.xpath exported by the module java.xml in all places in the compilation unit where that class declaration is not shadowed or obscured.
+
+Assume the following compilation unit associated with module M0:
+
+
+package q;
+import module M1;   // What does this import?
+class C { ... }
+
+
+
+where module M0 has the following declaration:
+
+
+module M0 { requires M1; }
+
+
+
+The meaning of the single-module-import declaration import module M1; depends on the exports of M1 and any modules that M1 requires transitively. Consider as an example:
+
+
+module M1 {
+    exports p1;
+    exports p2 to M0;
+    exports p3 to M3;
+    requires transitive M4;
+    requires M5;
+}
+
+module M3 { ... }
+
+module M4 { exports p10; }
+
+module M5 { exports p11; }
+
+
+
+The effect of the single-module-import declaration import module M1; is then:
+
+Import the public top level classes and interfaces from package p1, since M1 exports p1 to everyone;
+
+Import the public top level classes and interfaces from package p2, since M1 exports p2 to M0, the module with which the compilation unit is associated; and
+
+Import the public top level classes and interfaces from package p10, since M1 requires transitively M4, which exports p10.
+
+Nothing from packages p3 or p11 is imported by the compilation unit.
+
+Single-module-import declarations may appear in a source file containing only a package declaration. Such files are typically called package-info.java and are used as the sole repository for package-level annotations and documentation (§7.4.1).
+
+
+
+
+Example 7.5.5-2. Single-Module-Import in Modular Compilation Units
+
+Import declarations can also appear in a modular compilation unit. The following modular compilation unit uses a single-module-import declaration, allowing the simple name of the interface Driver associated with module java.sql to be used in the provides directive:
+
+
+import module java.sql;
+module com.myDB.core {
+    exports ...
+    requires transitive java.sql;
+    provides Driver with com.myDB.greatDriver;
+}
+
+
+
+It is possible for a modular compilation unit that declares a module to also import that module. In the following example, this means that the simple name of a class C can be used in a uses directive:
+
+
+import module M;
+module M {
+    ...
+    exports p;
+    ...
+    uses C;
+    ...
+}
+
+
+
+where the package p exported by module M is declared as follows:
+
+
+package p;
+class C { ... }
+
+
+
+Without the single-module-import declaration, the qualified name of the class C would need to be used in the uses directive.
+
+Suppose a module declaration as follows:
+
+
+module M2 {
+    requires java.se;
+    exports p2;
+    ...
+}
+
+
+
+where the package p2 exported by M2 is declared as follows:
+
+
+package p2;
+import module java.xml;
+class MyClass {
+    ...
+}
+
+
+
+Even though the module M2 does not directly express a dependency on the module java.xml, the import of module java.xml is still correct as the resolution process will determine that the module java.xml is read by module M2.
+
+
+
+
+Example 7.5.5-3. Ambiguous Imports
+
+Clearly importing multiple modules could lead to name ambiguities, for example:
+
+
+import module java.base;
+import module java.desktop;
+
+...
+List l = ...        // Error - Ambiguous name!
+...
+
+
+
+The module java.base exports the package java.util, which has a public List interface. The module java.desktop exports the package java.awt, which a public List class. Having imported both modules, the use of the simple name List is clearly ambiguous and results in a compile-time error.
+
+However, just importing a single module can also lead to a name ambiguity, for example:
+
+
+import module java.desktop;
+
+...
+Element e = ...     // Error - Ambiguous name!
+...
+
+
+
+The module java.desktop exports packages javax.swing.text and javax.swing.text.html.parser, which have a public Element interface and a public Element class, respectively. Thus the use of the simple name Element is ambiguous and results in a compile-time error.
+
+A single-type-import declaration can be used to resolve a name ambiguity. The earlier example where the simple name List is ambiguous can be resolved as follows:
+
+
+import module java.base;
+import module java.desktop;
+
+import java.util.List;  // Resolving the ambiguity
+                        // of the simple name List
+
+...
+List l = ...            // Ok - List is resolved to
+                        // java.util.List
+...
+
+
+
+
 7.6. Top Level Class and Interface Declarations
 
 A top level class or interface declaration declares a top level class (§8.1) or a top level interface (§9.1).
@@ -502,6 +732,8 @@ InterfaceDeclaration
 ;
 
 Extra ";" tokens appearing at the level of class and interface declarations in a compilation unit have no effect on the meaning of the compilation unit. Stray semicolons are permitted in the Java programming language solely as a concession to C++ programmers who are used to placing ";" after a class declaration. They should not be used in new Java code.
+
+A top level class may also be implicitly declared (§8.1.8) by a compact compilation unit.
 
 In the absence of an access modifier, a top level class or interface has package access: it is accessible only within ordinary compilation units of the package in which it is declared (§6.6.1). A class or interface may be declared public to grant access to the class or interface from code in other packages of the same module, and potentially from code in packages of other modules.
 
@@ -694,7 +926,7 @@ The requires keyword may be followed by the modifier static. This specifies that
 
 It is a compile-time error if the same modifier appears more than once following the requires keyword.
 
-If the declaration of a module expresses a dependence on the java.base module, and the module is not itself java.base, then it is a compile-time error if a modifier appears after the requires keyword.
+If the declaration of a module expresses a dependence on the java.base module, and the module is not itself java.base, then it is a compile-time error if the static modifier appears after the requires keyword.
 
 It is a compile-time error if more than one requires directive in a module declaration specifies the same module name.
 

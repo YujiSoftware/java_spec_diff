@@ -692,19 +692,19 @@ The classical open operation on existentials requires that the captured type var
 
 Any type may be converted to type String by string conversion.
 
-A value x of primitive type T is first converted to a reference value as if by giving it as an argument to an appropriate class instance creation expression (§15.9):
+A value x of primitive type T is first converted to a reference value as if by giving it as an argument to an appropriate method invocation:
 
-If T is boolean, then use new Boolean(x).
+If T is boolean, then use Boolean.valueOf(x).
 
-If T is char, then use new Character(x).
+If T is char, then use Character.valueOf(x).
 
-If T is byte, short, or int, then use new Integer(x).
+If T is byte, short, or int, then use Integer.valueOf(x).
 
-If T is long, then use new Long(x).
+If T is long, then use Long.valueOf(x).
 
-If T is float, then use new Float(x).
+If T is float, then use Float.valueOf(x).
 
-If T is double, then use new Double(x).
+If T is double, then use Double.valueOf(x).
 
 This reference value is then converted to type String by string conversion.
 

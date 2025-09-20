@@ -1332,7 +1332,7 @@ The type in a record component declaration of a record class (§8.10.1)
 
 In expressions:
 
-A type in the explicit type argument list to an explicit constructor invocation statement, class instance creation expression, method invocation expression, or method reference expression (§8.8.7.1, §15.9, §15.12, §15.13)
+A type in the explicit type argument list to a constructor invocation, class instance creation expression, method invocation expression, or method reference expression (§8.8.7.1, §15.9, §15.12, §15.13)
 
 In an unqualified class instance creation expression, as the class type to be instantiated (§15.9) or as the direct superclass type or direct superinterface type of an anonymous class to be instantiated (§15.9.5)
 
@@ -1386,7 +1386,7 @@ In an unqualified class instance creation expression, as the class type to be in
 
 In a method reference expression (§15.13), as the reference type to search for a member method or as the class type or array type to construct.
 
-In addition, no wildcard type arguments are permitted in the explicit type argument list to an explicit constructor invocation statement or class instance creation expression or method invocation expression or method reference expression (§8.8.7.1, §15.9, §15.12, §15.13).
+In addition, no wildcard type arguments are permitted in the explicit type argument list to a constructor invocation or class instance creation expression or method invocation expression or method reference expression (§8.8.7.1, §15.9, §15.12, §15.13).
 
 The following type contexts require that if a type is a parameterized reference type, it has only unbounded wildcard type arguments (i.e. it is a reifiable type) :
 
@@ -1591,7 +1591,7 @@ For every parameter declared in a method declaration, a new parameter variable i
 
 Constructor parameters (§8.8.1) name argument values passed to a constructor.
 
-For every parameter declared in a constructor declaration, a new parameter variable is created each time a class instance creation expression (§15.9) or explicit constructor invocation (§8.8.7) invokes that constructor. The new variable is initialized with the corresponding argument value from the creation expression or constructor invocation. The constructor parameter effectively ceases to exist when the execution of the body of the constructor is complete.
+For every parameter declared in a constructor declaration, a new parameter variable is created each time a class instance creation expression (§15.9) or constructor invocation (§8.8.7) invokes that constructor. The new variable is initialized with the corresponding argument value from the creation expression or constructor invocation. The constructor parameter effectively ceases to exist when the execution of the body of the constructor is complete.
 
 Lambda parameters (§15.27.1) name argument values passed to a lambda expression body (§15.27.2).
 
@@ -1712,7 +1712,7 @@ For all reference types (§4.3), the default value is null.
 
 Each method parameter (§8.4.1) is initialized to the corresponding argument value provided by the invoker of the method (§15.12).
 
-Each constructor parameter (§8.8.1) is initialized to the corresponding argument value provided by a class instance creation expression (§15.9) or explicit constructor invocation (§8.8.7).
+Each constructor parameter (§8.8.1) is initialized to the corresponding argument value provided by a class instance creation expression (§15.9) or constructor invocation (§8.8.7).
 
 An exception parameter (§14.20) is initialized to the thrown object representing the exception (§11.3, §14.18).
 
@@ -1767,7 +1767,7 @@ The correspondence between compile-time types and run-time types is incomplete f
 
 At run time, classes and interfaces are loaded by the Java Virtual Machine using class loaders. Each class loader defines its own set of classes and interfaces. As a result, it is possible for two loaders to load an identical class or interface definition but produce distinct classes or interfaces at run time. Consequently, code that compiled correctly may fail at link time if the class loaders that load it are inconsistent.
 
-See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 24 Edition for more details.
+See the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44, and The Java Virtual Machine Specification, Java SE 25 Edition for more details.
 
 Type variables (§4.4) and type arguments (§4.5.1) are not reified at run time. As a result, the same class or interface at run time represents multiple parameterized types (§4.5) from compile time. Specifically, all compile-time parameterizations of a given generic type (§8.1.2, §9.1.2) share a single run-time representation.
 

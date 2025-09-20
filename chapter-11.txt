@@ -8,7 +8,7 @@ Table of Contents
 11.1.3. Asynchronous Exceptions
 11.2. Compile-Time Checking of Exceptions
 11.2.1. Exception Analysis of Expressions
-11.2.2. Exception Analysis of Statements
+11.2.2. Exception Analysis of Statements and Constructor Invocations
 11.2.3. Exception Checking
 11.3. Run-Time Handling of an Exception
 
@@ -147,7 +147,7 @@ For every other kind of expression, the expression can throw an exception class 
 
 Note that a method reference expression (§15.13) of the form Primary :: [TypeArguments] Identifier can throw an exception class if the Primary subexpression can throw an exception class. In contrast, a lambda expression can throw nothing, and has no immediate subexpressions on which to perform exception analysis. It is the body of a lambda expression, containing expressions and statements, that can throw exception classes.
 
-11.2.2. Exception Analysis of Statements
+11.2.2. Exception Analysis of Statements and Constructor Invocations
 
 A throw statement (§14.18) whose thrown expression has static type E and is not a final or effectively final exception parameter can throw E or any exception class that the thrown expression can throw.
 
@@ -169,12 +169,6 @@ Some catch block of the try statement can throw E and either no finally block is
 
 A finally block is present and can throw E.
 
-An explicit constructor invocation statement (§8.8.7.1) can throw an exception class E iff either:
-
-Some expression of the constructor invocation's parameter list can throw E; or
-
-E is determined to be an exception class of the throws clause of the constructor that is invoked (§15.12.2.6).
-
 A switch statement (§14.11) can throw an exception class E iff either:
 
 The selector expression can throw E; or
@@ -182,6 +176,12 @@ The selector expression can throw E; or
 Some switch rule expression, switch rule block, switch rule throw statement, or switch labeled statement group in the switch block can throw E.
 
 Any other statement S can throw an exception class E iff an expression or statement immediately contained in S can throw E.
+
+A constructor invocation (§8.8.7.1) can throw an exception class E iff either:
+
+Some expression of the constructor invocation's parameter list can throw E; or
+
+E is determined to be an exception class of the throws clause of the constructor that is invoked (§15.12.2.6).
 
 11.2.3. Exception Checking
 

@@ -14,6 +14,7 @@ Table of Contents
 8.1.5. Superinterfaces
 8.1.6. Permitted Direct Subclasses
 8.1.7. Class Body and Member Declarations
+8.1.8. Implicitly Declared Classes
 8.2. Class Members
 8.3. Field Declarations
 8.3.1. Field Modifiers
@@ -54,7 +55,7 @@ Table of Contents
 8.8.5. Constructor Throws
 8.8.6. The Type of a Constructor
 8.8.7. Constructor Body
-8.8.7.1. Explicit Constructor Invocations
+8.8.7.1. Constructor Invocations
 8.8.8. Constructor Overloading
 8.8.9. Default Constructor
 8.8.10. Preventing Instantiation of a Class
@@ -76,7 +77,7 @@ A top level class (§7.6) is a class declared directly in a compilation unit.
 
 A nested class is any class whose declaration occurs within the body of another class or interface declaration. A nested class may be a member class (§8.5, §9.5), a local class (§14.3), or an anonymous class (§15.9.5).
 
-Some kinds of nested class are an inner class (§8.1.3), which is a class that can refer to enclosing class instances, local variables, and type variables.
+A nested class may be inner (§8.1.3), in which case it may (depending on precisely where its declaration occurs) be able to refer to enclosing class instances, local variables, and type variables.
 
 An enum class (§8.9) is a class declared with abbreviated syntax that defines a small set of named class instances.
 
@@ -123,7 +124,7 @@ RecordDeclaration
 NormalClassDeclaration:
 {ClassModifier} class TypeIdentifier [TypeParameters] [ClassExtends] [ClassImplements] [ClassPermits] ClassBody
 
-A class is also implicitly declared by a class instance creation expression (§15.9.5) and an enum constant that ends with a class body (§8.9.1).
+Some classes are implicitly declared by other constructs (§8.1.8).
 
 The TypeIdentifier in a class declaration specifies the name of the class.
 
@@ -377,8 +378,8 @@ class Test {
                                 new Seq<String>()));
         Seq<Number> nums =
             new Seq<Number>(
-                new Integer(1),
-                new Seq<Number>(new Double(1.5),
+                Integer.valueOf(1),
+                new Seq<Number>(Double.valueOf(1.5),
                                 new Seq<Number>()));
 
         Seq<String>.Zipper<Number> zipper =
@@ -464,11 +465,9 @@ field declaration,
 
 constructor declaration,
 
-instance initializer,
+instance initializer, or
 
-static initializer, or
-
-explicit constructor invocation statement
+static initializer.
 
 which encloses the construct is one of the following:
 
@@ -478,11 +477,9 @@ a static field declaration (§8.3.1.1, §9.3)
 
 a static initializer (§8.7)
 
-an explicit constructor invocation statement (§8.8.7.1)
-
 Note that a construct which appears in a constructor declaration or an instance initializer does not occur in a static context.
 
-The purpose of a static context is to demarcate code that must not refer explicitly or implicitly to the current instance of the class whose declaration lexically encloses the static context. Consequently, code that occurs in a static context is restricted in the following ways:
+The purpose of a static context is to demarcate code for which there is no current instance defined of the class whose declaration lexically encloses the static context. Consequently, code that occurs in a static context is restricted in the following ways:
 
 this expressions (both unqualified and qualified) are disallowed (§15.8.3, §15.8.4).
 
@@ -512,7 +509,7 @@ A class or interface O is the zeroth lexically enclosing class or interface decl
 
 A class O is the n'th lexically enclosing class declaration of a class C if it is the immediately enclosing class declaration of the n-1'th lexically enclosing class declaration of C.
 
-An instance i of a direct inner class C of a class or interface O is associated with an instance of O, known as the immediately enclosing instance of i. The immediately enclosing instance of an object, if any, is determined when the object is created (§15.9.2).
+An instance i of a direct inner class C of a class or interface O may be associated with an instance of O, known as the immediately enclosing instance of i. The immediately enclosing instance of an object, if any, is determined when the object is created (§15.9.2).
 
 An object o is the zeroth lexically enclosing instance of itself.
 
@@ -520,9 +517,9 @@ An object o is the n'th lexically enclosing instance of an instance i if it is t
 
 An instance of an inner local class or an anonymous class whose declaration occurs in a static context has no immediately enclosing instance. Also, an instance of a static nested class (§8.1.1.4) has no immediately enclosing instance.
 
-For every superclass S of C which is itself a direct inner class of a class or interface SO, there is an instance of SO associated with i, known as the immediately enclosing instance of i with respect to S. The immediately enclosing instance of an object with respect to its class' direct superclass, if any, is determined when the superclass constructor is invoked via an explicit constructor invocation statement (§8.8.7.1).
+For every superclass S of C which is itself a direct inner class of a class or interface SO, there is an instance of SO associated with i, known as the immediately enclosing instance of i with respect to S. The immediately enclosing instance of an object with respect to its class' direct superclass, if any, is determined when the superclass constructor is invoked via a constructor invocation (§8.8.7.1).
 
-When an inner class (whose declaration does not occur in a static context) refers to an instance variable that is a member of a lexically enclosing class or interface declaration, the variable of the corresponding lexically enclosing instance is used.
+When an inner class contains a valid reference to an instance variable that is a member of a lexically enclosing class or interface declaration, the variable of the corresponding lexically enclosing instance is used.
 
 Any local variable, formal parameter, or exception parameter used but not declared in an inner class must either be final or effectively final (§4.12.4), as specified in §6.5.6.1.
 
@@ -902,6 +899,54 @@ InterfaceDeclaration
 The scope and shadowing of a declaration of a member m declared in or inherited by a class C is specified in §6.3 and §6.4.1.
 
 If C is a nested class, there may be definitions of the same kind (variable, method, or type) and name as m in enclosing scopes. (The scopes may be blocks, classes, or packages.) In all such cases, the member m declared in or inherited by C shadows the other definitions of the same kind and name.
+
+8.1.8. Implicitly Declared Classes
+
+Not all classes are specified by a class declaration. The following constructs implicitly declare classes:
+
+a class instance creation expression that ends with a class body (§15.9.5)
+
+an enum constant that ends with a class body (§8.9.1)
+
+a compact compilation unit (§7.3)
+
+In all cases, the members of any implicitly declared class, including any implicitly declared members, are subject to the usual rules for member declarations in a class.
+
+The following production from §7.3 is shown here for convenience:
+
+CompactCompilationUnit:
+{ImportDeclaration} {ClassMemberDeclarationNoMethod} MethodDeclaration {ClassMemberDeclaration}
+ClassMemberDeclarationNoMethod:
+FieldDeclaration
+ClassDeclaration
+InterfaceDeclaration
+;
+
+The class implicitly declared by a compact compilation unit satisfies the following properties:
+
+It is a top level class (§7.6).
+
+Its name is a valid identifier (§3.8) determined by the host system.
+
+In simple implementations of the Java SE Platform, where compilation units are stored in files, the name of this implicitly declared class would typically be the name of the file containing the compact compilation unit minus any extension (such as .java or .jav).
+
+It is not abstract (§8.1.1.1).
+
+It is final (§8.1.1.2).
+
+It is a member of an unnamed package (§7.4.2) and has package access.
+
+Its direct superclass is Object (§8.1.4).
+
+It does not have any direct superinterfaces (§8.1.5).
+
+The body of the class contains every class member declared in the compact compilation unit (these are declarations of fields (§8.3), methods (§8.4), member classes (§8.5), and member interfaces (§9.1.1.3)). It is not possible for a compact compilation unit to contain declarations of instance initializers (§8.6), static initializers (§8.7), or constructors (§8.8).
+
+It has an implicitly declared default constructor (§8.8.9).
+
+It is a compile-time error if this class does not declare at least one candidate main method (§12.1.4).
+
+Note that an unnamed package may have multiple implicitly declared classes as members.
 
 8.2. Class Members
 
@@ -3033,7 +3078,7 @@ A generic constructor declaration defines a set of constructors, one for each po
 
 The scope and shadowing of a constructor's type parameter is specified in §6.3 and §6.4.1.
 
-References to a constructor's type parameter from an explicit constructor invocation statement or a nested class or interface are restricted, as specified in §6.5.5.1.
+References to a constructor's type parameter from a constructor invocation or a nested class or interface are restricted, as specified in §6.5.5.1.
 
 8.8.5. Constructor Throws
 
@@ -3045,18 +3090,21 @@ The type of a constructor consists of its signature and the exception types give
 
 8.8.7. Constructor Body
 
-The first statement of a constructor body may be an explicit invocation of another constructor of the same class or of the direct superclass (§8.8.7.1).
+A constructor body is a block of code that is executed as part of the process of creating a new instance of a class (§12.5). A constructor body may contain an explicit invocation of another constructor of the same class or of the direct superclass (§8.8.7.1).
 
 ConstructorBody:
-{ [ExplicitConstructorInvocation] [BlockStatements] }
+{ [BlockStatements] ConstructorInvocation [BlockStatements] }
+{ [BlockStatements] }
 
-It is a compile-time error for a constructor to directly or indirectly invoke itself through a series of one or more explicit constructor invocations involving this.
+If a constructor body contains an explicit constructor invocation, the BlockStatements preceding the constructor invocation are called the prologue of the constructor body. The prologue of a constructor body may be empty. The BlockStatements in a constructor with no explicit constructor invocation and the BlockStatements following a constructor invocation in a constructor body are called the epilogue. The epilogue of a constructor body may also be empty.
 
-If a constructor body does not begin with an explicit constructor invocation and the constructor being declared is not part of the primordial class Object, then the constructor body implicitly begins with a superclass constructor invocation "super();", an invocation of the constructor of its direct superclass that takes no arguments.
+A construct (statement, local variable declaration statement, local class declaration, local interface declaration, or expression) occurs in the early construction context of a class C if it is contained in either the prologue of a constructor body of C, or it is nested in the constructor invocation (§8.8.7.1) of a constructor body of C.
 
-Except for the possibility of explicit constructor invocations, and the prohibition on explicitly returning a value (§14.17), the body of a constructor is like the body of a method (§8.4.7).
+If a constructor body does not contain an explicit constructor invocation and the constructor being declared is not part of the primordial class Object, then the constructor body (i) has an empty prologue, (ii) implicitly begins with a superclass constructor invocation "super();", an implicit invocation of the constructor of the direct superclass that takes no arguments, and (iii) the statements, if any, given in the constructor body are taken to form the epilogue of the constructor body.
 
-A return statement (§14.17) may be used in the body of a constructor if it does not include an expression.
+Except for the possibility of explicit or implicit constructor invocations, and the prohibition on return statements (§14.17), the body of a constructor is like the body of a method (§8.4.7).
+
+Note that a constructor body contains at most one constructor invocation. The grammar makes it impossible, for example, to place constructor invocations in different branches of an if statement.
 
 Example 8.8.7-1. Constructor Bodies
 
@@ -3081,8 +3129,8 @@ Here, the first constructor of ColoredPoint invokes the second, providing an add
 
 
 
-8.8.7.1. Explicit Constructor Invocations
-ExplicitConstructorInvocation:
+8.8.7.1. Constructor Invocations
+ConstructorInvocation:
 [TypeArguments] this ( [ArgumentList] ) ;
 [TypeArguments] super ( [ArgumentList] ) ;
 ExpressionName . [TypeArguments] super ( [ArgumentList] ) ;
@@ -3095,7 +3143,7 @@ TypeArguments:
 ArgumentList:
 Expression {, Expression}
 
-Explicit constructor invocation statements are divided into two kinds:
+Constructor invocations are divided into two kinds:
 
 Alternate constructor invocations begin with the keyword this (possibly prefaced with explicit type arguments). They are used to invoke an alternate constructor of the same class.
 
@@ -3105,35 +3153,35 @@ Unqualified superclass constructor invocations begin with the keyword super (pos
 
 Qualified superclass constructor invocations begin with a Primary expression or an ExpressionName. They allow a subclass constructor to explicitly specify the newly created object's immediately enclosing instance with respect to the direct superclass (§8.1.3). This may be necessary when the superclass is an inner class.
 
-An explicit constructor invocation statement introduces a static context (§8.1.3), which limits the use of constructs that refer to the current object. Notably, the keywords this and super are prohibited in a static context (§15.8.3, §15.11.2), as are unqualified references to instance variables, instance methods, and type parameters of lexically enclosing declarations (§6.5.5.1, §6.5.6.1, §15.12.3).
+It is a compile-time error for a constructor to directly or indirectly invoke itself through a series of one or more alternate constructor invocations.
+
+A constructor invocation introduces an early construction context (§8.8.7), which limits the use of constructs that refer to the current object. Notably, references to the current object using this and super are restricted in an early construction context (§15.8.3, §15.11.2), as are references to instance variables (§6.5.6.1) and instance methods (§6.5.7.1).
 
 If TypeArguments is present to the left of this or super, then it is a compile-time error if any of the type arguments are wildcards (§4.5.1).
 
 Let C be the class being instantiated, and let S be the direct superclass of C.
 
-If a superclass constructor invocation statement is unqualified, then:
+If a superclass constructor invocation is unqualified, then:
 
 If S is an inner member class, but S is not a member of a class enclosing C, then a compile-time error occurs.
 
-Otherwise, let O be the innermost enclosing class of C of which S is a member. C must be an inner class of O (§8.1.3), or a compile-time error occurs.
+Otherwise, let O be the innermost enclosing class of C of which S is a member. C must be an inner class of O (§8.1.3), or a compile-time error occurs. If the superclass constructor invocation occurs in an early construction context of the class O, then a compile-time error occurs.
 
 If S is an inner local class, and S does not occur in a static context, let O be the immediately enclosing class or interface declaration of S. C must be an inner class of O, or a compile-time error occurs.
 
 If S is a inner local class whose declaration occurs in a static context, then let N be the nearest static method declaration, static field declaration, or static initializer that encloses the declaration of S. If N is not the nearest static method declaration, static field declaration, or static initializer that encloses the superclass constructor invocation, then a compile-time error occurs.
 
-If a superclass constructor invocation statement is qualified, then:
+If a superclass constructor invocation is qualified, then:
 
 If S is not an inner class, or if the declaration of S occurs in a static context, then a compile-time error occurs.
 
 Otherwise, let p be the Primary expression or the ExpressionName immediately preceding ".super", and let O be the immediately enclosing class of S. It is a compile-time error if the type of p is not O or a subclass of O, or if the type of p is not accessible (§6.6).
 
-The exception types that an explicit constructor invocation statement can throw are specified in §11.2.2.
+The exception types that an explicit constructor invocation can throw are specified in §11.2.2.
 
-Evaluation of an alternate constructor invocation statement proceeds by first evaluating the arguments to the constructor, left-to-right, as in an ordinary method invocation; and then invoking the constructor.
+Evaluation of an alternate constructor invocation proceeds by first evaluating the arguments to the constructor, left-to-right, as in an ordinary method invocation; and then invoking the constructor.
 
-Evaluation of a superclass constructor invocation statement proceeds as follows:
-
-Let i be the instance being created. The immediately enclosing instance of i with respect to S (if any) must be determined:
+Let i be the instance being created by a superclass constructor invocation. The immediately enclosing instance of i with respect to S (if any) is determined as follows:
 
 If S is not an inner class, or if the declaration of S occurs in a static context, then no immediately enclosing instance of i with respect to S exists.
 
@@ -3141,7 +3189,7 @@ Otherwise, if the superclass constructor invocation is unqualified, then S is ne
 
 If S is an inner local class, let O be the immediately enclosing class or interface declaration of S.
 
-If S is an inner member class, let O be the innermost enclosing class of C of which S is a member.
+If S is an inner member class, let O be the innermost enclosing class of C of which S is a member. If the superclass constructor invocation occurs in the early construction context of the class O, then a compile-time error occurs.
 
 Let n be an integer (n ≥ 1) such that O is the n'th lexically enclosing class or interface declaration of C.
 
@@ -3149,19 +3197,23 @@ The immediately enclosing instance of i with respect to S is the n'th lexically 
 
 While it may be the case that S is a member of C due to inheritance, the zeroth lexically enclosing instance of this (that is, this itself) is never used as the immediately enclosing instance of i with respect to S.
 
-Otherwise, if the superclass constructor invocation is qualified, then the Primary expression or the ExpressionName immediately preceding ".super", p, is evaluated.
+Otherwise, if the superclass constructor invocation is qualified, then the immediately enclosing instance of i with respect to S is the object that is the value of the Primary expression or the ExpressionName.
 
-If p evaluates to null, a NullPointerException is raised, and the superclass constructor invocation completes abruptly.
+If the superclass constructor invocation has an immediately enclosing instance then this instance is taken to be the first actual argument to the constructor invocation, and the subsequent actual arguments to the constructor invocation are taken to be the arguments in the argument list of superclass constructor invocation, if any, in the order that they appear. Otherwise the actual arguments to the constructor invocation are taken to be the arguments in the superclass constructor invocation, if any, in the order that they appear.
 
-Otherwise, the result of this evaluation is the immediately enclosing instance of i with respect to S.
+Evaluation of a superclass constructor invocation then proceeds as follows:
 
-After determining the immediately enclosing instance of i with respect to S (if any), evaluation of the superclass constructor invocation statement proceeds by evaluating the arguments to the constructor, left-to-right, as in an ordinary method invocation; and then invoking the constructor.
+First, if the superclass constructor invocation is qualified, the Primary expression or the ExpressionName is evaluated. If it evaluates to null, a NullPointerException is raised and the superclass constructor invocation completes abruptly. If this evaluation completes abruptly, then the superclass constructor invocation completes abruptly for the same reason.
 
-Finally, if the superclass constructor invocation statement completes normally, then all instance variable initializers of C and all instance initializers of C are executed. If an instance initializer or instance variable initializer I textually precedes another instance initializer or instance variable initializer J, then I is executed before J.
+The actual arguments to the constructor invocation are evaluated, left-to-right, as in an ordinary method invocation; then the constructor is invoked.
 
-Execution of instance variable initializers and instance initializers is performed regardless of whether the superclass constructor invocation actually appears as an explicit constructor invocation statement or is provided implicitly. (An alternate constructor invocation does not perform this additional implicit execution.)
+Recall that the first actual argument to the constructor invocation may be an enclosing instance.
 
-Example 8.8.7.1-1. Restrictions on Explicit Constructor Invocation Statements
+Finally, if the superclass constructor invocation completes normally, then all instance variable initializers of C and all instance initializers of C are executed. If an instance initializer or instance variable initializer I textually precedes another instance initializer or instance variable initializer J, then I is executed before J.
+
+Execution of instance variable initializers and instance initializers is performed regardless of whether the superclass constructor invocation actually appears as an explicit constructor invocation or is provided implicitly. (An alternate constructor invocation does not perform this additional implicit execution.)
+
+Example 8.8.7.1-1. Restrictions on Constructor Invocations
 
 If the first constructor of ColoredPoint in the example from §8.8.7 were changed as follows:
 
@@ -3182,14 +3234,14 @@ class ColoredPoint extends Point {
 }
 
 
-then a compile-time error would occur, because the instance variable color cannot be used by a explicit constructor invocation statement.
+then a compile-time error would occur, because the instance variable color cannot be used by a constructor invocation.
 
 
 
 
 Example 8.8.7.1-2. Qualified Superclass Constructor Invocation
 
-In the code below, ChildOfInner has no lexically enclosing class or interface declaration, so an instance of ChildOfInner has no enclosing instance. However, the superclass of ChildOfInner (Inner) has a lexically enclosing class declaration (Outer), and an instance of Inner must have an enclosing instance of Outer. The enclosing instance of Outer is set when an instance of Inner is created. Therefore, when we create an instance of ChildOfInner, which is implicitly an instance of Inner, we must provide the enclosing instance of Outer via a qualified superclass invocation statement in ChildOfInner's constructor. The instance of Outer is called the immediately enclosing instance of ChildOfInner with respect to Inner.
+In the code below, ChildOfInner has no lexically enclosing class or interface declaration, so an instance of ChildOfInner has no enclosing instance. However, the superclass of ChildOfInner (Inner) has a lexically enclosing class declaration (Outer), and an instance of Inner must have an enclosing instance of Outer. The enclosing instance of Outer is set when an instance of Inner is created. Therefore, when we create an instance of ChildOfInner, which is implicitly an instance of Inner, we must provide the enclosing instance of Outer via a qualified superclass invocation in ChildOfInner's constructor. The instance of Outer is called the immediately enclosing instance of ChildOfInner with respect to Inner.
 
 class Outer {
     class Inner {}
@@ -3199,7 +3251,7 @@ class ChildOfInner extends Outer.Inner {
 }
 
 
-Perhaps surprisingly, the same instance of Outer may serve as the immediately enclosing instance of ChildOfInner with respect to Inner for multiple instances of ChildOfInner. These instances of ChildOfInner are implicitly linked to the same instance of Outer. The program below achieves this by passing an instance of Outer to the constructor of ChildOfInner, which uses the instance in a qualified superclass constructor invocation statement. The rules for an explicit constructor invocation statement do not prohibit using formal parameters of the constructor that contains the statement.
+Perhaps surprisingly, the same instance of Outer may serve as the immediately enclosing instance of ChildOfInner with respect to Inner for multiple instances of ChildOfInner. These instances of ChildOfInner are implicitly linked to the same instance of Outer. The program below achieves this by passing an instance of Outer to the constructor of ChildOfInner, which uses the instance in a qualified superclass constructor invocation. The rules for a constructor invocation do not prohibit using formal parameters of the constructor that contains the invocation.
 
 class Outer {
     int secret = 5;
@@ -3249,7 +3301,7 @@ The default constructor has no formal parameters, except in a non-private inner 
 
 The default constructor has no throws clause.
 
-If the class being declared is the primordial class Object, then the default constructor has an empty body. Otherwise, the default constructor simply invokes the superclass constructor with no arguments.
+If the class being declared is the primordial class Object, then the default constructor has an empty body. Otherwise, the default constructor simply invokes the superclass constructor with no arguments. This superclass constructor invocation must satisfy all the rules for an unqualified superclass constructor invocation (§8.8.7.1).
 
 The form of the default constructor for an anonymous class is specified in §15.9.5.1.
 
@@ -3426,7 +3478,7 @@ Any constructor or member declarations in the body of an enum declaration apply 
 
 It is a compile-time error if a constructor declaration in an enum declaration is public or protected (§6.6).
 
-It is a compile-time error if a constructor declaration in an enum declaration contains a superclass constructor invocation statement (§8.8.7.1).
+It is a compile-time error if a constructor declaration in an enum declaration contains a superclass constructor invocation (§8.8.7.1).
 
 It is a compile-time error to refer to a static field of an enum class from a constructor, instance initializer, or instance variable initializer in the enum declaration of the class, unless the field is a constant variable (§4.12.4).
 
@@ -3972,7 +4024,7 @@ If the record component is a variable arity record component, then the derived f
 
 The derived formal parameter is annotated with the annotations, if any, that appear on the record component and whose annotation interfaces are applicable in the formal parameter context, or in type contexts, or both (§9.7.4).
 
-A record declaration may contain declarations of constructors that are not canonical constructors. The body of every non-canonical constructor in a record declaration must start with an alternate constructor invocation (§8.8.7.1), or a compile-time error occurs.
+A record declaration may contain declarations of constructors that are not canonical constructors. The body of every non-canonical constructor in a record declaration must contain an alternate constructor invocation (§8.8.7.1), or a compile-time error occurs.
 
 8.10.4.1. Normal Canonical Constructors
 
@@ -3992,7 +4044,7 @@ The constructor must not be generic (§8.8.4).
 
 The constructor must not have a throws clause.
 
-The constructor body must not contain an explicit constructor invocation statement (§8.8.7.1).
+The constructor body must not contain an explicit constructor invocation (§8.8.7.1).
 
 All the other rules for constructor declarations in a normal class declaration must be satisfied (§8.8).
 
@@ -4025,7 +4077,8 @@ Annotation public protected private
 SimpleTypeName:
 TypeIdentifier
 ConstructorBody:
-{ [ExplicitConstructorInvocation] [BlockStatements] }
+{ [BlockStatements] ConstructorInvocation [BlockStatements] }
+{ [BlockStatements] }
 
 It is a compile-time error for a record declaration to have more than one compact constructor declaration.
 
@@ -4039,7 +4092,7 @@ The body of a compact constructor declaration must satisfy all of the following 
 
 The body must not contain a return statement (§14.17).
 
-The body must not contain an explicit constructor invocation statement (§8.8.7.1).
+The body must not contain an explicit constructor invocation (§8.8.7.1).
 
 The body must not contain an assignment to a component field of the record class.
 

@@ -78,13 +78,15 @@ This chapter first specifies some properties that any binary format for the Java
 
 13.1. The Form of a Binary
 
-Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 24 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
+Programs must be compiled either into the class file format specified by The Java Virtual Machine Specification, Java SE 25 Edition, or into a representation that can be mapped into that format by a class loader written in the Java programming language.
 
 A class file corresponding to a class or interface declaration must have certain properties. A number of these properties are specifically chosen to support source code transformations that preserve binary compatibility. The required properties are:
 
 The class or interface must be named by its binary name, which must meet the following constraints:
 
 The binary name of a top level class or interface (§7.6) is its canonical name (§6.7).
+
+Note that the canonical name of the top level class implicitly declared by a compact compilation unit is determined by the host system (§8.1.8).
 
 The binary name of a member class or interface (§8.5, §9.5) consists of the binary name of its immediately enclosing class or interface, followed by $, followed by the simple name of the member.
 
@@ -156,7 +158,7 @@ A symbolic reference to the type of each parameter
 
 A reference to a method must also include either a symbolic reference to the erasure of the return type of the denoted method or an indication that the denoted method is declared void and does not return a value.
 
-Given a class instance creation expression (§15.9) or an explicit constructor invocation statement (§8.8.7.1) or a method reference expression of the form ClassType :: new (§15.13) in a class or interface C, referencing a constructor m declared in a (possibly distinct) class or interface D, we define the qualifying class of the constructor invocation as follows:
+Given a class instance creation expression (§15.9) or an explicit constructor invocation (§8.8.7.1) or a method reference expression of the form ClassType :: new (§15.13) in a class or interface C, referencing a constructor m declared in a (possibly distinct) class or interface D, we define the qualifying class of the constructor invocation as follows:
 
 If the expression is of the form new D(...) or ExpressionName.new D(...) or Primary.new D(...) or D :: new, then the qualifying class of the constructor invocation is D.
 
@@ -229,6 +231,8 @@ Certain private fields and public methods of record classes (§8.10.3)
 Certain public methods of interfaces (§9.2)
 
 Container annotations (§9.7.5)
+
+Classes implicitly declared by a compact compilation unit (§8.1.8).
 
 A class file corresponding to a module declaration must have the properties of a class file for a class whose binary name is module-info and which has no superclass, no superinterfaces, no fields, and no methods. In addition, the binary representation of the module must contain all of the following:
 

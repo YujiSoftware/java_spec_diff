@@ -51,6 +51,8 @@ Such an assignment is defined to occur if and only if either the simple name of 
 
 For every assignment to a blank final variable, the variable must be definitely unassigned before the assignment, or a compile-time error occurs.
 
+Similarly, for every alternate constructor invocation (§8.8.7.1) occurring in a constructor of a class C, every blank final instance variable of C declared in C must be definitely unassigned after the argument list of the alternate constructor invocation, or a compile-time error occurs.
+
 Note that local variables declared by a pattern (§14.30) are not subject to the rules of definite assignment. Every local variable declared by a pattern is initialized by the process of pattern matching and so always has a value when accessed.
 
 The remainder of this chapter is devoted to a precise explanation of the words "definitely assigned before" and "definitely unassigned before".
@@ -536,11 +538,11 @@ V is [un]assigned after an empty statement (§14.6) iff it is [un]assigned befor
 
 A blank final member field V is definitely assigned (and moreover is not definitely unassigned) before the block (§14.2) that is the body of any method in the scope of V and before the declaration of any class declared within the scope of V.
 
-A local variable V declared by a statement S is definitely unassigned (and moreover is not definitely assigned) before the block that is the body of the constructor, method, instance initializer or static initializer which contains S.
+A local variable V declared by a statement S is definitely unassigned (and moreover is not definitely assigned) before the block that is the body of the method, instance initializer or static initializer which contains S.
 
-Let C be a class declared within the scope of V. Then V is definitely assigned before the block that is the body of any constructor, method, instance initializer, or static initializer declared in C iff V is definitely assigned before the declaration of C.
+Let C be a class declared within the scope of V. Then V is definitely assigned before the block that is the body of any method, instance initializer, or static initializer declared in C iff V is definitely assigned before the declaration of C.
 
-Note that there are no rules that would allow us to conclude that V is definitely unassigned before the block that is the body of any constructor, method, instance initializer, or static initializer declared in C. We can informally conclude that V is not definitely unassigned before the block that is the body of any constructor, method, instance initializer, or static initializer declared in C, but there is no need for such a rule to be stated explicitly.
+Note that there are no rules that would allow us to conclude that V is definitely unassigned before the block that is the body of any method, instance initializer, or static initializer declared in C. We can informally conclude that V is not definitely unassigned before the block that is the body of any method, instance initializer, or static initializer declared in C, but there is no need for such a rule to be stated explicitly.
 
 V is [un]assigned after an empty block iff V is [un]assigned before the empty block.
 
@@ -886,28 +888,84 @@ V is definitely assigned (and moreover is not definitely unassigned) before ever
 
 Let C be a class declared within the scope of V. Then:
 
-V is definitely assigned before an instance variable initializer (§8.3.2) of C iff V is definitely assigned before the declaration of C.
+V is definitely assigned before a constructor declaration (§8.8.7) or instance variable initializer (§8.3.2) of C iff V is definitely assigned before the declaration of C.
 
-Note that there are no rules that would allow us to conclude that V is definitely unassigned before an instance variable initializer. We can informally conclude that V is not definitely unassigned before any instance variable initializer of C, but there is no need for such a rule to be stated explicitly.
+Note that there are no rules that would allow us to conclude that V is definitely unassigned before the constructor declaration or instance variable initializer. We can informally conclude that V is not definitely unassigned before any constructor declaration or instance variable initializer of C, but there is no need for such a rule to be stated explicitly.
 
 Let C be a class, and let V be a blank final non-static member field of C, declared in C. Then:
 
-V is definitely unassigned (and moreover is not definitely assigned) before the leftmost instance initializer (§8.6) or instance variable initializer of C.
+V is definitely unassigned (and moreover is not definitely assigned) before the declaration of any constructor in C.
+
+V is definitely unassigned (and moreover is not definitely assigned) before the leftmost instance initializer (§8.6) or instance variable initializer of C iff V is definitely unassigned after every superclass constructor invocation (§8.8.7.1) in the constructors of C.
+
+V is definitely assigned (and moreover is not definitely unassigned) before the leftmost instance initializer (§8.6) or instance variable initializer of C iff C declares at least one constructor, every constructor of C has an explicit constructor invocation, and V is definitely assigned after every superclass constructor invocation in these constructors.
 
 V is [un]assigned before an instance initializer or instance variable initializer of C other than the leftmost iff V is [un]assigned after the preceding instance initializer or instance variable initializer of C.
 
+Let C be a class, and let V be a blank final non-static member field of C, declared in a superclass of C. Then:
+
+V is definitely unassigned (and moreover is not definitely assigned) before the declaration of any constructor in C.
+
+V is definitely assigned (and moreover is not definitely unassigned) before every instance initializer and instance variable initializer of C.
+
+Let C be a class, and let V be a blank final static member field of C. Then:
+
+V is definitely assigned (and moreover is not definitely unassigned) before every constructor declaration, instance initializer, and instance variable initializer of C.
+
+Let C be a class, and let V be a local variable declared by a statement S contained by a constructor or instance variable initializer of C. Then:
+
+V is definitely unassigned (and moreover is not definitely assigned) before the constructor declaration or instance variable initializer.
+
 The following rules hold within the constructors (§8.8.7) of class C:
 
-V is definitely assigned (and moreover is not definitely unassigned) after an alternate constructor invocation (§8.8.7.1).
+V is [un]assigned before the prologue of the constructor body (§8.8.7) iff V is [un]assigned before the constructor declaration.
 
-V is definitely unassigned (and moreover is not definitely assigned) before an explicit or implicit superclass constructor invocation (§8.8.7.1).
+V is [un]assigned after an empty prologue iff V is [un]assigned before the prologue.
 
-If C has no instance initializers or instance variable initializers, then V is not definitely assigned (and moreover is definitely unassigned) after an explicit or implicit superclass constructor invocation.
+V is [un]assigned after a non-empty prologue iff V is [un]assigned after the last statement in the prologue.
 
-If C has at least one instance initializer or instance variable initializer then V is [un]assigned after an explicit or implicit superclass constructor invocation iff V is [un]assigned after the rightmost instance initializer or instance variable initializer of C.
+V is [un]assigned before a constructor invocation (§8.8.7.1) iff V is [un]assigned after the prologue.
 
-Let C be a class, and let V be a blank final member field of C, declared in a superclass of C. Then:
+V is [un]assigned before the argument list of a qualified super constructor invocation iff V is [un]assigned after the qualifier expression.
 
-V is definitely assigned (and moreover is not definitely unassigned) before the block that is the body of a constructor or instance initializer of C.
+V is [un]assigned before the argument list of any other constructor invocation iff V is [un]assigned before the invocation.
 
-V is definitely assigned (and moreover is not definitely unassigned) before every instance variable initializer of C.
+V is [un]assigned after the argument list of a constructor invocation iff either V is [un]assigned after the rightmost argument expression in the argument list, or the argument list is empty and V is [un]assigned before the argument list.
+
+A blank final non-static member field of C, declared in a superclass of C, is definitely assigned (and moreover is not definitely unassigned) after a superclass constructor invocation.
+
+Any other variable V is [un]assigned after a superclass constructor invocation iff V is [un]assigned after the argument list of the invocation.
+
+A blank final non-static member field of C, declared in C or a superclass of C, is definitely assigned (and moreover is not definitely unassigned) after an alternate constructor invocation.
+
+Any other variable V is [un]assigned after an alternate constructor invocation iff V is [un]assigned after the argument list of the invocation.
+
+For the epilogue of a constructor body with no explicit constructor invocation:
+
+A blank final non-static member field V of C, declared in C, is [un]assigned before the epilogue iff either V is [un]assigned after the rightmost instance initialization or instance variable initializer of C, or C declares no instance initializer or instance variable initializer, and V is [un]assigned after the prologue of the constructor body.
+
+A blank final non-static member field of C, declared in a superclass of C, is definitely assigned (and moreover is not definitely unassigned) before the epilogue.
+
+Any other variable V is [un]assigned before the epilogue iff V is [un]assigned after the prologue of the constructor body.
+
+For the epilogue of a constructor body with a superclass constructor invocation:
+
+A blank final non-static member field V of C, declared in C, is [un]assigned before the epilogue iff either V is [un]assigned after the rightmost instance initialization or instance variable initializer of C, or C declares no instance initializer or instance variable initializer, and V is [un]assigned after the superclass constructor invocation.
+
+Any other variable V is [un]assigned before the epilogue iff V is [un]assigned after the superclass constructor invocation.
+
+For the epilogue of a constructor body with an alternate constructor invocation, V is [un]assigned before the epilogue iff V is [un]assigned after the alternate constructor invocation.
+
+V is [un]assigned after an empty epilogue iff V is [un]assigned before the epilogue.
+
+V is [un]assigned after a non-empty epilogue iff V is [un]assigned after the last statement in the epilogue.
+
+V is [un]assigned before the first statement of the prologue or epilogue iff V is [un]assigned before the prologue or epilogue, respectively.
+
+V is [un]assigned before any other statement S in the prologue or epilogue iff V is [un]assigned after the statement immediately preceding S in the prologue or epilogue.
+
+V is [un]assigned before the qualifier expression of a super constructor invocation iff V is [un]assigned before the super constructor invocation.
+
+V is [un]assigned before the leftmost argument expression of an explicit constructor invocation iff V is [un]assigned before the argument list.
+
+V is [un]assigned before any other argument expression x of an explicit constructor invocation iff V is [un]assigned after the argument expression to the left of x.

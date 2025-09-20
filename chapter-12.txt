@@ -3,10 +3,10 @@ Chapter 12. Execution
 Table of Contents
 
 12.1. Java Virtual Machine Startup
-12.1.1. Load the Class Test
-12.1.2. Link Test: Verify, Prepare, (Optionally) Resolve
-12.1.3. Initialize Test: Execute Initializers
-12.1.4. Invoke Test.main
+12.1.1. Load the Initial Class or Interface
+12.1.2. Link the Initial Class or Interface: Verify, Prepare, (Optionally) Resolve
+12.1.3. Initialize the Initial Class or Interface: Execute Initializers
+12.1.4. Invoke a main Method
 12.2. Loading of Classes and Interfaces
 12.2.1. The Loading Process
 12.2.2. Class Loader Consistency
@@ -26,82 +26,114 @@ Table of Contents
 
 This chapter specifies activities that occur during execution of a program. It is organized around the life cycle of the Java Virtual Machine and of the classes, interfaces, and objects that form a program.
 
-The Java Virtual Machine starts up by loading a specified class or interface, then invoking the method main in this specified class or interface. Section §12.1 outlines the loading, linking, and initialization steps involved in executing main, as an introduction to the concepts in this chapter. Further sections specify the details of loading (§12.2), linking (§12.3), and initialization (§12.4).
+The Java Virtual Machine starts up by loading a specified class or interface, then invoking a main method in this specified class or interface. Section §12.1 outlines the loading, linking, and initialization steps involved in executing this method, as an introduction to the concepts in this chapter. Further sections specify the details of loading (§12.2), linking (§12.3), and initialization (§12.4).
 
 The chapter continues with a specification of the procedures for creation of new class instances (§12.5); and finalization of class instances (§12.6). It concludes by describing the unloading of classes (§12.7) and the procedure followed when a program exits (§12.8).
 
 12.1. Java Virtual Machine Startup
 
-The Java Virtual Machine starts execution by invoking the method main of some specified class or interface, passing it a single argument which is an array of strings. In the examples in this specification, this first class is typically called Test.
+The Java Virtual Machine starts execution by invoking a main method of some specified class or interface. If this method has a formal parameter, it is passed a single argument which is an array of strings.
 
-The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 24 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of Java Virtual Machine startup are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 25 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
-The manner in which the initial class or interface is specified to the Java Virtual Machine is beyond the scope of this specification, but it is typical, in host environments that use command lines, for the fully qualified name of the class or interface to be specified as a command line argument and for following command line arguments to be used as strings to be provided as the argument to the method main.
+The manner in which the initial class or interface is specified to the Java Virtual Machine is beyond the scope of this specification, but it is typical, in host environments that use command lines, for the fully qualified name of the initial class or interface to be specified as a command line argument and for following command line arguments to be used as strings that are taken as the components of an array that is passed as an argument to the main method. If the original compilation unit was a compact compilation unit (§7.3), then the name of the file that contained the compilation unit, minus any extension, is typically used to specify the name of the initial class or interface.
 
 For example, in a UNIX implementation, the command line:
 
 java Test reboot Bob Dot Enzo
 
 
-will typically start a Java Virtual Machine by invoking method main of class Test (a class in an unnamed package), passing it an array containing the four strings "reboot", "Bob", "Dot", and "Enzo".
+will typically start a Java Virtual Machine by invoking a main method of class Test (a class in an unnamed package), passing it an argument array containing the four strings "reboot", "Bob", "Dot", and "Enzo".
 
-We now outline the steps the Java Virtual Machine may take to execute Test, as an example of the loading, linking, and initialization processes that are described further in later sections.
+Whereas if the file HelloWorld.java contained the following compact compilation unit:
 
-12.1.1. Load the Class Test
 
-The initial attempt to execute the method main of class Test discovers that the class Test is not loaded - that is, that the Java Virtual Machine does not currently contain a binary representation for this class. The Java Virtual Machine then uses a class loader to attempt to find such a binary representation. If this process fails, then an error is thrown. This loading process is described further in §12.2.
+void main() {
+    System.out.println("Hello, World!");
+}
 
-12.1.2. Link Test: Verify, Prepare, (Optionally) Resolve
 
-After Test is loaded, it must be initialized before main can be invoked. And Test, like all classes and interfaces, must be linked before it is initialized. Linking involves verification, preparation, and (optionally) resolution. Linking is described further in §12.3.
+which has been compiled, then the command line:
 
-Verification checks that the loaded representation of Test is well-formed, with a proper symbol table. Verification also checks that the code that implements Test obeys the semantic requirements of the Java programming language and the Java Virtual Machine. If a problem is detected during verification, then an error is thrown. Verification is described further in §12.3.1.
+java HelloWorld
+
+
+will typically start a Java Virtual Machine by invoking the main method of the implicitly declared class (§8.1.8), producing the output:
+
+Hello, World!
+
+
+We now outline the steps the Java Virtual Machine may take to execute the initial class or interface; these are described further in later sections.
+
+12.1.1. Load the Initial Class or Interface
+
+The attempt to execute a main method of the initial class or interface discovers that it is not loaded - that is, that the Java Virtual Machine does not currently contain a binary representation for this class or interface. The Java Virtual Machine then uses a class loader to attempt to find such a binary representation. If this process fails, then an error is thrown. This loading process is described further in §12.2.
+
+12.1.2. Link the Initial Class or Interface: Verify, Prepare, (Optionally) Resolve
+
+After the class or interface is loaded, it must be initialized before a main method can be invoked. The initial class, like all classes and interfaces, must be linked before it is initialized. Linking involves verification, preparation, and (optionally) resolution. Linking is described further in §12.3.
+
+Verification checks that the loaded representation of the initial class or interface is well-formed, with a proper symbol table. Verification also checks that the code that implements the initial class or interface obeys the semantic requirements of the Java programming language and the Java Virtual Machine. If a problem is detected during verification, then an error is thrown. Verification is described further in §12.3.1.
 
 Preparation involves allocation of static storage and any data structures that are used internally by the implementation of the Java Virtual Machine, such as method tables. Preparation is described further in §12.3.2.
 
-Resolution is the process of checking symbolic references from Test to other classes and interfaces, by loading the other classes and interfaces that are mentioned and checking that the references are correct.
+Resolution is the process of checking symbolic references from the initial class or interface to other classes and interfaces, by loading the other classes and interfaces that are mentioned and checking that the references are correct.
 
 The resolution step is optional at the time of initial linkage. An implementation may resolve symbolic references from a class or interface that is being linked very early, even to the point of resolving all symbolic references from the classes and interfaces that are further referenced, recursively. (This resolution may result in errors from these further loading and linking steps.) This implementation choice represents one extreme and is similar to the kind of "static" linkage that has been done for many years in simple implementations of the C language. (In these implementations, a compiled program is typically represented as an "a.out" file that contains a fully-linked version of the program, including completely resolved links to library routines used by the program. Copies of these library routines are included in the "a.out" file.)
 
-An implementation may instead choose to resolve a symbolic reference only when it is actively used; consistent use of this strategy for all symbolic references would represent the "laziest" form of resolution. In this case, if Test had several symbolic references to another class, then the references might be resolved one at a time, as they are used, or perhaps not at all, if these references were never used during execution of the program.
+An implementation may instead choose to resolve a symbolic reference only when it is actively used; consistent use of this strategy for all symbolic references would represent the "laziest" form of resolution. In this case, if the initial class or interface had several symbolic references to another class, then the references might be resolved one at a time, as they are used, or perhaps not at all, if these references were never used during execution of the program.
 
-The only requirement on when resolution is performed is that any errors detected during resolution must be thrown at a point in the program where some action is taken by the program that might, directly or indirectly, require linkage to the class or interface involved in the error. Using the "static" example implementation choice described above, loading and linkage errors could occur before the program is executed if they involved a class or interface mentioned in the class Test or any of the further, recursively referenced, classes and interfaces. In a system that implemented the "laziest" resolution, these errors would be thrown only when an incorrect symbolic reference is actively used.
+The only requirement on when resolution is performed is that any errors detected during resolution must be thrown at a point in the program where some action is taken by the program that might, directly or indirectly, require linkage to the class or interface involved in the error. Using the "static" example implementation choice described above, loading and linkage errors could occur before the program is executed if they involved a class or interface mentioned in the initial class or interface or any of the further, recursively referenced, classes and interfaces. In a system that implemented the "laziest" resolution, these errors would be thrown only when an incorrect symbolic reference is actively used.
 
 The resolution process is described further in §12.3.3.
 
-12.1.3. Initialize Test: Execute Initializers
+12.1.3. Initialize the Initial Class or Interface: Execute Initializers
 
-In our continuing example, the Java Virtual Machine is still trying to execute the method main of class Test. This is permitted only if the class has been initialized (§12.4.1).
+At this stage, the Java Virtual Machine is still trying to execute a main method of the initial class or interface. This is permitted only if the class or interface has been initialized (§12.4.1).
 
-Initialization consists of execution of any class variable initializers and static initializers of the class Test, in textual order. But before Test can be initialized, its direct superclass must be initialized, as well as the direct superclass of its direct superclass, and so on, recursively. In the simplest case, Test has Object as its implicit direct superclass; if class Object has not yet been initialized, then it must be initialized before Test is initialized. Class Object has no superclass, so the recursion terminates here.
+Initialization consists of execution of any class variable initializers and static initializers of the initial class or interface, in textual order. But before it can be initialized, its direct superclass must be initialized, as well as the direct superclass of its direct superclass, and so on, recursively. In the simplest case, the initial class has Object as its implicit direct superclass; if class Object has not yet been initialized, then it must be initialized before the initial class or interface is initialized. Class Object has no superclass, so the recursion terminates here.
 
-If class Test has another class Super as its superclass, then Super must be initialized before Test. This requires loading, verifying, and preparing Super if this has not already been done and, depending on the implementation, may also involve resolving the symbolic references from Super and so on, recursively.
+If the initial class has another class Super as its superclass, then Super must be initialized before the initial class. This requires loading, verifying, and preparing Super if this has not already been done and, depending on the implementation, may also involve resolving the symbolic references from Super and so on, recursively.
 
 Initialization may thus cause loading, linking, and initialization errors, including such errors involving other classes and interfaces.
 
 The initialization process is described further in §12.4.
 
-12.1.4. Invoke Test.main
+12.1.4. Invoke a main Method
 
-Finally, after completion of the initialization for class Test (during which other consequential loading, linking, and initializing may have occurred), the method main of Test is invoked.
+Finally, after completion of the initialization for the initial class or interface (during which other consequential loading, linking, and initializing may have occurred), a main method declared in, or inherited by, the initial class or interface is invoked.
 
-The method main must be declared public, static, and void. It must specify a formal parameter (§8.4.1) whose declared type is array of String. Therefore, either of the following declarations is acceptable:
+A main method declared in, or inherited by, a given class is a candidate main method if either:
 
+It has a single formal parameter (§8.4.1) whose declared type is an array of String, a void result, and public, protected or package access; or
 
-public static void main(String[] args)
+It has no formal parameters, a void result, and public, protected or package access.
 
+Note that a candidate main method may be either a static or an instance method. It may optionally have a throws clause (§8.4.6). The type of the single formal parameter may be given as either String[] or String... as they denote the same type.
 
+The form of a candidate main method expanded significantly in Java SE 25. Prior to that, it had to be public, static, and have a single formal parameter; the only variation possible was String[] versus String... for the type of the single formal parameter.
 
-public static void main(String... args)
+Note that it is not a compile-time error if the initial class or interface counts more than one candidate main methods among its members.
 
+The presence of a candidate main method in a class or interface may not be immediately apparent because it may be inherited. For example, a default method in an interface is an instance method (§9.4), so may be a candidate main method when inherited by a class that implements the interface.
+
+A candidate main method of the initial class or interface is invoked as if by application of the following rules:
+
+If there is a candidate main method with a single formal parameter, then this method is invoked. If this method is static then it is invoked directly, passing the argument array (§12.1). If the candidate main method is an instance method then first an instance of the initial class must be created. This class instance is the result of evaluating an unqualified class instance creation expression (§15.9) with no type arguments, no actual arguments, no class body, and where the ClassOrInterfaceTypeToInstantiate is the name of the initial class. The candidate main method is then invoked on the resulting instance, passing the argument array.
+
+Otherwise, if there is a candidate main method with no formal parameters, then this method is invoked. If this method is static then it is invoked directly. If the candidate main method is an instance method then first an instance of the initial class must be created. This class instance is the result of evaluating an unqualified class instance creation expression (§15.9) with no type arguments, no actual arguments, no class body, and where the ClassOrInterfaceTypeToInstantiate is the name of the initial class. The candidate main method is then invoked on the resulting instance with no actual arguments.
+
+Note that it is not possible for a class to have both a static and an instance method with the same signature (§8.4.2).
+
+If there is no candidate main method to invoke, or if creating an instance of the initial class when invoking an instance main method fails, then execution fails; the precise behavior of an implementation in this case is beyond the scope of this specification.
 
 12.2. Loading of Classes and Interfaces
 
 Loading refers to the process of finding the binary form of a class or interface with a particular name, perhaps by computing it on the fly, but more typically by retrieving a binary representation previously computed from source code by a Java compiler, and constructing, from that binary form, a Class object to represent the class or interface (§1.4).
 
-The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 24 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of loading are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 25 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
-The binary representation of a class or interface is normally the class file format described in Chapter 4 of The Java Virtual Machine Specification, Java SE 24 Edition, but other representations are possible, provided they meet the requirements specified in §13.1.
+The binary representation of a class or interface is normally the class file format described in Chapter 4 of The Java Virtual Machine Specification, Java SE 25 Edition, but other representations are possible, provided they meet the requirements specified in §13.1.
 
 12.2.1. The Loading Process
 
@@ -129,13 +161,13 @@ If a class loader L1 delegates loading of a class or interface C to another load
 
 A malicious class loader could violate these properties. However, it could not undermine the security of the type system, because the Java Virtual Machine guards against this.
 
-For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 24 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of sensitive system classes such as ClassLoader.
+For further discussion of these issues, see The Java Virtual Machine Specification, Java SE 25 Edition and the paper Dynamic Class Loading in the Java Virtual Machine, by Sheng Liang and Gilad Bracha, in Proceedings of OOPSLA '98, published as ACM SIGPLAN Notices, Volume 33, Number 10, October 1998, pages 36-44. A basic principle of the design of the Java programming language is that the run-time type system cannot be subverted by code written in the Java programming language, not even by implementations of sensitive system classes such as ClassLoader.
 
 12.3. Linking of Classes and Interfaces
 
 Linking is the process of taking a binary form of a class or interface and combining it into the run-time state of the Java Virtual Machine, so that it can be executed. A class or interface is always loaded before it is linked.
 
-The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 24 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
+The precise semantics of linking are given in Chapter 5 of The Java Virtual Machine Specification, Java SE 25 Edition. Here we present an overview of the process from the viewpoint of the Java programming language.
 
 Three different activities are involved in linking: verification, preparation, and resolution of symbolic references.
 
@@ -387,15 +419,19 @@ Just before a reference to the newly created object is returned as the result, t
 
 Assign the arguments for the constructor to newly created parameter variables for this constructor invocation.
 
-If this constructor begins with an explicit constructor invocation (§8.8.7.1) of another constructor in the same class (using this), then evaluate the arguments and process that constructor invocation recursively using these same five steps. If that constructor invocation completes abruptly, then this procedure completes abruptly for the same reason; otherwise, continue with step 5.
+If this constructor does not contain an explicit constructor invocation (§8.8.7.1) then continue from step 5.
 
-This constructor does not begin with an explicit constructor invocation of another constructor in the same class (using this). If this constructor is for a class other than Object, then this constructor will begin with an explicit or implicit invocation of a superclass constructor (using super). Evaluate the arguments and process that superclass constructor invocation recursively using these same five steps. If that constructor invocation completes abruptly, then this procedure completes abruptly for the same reason. Otherwise, continue with step 4.
+Execute the BlockStatements, if any, of the prologue of the constructor body. If execution of any statement completes abruptly, then execution of the constructor completes abruptly for the same reason, otherwise continue with the next step.
 
-Execute the instance initializers and instance variable initializers for this class, assigning the values of instance variable initializers to the corresponding instance variables, in the left-to-right order in which they appear textually in the source code for the class. If execution of any of these initializers results in an exception, then no further initializers are processed and this procedure completes abruptly with that same exception. Otherwise, continue with step 5.
+The explicit constructor invocation is either an invocation of another constructor in the same class (using this) or an invocation of a superclass constructor (using super). Evaluate the arguments of the constructor invocation and process the constructor invocation recursively using these same seven steps. If the constructor invocation completes abruptly, then this procedure completes abruptly for the same reason. Otherwise, continue from step 7 if the invocation is of another constructor in the same class, and continue from step 6 if the invocation is of a superclass constructor.
 
-Execute the rest of the body of this constructor. If that execution completes abruptly, then this procedure completes abruptly for the same reason. Otherwise, this procedure completes normally.
+If this constructor is for a class other than Object, then this constructor contains an implicit invocation of a superclass constructor with no arguments. In this case, process the implicit constructor invocation recursively using these same seven steps. If that constructor invocation completes abruptly, then this procedure completes abruptly for the same reason, otherwise continue with the next step.
 
-Unlike C++, the Java programming language does not specify altered rules for method dispatch during the creation of a new class instance. If methods are invoked that are overridden in subclasses in the object being initialized, then these overriding methods are used, even before the new object is completely initialized.
+Execute the instance initializers and instance variable initializers for this class, assigning the values of instance variable initializers to the corresponding instance variables, in the left-to-right order in which they appear textually in the source code for the class. If execution of any of these initializers results in an exception, then no further initializers are processed and this procedure completes abruptly with that same exception, otherwise continue with the next step.
+
+Execute the BlockStatements, if any, of the epilogue of this constructor. If execution of any statement completes abruptly, then this procedure completes abruptly for the same reason. Otherwise, this procedure completes normally.
+
+Unlike C++, the Java programming language does not specify altered rules for method dispatch during the creation of a new class instance. If methods are invoked that are overridden in subclasses in the object being initialized, then these overriding methods are used, even before the new object is completely initialized. Classes can avoid unwanted exposure of uninitialized state by assigning to their fields in the prologue of the constructor body.
 
 Example 12.5-1. Evaluation of Instance Creation
 
@@ -435,7 +471,7 @@ This constructor executes without effect and returns.
 
 Next, all initializers for the instance variables of class Point are executed. As it happens, the declarations of x and y do not provide any initialization expressions, so no action is required for this step of the example. Then the body of the Point constructor is executed, setting x to 1 and y to 1.
 
-Next, the initializers for the instance variables of class ColoredPoint are executed. This step assigns the value 0xFF00FF to color. Finally, the rest of the body of the ColoredPoint constructor is executed (the part after the invocation of super); there happen to be no statements in the rest of the body, so no further action is required and initialization is complete.
+Next, the initializers for the instance variables of class ColoredPoint are executed. This step assigns the value 0xFF00FF to color. Finally, the epilogue of the ColoredPoint constructor is executed (the part after the invocation of super); there happen to be no statements in the epilogue, so no further action is required and initialization is complete.
 
 
 
@@ -467,9 +503,45 @@ This shows that the invocation of printThree in the constructor for class Super 
 
 
 
+
+Example 12.5-3. Initialization of Fields in the Prologue
+
+
+class Super {
+    Super() { printThree(); }
+    void printThree() { System.out.println("three"); }
+}
+class Test extends Super {
+    int three;
+
+    public Test() {
+        three = (int)Math.PI;  // That is, 3
+        super();
+    }
+
+    void printThree() { System.out.println(three); }
+
+    public static void main(String[] args) {
+        Test t = new Test();
+        t.printThree();
+    }
+}
+
+
+
+This alternative to Example 12.5-2 produces the output:
+
+3
+3
+
+
+Because the field three is initialized in the prologue of the Test constructor, its assignment occurs in Step 3 of the object initialization procedure, before execution of the Super constructor in Step 4. When three is initialized in this way, it is impossible to observe it with the default value 0.
+
+
+
 12.6. Finalization of Class Instances
 
-As of Java SE 24, the Java SE Platform Specification allows finalization of class instances to be disabled in an implementation of the Java SE Platform, in anticipation of the removal of finalization from a future release of the Java SE Platform.
+As of Java SE 25, the Java SE Platform Specification allows finalization of class instances to be disabled in an implementation of the Java SE Platform, in anticipation of the removal of finalization from a future release of the Java SE Platform.
 
 The class Object has a protected method called finalize; this method can be overridden by other classes. The particular definition of finalize that can be invoked for an object is called the finalizer of that object. Before the storage for an object is reclaimed by the garbage collector, the Java Virtual Machine will invoke the finalizer of that object.
 

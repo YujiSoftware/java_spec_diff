@@ -740,7 +740,7 @@ A guard cannot be a constant expression (§15.29) with the value false.
 
 The switch block of a switch statement or a switch expression is switch compatible with the type of the selector expression, T, if all of the following are true:
 
-If a null literal is associated with the switch block, then T is a reference type.
+If a null literal is associated with the switch block, then T is a reference type, or the null type (§4.1).
 
 For every case constant associated with the switch block that names an enum constant, the type of the case constant is assignment compatible with T (§5.2).
 
@@ -1869,6 +1869,8 @@ It is a compile-time error if the return target contains either (i) an instance 
 
 It is a compile-time error if the return target of a return statement with no value is a method, and that method is not declared void.
 
+It is a compile-time error if the return target of a return statement is a constructor, and the return statement appears in the prologue of this constructor (§8.8.7).
+
 It is a compile-time error if the return target of a return statement with value Expression is either a constructor, or a method that is declared void.
 
 It is a compile-time error if the return target of a return statement with value Expression is a method with declared return type T, and the type of Expression is not assignable compatible (§5.2) with T.
@@ -2476,11 +2478,23 @@ The block that is the body of a constructor, method, instance initializer, stati
 
 An empty block that is not a switch block can complete normally iff it is reachable.
 
-A non-empty block that is not a switch block can complete normally iff the last statement in it can complete normally.
+A non-empty block that is not a switch block or a constructor body containing a constructor invocation can complete normally iff the last statement in it can complete normally.
 
-The first statement in a non-empty block that is not a switch block is reachable iff the block is reachable.
+The first statement in a non-empty block that is not a switch block or a constructor body containing a constructor invocation is reachable iff the block is reachable.
 
-Every other statement S in a non-empty block that is not a switch block is reachable iff the statement preceding S can complete normally.
+Every other statement S in a non-empty block that is not a switch block or a constructor body containing a constructor invocation is reachable iff the statement preceding S can complete normally.
+
+A non-empty block that is the body of a constructor containing a constructor invocation can complete normally iff the last statement in it can complete normally.
+
+The first statement in a non-empty prologue of a constructor body containing a constructor invocation is reachable iff the block is reachable.
+
+Every other statement S in the prologue of a constructor body containing a constructor invocation is reachable iff the statement preceding S can complete normally.
+
+The first statement in a non-empty epilogue of a constructor containing a constructor invocation and an empty prologue is reachable iff the block is reachable.
+
+The first statement in a non-empty epilogue of a constructor containing a constructor invocation and a non-empty prologue is reachable iff the last statement of the prologue of the constructor can complete normally.
+
+Every other statement S in the epilogue of a constructor containing a constructor invocation is reachable iff the statement preceding S can complete normally.
 
 A local class declaration statement can complete normally iff it is reachable.
 
@@ -2781,7 +2795,7 @@ record R<T>(ArrayList<T> a){}
 
 Given the record pattern R<String>(var b), the type of the pattern variable b is ArrayList<String>.
 
-A type pattern is said to be null matching if it is appears directly in the component pattern list of a record pattern with type R, where the corresponding record component of R has type U, and the type pattern is unconditional for the type U (§14.30.3).
+A type pattern is said to be null-matching if it is appears directly in the component pattern list of a record pattern with type R, where the corresponding record component of R has type U, and the type pattern is unconditional for the type U (§14.30.3).
 
 Note that this compile-time property of type patterns is used in the run-time process of pattern matching (§14.30.2), so it is associated with the type pattern for use at run time.
 
