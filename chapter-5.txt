@@ -74,11 +74,11 @@ String conversions
 
 There are seven kinds of conversion contexts in which poly expressions may be influenced by context or implicit conversions may occur. Each kind of context has different rules for poly expression typing and allows conversions in some of the categories above but not others. The contexts are:
 
-Assignment contexts (§5.2, §15.26), in which an expression's value is bound to a named variable. Primitive and reference types are subject to widening, values may be boxed or unboxed, and some primitive constant expressions may be subject to narrowing. An unchecked conversion may also occur.
+Assignment contexts (§5.2, §15.26), in which an expression's value is assigned to a named variable. Primitive and reference types are subject to widening, values may be boxed or unboxed, and some primitive constant expressions may be subject to narrowing. An unchecked conversion may also occur.
 
-Strict invocation contexts (§5.3, §15.9, §15.12), in which an argument is bound to a formal parameter of a constructor or method. Widening primitive, widening reference, and unchecked conversions may occur.
+Strict invocation contexts (§5.3, §15.9, §15.12), in which an argument is assigned to a formal parameter of a constructor or method. Widening primitive, widening reference, and unchecked conversions may occur.
 
-Loose invocation contexts (§5.3, §15.9, §15.12), in which, like strict invocation contexts, an argument is bound to a formal parameter. Method or constructor invocations may provide this context if no applicable declaration can be found using only strict invocation contexts. In addition to widening and unchecked conversions, this context allows boxing and unboxing conversions to occur.
+Loose invocation contexts (§5.3, §15.9, §15.12), in which, like strict invocation contexts, an argument is assigned to a formal parameter. Method or constructor invocations may provide this context if no applicable declaration can be found using only strict invocation contexts. In addition to widening and unchecked conversions, this context allows boxing and unboxing conversions to occur.
 
 String contexts (§5.4, §15.18.1), in which a value of any type is converted to an object of type String.
 
@@ -88,7 +88,7 @@ Numeric contexts (§5.6), in which the operands of a numeric operator or some ot
 
 Testing contexts (§5.7), in which an expression's value is converted to a type explicitly specified by a pattern (§14.30). Testing contexts are more inclusive than assignment or loose invocation contexts, but not as inclusive as casting contexts.
 
-The term "conversion" is also used to describe, without being specific, any conversions allowed in a particular context. For example, we say that an expression that is the initializer of a local variable is subject to "assignment conversion", meaning that a specific conversion will be implicitly chosen for that expression according to the rules for the assignment context. As another example, we say that an expression undergoes "casting conversion" to mean that the expression's type will be converted as permitted in a casting context.
+The term "conversion" is also used to describe, without being specific, any conversions allowed in a particular context. For example, we say that an expression that is the initializer of a local variable is subject to "assignment conversion", meaning that a specific conversion will be implicitly chosen for that expression according to the rules for the assignment context. As another example, we say that an expression undergoes "casting conversion" to mean that the expression's value will be converted as permitted in a casting context.
 
 Example 5.0-2. Conversions In Various Contexts
 
@@ -1010,7 +1010,7 @@ The target type in these contexts is always String, and a string conversion (§5
 
 5.5. Casting Contexts
 
-Casting contexts allow the operand of a cast expression (§15.16) to be converted to the type explicitly named by the cast operator. Compared to assignment contexts and invocation contexts, casting contexts allow the use of more of the conversions defined in §5.1, and allow more combinations of those conversions.
+Casting contexts allow the operand of a cast expression (§15.16) to be converted to the type explicitly specified by the cast operator. Compared to assignment contexts and invocation contexts, casting contexts allow the use of more of the conversions defined in §5.1, and allow more combinations of those conversions.
 
 If the expression is of a primitive type, then a casting context allows the use of one of the following:
 
@@ -1365,8 +1365,6 @@ The example converts the ASCII character G to the ASCII control-G (BEL), by mask
 
 Testing contexts allow the operand of a pattern match operator (§15.20.2), or the selector expression of a switch expression or statement that has at least one pattern case label associated with its switch block (§14.11.1) to be converted to a type as part of the process of pattern matching. As pattern matching is an inherently conditional process (§14.30.2), it is expected that a testing context will make use of conversions that may fail at run time.
 
-Testing contexts use similar conversions for reference types as casting contexts except that they do not permit narrowing reference conversions that are unchecked (§5.1.6.2).
-
 If the expression is of a primitive type, then a testing context allows the use of an identity conversion (§5.1.1).
 
 If the expression is of a reference type, then a testing context allows the use of one of the following:
@@ -1376,6 +1374,8 @@ an identity conversion (§5.1.1)
 a widening reference conversion (§5.1.5)
 
 a narrowing reference conversion that is checked (§5.1.6.2)
+
+Unlike casting contexts, testing contexts do not permit narrowing reference conversions that are unchecked.
 
 If the expression has the null type, then the expression may be converted to any reference type.
 

@@ -957,7 +957,7 @@ A set of case elements, P, covers a type T if one of the following cases applies
 
 P covers a type U where T and U have the same erasure.
 
-P contains a pattern that is unconditional for T.
+P contains a pattern that is unconditional for T (§14.30.3).
 
 T is a type variable with upper bound B and P covers B.
 
@@ -1873,7 +1873,7 @@ It is a compile-time error if the return target of a return statement is a const
 
 It is a compile-time error if the return target of a return statement with value Expression is either a constructor, or a method that is declared void.
 
-It is a compile-time error if the return target of a return statement with value Expression is a method with declared return type T, and the type of Expression is not assignable compatible (§5.2) with T.
+It is a compile-time error if the return target of a return statement with value Expression is a method with declared return type T, and the type of Expression is not assignment compatible (§5.2) with T.
 
 Execution of a return statement with no value always completes abruptly, the reason being a return with no value.
 
